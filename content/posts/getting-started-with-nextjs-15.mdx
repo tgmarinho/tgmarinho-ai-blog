@@ -1,0 +1,81 @@
+---
+title: "Getting Started with Next.js 15"
+description: "Learn how to build modern web applications with Next.js 15, the latest version with App Router and React Server Components."
+date: "2024-12-01"
+published: true
+categories: ["React", "Next.js", "Tutorial"]
+---
+
+Next.js 15 brings exciting new features and improvements to the React framework. In this post, we'll explore what's new and how to get started.
+
+## What's New in Next.js 15
+
+Next.js 15 introduces several key improvements:
+
+- **Improved App Router** - Better performance and developer experience
+- **React 19 Support** - Full support for the latest React features
+- **Turbopack** - Faster builds in development
+- **Enhanced Caching** - More control over caching strategies
+
+## Quick Start
+
+Getting started is simple:
+
+```bash
+npx create-next-app@latest my-app --typescript --tailwind --app
+```
+
+This sets up a new project with TypeScript, Tailwind CSS, and the App Router.
+
+## App Router Basics
+
+The App Router uses file-system based routing in the `app` directory:
+
+```typescript
+// app/page.tsx - Home page
+export default function HomePage() {
+  return (
+    <div>
+      <h1>Welcome to my site!</h1>
+    </div>
+  );
+}
+```
+
+```typescript
+// app/blog/[slug]/page.tsx - Dynamic route
+interface Props {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function BlogPost({ params }: Props) {
+  const { slug } = await params;
+  return <article>Post: {slug}</article>;
+}
+```
+
+## Server Components
+
+By default, all components in the App Router are **Server Components**. This means they run on the server and can directly access databases, APIs, and other server-side resources.
+
+```typescript
+// This runs on the server!
+async function PostList() {
+  const posts = await db.query("SELECT * FROM posts");
+  return (
+    <ul>
+      {posts.map(post => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+For interactive components that need browser APIs, add `"use client"` at the top of the file.
+
+## Conclusion
+
+Next.js 15 is a great choice for building modern web applications. The App Router, combined with React Server Components, provides an excellent developer experience and great performance out of the box.
+
+Happy coding!

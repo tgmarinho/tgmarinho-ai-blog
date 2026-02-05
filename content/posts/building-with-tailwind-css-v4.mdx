@@ -1,0 +1,82 @@
+---
+title: "Building with Tailwind CSS v4"
+description: "Explore the new features in Tailwind CSS v4, including the new engine, CSS-first configuration, and improved performance."
+date: "2024-10-20"
+published: true
+categories: ["CSS", "Tailwind CSS"]
+---
+
+Tailwind CSS v4 is a major rewrite that brings significant improvements to the framework. Let's explore what's new.
+
+## CSS-First Configuration
+
+The biggest change in v4 is the move to CSS-first configuration:
+
+```css
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3b82f6;
+  --color-background: #09090b;
+  --font-sans: "Inter", sans-serif;
+}
+```
+
+No more `tailwind.config.js`! Everything lives in your CSS.
+
+## New Engine
+
+Tailwind v4 is built on a completely new engine called **Oxide**, written in Rust. This brings:
+
+- **10x faster** full builds
+- **100x faster** incremental builds
+- Smaller CSS output
+- Zero-config content detection
+
+## Modern CSS Features
+
+v4 embraces modern CSS:
+
+```css
+/* Container queries */
+@container (min-width: 400px) {
+  .card {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* CSS nesting */
+.card {
+  background: var(--color-card);
+
+  & .title {
+    font-weight: bold;
+  }
+
+  &:hover {
+    background: var(--color-card-hover);
+  }
+}
+```
+
+## Getting Started
+
+Install Tailwind CSS v4:
+
+```bash
+npm install tailwindcss@latest @tailwindcss/postcss
+```
+
+Add to your PostCSS config:
+
+```javascript
+export default {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+```
+
+## Conclusion
+
+Tailwind CSS v4 is faster, simpler, and more powerful. The CSS-first approach makes it feel more native and the performance improvements are remarkable.

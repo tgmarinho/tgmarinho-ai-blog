@@ -1,0 +1,91 @@
+---
+title: "TypeScript Tips for React Developers"
+description: "Essential TypeScript patterns and tips that will make your React code more type-safe and maintainable."
+date: "2024-11-15"
+published: true
+categories: ["TypeScript", "React"]
+---
+
+TypeScript has become the standard for building React applications. Here are some essential tips to improve your TypeScript + React workflow.
+
+## 1. Typing Component Props
+
+Always define explicit prop types:
+
+```typescript
+interface ButtonProps {
+  variant?: "primary" | "secondary" | "ghost";
+  size?: "sm" | "md" | "lg";
+  children: React.ReactNode;
+  onClick?: () => void;
+}
+
+function Button({ variant = "primary", size = "md", children, onClick }: ButtonProps) {
+  return (
+    <button className={`btn btn-${variant} btn-${size}`} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+```
+
+## 2. Generic Components
+
+Use generics for reusable components:
+
+```typescript
+interface ListProps<T> {
+  items: T[];
+  renderItem: (item: T) => React.ReactNode;
+  keyExtractor: (item: T) => string;
+}
+
+function List<T>({ items, renderItem, keyExtractor }: ListProps<T>) {
+  return (
+    <ul>
+      {items.map((item) => (
+        <li key={keyExtractor(item)}>{renderItem(item)}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+## 3. Discriminated Unions for State
+
+Use discriminated unions for complex state:
+
+```typescript
+type AsyncState<T> =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: T }
+  | { status: "error"; error: Error };
+
+function useAsync<T>() {
+  const [state, setState] = useState<AsyncState<T>>({ status: "idle" });
+  // ...
+}
+```
+
+## 4. Utility Types
+
+Leverage TypeScript's built-in utility types:
+
+```typescript
+// Pick only what you need
+type CardProps = Pick<Post, "title" | "description" | "date">;
+
+// Make all props optional
+type PartialUser = Partial<User>;
+
+// Make all props required
+type RequiredConfig = Required<Config>;
+
+// Omit specific props
+type CreatePost = Omit<Post, "id" | "createdAt">;
+```
+
+## Conclusion
+
+These patterns will help you write more type-safe and maintainable React applications. TypeScript's type system is powerful - use it to your advantage!
