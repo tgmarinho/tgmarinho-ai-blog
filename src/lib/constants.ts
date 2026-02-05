@@ -1,5 +1,6 @@
 export const siteConfig = {
   name: "Thiago Marinho",
+  username: "tgmarinho",
   url: "https://tgmarinhopro.com",
   description:
     "AI Product Engineer | 10+ Years Full-Stack Developer | Building AI-driven solutions | TypeScript, React, React Native, Node.js | Spec Driven Development | LLMs, RAG, AI Agents",

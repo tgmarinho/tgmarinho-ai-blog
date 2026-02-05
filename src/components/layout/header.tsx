@@ -16,7 +16,7 @@ export function Header() {
           href="/"
           className="text-lg font-bold tracking-tight hover:text-blue-500 transition-colors"
         >
-          @{siteConfig.name.split(" ")[0].toLowerCase()}
+          @{siteConfig.username}
         </Link>
 
         {/* Desktop nav */}
