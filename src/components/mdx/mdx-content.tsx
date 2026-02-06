@@ -4,19 +4,6 @@ import { Callout } from "./callout";
 import { CopyButton } from "./copy-button";
 import { YouTubeEmbed } from "./video";
 import { ShareButton } from "./share-button";
-import { parseMarkdown } from "./markdown-parser";
-
-// This is now used for markdown strings, not compiled MDX
-const useMarkdownContent = (markdown: string) => {
-  try {
-    return parseMarkdown(markdown);
-  } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("Markdown parsing error:", error);
-    }
-    return null;
-  }
-};
 
 // Stub components for React Native and other components that appear in blog posts
 const StubComponent = ({ children, ...props }: any) => <span {...props}>{children}</span>;
@@ -68,19 +55,21 @@ export function MdxContent({ code }: MdxContentProps) {
     return <div className="prose max-w-none">No content available</div>;
   }
 
-  const content = code;
+  const content = code.trim();
 
-  // Check if code is compiled MDX (starts with function/export) or markdown string
-  const isCompiledMDX = content.trim().startsWith("function") || content.trim().startsWith("export");
-  
+  // Check if code is compiled MDX (starts with function/export)
+  const isCompiledMDX = content.startsWith("function") || content.startsWith("export");
+
+  // Check if code is already HTML (from Velite s.markdown())
+  const isHTML = content.startsWith("<");
+
   if (isCompiledMDX) {
-    // Handle compiled MDX
     try {
       const fn = new Function("React", "runtime", content);
       const result = fn(React, { ...runtime });
       const Component = result?.default || result;
       if (!Component) {
-        return <div className="prose max-w-none">Error: Could not compile MDX component</div>;
+        return <div className="prose max-w-none" />;
       }
       return (
         <div className="prose max-w-none">
@@ -90,30 +79,21 @@ export function MdxContent({ code }: MdxContentProps) {
     } catch (error) {
       if (process.env.NODE_ENV === "development") {
         console.error("MDX render error:", error);
-        return <div className="prose max-w-none">Error rendering content: {String(error)}</div>;
-      }
-      return <div className="prose max-w-none" />;
-    }
-  } else {
-    // Handle markdown string
-    try {
-      if (process.env.NODE_ENV === "development") {
-        console.log("Parsing markdown, content length:", content.length);
-      }
-      const parsedContent = useMarkdownContent(content);
-      if (!parsedContent) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn("parseMarkdown returned null or undefined");
-        }
-        return <div className="prose max-w-none">Error parsing markdown</div>;
-      }
-      return <div className="prose max-w-none">{parsedContent}</div>;
-    } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Markdown render error:", error);
-        return <div className="prose max-w-none">Error rendering markdown: {String(error)}</div>;
       }
       return <div className="prose max-w-none" />;
     }
   }
+
+  if (isHTML) {
+    // Velite s.markdown() returns compiled HTML - render it directly
+    return (
+      <div
+        className="prose max-w-none"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+
+  // Fallback: plain text
+  return <div className="prose max-w-none">{content}</div>;
 }
