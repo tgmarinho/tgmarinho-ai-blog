@@ -14,6 +14,7 @@ interface Post {
   slug: string;
   categories: string[];
   body: string;
+  plainBody: string;
   published: boolean;
 }
 
@@ -29,7 +30,12 @@ export function BlogSearch({ posts, categories }: BlogSearchProps) {
   const fuse = useMemo(
     () =>
       new Fuse(posts, {
-        keys: ["title", "description", "categories"],
+        keys: [
+          { name: "title", weight: 3 },
+          { name: "description", weight: 2 },
+          { name: "categories", weight: 1.5 },
+          { name: "plainBody", weight: 1 },
+        ],
         threshold: 0.3,
         includeScore: true,
       }),
