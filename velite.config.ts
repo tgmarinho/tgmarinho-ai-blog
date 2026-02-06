@@ -14,7 +14,7 @@ const posts = defineCollection({
       published: s.boolean().default(true),
       categories: s.array(s.string()).default([]),
       image: s.string().optional(),
-      body: s.mdx().optional().default(""), // Make body optional to allow posts with MDX errors
+      body: s.markdown(), // Changed from mdx to markdown to fix compilation issues
     })
     .transform((data) => ({
       ...data,

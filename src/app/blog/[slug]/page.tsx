@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import readingTime from "reading-time";
 import { siteConfig } from "@/lib/constants";
-import fs from "fs";
-import path from "path";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -59,93 +57,7 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  // If body is empty (MDX compilation failed), try to read from file
-  let bodyContent = post.body || "";
-  if (!bodyContent) {
-    try {
-      const postsDir = path.join(process.cwd(), "content", "posts");
-      const files = fs.readdirSync(postsDir);
-      
-      // Normalize slug for comparison (remove all non-alphanumeric, normalize hyphens)
-      const normalizeSlug = (s: string) => 
-        s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-      
-      const normalizedSlug = normalizeSlug(slug);
-      
-      const file = files.find((f) => {
-        if (!f.endsWith('.mdx') && !f.endsWith('.md')) return false;
-        const fileSlug = normalizeSlug(f.replace(/\.mdx?$/, ""));
-        // Try exact match first
-        if (fileSlug === normalizedSlug) return true;
-        
-        // Try fuzzy match (remove all hyphens and compare)
-        const fileSlugNoHyphens = fileSlug.replace(/-/g, "");
-        const slugNoHyphens = normalizedSlug.replace(/-/g, "");
-        if (fileSlugNoHyphens === slugNoHyphens) return true;
-        
-        // Try prefix match - check if slug starts with file slug (slug is usually longer)
-        // or if file slug starts with slug (file name is usually shorter)
-        if (normalizedSlug.startsWith(fileSlug) || fileSlug.startsWith(normalizedSlug)) {
-          return true;
-        }
-        
-        // Try matching first N words (handles cases where file name is shorter)
-        // Split by hyphens and compare first few words
-        const fileWords = fileSlug.split('-').filter(w => w.length > 0);
-        const slugWords = normalizedSlug.split('-').filter(w => w.length > 0);
-        const minWords = Math.min(fileWords.length, slugWords.length);
-        
-        if (minWords >= 3) {
-          // Compare first 3-5 words
-          const compareWords = Math.min(5, minWords);
-          let matchingWords = 0;
-          for (let i = 0; i < compareWords; i++) {
-            // Normalize words (remove hyphens within words, handle accented chars)
-            const fileWord = fileWords[i].replace(/-/g, '');
-            const slugWord = slugWords[i].replace(/-/g, '');
-            if (fileWord === slugWord || 
-                fileWord.length > 5 && slugWord.startsWith(fileWord.substring(0, Math.min(5, fileWord.length))) ||
-                slugWord.length > 5 && fileWord.startsWith(slugWord.substring(0, Math.min(5, slugWord.length)))) {
-              matchingWords++;
-            }
-          }
-          // If most words match, consider it a match
-          if (matchingWords >= Math.min(3, compareWords - 1)) {
-            return true;
-          }
-        }
-        
-        return false;
-      });
-      
-      if (file) {
-        const filePath = path.join(postsDir, file);
-        const fileContent = fs.readFileSync(filePath, "utf-8");
-        // Extract body content (everything after frontmatter)
-        const frontmatterEnd = fileContent.indexOf("---", 3);
-        if (frontmatterEnd !== -1) {
-          bodyContent = fileContent.substring(frontmatterEnd + 3).trim();
-        } else {
-          bodyContent = fileContent.trim();
-        }
-      } else {
-        if (process.env.NODE_ENV === "development") {
-          console.warn(`Could not find file for slug: ${slug}. Available files:`, files.slice(0, 5).join(", "));
-        }
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.error(`Error reading file for slug ${slug}:`, error);
-      }
-    }
-  }
-  
-  // Debug: log if bodyContent is still empty
-  if (!bodyContent && process.env.NODE_ENV === "development") {
-    console.warn(`No body content found for post: ${post.title} (slug: ${slug})`);
-  }
-
-  const stats = readingTime(bodyContent || post.body || "");
+  const stats = readingTime(post.body || "");
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
@@ -198,7 +110,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
       {/* Post content */}
       <div className="prose max-w-none">
-        <MdxContent code={bodyContent || post.body || ""} />
+        <MdxContent code={post.body || ""} />
       </div>
 
       {/* Share button */}
