@@ -9,26 +9,32 @@ export const metadata: Metadata = {
 
 const projects = [
   {
-    title: "tgmarinho.com",
+    title: "Unicrow",
     description:
-      "My personal blog and portfolio built with Next.js 15, Velite, and Tailwind CSS v4.",
-    tags: ["Next.js", "TypeScript", "Tailwind CSS", "MDX"],
-    github: "https://github.com/tgmarinho/tgmarinho-ai-website",
-    live: "https://tgmarinho.com",
+      "Web3 escrow platform on Ethereum. Contributed to SDK development, blockchain indexer, and smart contracts. Production-grade TypeScript SDK for escrow payments integration.",
+    tags: ["TypeScript", "Ethereum", "Web3", "Smart Contracts", "Node.js", "GraphQL"],
+    github: "https://github.com/unicrowio",
   },
   {
-    title: "Open Source Contributions",
+    title: "Meetapp",
     description:
-      "Active contributor to various open source projects in the React and Node.js ecosystem.",
-    tags: ["React", "Node.js", "Open Source"],
-    github: "https://github.com/tgmarinho",
+      "Full-stack meetup organizer application (Backend, Frontend, Mobile). Final challenge project from Rocketseat Bootcamp. Built with React, React Native, Node.js, and Redux.",
+    tags: ["React", "React Native", "Node.js", "Redux", "JavaScript", "Full-Stack"],
+    github: "https://github.com/tgmarinho/meetapp",
   },
   {
-    title: "Discord Community",
+    title: "Be the Hero",
     description:
-      "A community of developers learning and growing together. Join us to discuss tech, share projects, and network.",
-    tags: ["Community", "Discord", "Networking"],
-    live: "https://discord.gg/kznGvgV7aA",
+      "Full-stack application connecting NGOs with donors. Built during Rocketseat Bootcamp to help organizations raise funds for their causes.",
+    tags: ["React", "React Native", "Node.js", "JavaScript", "Full-Stack"],
+    github: "https://github.com/tgmarinho/be-the-hero",
+  },
+  {
+    title: "Members",
+    description:
+      "Open source project for managing members and communities.",
+    tags: ["Open Source", "TypeScript", "React"],
+    github: "https://github.com/tgmarinho/members",
   },
 ];
 

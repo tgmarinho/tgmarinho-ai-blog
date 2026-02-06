@@ -34,6 +34,11 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   authors: [{ name: siteConfig.author }],
   creator: siteConfig.author,
+  icons: {
+    icon: "https://avatars.githubusercontent.com/u/380327?v=4",
+    shortcut: "https://avatars.githubusercontent.com/u/380327?v=4",
+    apple: "https://avatars.githubusercontent.com/u/380327?v=4",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -41,12 +46,21 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     siteName: siteConfig.name,
+    images: [
+      {
+        url: "https://avatars.githubusercontent.com/u/380327?v=4",
+        width: 460,
+        height: 460,
+        alt: siteConfig.name,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
     creator: "@tgmarinho",
+    images: ["https://avatars.githubusercontent.com/u/380327?v=4"],
   },
 };
 

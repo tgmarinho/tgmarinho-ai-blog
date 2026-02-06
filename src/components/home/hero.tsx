@@ -14,9 +14,11 @@ export function Hero({ postCount }: HeroProps) {
         {/* Avatar */}
         <div className="relative">
           <div className="h-28 w-28 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 p-0.5">
-            <div className="h-full w-full rounded-full bg-background flex items-center justify-center text-4xl font-bold text-blue-500">
-              TM
-            </div>
+            <img
+              src="https://avatars.githubusercontent.com/u/380327?v=4"
+              alt={siteConfig.name}
+              className="h-full w-full rounded-full object-cover"
+            />
           </div>
         </div>
 

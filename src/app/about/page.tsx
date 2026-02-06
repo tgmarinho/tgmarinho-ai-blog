@@ -10,8 +10,9 @@ export const metadata: Metadata = {
 
 const skills = [
   "React", "Next.js", "TypeScript", "Node.js", "React Native",
-  "GraphQL", "PostgreSQL", "MongoDB", "Docker", "AWS",
-  "Solidity", "Ethereum", "Web3", "Tailwind CSS", "Git",
+  "GraphQL", "PostgreSQL", "MongoDB", "Docker", "Vercel", "Ethereum", "Web3", "Tailwind CSS", "Git",
+  "AI", "LLMs", "RAG", "AI Agents", "Intelligent Automation",
+  "Spec Driven Development", "Product Thinking",
 ];
 
 const socialLinks = [
@@ -32,9 +33,11 @@ export default function AboutPage() {
       <section className="mb-10">
         <div className="flex items-start gap-6 mb-6">
           <div className="h-20 w-20 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 p-0.5">
-            <div className="h-full w-full rounded-full bg-background flex items-center justify-center text-2xl font-bold text-blue-500">
-              TM
-            </div>
+            <img
+              src="https://avatars.githubusercontent.com/u/380327?v=4"
+              alt={siteConfig.name}
+              className="h-full w-full rounded-full object-cover"
+            />
           </div>
           <div>
             <h2 className="text-xl font-semibold mb-1">{siteConfig.name}</h2>

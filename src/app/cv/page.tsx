@@ -89,11 +89,20 @@ export default function CVPage() {
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Header with controls */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Curriculum Vitae</h1>
-            <p className="text-muted-foreground mt-1">
-              Thiago Marinho de Oliveira
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 p-0.5">
+              <img
+                src="https://avatars.githubusercontent.com/u/380327?v=4"
+                alt="Thiago Marinho de Oliveira"
+                className="h-full w-full rounded-full object-cover"
+              />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Curriculum Vitae</h1>
+              <p className="text-muted-foreground mt-1">
+                Thiago Marinho de Oliveira
+              </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-3">
