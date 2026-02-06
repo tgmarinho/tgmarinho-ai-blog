@@ -26,6 +26,7 @@ const posts = defineCollection({
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, ""),
+      plainBody: data.body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
     })),
 });
 
