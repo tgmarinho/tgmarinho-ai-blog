@@ -108,7 +108,9 @@ export default async function PostPage({ params }: PostPageProps) {
       <hr className="border-border mb-10" />
 
       {/* Post content */}
-      <MdxContent code={post.body} />
+      <div className="prose max-w-none">
+        <MdxContent code={post.body} />
+      </div>
     </article>
   );
 }

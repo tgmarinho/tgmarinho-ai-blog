@@ -507,12 +507,12 @@ export default function cart(state, action) {
 E agora se executarmos essa função, vamos ver as actions sendo logadas no console:
 
 ```
-{type: "@@redux/INITp.i.5.b.k.v"}type: "@@redux/INITp.i.5.b.k.v"__proto__: Object
-reducer.js:2 {type: "@@redux/PROBE_UNKNOWN_ACTIONv.t.j.3.7"}type: "@@redux/PROBE_UNKNOWN_ACTIONv.t.j.3.7"__proto__: Object
+{type: "@@redux/INITp.i.5.b.k.v"} type: "@@redux/INITp.i.5.b.k.v" __proto__: Object
+reducer.js:2 {type: "@@redux/PROBE_UNKNOWN_ACTIONv.t.j.3.7"} type: "@@redux/PROBE_UNKNOWN_ACTIONv.t.j.3.7" __proto__: Object
 reducer.js:2 {type: "@@redux/INITp.i.5.b.k.v"}
-reducer.js:2 {type: "ADD_TO_CART", product: {…}}
-reducer.js:2 {type: "ADD_TO_CART", product: {…}}
-reducer.js:2 {type: "ADD_TO_CART", product: {…}}
+reducer.js:2 {type: "ADD_TO_CART", product: {...}}
+reducer.js:2 {type: "ADD_TO_CART", product: {...}}
+reducer.js:2 {type: "ADD_TO_CART", product: {...}}
 ```
 
 E olha que legal, os três primeiros logs é a inicialização e integração do React com Redux. E os outros três sou eu clicando no botão adicionar ao carrinho.

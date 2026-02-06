@@ -40,6 +40,8 @@ export default defineConfig({
   },
   collections: { posts },
   mdx: {
+    // Disable strict validation to allow posts with invalid JSX/JS
+    jsx: true,
     rehypePlugins: [
       rehypeSlug,
       [

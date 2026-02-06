@@ -7,7 +7,15 @@ export const metadata: Metadata = {
   description: "A showcase of my projects and open source contributions.",
 };
 
-const projects = [
+type Project = {
+  title: string;
+  description: string;
+  tags: string[];
+  github: string;
+  live?: string;
+};
+
+const projects: Project[] = [
   {
     title: "Unicrow",
     description:
