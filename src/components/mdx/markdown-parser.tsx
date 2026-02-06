@@ -113,30 +113,32 @@ function formatInlineMarkdown(text: string): ReactNode {
   const placeholderRegex = /(__\w+_\d+__)/g;
   const segments: (string | ReactNode)[] = [];
   let lastIndex = 0;
-  let match;
+  let match: RegExpExecArray | null;
 
   // Reset regex lastIndex
   placeholderRegex.lastIndex = 0;
   
   while ((match = placeholderRegex.exec(processed)) !== null) {
+    const currentMatch = match; // Create a non-null reference
+
     // Add text before the placeholder
-    if (match.index > lastIndex) {
-      const textSegment = processed.substring(lastIndex, match.index);
+    if (currentMatch.index > lastIndex) {
+      const textSegment = processed.substring(lastIndex, currentMatch.index);
       if (textSegment) {
         segments.push(textSegment);
       }
     }
-    
+
     // Add the replacement element
-    const replacement = replacements.find((r) => r.placeholder === match[1]);
+    const replacement = replacements.find((r) => r.placeholder === currentMatch[1]);
     if (replacement) {
       segments.push(replacement.element);
     } else {
       // If replacement not found, keep the placeholder as text (shouldn't happen)
-      segments.push(match[1]);
+      segments.push(currentMatch[1]);
     }
-    
-    lastIndex = match.index + match[0].length;
+
+    lastIndex = currentMatch.index + currentMatch[0].length;
   }
   
   // Add remaining text after last placeholder
@@ -201,8 +203,8 @@ export function parseMarkdown(content: string): ReactNode {
     }
   }
 
-  function parseIframeAttributes(iframeHtml: string): React.HTMLAttributes<HTMLIFrameElement> {
-    const attrs: React.HTMLAttributes<HTMLIFrameElement> = {};
+  function parseIframeAttributes(iframeHtml: string): React.IframeHTMLAttributes<HTMLIFrameElement> {
+    const attrs: React.IframeHTMLAttributes<HTMLIFrameElement> = {};
     
     // Normalize the HTML string (remove newlines, normalize spaces)
     const normalized = iframeHtml.replace(/\s+/g, " ").trim();
@@ -247,7 +249,9 @@ export function parseMarkdown(content: string): ReactNode {
       // Calculate aspect ratio if width and height are provided
       let aspectRatio = "aspect-video"; // default 16:9
       if (attrs.width && attrs.height) {
-        const ratio = attrs.width / attrs.height;
+        const width = Number(attrs.width);
+        const height = Number(attrs.height);
+        const ratio = width / height;
         if (Math.abs(ratio - 16/9) < 0.1) {
           aspectRatio = "aspect-video";
         } else if (Math.abs(ratio - 4/3) < 0.1) {
@@ -256,7 +260,7 @@ export function parseMarkdown(content: string): ReactNode {
           aspectRatio = "aspect-[21/9]";
         } else {
           // Use custom aspect ratio
-          const customRatio = `${attrs.width}/${attrs.height}`;
+          const customRatio = `${width}/${height}`;
           aspectRatio = `aspect-[${customRatio}]`;
         }
       }
