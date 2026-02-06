@@ -3,25 +3,18 @@ import React from "react";
 import { Callout } from "./callout";
 import { CopyButton } from "./copy-button";
 import { YouTubeEmbed } from "./video";
+import { ShareButton } from "./share-button";
+import { parseMarkdown } from "./markdown-parser";
 
-const useMDXComponent = (code: string) => {
+// This is now used for markdown strings, not compiled MDX
+const useMarkdownContent = (markdown: string) => {
   try {
-    // Check if code contains await and wrap in async if needed
-    const hasAwait = /await\s+/.test(code);
-    const wrappedCode = hasAwait 
-      ? `(async function() { ${code} })()`
-      : code;
-    
-    const fn = new Function("React", "runtime", wrappedCode);
-    const result = fn(React, { ...runtime });
-    return result?.default || result || (() => null);
+    return parseMarkdown(markdown);
   } catch (error) {
-    // Silently fail during build - return empty component
-    if (typeof window === "undefined") {
-      return () => null;
+    if (process.env.NODE_ENV === "development") {
+      console.warn("Markdown parsing error:", error);
     }
-    console.warn("MDX component error:", error);
-    return () => null;
+    return null;
   }
 };
 
@@ -31,6 +24,7 @@ const StubComponent = ({ children, ...props }: any) => <span {...props}>{childre
 const components = {
   Callout,
   YouTubeEmbed,
+  ShareButton,
   // React Native components stubs (to avoid MDX validation errors)
   ActivityIndicator: StubComponent,
   Text: StubComponent,
@@ -70,22 +64,56 @@ interface MdxContentProps {
 }
 
 export function MdxContent({ code }: MdxContentProps) {
-  try {
-    const Component = useMDXComponent(code);
-    if (!Component) {
-      return <div className="prose max-w-none">Error loading content</div>;
-    }
-    return (
-      <div className="prose max-w-none">
-        <Component components={components} />
-      </div>
-    );
-  } catch (error) {
-    // During build, return empty div to prevent build failures
-    if (typeof window === "undefined") {
+  if (!code) {
+    return <div className="prose max-w-none">No content available</div>;
+  }
+
+  const content = code;
+
+  // Check if code is compiled MDX (starts with function/export) or markdown string
+  const isCompiledMDX = content.trim().startsWith("function") || content.trim().startsWith("export");
+  
+  if (isCompiledMDX) {
+    // Handle compiled MDX
+    try {
+      const fn = new Function("React", "runtime", content);
+      const result = fn(React, { ...runtime });
+      const Component = result?.default || result;
+      if (!Component) {
+        return <div className="prose max-w-none">Error: Could not compile MDX component</div>;
+      }
+      return (
+        <div className="prose max-w-none">
+          <Component components={components} />
+        </div>
+      );
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("MDX render error:", error);
+        return <div className="prose max-w-none">Error rendering content: {String(error)}</div>;
+      }
       return <div className="prose max-w-none" />;
     }
-    console.error("MDX render error:", error);
-    return <div className="prose max-w-none">Error rendering content</div>;
+  } else {
+    // Handle markdown string
+    try {
+      if (process.env.NODE_ENV === "development") {
+        console.log("Parsing markdown, content length:", content.length);
+      }
+      const parsedContent = useMarkdownContent(content);
+      if (!parsedContent) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("parseMarkdown returned null or undefined");
+        }
+        return <div className="prose max-w-none">Error parsing markdown</div>;
+      }
+      return <div className="prose max-w-none">{parsedContent}</div>;
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Markdown render error:", error);
+        return <div className="prose max-w-none">Error rendering markdown: {String(error)}</div>;
+      }
+      return <div className="prose max-w-none" />;
+    }
   }
 }
