@@ -4,72 +4,158 @@ description: "How we stopped loading entire collections into Node.js and let the
 date: "2026-03-10"
 published: true
 categories: ["mongodb", "database", "javascript", "performance"]
-image: "https://images.unsplash.com/photo-1658204238967-3a81a063d162?q=80&w=2662&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+image: "https://images.unsplash.com/photo-1658204238967-3a81a063d162?q=80&w=2662&auto=format&fit=crop&ixlib=rb-4.1.0"
 ---
+
+# Avoiding In-Memory Aggregation and Overfetching in MongoDB with Prisma
 
 ## The Real Performance Killer: Overfetching
 
-When people talk about query performance, the classic "N+1 problem" gets all the attention — 1 query to fetch a list, then N queries for related data. But in MongoDB applications using Prisma, there's a different anti-pattern that's arguably more damaging and far more common: **overfetching and in-memory aggregation**.
+Most backend engineers learn early about the **N+1 query problem**.
 
-It looks like this: you issue a single `findMany()` that loads an entire collection (or a large subset of it), then use JavaScript `.filter()`, `.reduce()`, and `.map()` to count, aggregate, and paginate — work the database is specifically designed to do.
+One query loads a list. Then N additional queries fetch related data.  
+It's inefficient and easy to detect in query logs.
 
-This pattern is especially tempting with ORMs like Prisma, where `findMany` + `include` is the path of least resistance. It works fine with 50 records. It falls apart at 5,000.
+But in many MongoDB applications using Prisma, a different anti-pattern is often **more damaging and more common**:
+
+**Overfetching combined with in-memory aggregation.**
+
+Instead of letting the database aggregate data, the application loads thousands of records into Node.js and processes them with JavaScript.
+
+At small scale it works fine.
+
+At a few thousand records it becomes a bottleneck.
+
+The pattern usually looks like this:
+
+```ts
+const orders = await prisma.order.findMany({ where: { eventId } })
+
+const confirmed = orders.filter(o => o.status === "CONFIRMED").length
+const pending = orders.filter(o => o.status === "PENDING").length
+```
+
+This means:
+
+- MongoDB sends every document over the network
+- Node.js loads them into memory
+- JavaScript loops over them multiple times
+
+All to compute something the database can do instantly.
 
 ## The Problem: A Real Dashboard
 
-We had an event management platform built with **Next.js 15**, **tRPC**, **Prisma 6**, and **MongoDB**. The admin dashboard showed stats: total registrations, pending payments, check-in counts, revenue breakdowns.
+In our event management platform built with:
 
-Here's what the original code looked like:
+- Next.js 15
+- tRPC
+- Prisma 6
+- MongoDB
+
+The admin dashboard shows metrics like:
+
+- total registrations
+- pending payments
+- check-ins
+- revenue breakdown
+
+The original implementation looked like this:
 
 ```ts
-// ❌ BEFORE — loads ALL orders into memory, filters with JavaScript
+// ❌ BEFORE — loads ALL orders into memory
 const allOrders = await ctx.db.order.findMany({
   where: { eventId: input.eventId },
   include: { ticketType: true, coupon: true },
-});
+})
 
-const totalConfirmed = allOrders.filter((o) => o.status === "CONFIRMED").length;
-const totalPending = allOrders.filter((o) => o.status === "PENDING").length;
-const totalCancelled = allOrders.filter((o) => o.status === "CANCELLED").length;
-const totalRefunded = allOrders.filter((o) => o.status === "REFUNDED").length;
+const totalConfirmed = allOrders.filter(o => o.status === "CONFIRMED").length
+const totalPending = allOrders.filter(o => o.status === "PENDING").length
+const totalCancelled = allOrders.filter(o => o.status === "CANCELLED").length
+const totalRefunded = allOrders.filter(o => o.status === "REFUNDED").length
 
-// Then compute financial stats...
-let revenue = 0;
+let revenue = 0
 for (const order of allOrders) {
   if (order.status === "CONFIRMED") {
-    revenue += order.organizerReceivedCents;
+    revenue += order.organizerReceivedCents
   }
 }
 ```
 
-### Why This Is Bad
+This worked fine during development.
 
-1. **Memory**: An event with 10,000 orders loads 10,000 full documents into Node.js memory — including fields you never use.
-2. **Network**: MongoDB sends all those documents over the wire, serialized as BSON, even though you only need a count.
-3. **CPU**: JavaScript loops through the entire array multiple times (once per `.filter()` call).
-4. **Scales linearly**: As events grow, response time grows proportionally. A dashboard that loads in 200ms with 100 orders takes 2+ seconds with 5,000.
-5. **No index utilization**: Even if you have an index on `status`, loading all documents means MongoDB can't use it efficiently for aggregation.
+But once events reached thousands of orders, the dashboard became slow.
 
-### Why This Happens More Often with MongoDB
+## Why This Is Expensive
 
-Unlike SQL databases, MongoDB doesn't have a built-in `GROUP BY` that returns counts by status in a single query. Prisma's MongoDB adapter also doesn't support `groupBy` on all field types. Without an obvious "aggregate in the DB" path, developers default to "load everything and compute in JS."
+### 1. Memory pressure
 
-But Prisma **does** support `count()` with `where` clauses on MongoDB, and those queries **do** use indexes. The tools exist — they're just less discoverable.
+An event with 10,000 orders loads 10,000 documents into Node.js memory.
+
+Most of those fields are never used.
+
+### 2. Network overhead
+
+MongoDB sends documents serialized as BSON.
+
+Even if each document is ~1 KB:
+
+10,000 orders ≈ 10 MB transferred
+
+All that data travels over the network just to compute a few counts.
+
+### 3. CPU usage in Node.js
+
+Each `.filter()` scans the entire array.
+
+- `orders.filter(...)`
+- `orders.filter(...)`
+- `orders.filter(...)`
+
+That means multiple full passes over the dataset.
+
+### 4. Poor index utilization
+
+MongoDB indexes are optimized for query filtering and counting.
+
+But when you load every document and aggregate in JavaScript, the database cannot leverage those indexes effectively.
+
+## Why This Happens More Often With MongoDB
+
+MongoDB does support aggregation pipelines, including `$group`.
+
+Example:
+
+```js
+db.orders.aggregate([
+  { $match: { eventId } },
+  {
+    $group: {
+      _id: "$status",
+      total: { $sum: 1 }
+    }
+  }
+])
+```
+
+However, Prisma's MongoDB adapter does not expose a full groupBy API like the SQL connectors.
+
+Because of this limitation, developers often default to:
+
+`findMany()` → aggregate in JavaScript
+
+But Prisma does support `count()` queries, which MongoDB can execute very efficiently — especially with indexes.
 
 ## The Solution: Database-Level Counting
 
-Replace in-memory filtering with parallel `count()` queries:
+Instead of loading all documents, let the database count them.
 
 ```ts
-// ✅ AFTER — 7 parallel queries, each counting at database level
+// ✅ AFTER — parallel count queries
 const [
-  totalInscritos,
-  totalPendente,
-  totalCanceladas,
-  totalReembolsadas,
-  checkinDone,
-  checkinTotal,
-  byTicketTypeRaw,
+  totalConfirmed,
+  totalPending,
+  totalCancelled,
+  totalRefunded,
 ] = await Promise.all([
   ctx.db.order.count({
     where: { eventId: input.eventId, status: "CONFIRMED" },
@@ -83,67 +169,45 @@ const [
   ctx.db.order.count({
     where: { eventId: input.eventId, status: "REFUNDED" },
   }),
-  ctx.db.ticket.count({
-    where: {
-      checkedInAt: { not: null },
-      order: { eventId: input.eventId, status: "CONFIRMED" },
-    },
-  }),
-  ctx.db.ticket.count({
-    where: {
-      order: { eventId: input.eventId, status: "CONFIRMED" },
-    },
-  }),
-  // Only load the subset we actually need for breakdown
-  ctx.db.order.findMany({
-    where: {
-      eventId: input.eventId,
-      status: { in: ["CONFIRMED", "PENDING"] },
-    },
-    select: {
-      status: true,
-      ticketTypeId: true,
-      ticketType: { select: { id: true, name: true } },
-    },
-  }),
-]);
+])
 ```
 
-### What Changed
+Each query returns a single integer.
 
-| Aspect           | Before                    | After                                          |
-| ---------------- | ------------------------- | ---------------------------------------------- |
-| Documents loaded | All orders (every field)  | Only confirmed + pending (3 fields each)       |
-| Status counting  | 4× `.filter()` in JS      | 4× `count()` in MongoDB                        |
-| Check-in stats   | Load all tickets → filter | 2× `count()` on tickets                        |
-| Network payload  | Entire order documents    | Integers (counts) + minimal subset             |
-| Index usage      | None for aggregation      | Full — compound index on `[status, createdAt]` |
+Instead of transferring megabytes of documents, the response is just a few bytes.
+
+With `Promise.all`, the queries run concurrently.
+
+## Why This Is Faster
+
+With a compound index like:
+
+`[eventId, status]`
+
+MongoDB can satisfy the query directly from the index, without scanning the full collection.
+
+This dramatically reduces:
+
+- disk access
+- CPU usage
+- network payload
 
 ## Adding the Right Indexes
 
-For `count()` queries to be fast, MongoDB needs indexes that match the query pattern. In Prisma schema:
+Indexes must match the query pattern.
+
+Example Prisma schema:
 
 ```prisma
 model Order {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   eventId   String   @db.ObjectId @map("event_id")
   status    String
-  createdAt DateTime @default(now()) @map("created_at")
-  // ... other fields
+  createdAt DateTime @default(now())
 
-  @@index([eventId, status])  // covers count-by-status queries
-  @@index([status, createdAt]) // covers time-range + status queries
-  @@index([createdAt])         // covers date-range queries
-  @@map("orders")
-}
-
-model Ticket {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  checkedInAt DateTime? @map("checked_in_at")
-  // ... other fields
-
-  @@index([checkedInAt])  // covers check-in count queries
-  @@map("tickets")
+  @@index([eventId, status])
+  @@index([status, createdAt])
+  @@index([createdAt])
 }
 ```
 
@@ -153,168 +217,143 @@ Apply with:
 npx prisma db push
 ```
 
-> **Note**: MongoDB doesn't support `prisma migrate`. Use `db push` to sync schema changes.
+MongoDB uses db push instead of migrations.
 
-## Pattern: Filtered Queries Instead of In-Memory Filtering
+## Pattern: Filtering in the Database
 
-Another common pattern we fixed was loading all records and paginating in JavaScript:
+Another common anti-pattern is filtering in JavaScript.
+
+**❌ Bad**
 
 ```ts
-// ❌ BEFORE — loads ALL confirmed orders, slices in memory
-const allOrders = await ctx.db.order.findMany({
-  where: { eventId: input.eventId, status: "CONFIRMED" },
-  include: { customer: true, ticketType: true },
-});
+const orders = await prisma.order.findMany()
 
-// Filter by check-in status in memory
-const filtered =
-  input.checkedIn !== undefined
-    ? allOrders.filter((o) => {
-        const ticket = o.tickets[0];
-        return input.checkedIn
-          ? ticket?.checkedInAt !== null
-          : ticket?.checkedInAt === null;
-      })
-    : allOrders;
-
-// Paginate in memory
-const page = filtered.slice(skip, skip + take);
+const confirmed = orders.filter(o => o.status === "CONFIRMED")
 ```
 
-The fix moves **both** the filter and the pagination to the database:
+**✅ Better**
 
 ```ts
-// ✅ AFTER — filter and paginate at database level
-const checkedInFilter =
-  input.checkedIn !== undefined
-    ? {
-        tickets: {
-          some: input.checkedIn
-            ? { checkedInAt: { not: null } }
-            : { checkedInAt: null },
-        },
-      }
-    : {};
-
-const [orders, total] = await Promise.all([
-  ctx.db.order.findMany({
-    where: {
-      eventId: input.eventId,
-      status: "CONFIRMED",
-      ...checkedInFilter,
-    },
-    select: {
-      id: true,
-      customer: { select: { name: true, email: true } },
-      ticketType: { select: { name: true } },
-      tickets: { select: { checkedInAt: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    skip: input.skip,
-    take: input.take,
-  }),
-  ctx.db.order.count({
-    where: {
-      eventId: input.eventId,
-      status: "CONFIRMED",
-      ...checkedInFilter,
-    },
-  }),
-]);
-```
-
-Key improvements:
-
-- **`skip`/`take`** at the DB level — MongoDB only scans the page you need
-- **`select`** instead of `include` — only requested fields cross the wire
-- **`where` clause** for the checked-in filter — MongoDB uses indexes, not JavaScript
-
-## Pattern: Stats via Parallel Counts
-
-When you need multiple stat counts, don't loop through a single array. Use parallel `count()` calls:
-
-```ts
-// ❌ BEFORE
-const orders = await ctx.db.order.findMany({
-  where: { eventId },
-});
-const confirmed = orders.filter((o) => o.status === "CONFIRMED").length;
-const pending = orders.filter((o) => o.status === "PENDING").length;
-const cancelled = orders.filter((o) => o.status === "CANCELLED").length;
-
-// ✅ AFTER
-const [confirmed, pending, cancelled] = await Promise.all([
-  ctx.db.order.count({ where: { eventId, status: "CONFIRMED" } }),
-  ctx.db.order.count({ where: { eventId, status: "PENDING" } }),
-  ctx.db.order.count({ where: { eventId, status: "CANCELLED" } }),
-]);
-```
-
-Yes, this sends 3 queries instead of 1. But each returns a single integer. The total data transferred is ~100 bytes vs potentially megabytes of full documents. And with `Promise.all`, they run concurrently.
-
-## When You Still Need `findMany`
-
-Not everything can be a `count()`. For the financial dashboard, we needed to sum `organizerReceivedCents` and break down by ticket type and coupon — aggregations that require actual field values.
-
-The key is to **minimize what you load**:
-
-```ts
-// ✅ Load only what aggregation needs — no extra fields
-const orders = await ctx.db.order.findMany({
+const confirmed = await prisma.order.findMany({
   where: {
-    eventId: input.eventId,
-    status: { in: ["CONFIRMED", "PENDING"] }, // exclude CANCELLED, REFUNDED
+    status: "CONFIRMED"
+  }
+})
+```
+
+This allows MongoDB to use indexes.
+
+## Pattern: Pagination in the Database
+
+Loading everything and paginating in memory is another performance killer.
+
+**❌ Bad**
+
+```ts
+const orders = await prisma.order.findMany()
+const page = orders.slice(skip, skip + take)
+```
+
+**✅ Better**
+
+```ts
+const orders = await prisma.order.findMany({
+  skip,
+  take,
+  orderBy: { createdAt: "desc" }
+})
+```
+
+MongoDB now scans only the required range.
+
+## When findMany Is Still Necessary
+
+Sometimes you do need real data, not just counts.
+
+Example: revenue calculations.
+
+The key is minimizing what you load.
+
+```ts
+const orders = await prisma.order.findMany({
+  where: {
+    eventId,
+    status: { in: ["CONFIRMED", "PENDING"] }
   },
   select: {
     status: true,
-    organizerReceivedCents: true,
-    paymentMethod: true,
-    ticketTypeId: true,
-    ticketType: { select: { id: true, name: true } },
-    coupon: { select: { id: true, code: true } },
-  },
-});
+    organizerReceivedCents: true
+  }
+})
 
-// Single-pass aggregation
-let totalConfirmed = 0;
-let totalPending = 0;
+let revenue = 0
 
 for (const order of orders) {
   if (order.status === "CONFIRMED") {
-    totalConfirmed += order.organizerReceivedCents;
-  } else {
-    totalPending += order.organizerReceivedCents;
+    revenue += order.organizerReceivedCents
   }
 }
 ```
 
-Notice:
+Key improvements:
 
-1. **`status: { in: ["CONFIRMED", "PENDING"] }`** — excludes cancelled/refunded orders at the DB level, reducing the dataset
-2. **`select`** — only 6 fields instead of the entire 20+ field document
-3. **Single loop** — one pass computes all aggregations instead of multiple `.filter()` calls
+- filter unwanted statuses in the database
+- use `select` instead of `include`
+- aggregate in a single pass
+
+## Beyond Query Optimization: Precomputed Stats
+
+At larger scale, even efficient `count()` queries can become expensive when dashboards are loaded frequently.
+
+Many high-scale systems solve this using precomputed counters.
+
+Example document:
+
+```json
+{
+  "eventId": "evt_123",
+  "confirmedOrders": 182,
+  "pendingOrders": 21,
+  "revenue": 21840
+}
+```
+
+Whenever an order changes status:
+
+- order.confirmed → increment confirmedOrders
+- order.cancelled → decrement confirmedOrders
+
+This approach allows dashboards to load with a single read.
 
 ## Quick Checklist
 
 Before shipping any query, ask yourself:
 
-- [ ] Am I loading records just to count them? Use `count()`.
-- [ ] Am I filtering in JavaScript? Move the filter to `where`.
-- [ ] Am I paginating with `.slice()`? Use `skip`/`take`.
-- [ ] Am I using `include` when `select` would suffice?
-- [ ] Do I have indexes for my `where` + `orderBy` patterns?
-- [ ] Am I running sequential queries that could be parallel? Use `Promise.all`.
+- Am I loading records just to count them?
+- Am I filtering in JavaScript?
+- Am I paginating with `.slice()`?
+- Am I using `include` when `select` would suffice?
+- Do my indexes match my query patterns?
+- Can multiple queries run in parallel with `Promise.all`?
 
 ## Results
 
-After applying these patterns across our codebase:
+After applying these patterns:
 
-- **Dashboard load time**: ~2s → ~200ms (10x improvement for events with 5k+ orders)
-- **Memory usage**: Reduced peak RSS by ~60% on dashboard endpoints
-- **Database load**: Eliminated full collection scans for stats queries
+| Metric | Improvement |
+|--------|-------------|
+| Dashboard load time | ~2s → ~200ms |
+| Memory usage | -60% |
+| Database scans | eliminated |
 
-Overfetching and in-memory aggregation won't show up as "N+1" in your query logs — there's no cascade of queries to spot. Instead, you'll see a single `findMany` that returns thousands of documents, followed by silence while Node.js burns CPU filtering them. The fix is straightforward: use `count()`, use `select`, use `where`, and add indexes. Let the database do what it was built for.
+Overfetching rarely appears as an obvious bug.
 
----
+Your logs show a single query.  
+Your database looks healthy.
 
-_Built with Next.js 15, tRPC v11, Prisma 6, and MongoDB._
+Meanwhile, Node.js is quietly doing the database's job —  
+one `.filter()` at a time.
+
+The fix is simple:
+
+**Let the database do what it was built for.**
