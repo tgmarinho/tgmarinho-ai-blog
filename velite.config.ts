@@ -12,22 +12,31 @@ const posts = defineCollection({
       description: s.string().max(999).optional(),
       date: s.isodate(),
       published: s.boolean().default(true),
+      slug: s.string().optional(),
+      language: s.string().optional(),
+      translationKey: s.string().optional(),
       categories: s.array(s.string()).default([]),
       image: s.string().optional(),
       body: s.markdown(), // Changed from mdx to markdown to fix compilation issues
     })
-    .transform((data) => ({
-      ...data,
-      slug: data.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, ""),
-      slugAsParams: data.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, ""),
-      plainBody: data.body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
-    })),
+    .transform((data) => {
+      const slug =
+        data.slug ??
+        data.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+
+      return {
+        ...data,
+        slug,
+        slugAsParams: slug,
+        plainBody: data.body
+          .replace(/<[^>]*>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim(),
+      };
+    }),
 });
 
 export default defineConfig({
