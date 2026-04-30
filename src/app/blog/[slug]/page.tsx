@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { posts } from "#site/content";
+import { posts, type Post } from "#site/content";
 import { MdxContent } from "@/components/mdx/mdx-content";
 import { ShareButton } from "@/components/mdx/share-button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,31 @@ interface PostPageProps {
 
 function getPostBySlug(slug: string) {
   return posts.find((post) => post.slug === slug && post.published);
+}
+
+const languageLabels: Record<string, string> = {
+  en: "EN",
+  "pt-BR": "PT-BR",
+};
+
+const languageOrder: Record<string, number> = {
+  en: 0,
+  "pt-BR": 1,
+};
+
+function getPostTranslations(post: Post) {
+  if (!post.translationKey) return [];
+
+  return posts
+    .filter(
+      (candidate) =>
+        candidate.published && candidate.translationKey === post.translationKey
+    )
+    .sort(
+      (a, b) =>
+        (languageOrder[a.language ?? ""] ?? 99) -
+        (languageOrder[b.language ?? ""] ?? 99)
+    );
 }
 
 export async function generateMetadata({
@@ -58,6 +83,8 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   const stats = readingTime(post.body || "");
+  const translations = getPostTranslations(post);
+  const hasTranslations = translations.length > 1;
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
@@ -71,6 +98,34 @@ export default async function PostPage({ params }: PostPageProps) {
 
       {/* Post header */}
       <header className="mb-10">
+        {hasTranslations && (
+          <nav
+            aria-label="Article language"
+            className="mb-6 inline-flex rounded-full border border-border/70 bg-muted/40 p-1"
+          >
+            {translations.map((translation) => {
+              const isActive = translation.slug === post.slug;
+              const label =
+                languageLabels[translation.language ?? ""] ??
+                translation.language ??
+                "Article";
+
+              return (
+                <Button
+                  key={translation.slug}
+                  asChild
+                  size="xs"
+                  variant={isActive ? "default" : "ghost"}
+                  className="rounded-full px-3"
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <Link href={`/blog/${translation.slug}`}>{label}</Link>
+                </Button>
+              );
+            })}
+          </nav>
+        )}
+
         <div className="flex flex-wrap gap-2 mb-4">
           {post.categories.map((cat) => (
             <Badge key={cat} variant="secondary">
