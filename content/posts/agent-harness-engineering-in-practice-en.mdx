@@ -1,0 +1,186 @@
+---
+title: "Agent Harness Engineering in practice"
+description: "Why coding agent performance depends more on the harness than on the model alone, and how to apply that in day-to-day engineering."
+date: "2026-04-30"
+published: true
+slug: "agent-harness-engineering-in-practice"
+language: "en"
+translationKey: "agent-harness-engineering-in-practice"
+categories: ["ai", "software-engineering", "en"]
+image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=928&q=80"
+---
+
+If you use coding agents, one idea is worth internalizing:
+
+**the agent is not the model.**
+
+In practice, what we call an agent is:
+
+`agent = model + harness`
+
+The model reasons and generates text/code.
+The harness defines the environment, rules, tools, boundaries, and verification loops.
+
+And this second part is usually what most impacts quality, predictability, and speed in real work.
+
+This article is a practical read based on write-ups from Addy Osmani, Viv Trivedy, and the Cursor team on harness engineering.
+
+### What a harness is, objectively
+
+A harness is everything around the model that turns inference into delivery:
+
+- system prompt and rule files (`AGENTS.md`, skills, conventions)
+- tools (shell, git, browser, linters, tests, MCPs)
+- context and memory (how knowledge is loaded, summarized, and persisted)
+- safety and quality hooks (blocks, checks, approval gates)
+- orchestration (subagents, handoff, planner x executor x reviewer)
+- observability (logs, traces, cost, latency, error rates)
+
+An excellent model with a weak harness tends to fail in repetitive ways.
+A good model with a strong harness often performs better in production.
+
+### Mindset shift: from "blame the model" to "improve the system"
+
+When an agent fails, the default reaction is:
+
+"the model is bad, let's wait for the next version."
+
+Harness engineering suggests another approach:
+
+"what system change prevents this error from happening again?"
+
+Practical examples:
+
+- the agent comments out tests instead of fixing them -> explicit rule + hook blocking `.skip(`, `xit(`, and similar patterns
+- the agent tries destructive commands -> pre-tool block (`rm -rf`, `git push --force`, `DROP TABLE`)
+- the agent gets lost in long tasks -> split roles (planner, executor, evaluator)
+- the agent marks work as done without validation -> force typecheck/lint/test as loop back-pressure
+
+This is the strongest part of the concept: **every mistake becomes a specification.**
+
+### Ratchet effect: each failure becomes permanent protection
+
+Think of the harness as a maturity ratchet.
+
+Whenever a real failure happens:
+
+1. record the failure pattern
+2. decide whether prevention belongs in prompt, hook, tooling, or process
+3. automate the prevention
+4. measure whether the failure disappears
+
+This moves you from team memory to system memory.
+
+### Minimum components of a good software harness
+
+If you want a practical starting point, begin here:
+
+1. **Short, testable rules**
+   Keep `AGENTS.md` concise, objective, and actionable.
+   Use a pilot checklist, not a giant style guide.
+
+2. **Tools people actually use**
+   Fewer tools with clear descriptions beat a huge overlapping menu.
+
+3. **Automatic feedback loops**
+   Code was edited? run validations.
+   Failed? feed the errors back to the agent.
+   Passed? stay silent.
+
+4. **Safe execution**
+   Use sandboxing/isolation when possible.
+   Explicitly block destructive operations.
+
+5. **Project memory**
+   Persist conventions, architecture decisions, and known pitfalls in versioned files.
+
+6. **Observability**
+   Without failure logs and decision traces, you cannot improve harness quality consistently.
+
+### Long context hurts agents (if unmanaged)
+
+Another key point: context degrades over time.
+
+As the window grows, agents tend to:
+
+- lose focus
+- reason worse
+- stop too early
+- repeat actions without progress
+
+Three techniques help a lot:
+
+- **compaction**: summarize and offload older history
+- **large-output offloading**: move long logs to files; keep only the signal in context
+- **progressive disclosure**: load rules/tools on demand, not all at startup
+
+### What Cursor adds in a very practical way
+
+Cursor's post adds an important angle: the harness is a product, not static configuration.
+
+They describe a continuous cycle:
+
+- define the ideal agent experience
+- build harness-improvement hypotheses
+- test with offline evals + online A/B tests
+- keep only changes that improve real quality
+
+High-value ideas to copy:
+
+- **Keep Rate for generated code**: measure how much of agent-proposed code remains in the repo after a fixed period
+- **semantic user satisfaction signal**: infer whether the user was satisfied from follow-up interaction patterns
+- **tool-call error taxonomy**: separate unknown errors (harness bugs) from expected ones (for example invalid args, timeouts, provider outages)
+- **anomaly alerts by tool and model**: detect degradation relative to baselines
+- **incremental optimization mindset**: quality improvements are often many small wins, not one silver bullet
+
+In short: sustainable agent improvement requires product engineering, observability, and disciplined experimentation.
+
+### There is no universal harness
+
+Another key Cursor insight: harnesses must be customized per model.
+
+Practical example:
+
+- if a model is more trained for patch editing, make patch the primary path
+- if a model performs better with string replacement, align tools and prompts accordingly
+
+This reduces errors, reasoning overhead, and rework.
+
+General rule:
+
+**model-agnostic abstractions outside, model-specific customization inside.**
+
+### A simple playbook for this week
+
+If your team already uses coding agents, you can do this in a few steps:
+
+1. List the top 5 most expensive failures from recent weeks.
+2. For each one, choose a prevention mechanism (rule, hook, validation, flow).
+3. Update the harness with small, reversible changes.
+4. Run for a week and compare rework, regressions, and review time.
+5. Keep only what produced measurable improvement.
+
+This is not about over-constraining the agent.
+It is about increasing hit rate without relying on luck.
+
+### Closing
+
+Models will keep improving, but that does not remove the need for harnesses.
+
+In practice, as models become more capable, harness value often increases:
+
+- to preserve safety
+- to guarantee quality
+- to scale long-running work
+- to coordinate multiple agents toward one goal
+
+If you want to move from casual AI usage to production-grade agent-assisted engineering, start with the harness.
+
+It is the multiplier that turns model potential into real outcomes.
+
+### References
+
+- [Agent Harness Engineering (Addy Osmani)](https://addyosmani.com/blog/agent-harness-engineering/)
+- [The Anatomy of an Agent Harness (Viv Trivedy)](https://www.vtrivedy.com/posts/the-anatomy-of-an-agent-harness)
+- [Continually improving our agent harness (Cursor)](https://cursor.com/blog/continually-improving-agent-harness)
+- [X post on "Agent = Model + Harness"](<https://x.com/Vtrivedy10/status/2031408954517971368>)
