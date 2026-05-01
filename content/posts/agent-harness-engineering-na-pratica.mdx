@@ -1,0 +1,186 @@
+---
+title: "Agent Harness Engineering na prática"
+description: "Por que o desempenho de agentes de código depende mais do harness do que só do modelo, e como aplicar isso no dia a dia."
+date: "2026-04-30"
+published: true
+slug: "agent-harness-engineering-na-pratica"
+language: "pt-BR"
+translationKey: "agent-harness-engineering-in-practice"
+categories: ["ai", "software-engineering", "pt-br"]
+image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=928&q=80"
+---
+
+Se você usa agentes para programar, vale internalizar uma ideia simples:
+
+**o agente não e o modelo.**
+
+Na pratica, o que chamamos de agente e:
+
+`agente = modelo + harness`
+
+O modelo pensa e gera texto/codigo.
+O harness define o ambiente, as regras, as ferramentas, os limites e os loops de validacao.
+
+E justamente esse segundo bloco que mais impacta qualidade, previsibilidade e velocidade em trabalho real.
+
+Este artigo e uma leitura aplicada, em portugues, baseada nos textos do Addy Osmani, Viv Trivedy e da equipe da Cursor sobre harness engineering na pratica.
+
+### O que e harness, de forma objetiva
+
+Harness e tudo que existe ao redor do modelo para transformar inferencia em entrega:
+
+- prompt de sistema e arquivos de regra (`AGENTS.md`, skills, conventions)
+- ferramentas (shell, git, browser, linters, testes, MCPs)
+- contexto e memoria (como carrega, resume e persiste conhecimento)
+- hooks de seguranca e qualidade (bloqueios, checks, gates de aprovacao)
+- orquestracao (subagentes, handoff, planner x executor x reviewer)
+- observabilidade (logs, traces, custo, latencia, taxa de erro)
+
+Um modelo excelente com harness fraco tende a falhar de formas repetitivas.
+Um modelo apenas bom com harness forte costuma entregar melhor em producao.
+
+### A mudanca de mentalidade: de "culpar o modelo" para "melhorar o sistema"
+
+Quando o agente erra, o caminho mais comum e:
+
+"o modelo e ruim, vamos esperar a proxima versao."
+
+Harness engineering propoe outro caminho:
+
+"qual ajuste no sistema evita esse erro daqui pra frente?"
+
+Exemplos práticos:
+
+- agente comentou testes ao inves de corrigir -> regra explicita + hook bloqueando `.skip(`, `xit(` e afins
+- agente tentou comando destrutivo -> bloqueio em pre-tool (`rm -rf`, `git push --force`, `DROP TABLE`)
+- agente se perdeu em tarefa longa -> separacao de papeis (planner, executor, evaluator)
+- agente marcou tarefa como pronta sem validar -> obrigar typecheck/lint/test no loop de feedback
+
+Esse e o ponto mais forte do conceito: **cada erro vira especificacao.**
+
+### Efeito catraca: cada falha vira uma protecao permanente
+
+Pense no harness como uma catraca de maturidade.
+
+Toda vez que houver uma falha real:
+
+1. registrar o padrao do erro
+2. decidir se a prevencao e por prompt, hook, ferramenta ou processo
+3. automatizar a prevencao
+4. medir se a falha desapareceu
+
+Com isso, voce para de depender de "memoria do time" e passa a depender de sistema.
+
+### Componentes minimos de um bom harness para engenharia de software
+
+Se voce quiser sair do zero com algo funcional, comecaria assim:
+
+1. **Regras curtas e testaveis**
+   `AGENTS.md` com poucas regras, objetivas e acionaveis.
+   Nao faca guia de estilo gigante: faca checklist de voo.
+
+2. **Ferramentas realmente usadas**
+   Menos ferramentas, com descricoes claras, e melhor do que um menu enorme e confuso.
+
+3. **Feedback automatico no loop**
+   Editou codigo? roda validacoes.
+   Falhou? devolve erro para o agente se autocorrigir.
+   Passou? silencio.
+
+4. **Execucao segura**
+   Sandbox/isolamento quando possivel.
+   Bloqueio explicito para operacoes destrutivas.
+
+5. **Memoria de projeto**
+   Convencoes, decisoes arquiteturais e armadilhas conhecidas persistidas em arquivo versionado.
+
+6. **Observabilidade**
+   Sem log de falhas e sem rastreio de decisao, voce nao melhora o harness de forma consistente.
+
+### Contexto longo quebra agente (se voce nao cuidar)
+
+Outro ponto central: contexto degrada.
+
+Conforme a janela cresce, o agente tende a:
+
+- perder foco
+- degradar raciocinio
+- encerrar antes da hora
+- repetir acao sem progresso
+
+Tres tecnicas ajudam muito:
+
+- **compaction**: resumir e descarregar historico antigo
+- **offload de saida grande**: logs extensos vao para arquivo; no contexto fica so sinal relevante
+- **progressive disclosure**: carregar regras/ferramentas sob demanda, nao tudo no inicio
+
+### O que a Cursor adiciona de forma muito pratica
+
+O texto da Cursor traz um angulo importante: harness e produto, nao configuracao estatica.
+
+Eles descrevem um ciclo continuo:
+
+- definir visao de experiencia ideal do agente
+- criar hipoteses de melhoria do harness
+- testar com evals offline + A/B online
+- manter o que melhora qualidade real
+
+Alguns pontos que valem copiar no dia a dia:
+
+- **Keep Rate de codigo gerado**: medir quanto do codigo proposto pelo agente continua no repositorio depois de um tempo
+- **satisfacao semantica do usuario**: inferir se a pessoa ficou satisfeita pela conversa subsequente (seguir fluxo vs voltar com stack trace)
+- **classificacao de erros de tool calls**: separar erro inesperado (bug de harness) de erro esperado (ex.: argumento invalido, timeout, provider fora)
+- **alerta por anomalia por ferramenta e por modelo**: detectar degradacao quando desvia da baseline
+- **otimizacao incremental**: ganhos de qualidade costumam vir de pequenas melhorias acumuladas, nao so de "silver bullet"
+
+Em outras palavras: melhorar agente de forma consistente exige engenharia de produto, observabilidade e disciplina de experimento.
+
+### Nao existe harness universal
+
+Outro aprendizado forte da Cursor: o harness precisa ser customizado por modelo.
+
+Exemplo pratico:
+
+- se o modelo foi mais treinado para edicao via patch, ofereca patch como caminho principal
+- se o modelo performa melhor com substituicao de string, ajuste ferramentas e prompts para isso
+
+Isso reduz erro, custo de raciocinio e retrabalho.
+
+A regra geral e:
+
+**abstracao agnostica por fora, personalizacao por modelo por dentro.**
+
+### Um playbook simples para aplicar esta semana
+
+Se sua equipe ja usa agentes de codigo, voce pode fazer isso em poucos passos:
+
+1. Liste os 5 erros mais caros das ultimas semanas.
+2. Para cada erro, decida um mecanismo de prevencao (regra, hook, validacao, fluxo).
+3. Atualize o harness com mudancas pequenas e reversiveis.
+4. Rode por uma semana e compare retrabalho, regressao e tempo de review.
+5. Mantenha so o que gerou melhoria real.
+
+Nao e sobre "engessar" o agente.
+E sobre aumentar taxa de acerto sem depender de sorte.
+
+### Fechando
+
+Modelos vao continuar melhorando, mas isso nao elimina a necessidade de harness.
+
+Na verdade, quanto mais capacidade o modelo ganha, maior tende a ser o valor de uma boa orquestracao:
+
+- para manter seguranca
+- para garantir qualidade
+- para escalar em tarefas longas
+- para coordenar multiplos agentes no mesmo objetivo
+
+Se voce quer evoluir de uso casual de IA para engenharia assistida por agentes em nivel de producao, comece pelo harness.
+
+Ele e o multiplicador que transforma potencial em resultado.
+
+### Referencias
+
+- [Agent Harness Engineering (Addy Osmani)](https://addyosmani.com/blog/agent-harness-engineering/)
+- [The Anatomy of an Agent Harness (Viv Trivedy)](https://www.vtrivedy.com/posts/the-anatomy-of-an-agent-harness)
+- [Continually improving our agent harness (Cursor)](https://cursor.com/blog/continually-improving-agent-harness)
+- [Post no X sobre "Agent = Model + Harness"](<https://x.com/Vtrivedy10/status/2031408954517971368>)
