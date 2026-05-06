@@ -1,0 +1,177 @@
+---
+title: "Harness Engineering: o que faz agentes de IA entregarem software de verdade"
+description: "Modelos melhores ajudam, mas o salto de qualidade em agentes de código vem do ambiente ao redor: contexto, sensores, memória, gates e orquestração."
+date: "2026-05-06"
+published: true
+slug: "harness-engineering-agentes-ia-inscricoes-top"
+language: "pt-BR"
+translationKey: "harness-engineering-ai-agents"
+categories: ["ai", "software-engineering", "pt-br"]
+image: "/images/harness-engineering-inscricoes-top-3d.png"
+---
+
+Imagine pedir para um agente de IA construir uma aplicação full stack com autenticação, dashboard, gestão de eventos e integração com o [Inscrições TOP](https://www.inscricoestop.com.br/).
+
+Quarenta minutos depois, você abre um diff com milhares de linhas. Parte funciona. Parte nem compila. Há código duplicado, testes removidos, estados quebrados e uma feature marcada como pronta sem validação real.
+
+Esse cenário não significa, necessariamente, que o modelo é ruim.
+
+Modelos como Claude, GPT-5 e outros já são capazes o suficiente para resolver problemas complexos. O ponto fraco costuma estar em outro lugar: ninguém definiu como o agente deve trabalhar, validar, registrar progresso e pedir passagem para a próxima etapa.
+
+É aí que entra **Harness Engineering**.
+
+### A ideia central
+
+A fórmula popularizada por Mitchell Hashimoto resume bem:
+
+`Agente = Modelo + Harness`
+
+O modelo é a LLM.
+
+O harness é o ambiente operacional ao redor dela: instruções, estrutura do repositório, linters, testes, scripts de setup, regras arquiteturais, arquivos de progresso, contratos entre agentes e gates de validação.
+
+Se o modelo é um engenheiro brilhante recém-contratado, o harness é o onboarding, a esteira de CI, o playbook do time, o checklist de release e a revisão técnica. Sem isso, mesmo alguém muito capaz toma decisões genéricas em um contexto específico demais.
+
+### Context Engineering não é a mesma coisa
+
+Context Engineering responde à pergunta:
+
+**"O que o modelo precisa saber agora?"**
+
+Na prática, isso inclui RAG, memória persistente, MCP, system prompts estruturados e injeção seletiva de documentos. É uma disciplina essencial, porque para o agente qualquer informação fora da janela de contexto simplesmente não existe.
+
+Mas contexto resolve apenas parte do problema.
+
+Harness Engineering responde a outra pergunta:
+
+**"O que acontece quando o agente executa, falha, recomeça ou declara que terminou?"**
+
+Context Engineering melhora o raciocínio dentro da sessão. Harness Engineering melhora a confiabilidade do sistema entre sessões, ferramentas, agentes, validações e entregas.
+
+Uma forma prática de separar:
+
+- Se o problema é o que o agente sabe ou raciocina, é contexto.
+- Se o problema é o que acontece depois da execução, é harness.
+
+### Por que Spec Driven Development ajuda, mas não basta
+
+Spec Driven Development coloca especificação, critérios de aceite e casos de teste antes da implementação. Isso é valioso, principalmente porque dá direção ao agente.
+
+Mas, sozinho, SDD cobre melhor o lado preventivo do sistema.
+
+Na linguagem de engenharia de controle:
+
+- **Feed forward** é o que orienta antes da execução: specs, `AGENTS.md`, regras de arquitetura, guias de estilo e critérios de aceite.
+- **Feedback** é o que mede depois da execução: lint, typecheck, testes, validações de fluxo, scripts customizados e revisão independente.
+
+O erro comum é acreditar que uma spec boa substitui sensores. Não substitui.
+
+Uma spec diz ao agente para onde ir. Sensores dizem se ele chegou lá.
+
+O SPDD, publicado pela Thoughtworks no site de Martin Fowler em abril de 2026, é um bom exemplo de feed forward bem estruturado: prompts tratados como artefatos versionados, revisados e reutilizáveis, com intenção, arquitetura e restrições explícitas. Ainda assim, sensores externos, gates de progresso e separação entre agentes continuam sendo responsabilidade do harness.
+
+### Os padrões de falha que aparecem sem harness
+
+Agentes sem harness tendem a falhar de formas previsíveis:
+
+- **One Shot Hero:** o agente tenta entregar tudo de uma vez, estoura contexto e deixa metade do sistema incompleta.
+- **Vitória prematura:** o agente declara que terminou antes de validar o fluxo real.
+- **Amnésia entre sessões:** uma nova sessão não sabe o que foi feito, o que falhou e qual decisão já foi tomada.
+- **Testes ignorados:** o agente faz uma checagem superficial, recebe um 200 em algum endpoint e assume que a feature está pronta.
+- **Viés de confirmação:** o mesmo agente implementa e valida, então tende a defender a própria entrega.
+- **Drift acumulado:** cada mudança parece aceitável isoladamente, mas o sistema degrada em arquitetura, padrão e manutenção.
+
+Esses problemas não são resolvidos apenas pedindo "seja mais cuidadoso". Eles exigem mecanismo.
+
+### Os quatro blocos de um bom harness
+
+Um harness útil para engenharia de software costuma combinar quatro blocos.
+
+**1. Guias**
+
+Aqui entram `AGENTS.md`, convenções de código, decisões arquiteturais, specs, critérios de aceite e histórico relevante do projeto. Bons guias são curtos, acionáveis e próximos do código.
+
+No experimento descrito pela OpenAI, o time usou dezenas de arquivos `AGENTS.md` distribuídos pelo monorepo para injetar contexto específico por área do sistema.
+
+**2. Sensores**
+
+Linters, type checkers, test runners, validações de build, scripts de integração e checks de segurança.
+
+O detalhe importante: sensor bom não é um texto longo para o agente interpretar. Sensor bom retorna sinal claro: passou ou falhou. Código de saída zero ou um.
+
+**3. Memória e progresso**
+
+Agentes precisam saber o estado atual do trabalho. Isso pode vir de arquivos de progresso, commits pequenos, logs de decisão, issues bem escritas, checklists e scripts de bootstrap.
+
+Sem memória operacional, cada sessão começa como se fosse o primeiro dia de projeto.
+
+**4. Orquestração multiagente**
+
+Um agente pode planejar. Outro pode implementar. Outro pode validar. Outro pode revisar drift arquitetural.
+
+Separar missões reduz viés de confirmação. O agente que quer terminar a feature não deveria ser o único responsável por dizer se ela está correta.
+
+### O experimento da OpenAI
+
+O case mais citado é o da própria OpenAI. Segundo o artigo de Ryan Lopopolo no OpenAI Engineering Blog, um pequeno time iniciou um repositório vazio e passou a usar Codex/GPT-5 para gerar a base, evoluir features e abrir pull requests.
+
+Meses depois, o sistema tinha mais de 1 milhão de linhas de código e milhares de mudanças revisadas. A parte mais importante não é o volume de código. É a mudança de função dos engenheiros.
+
+Eles não estavam apenas "pedindo código". Estavam projetando o sistema para que agentes conseguissem produzir, validar, corrigir e manter o código com previsibilidade.
+
+A lição central do artigo é simples: para o agente, conhecimento que não está acessível no contexto ou no repositório não existe. Decisões no Slack, acordos verbais, documentos perdidos e memória tácita do time precisam virar artefatos consumíveis pelo agente.
+
+### O que isso muda para engenheiros
+
+Harness Engineering não elimina o engenheiro. Ele desloca o centro do trabalho.
+
+Menos tempo digitando cada linha.
+
+Mais tempo desenhando restrições, sensores, fluxos de validação, contratos entre agentes e mecanismos de recuperação quando algo falha.
+
+O valor passa a estar em transformar conhecimento técnico em sistema verificável:
+
+- regras que um agente consegue seguir;
+- testes que capturam comportamento real;
+- validações que bloqueiam regressão;
+- memória que sobrevive entre sessões;
+- processos que reduzem viés e improviso.
+
+O gargalo deixa de ser apenas "qual modelo estamos usando?" e passa a ser "em que ambiente esse modelo está operando?".
+
+### Como começar sem complicar
+
+Você não precisa montar uma plataforma de agentes no primeiro dia. Dá para começar com mudanças simples:
+
+1. Crie um `AGENTS.md` com convenções do projeto, comandos úteis, critérios de pronto e decisões importantes.
+2. Transforme warnings críticos em erros no lint.
+3. Exija typecheck, lint e testes antes de declarar a tarefa como concluída.
+4. Mantenha um arquivo de progresso para tarefas longas, com o que foi feito, o que falhou e o próximo passo.
+5. Separe implementação e validação quando a mudança tiver risco real.
+6. Registre falhas recorrentes e transforme cada uma em regra, teste, hook ou checklist.
+
+O primeiro ganho vem quando o agente deixa de julgar o próprio trabalho apenas pela resposta que escreveu no chat.
+
+### Fechando
+
+2025 mostrou que agentes de IA conseguem escrever código.
+
+2026 está mostrando que escrever código não é a parte difícil.
+
+A parte difícil é criar um ambiente em que o agente consiga trabalhar com contexto suficiente, limites claros, validação objetiva e memória operacional.
+
+Modelos melhores vão continuar chegando. Mas, para software real, o diferencial não será só trocar de modelo.
+
+Será construir um harness melhor.
+
+### Referências
+
+- [BÖCKELER, Birgitta. Harness engineering for coding agent users. Martin Fowler, 2 abr. 2026.](https://martinfowler.com/articles/harness-engineering.html)
+- [LOPOPOLO, Ryan. Harness engineering: leveraging Codex in an agent-first world. OpenAI Engineering Blog, 11 fev. 2026.](https://openai.com/index/harness-engineering/)
+- [MASOOD, Adnan. Agent harness engineering: the rise of the AI control plane. Medium, 23 abr. 2026.](https://medium.com/@adnanmasood/agent-harness-engineering-the-rise-of-the-ai-control-plane-938ead884b1d)
+- [MILVUS. What is harness engineering for AI agents? Milvus Blog, abr. 2026.](https://milvus.io/blog/harness-engineering-ai-agents.md)
+- [NXCODE. Harness engineering: the complete guide to building systems that make AI agents actually work. NxCode Resources, mar. 2026.](https://www.nxcode.io/resources/news/harness-engineering-complete-guide-ai-agent-codex-2026)
+- [AUGMENT CODE. Harness engineering for AI coding agents: constraints that ship reliable code. Augment Code Guides, abr. 2026.](https://www.augmentcode.com/guides/harness-engineering-ai-coding-agents)
+- [ATLAN. What is harness engineering AI? The definitive 2026 guide. Atlan, abr. 2026.](https://atlan.com/know/what-is-harness-engineering/)
+- [ZHANG, Wei; XIA, Jessie Jie. Structured-Prompt-Driven Development (SPDD). Martin Fowler, 28 abr. 2026.](https://martinfowler.com/articles/structured-prompt-driven/)
+- [MARTINS, Juliano. Harness Engineering: o próximo passo do desenvolvimento com IA não é (necessariamente) um modelo melhor. LinkedIn, 4 maio 2026.](https://www.linkedin.com/pulse/harness-engineering-o-pr%C3%B3ximo-passo-do-com-ia-n%C3%A3o-%C3%A9-um-martins-61yhf/)
