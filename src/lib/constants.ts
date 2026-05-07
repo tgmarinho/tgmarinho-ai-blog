@@ -9,7 +9,7 @@ export const siteConfig = {
   shareDescription:
     "Personal site and technical blog on AI agents, product engineering, and full-stack development. CV, projects, and community.",
   /** Root OG image — same-origin URL for reliable link previews (612×408) */
-  defaultOgImage: "/images/hero/portrait-hybrid-v2.png",
+  defaultOgImage: "/images/hero/portrait-hybrid-v2-removebg.png",
   author: "Thiago Marinho",
   email: "tgmarinho@gmail.com",
   role: "AI Product Engineer",
