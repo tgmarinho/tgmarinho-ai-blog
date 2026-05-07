@@ -6,7 +6,12 @@ import { YouTubeEmbed } from "./video";
 import { ShareButton } from "./share-button";
 
 // Stub components for React Native and other components that appear in blog posts
-const StubComponent = ({ children, ...props }: any) => <span {...props}>{children}</span>;
+const StubComponent = ({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) => (
+  <span {...props}>{children}</span>
+);
 
 const components = {
   Callout,

@@ -30,8 +30,8 @@ export function CursorAurora() {
     }
 
     let raf = 0;
-    let target = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    let current = { ...target };
+    const target = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const current = { ...target };
     let visible = false;
 
     const onMove = (e: PointerEvent) => {

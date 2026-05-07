@@ -1,34 +1,5 @@
 import React, { ReactNode } from "react";
-import { Callout } from "./callout";
-import { YouTubeEmbed } from "./video";
 import { CopyButton } from "./copy-button";
-
-// Stub components for React Native and other components that appear in blog posts
-const StubComponent = ({ children, ...props }: any) => <span {...props}>{children}</span>;
-
-const components: Record<string, React.ComponentType<any>> = {
-  Callout,
-  YouTubeEmbed,
-  // React Native components stubs
-  ActivityIndicator: StubComponent,
-  Text: StubComponent,
-  View: StubComponent,
-  ScrollView: StubComponent,
-  TouchableOpacity: StubComponent,
-  Image: StubComponent,
-  FlatList: StubComponent,
-  SafeAreaView: StubComponent,
-  StatusBar: StubComponent,
-  // Components from blog posts that don't exist
-  ProblemStatement: StubComponent,
-  Widget: StubComponent,
-  Video: StubComponent,
-  TreeSandbox: StubComponent,
-  EmbeddedTranspiler: StubComponent,
-  VisitorSandbox: StubComponent,
-  BabelPipeline: StubComponent,
-  TraverseVisitor: StubComponent,
-};
 
 function formatInlineMarkdown(text: string): ReactNode {
   if (!text) return null;
