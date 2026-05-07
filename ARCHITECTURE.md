@@ -38,7 +38,6 @@ The philosophy is simple:
 | Headings/anchors | `rehype-slug` + `rehype-autolink-headings` | — |
 | Search | Fuse.js (fuzzy) | `^7` |
 | Reading time | `reading-time` | `^1.5` |
-| QR code (PIX) | `qrcode.react` | `^4` |
 | KV / cache | Upstash Redis (optional, currently in-memory stub) | `^1.36` |
 | Newsletter | Buttondown (HTTP) | — |
 
@@ -84,7 +83,6 @@ tgmarinho-ai-website/
 │   │   ├── cv/          # cv-viewer (local markdown parser)
 │   │   ├── mdx/         # mdx-content, callout, copy-button, share-button, video, markdown-parser
 │   │   ├── forms/       # newsletter, feedback
-│   │   ├── pix/         # pix-payment (QR code)
 │   │   ├── fx/          # cursor-aurora, glow-card, liquid-orb, particle-field
 │   │   └── ui/          # shadcn-style primitives (button, card, input, badge, sheet, separator)
 │   │

@@ -163,9 +163,6 @@ src/components/layout/
 
 src/components/cv/
 └── cv-viewer.tsx             ← (reescrito) Markdown render glassmorphic + print fallback
-
-src/components/pix/
-└── pix-payment.tsx           ← (atualizado) dark glass + copied-state feedback
 ```
 
 ## 6. Arquivos modificados (substancialmente)
@@ -178,7 +175,7 @@ src/app/blog/page.tsx         ← hero header + asymmetric grid
 src/app/blog/[slug]/page.tsx  ← editorial layout completo (Fraunces + drop-cap + sign-off)
 src/app/about/page.tsx        ← achievements grid + timeline + skills + socials
 src/app/projects/page.tsx     ← hero + GlowCard grid com highlight prop
-src/app/contact/page.tsx      ← 2-col channels + Pix payment
+src/app/contact/page.tsx      ← channels + inquiry hints
 src/app/community/page.tsx    ← Discord-tinted hero + benefits + CTA
 src/app/cv/page.tsx           ← screen futurist + print formal black-on-white
 src/lib/constants.ts          ← +"Community" no navLinks
