@@ -10,7 +10,7 @@ interface HeroPortraitProps {
 
 const STAGES = [
   {
-    src: "/images/hero/portrait-human-v2-removedbg.png",
+    src: "/images/hero/portrait-human-v2.png",
     label: "MODE · human",
     dot: "cyan",
   },
