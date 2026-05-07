@@ -8,6 +8,7 @@ import { posts, type Post } from "#site/content";
 import { MdxContent } from "@/components/mdx/mdx-content";
 import { ShareButton } from "@/components/mdx/share-button";
 import { siteConfig } from "@/lib/constants";
+import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -44,10 +45,12 @@ function getReadingTimeText(post: Post) {
 }
 
 function getFormattedDate(date: string, language?: string) {
-  return new Date(date).toLocaleDateString(
-    language === "pt-BR" ? "pt-BR" : "en-US",
-    { year: "numeric", month: "long", day: "numeric" }
-  );
+  const locale = language === "pt-BR" ? "pt-BR" : "en-US";
+  return formatIsoDateForDisplay(date, locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function getPostTranslations(post: Post) {

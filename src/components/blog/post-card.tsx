@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight, Clock } from "lucide-react";
 import readingTime from "reading-time";
 import { GlowCard } from "@/components/fx/glow-card";
+import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { cn } from "@/lib/utils";
 
 interface PostCardProps {
@@ -29,7 +30,7 @@ export function PostCard({
   className,
 }: PostCardProps) {
   const stats = readingTime(body);
-  const formattedDate = new Date(date).toLocaleDateString("en-US", {
+  const formattedDate = formatIsoDateForDisplay(date, "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
