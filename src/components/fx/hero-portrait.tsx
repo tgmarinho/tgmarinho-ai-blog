@@ -10,7 +10,7 @@ interface HeroPortraitProps {
 
 const STAGES = [
   {
-    src: "/images/hero/portrait-human-v2.png",
+    src: "/images/hero/portrait-human-v2-removedbg.png",
     label: "MODE · human",
     dot: "cyan",
   },
@@ -26,52 +26,82 @@ const STAGES = [
   },
 ] as const;
 
-const IDLE_INTERVAL_MS = 3600;
-const HOVER_INTERVAL_MS = 1600;
-const REVEAL_DURATION_MS = 900;
+// Step / hold timing — calibrated to match the landonorris.com cadence
+// (slow build-up, brief pause at the peak, slow tear-down).
+const STEP_INTERVAL_MS = 2400;
+const HOVER_INTERVAL_MS = 1400;
+const REVEAL_DURATION_MS = 1100;
 
 // Soft radial alpha mask — keeps the subject's center fully opaque and
-// dissolves the backdrop edges into the page. Works on both Webkit and
-// modern browsers (mask-image / -webkit-mask-image).
+// dissolves the photo's dark backdrop edges into the page so there's no
+// visible square frame around the portrait.
 const EDGE_FEATHER =
-  "radial-gradient(ellipse 70% 75% at 50% 48%, black 55%, rgba(0,0,0,0.85) 75%, transparent 100%)";
+  "radial-gradient(ellipse 72% 78% at 50% 48%, black 55%, rgba(0,0,0,0.85) 75%, transparent 100%)";
 
 /**
- * Hero portrait with a "landonorris.com"-style morph.
+ * Hero portrait with a "landonorris.com"-style materialization.
  *
- * Three cinematic portraits (human → hybrid → agent) are stacked. Each
- * stage is revealed top-to-bottom via animated clip-path with a slight
- * translateY drop, as if a new layer of the suit physically dropped on
- * top of the previous portrait. There is no visible card frame — the
- * portraits float, masked into the page by a soft radial alpha gradient.
+ * Three transparent-background portraits (human → hybrid → agent) crossfade
+ * into each other — only the active mode is opaque at any moment, so we
+ * never see one silhouette bleeding through another (the agent helmet has
+ * a much wider/different outline than the bare face). The cinematic
+ * "materialize" feel is delivered by an overlaid neon scan line + a brief
+ * top-down clip wipe on the incoming layer, replayed on each transition.
+ * The cycle is a ping-pong (0 → 1 → 2 → 1 → 0 …) with a natural beat of
+ * pause at each extreme, mirroring the build / hold / dismantle cadence
+ * of the reference site.
  */
 export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
-  const [stage, setStage] = useState(0);
-  const [prevStage, setPrevStage] = useState(0);
+  const [mode, setMode] = useState(0);
   const [hovered, setHovered] = useState(false);
+  const directionRef = useRef<1 | -1>(1);
   const reduceMotionRef = useRef(false);
 
   useEffect(() => {
     reduceMotionRef.current = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
+      "(prefers-reduced-motion: reduce)",
     ).matches;
   }, []);
 
-  const advance = () => {
-    setPrevStage(stage);
-    setStage((s) => (s + 1) % STAGES.length);
-  };
-
-  // Auto-cycle through stages. Hover accelerates the cycle.
+  // Ping-pong auto-cycle. When we hit an extreme (0 or 2) we hold for one
+  // extra beat by returning the same mode; the direction flips so the
+  // next tick moves the other way.
   useEffect(() => {
     if (reduceMotionRef.current) return;
-    const interval = hovered ? HOVER_INTERVAL_MS : IDLE_INTERVAL_MS;
-    const id = window.setInterval(advance, interval);
+    const interval = hovered ? HOVER_INTERVAL_MS : STEP_INTERVAL_MS;
+    const id = window.setInterval(() => {
+      setMode((m) => {
+        const next = m + directionRef.current;
+        if (next > STAGES.length - 1) {
+          directionRef.current = -1;
+          return m;
+        }
+        if (next < 0) {
+          directionRef.current = 1;
+          return m;
+        }
+        return next;
+      });
+    }, interval);
     return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered]);
 
-  const current = STAGES[stage];
+  const advance = () => {
+    setMode((m) => {
+      const next = m + directionRef.current;
+      if (next > STAGES.length - 1) {
+        directionRef.current = -1;
+        return Math.max(0, m - 1);
+      }
+      if (next < 0) {
+        directionRef.current = 1;
+        return Math.min(STAGES.length - 1, m + 1);
+      }
+      return next;
+    });
+  };
+
+  const current = STAGES[mode];
   const dotClass = {
     cyan: "bg-cyan-300 shadow-[0_0_10px_2px_rgba(34,211,238,0.7)]",
     magenta: "bg-fuchsia-400 shadow-[0_0_10px_2px_rgba(217,70,239,0.7)]",
@@ -119,22 +149,26 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
         }}
       />
 
-      {/* Rotating conic ring — the only "frame" the portrait gets. */}
+      {/* Rotating conic ring — a wider, softer halo orbiting the figure.
+          Sits behind the portrait and is offset upward so it centers on
+          the face rather than the geometric middle of the square. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-2 rounded-full transition-opacity duration-500"
+        className="pointer-events-none absolute -inset-x-[6%] -top-[6%] bottom-[6%] -z-[5] transition-opacity duration-500"
         style={{
           background:
-            "conic-gradient(from 0deg, rgba(34,211,238,0.0), rgba(34,211,238,0.55), rgba(217,70,239,0.45), rgba(34,211,238,0.0))",
-          mask: "radial-gradient(circle, transparent 58%, black 60%, black 62%, transparent 64%)",
+            "conic-gradient(from 0deg, rgba(34,211,238,0) 0deg, rgba(34,211,238,0.55) 90deg, rgba(217,70,239,0.45) 200deg, rgba(34,211,238,0) 360deg)",
+          mask: "radial-gradient(circle at 50% 42%, transparent 52%, black 55%, black 56.5%, transparent 60%)",
           WebkitMask:
-            "radial-gradient(circle, transparent 58%, black 60%, black 62%, transparent 64%)",
-          animation: "orb-rotate 18s linear infinite",
-          opacity: hovered ? 0.95 : 0.55,
+            "radial-gradient(circle at 50% 42%, transparent 52%, black 55%, black 56.5%, transparent 60%)",
+          animation: "orb-rotate 22s linear infinite",
+          opacity: hovered ? 0.85 : 0.45,
+          filter: "blur(0.5px)",
         }}
       />
 
-      {/* Portrait stack — no card, no border, just the masked figures. */}
+      {/* Portrait stack — transparent PNGs, each new stage materializes on
+          top of the previous one. */}
       <div
         className="absolute inset-0"
         style={{
@@ -143,44 +177,47 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
         }}
       >
         {STAGES.map((s, i) => {
-          const isActive = i === stage;
-          const isPrev = i === prevStage && i !== stage;
-          const clipPath =
-            isActive || isPrev ? "inset(0 0 0 0)" : "inset(100% 0 0 0)";
-          const zIndex = isActive ? 30 : isPrev ? 20 : 10;
-          const transform = isActive ? "translateY(0)" : "translateY(-1.5%)";
-          const transition = isActive
-            ? `clip-path ${REVEAL_DURATION_MS}ms cubic-bezier(0.16, 1, 0.3, 1), transform ${REVEAL_DURATION_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`
-            : "none";
+          const isActive = i === mode;
+          // Each active layer plays a fresh top-down clip wipe via the
+          // `key` (forces the inner wrapper to remount, replaying the
+          // animation). Inactive layers crossfade out smoothly via opacity.
           return (
             <div
               key={s.src}
               className="absolute inset-0"
               style={{
-                clipPath,
-                WebkitClipPath: clipPath,
-                zIndex,
-                transform,
-                transition,
+                zIndex: isActive ? 30 : 20,
+                opacity: isActive ? 1 : 0,
+                transition: `opacity ${REVEAL_DURATION_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`,
               }}
             >
-              <Image
-                src={s.src}
-                alt={`Thiago Marinho — ${s.label}`}
-                fill
-                priority={i === 0}
-                sizes="(max-width: 768px) 80vw, 540px"
-                className="object-cover object-center"
-              />
+              <div
+                key={`wipe-${i}-${mode}`}
+                className="absolute inset-0"
+                style={{
+                  animation: isActive
+                    ? `portrait-wipe ${REVEAL_DURATION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) both`
+                    : undefined,
+                }}
+              >
+                <Image
+                  src={s.src}
+                  alt={`Thiago Marinho — ${s.label}`}
+                  fill
+                  priority={i === 0}
+                  sizes="(max-width: 768px) 90vw, 640px"
+                  className="object-cover object-center"
+                />
+              </div>
             </div>
           );
         })}
 
         {/* Reveal seam — neon line tracing the descending clip edge. */}
         <div
-          key={`seam-${stage}`}
+          key={`seam-${mode}`}
           aria-hidden
-          className="pointer-events-none absolute inset-x-[8%] z-35 h-px"
+          className="pointer-events-none absolute inset-x-[8%] z-[60] h-px"
           style={{
             background:
               "linear-gradient(90deg, transparent, rgba(34,211,238,0.85), rgba(217,70,239,0.7), transparent)",
@@ -192,7 +229,7 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
       </div>
 
       {/* HUD chip — below the portrait, outside the alpha mask. */}
-      <div className="pointer-events-none absolute -bottom-2 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/[0.08] bg-black/55 px-3 py-1.5 backdrop-blur-xl">
+      <div className="pointer-events-none absolute -bottom-2 left-1/2 z-[70] flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/[0.08] bg-black/55 px-3 py-1.5 backdrop-blur-xl">
         <span className="flex items-center gap-2">
           <span
             className={`h-1.5 w-1.5 rounded-full transition-colors duration-500 ${dotClass}`}
@@ -206,7 +243,7 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
             <span
               key={i}
               className={`h-1 w-3 rounded-full transition-colors duration-300 ${
-                i === stage ? "bg-cyan-300" : "bg-white/15"
+                i === mode ? "bg-cyan-300" : "bg-white/15"
               }`}
             />
           ))}

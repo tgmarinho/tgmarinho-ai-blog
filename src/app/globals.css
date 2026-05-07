@@ -351,6 +351,65 @@
   100% { top: 100%; opacity: 0; }
 }
 
+/* Slow spin used by the decorative BlackHole accretion disk. */
+@keyframes bh-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Space dust around the decorative black hole — slow opacity pulse. */
+@keyframes bh-dust-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+/* Very slow drift so dust feels suspended in space (subtle translation). */
+@keyframes bh-dust-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(3px, -3px);
+  }
+  66% {
+    transform: translate(-2px, 4px);
+  }
+}
+
+/* Slow rotation of the gas swirls inside the black hole storm */
+@keyframes bh-storm-swirl {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Top-down materialization wipe used by HeroPortrait when a new stage
+   becomes active. The new layer is briefly clipped from the bottom up
+   while sliding into place, mimicking a hologram assembling around the
+   subject. Pairs visually with `reveal-seam`. */
+@keyframes portrait-wipe {
+  0% {
+    clip-path: inset(0 0 100% 0);
+    -webkit-clip-path: inset(0 0 100% 0);
+    transform: translateY(-2%);
+    filter: brightness(1.15) saturate(1.1);
+  }
+  60% {
+    filter: brightness(1.05) saturate(1.05);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    -webkit-clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+    filter: brightness(1) saturate(1);
+  }
+}
+
 @keyframes shooting-star {
   0% { transform: translateX(0); opacity: 0; }
   6% { opacity: 1; }
@@ -359,10 +418,10 @@
 }
 
 @keyframes rocket-rise {
-  0% { transform: translateY(110%) rotate(-3deg); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(-130%) rotate(2deg); opacity: 0; }
+  0% { transform: translateY(100%) rotate(-3deg); opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { transform: translateY(calc(-100vh - 100%)) rotate(2deg); opacity: 0; }
 }
 
 @keyframes rocket-flame {
