@@ -109,8 +109,12 @@ export async function generateMetadata({
         ? [
             {
               url: imageUrl,
-              width: 1024,
-              height: 683,
+              width: 1200,
+              height: 630,
+              type:
+                imageUrl.endsWith(".jpg") || imageUrl.endsWith(".jpeg")
+                  ? "image/jpeg"
+                  : undefined,
               alt: post.title,
             },
           ]
