@@ -8,9 +8,9 @@ export default function HomePage() {
   const recentPosts = publishedPosts.slice(0, 5);
 
   return (
-    <div className="mx-auto max-w-3xl px-4">
+    <>
       <Hero postCount={publishedPosts.length} />
       <RecentPosts posts={recentPosts} />
-    </div>
+    </>
   );
 }
