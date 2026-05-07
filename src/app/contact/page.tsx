@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { FaGithub, FaXTwitter, FaLinkedin } from "react-icons/fa6";
 import { siteConfig } from "@/lib/constants";
-import { PixPayment } from "@/components/pix/pix-payment";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -89,105 +88,79 @@ export default function ContactPage() {
           </div>
         </header>
 
-        {/* ── 2-column layout ── */}
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.4fr_1fr] lg:gap-14">
-          {/* Channels */}
-          <section>
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
-              ━ channels
-            </span>
-            <h2 className="mt-3 font-display text-[26px] font-bold leading-[1.15] tracking-[-0.025em] text-foreground md:text-[30px]">
-              Pick your medium.
-            </h2>
+        <section className="max-w-3xl">
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
+            ━ channels
+          </span>
+          <h2 className="mt-3 font-display text-[26px] font-bold leading-[1.15] tracking-[-0.025em] text-foreground md:text-[30px]">
+            Pick your medium.
+          </h2>
 
-            <ul className="mt-7 space-y-3">
-              {channels.map((c) => (
-                <li key={c.label}>
-                  <a
-                    href={c.href}
-                    target={c.href.startsWith("mailto") ? undefined : "_blank"}
-                    rel={
-                      c.href.startsWith("mailto")
-                        ? undefined
-                        : "noopener noreferrer"
-                    }
-                    className="group flex items-start gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-cyan-300/25"
-                  >
-                    <span className="mt-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-foreground/85 transition-colors group-hover:border-cyan-300/30 group-hover:text-cyan-300">
-                      <c.icon className="h-4 w-4" />
-                    </span>
+          <ul className="mt-7 space-y-3">
+            {channels.map((c) => (
+              <li key={c.label}>
+                <a
+                  href={c.href}
+                  target={c.href.startsWith("mailto") ? undefined : "_blank"}
+                  rel={
+                    c.href.startsWith("mailto")
+                      ? undefined
+                      : "noopener noreferrer"
+                  }
+                  className="group flex items-start gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-cyan-300/25"
+                >
+                  <span className="mt-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-foreground/85 transition-colors group-hover:border-cyan-300/30 group-hover:text-cyan-300">
+                    <c.icon className="h-4 w-4" />
+                  </span>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-[14.5px] font-medium tracking-tight text-foreground">
-                          {c.label}
-                        </p>
-                        {c.badge && (
-                          <span className="inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/[0.06] px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-cyan-200">
-                            {c.badge}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 truncate font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-                        {c.handle}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[14.5px] font-medium tracking-tight text-foreground">
+                        {c.label}
                       </p>
-                      <p className="mt-2 text-[13px] leading-[1.55] text-muted-foreground">
-                        {c.note}
-                      </p>
+                      {c.badge && (
+                        <span className="inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/[0.06] px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-cyan-200">
+                          {c.badge}
+                        </span>
+                      )}
                     </div>
-
-                    <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-cyan-300" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-
-            {/* Inquiry hints */}
-            <div className="mt-10">
-              <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-fuchsia-300/80">
-                ━ what to write about
-              </span>
-              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {inquiryHints.map((h) => (
-                  <div
-                    key={h.title}
-                    className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4 backdrop-blur-md"
-                  >
-                    <h.icon className="h-4 w-4 text-cyan-300/85" />
-                    <p className="mt-3 text-[13px] font-medium tracking-tight text-foreground">
-                      {h.title}
+                    <p className="mt-1 truncate font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+                      {c.handle}
                     </p>
-                    <p className="mt-1 text-[12px] leading-[1.55] text-muted-foreground">
-                      {h.text}
+                    <p className="mt-2 text-[13px] leading-[1.55] text-muted-foreground">
+                      {c.note}
                     </p>
                   </div>
-                ))}
-              </div>
-            </div>
-          </section>
 
-          {/* Support / Pix */}
-          <aside>
+                  <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-cyan-300" />
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          {/* Inquiry hints */}
+          <div className="mt-10">
             <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-fuchsia-300/80">
-              ━ support
+              ━ what to write about
             </span>
-            <h2 className="mt-3 font-display text-[26px] font-bold leading-[1.15] tracking-[-0.025em] text-foreground md:text-[30px]">
-              Buy me a coffee.
-            </h2>
-            <p className="mt-3 text-[14px] leading-[1.65] text-muted-foreground">
-              Enjoy the writing or open-source work? A Pix donation keeps the
-              caffeine on and the keyboard busy.
-            </p>
-
-            <div className="mt-7">
-              <PixPayment />
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {inquiryHints.map((h) => (
+                <div
+                  key={h.title}
+                  className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4 backdrop-blur-md"
+                >
+                  <h.icon className="h-4 w-4 text-cyan-300/85" />
+                  <p className="mt-3 text-[13px] font-medium tracking-tight text-foreground">
+                    {h.title}
+                  </p>
+                  <p className="mt-1 text-[12px] leading-[1.55] text-muted-foreground">
+                    {h.text}
+                  </p>
+                </div>
+              ))}
             </div>
-
-            <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-              every contribution &middot; thank you
-            </p>
-          </aside>
-        </div>
+          </div>
+        </section>
       </div>
     </div>
   );

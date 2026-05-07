@@ -33,7 +33,7 @@ npm run start    # serve production build
 ```
 content/posts/         # MDX — source of truth for the blog (70+ posts)
 src/app/               # Routes (App Router) — server components by default
-src/components/        # blog/ cv/ forms/ fx/ home/ layout/ mdx/ pix/ ui/
+src/components/        # blog/ cv/ forms/ fx/ home/ layout/ mdx/ ui/
 src/lib/               # constants.ts (siteConfig), utils.ts (cn), velite.ts (helpers)
 src/app/globals.css    # design tokens + utilities + .prose editorial
 docs/                  # redesign-2026-agentic-futurist.md (visual decisions)
@@ -52,7 +52,7 @@ velite.config.ts       # post schema + rehype pipeline
 
 1. **Never edit `.velite/` by hand.** It's Velite output. To change post data, edit `content/posts/*.mdx` and run `npm run velite`.
 2. **Never commit secrets.** `.env.local` is gitignored. Sensitive vars: `BUTTONDOWN_API_KEY`, `UPSTASH_REDIS_REST_*`.
-3. **Server Components by default.** Add `"use client"` **only** if you need `useState`/`useEffect`/browser events. Today's clients: `BlogSearch`, `CVViewer`, `ShareButton`, forms (`feedback`, `newsletter`), `PixPayment`, FX components with mouse listeners.
+3. **Server Components by default.** Add `"use client"` **only** if you need `useState`/`useEffect`/browser events. Today's clients: `BlogSearch`, `CVViewer`, `ShareButton`, forms (`feedback`, `newsletter`), FX components with mouse listeners.
 4. **Do not introduce a CMS.** Content lives in MDX in Git, by design.
 5. **Do not swap the stack without asking.** No Pages Router, no replacing Velite with contentlayer/next-mdx-remote, no Tailwind→CSS-in-JS, no Redux. Stack changes need explicit human confirmation.
 6. **Do not run `npm run build` "just to test"** without reason — it's expensive and regenerates `.velite/`. Prefer `npm run lint` + reading the diff. Full builds only when explicitly requested or when type/config changes require it.

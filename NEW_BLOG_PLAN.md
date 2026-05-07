@@ -30,7 +30,7 @@ tgmarinho-ai-website/
 │   │   │   └── [slug]/page.tsx     # Post individual
 │   │   ├── about/page.tsx
 │   │   ├── projects/page.tsx
-│   │   ├── contact/page.tsx        # Contato + Pix
+│   │   ├── contact/page.tsx        # Contato (canais)
 │   │   ├── community/page.tsx      # Discord
 │   │   ├── not-found.tsx
 │   │   ├── sitemap.ts
@@ -46,12 +46,11 @@ tgmarinho-ai-website/
 │   │   ├── blog/                   # post-card, search, category-filter
 │   │   ├── mdx/                    # mdx-content, code-block, callout, video
 │   │   ├── forms/                  # feedback, newsletter, contact
-│   │   ├── pix/                    # pix-payment, pix-qrcode
 │   │   └── ui/                     # shadcn components
 │   └── lib/
 │       ├── utils.ts                # cn() do shadcn
 │       ├── velite.ts               # helpers para acessar posts
-│       └── constants.ts            # config do site, social links, pix
+│       └── constants.ts            # config do site, social links
 ├── velite.config.ts
 ├── next.config.ts
 └── .env.local
@@ -74,7 +73,7 @@ tgmarinho-ai-website/
 ### Fase 2: Paginas + Polish
 1. Pagina About (bio, skills, social links)
 2. Pagina Projects (showcase com cards)
-3. Pagina Contact/Sponsor (form + Pix QR code)
+3. Pagina Contact/Sponsor (form ou canais)
 4. Pagina Community (Discord invite)
 5. Pagina 404
 6. Filtro por categorias no blog
