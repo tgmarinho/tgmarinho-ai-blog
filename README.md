@@ -14,16 +14,17 @@ This repo powers two layers of the same digital system:
 - **Institutional layer**: `/about`, `/projects`, `/contact`, `/community`, `/cv`
 - **Editorial layer**: `/blog` and `/blog/[slug]` with MDX long-form content
 
-The visual direction is **Minimalismo Futurista + IA Agentic**:
+The visual direction is **futurist minimalism + agentic AI**:
 - rich dark canvas (`#05060a`)
 - cyan + magenta accent system
 - glassmorphism surfaces
-- atmospheric motion (particle field, liquid orb, cursor aurora)
+- layered atmosphere: CSS radial halos + masked grid, mouse-following cursor aurora (`mix-blend-mode: screen`)
+- hero & global motion: particle network, liquid orb, **shooting stars** (sitewide), **black-hole** accent, periodic **rocket launch**, **hero portrait** cycle (human → hybrid → agent with scan-line materialization)
 - editorial reading mode for articles (Fraunces + Source Serif 4)
 
 ## ⚡ Experience Highlights
 
-- Reusable FX primitives in `src/components/fx`
+- Reusable FX primitives in `src/components/fx` (see **FX / motion layer** below)
 - Asymmetric blog cards with `feature/default/compact` variants
 - Fast fuzzy search with `Fuse.js`
 - Reading-time and rich MDX prose
@@ -74,7 +75,7 @@ tgmarinho-ai-website/
 │   │   ├── community/
 │   │   └── cv/
 │   ├── components/
-│   │   ├── fx/                   # particle-field, liquid-orb, glow-card, cursor-aurora
+│   │   ├── fx/                   # motion & atmosphere primitives (see FX section)
 │   │   ├── blog/
 │   │   ├── home/
 │   │   ├── layout/
@@ -86,13 +87,25 @@ tgmarinho-ai-website/
 
 ## 🎨 Design System Entry Points
 
-- `src/app/globals.css`
-- `src/components/fx/particle-field.tsx`
-- `src/components/fx/liquid-orb.tsx`
-- `src/components/fx/glow-card.tsx`
-- `src/components/fx/cursor-aurora.tsx`
+- `src/app/globals.css` — tokens, ambient `body` layers, utilities, editorial `.prose`, shared FX keyframes (e.g. accretion spin, portrait reveal)
+- `src/app/layout.tsx` — fonts, global `ShootingStars`, `CursorAurora`
+- `src/components/home/hero.tsx` — composes orb, particles, `BlackHole`, `RocketLaunch`, `HeroPortrait`
 
-Deep context + lessons learned:
+### FX / motion layer (`src/components/fx/`)
+
+| File | Role |
+|------|------|
+| `cursor-aurora.tsx` | Sitewide cursor halo with lerp; skips touch + `prefers-reduced-motion` |
+| `shooting-stars.tsx` | Periodic diagonal streaks (cyan / magenta / white); mounted in root layout |
+| `particle-field.tsx` | Canvas2D linked-particle “agent network” |
+| `liquid-orb.tsx` | SVG + conic-gradient hero orb with cursor tilt |
+| `glow-card.tsx` | Spotlight follow inside cards via CSS custom properties (no React re-renders on move) |
+| `black-hole.tsx` | SVG black hole + accretion disk + sparkle field (server component) |
+| `rocket-launch.tsx` | Wireframe rocket ascent on a timer (transparent PNG asset) |
+| `hero-portrait.tsx` | Three-mode portrait crossfade with scan line + clip wipe |
+
+Motion-sensitive pieces respect **`prefers-reduced-motion`**. Deep rationale and history:
+
 - `docs/redesign-2026-agentic-futurist.md`
 
 ## 🚀 Quick Start

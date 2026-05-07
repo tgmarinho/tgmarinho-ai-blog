@@ -10,7 +10,7 @@
 
 Personal website and technical blog of Thiago Marinho — `tgmarinhopro.com`.
 Stack: **Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4 + Velite (MDX) + Vercel**.
-Aesthetic: "Agentic Futurism" — dark canvas, cyan/magenta accents, editorial typography inside posts. Details in `docs/redesign-2026-agentic-futurist.md`.
+Aesthetic: "Agentic Futurism" — dark canvas, cyan/magenta accents, editorial typography inside posts, and a layered **FX motion system** (cursor aurora, particles, liquid orb, shooting stars, hero black hole / rocket / portrait cycle). Details in `docs/redesign-2026-agentic-futurist.md`.
 
 ---
 
@@ -34,6 +34,8 @@ npm run start    # serve production build
 content/posts/         # MDX — source of truth for the blog (70+ posts)
 src/app/               # Routes (App Router) — server components by default
 src/components/        # blog/ cv/ forms/ fx/ home/ layout/ mdx/ pix/ ui/
+                         # fx/: cursor-aurora, shooting-stars, particle-field, liquid-orb,
+                         #     glow-card, black-hole (RSC), rocket-launch, hero-portrait
 src/lib/               # constants.ts (siteConfig), utils.ts (cn), velite.ts (helpers)
 src/app/globals.css    # design tokens + utilities + .prose editorial
 docs/                  # redesign-2026-agentic-futurist.md (visual decisions)
@@ -52,11 +54,11 @@ velite.config.ts       # post schema + rehype pipeline
 
 1. **Never edit `.velite/` by hand.** It's Velite output. To change post data, edit `content/posts/*.mdx` and run `npm run velite`.
 2. **Never commit secrets.** `.env.local` is gitignored. Sensitive vars: `BUTTONDOWN_API_KEY`, `UPSTASH_REDIS_REST_*`.
-3. **Server Components by default.** Add `"use client"` **only** if you need `useState`/`useEffect`/browser events. Today's clients: `BlogSearch`, `CVViewer`, `ShareButton`, forms (`feedback`, `newsletter`), `PixPayment`, FX components with mouse listeners.
+3. **Server Components by default.** Add `"use client"` **only** if you need `useState`/`useEffect`/browser events. Common clients: `BlogSearch`, `CVViewer`, `ShareButton`, forms (`feedback`, `newsletter`), `PixPayment`, and FX pieces that use hooks or pointer/interval timers: `CursorAurora`, `ShootingStars`, `ParticleField`, `LiquidOrb`, `GlowCard`, `RocketLaunch`, `HeroPortrait`. `BlackHole` is a Server Component (no `"use client"`).
 4. **Do not introduce a CMS.** Content lives in MDX in Git, by design.
 5. **Do not swap the stack without asking.** No Pages Router, no replacing Velite with contentlayer/next-mdx-remote, no Tailwind→CSS-in-JS, no Redux. Stack changes need explicit human confirmation.
 6. **Do not run `npm run build` "just to test"** without reason — it's expensive and regenerates `.velite/`. Prefer `npm run lint` + reading the diff. Full builds only when explicitly requested or when type/config changes require it.
-7. **`docs/redesign-2026-agentic-futurist.md`** is the visual changelog. Any non-trivial design change (tokens, fonts, hero layout, prose) must be reflected there.
+7. **`docs/redesign-2026-agentic-futurist.md`** is the visual changelog. Any non-trivial design change (tokens, fonts, hero layout, prose, **or new sitewide FX**) must be reflected there.
 8. **Communication language with the human:** the user's rule is to **reply in Portuguese**. Code, comments, and identifiers stay in English.
 
 ---
@@ -79,6 +81,14 @@ velite.config.ts       # post schema + rehype pipeline
 - When a pattern repeats 3+ times, extract it to `@layer utilities` in `src/app/globals.css`.
 - **No inline `style={...}`** except for dynamic values (computed gradients, animation angles, etc.).
 - Keep the "Agentic Futurism" aesthetic: dark, cyan/magenta accents, restrained glassmorphism, mono font for meta strips, Fraunces/Source Serif **only inside `.prose`**.
+
+### FX / motion layer (`src/components/fx/`)
+
+- **Global:** `ShootingStars` + `CursorAurora` mount from `src/app/layout.tsx`. Hero-specific: `BlackHole`, `RocketLaunch`, `HeroPortrait` compose in `src/components/home/hero.tsx` alongside `ParticleField` and `LiquidOrb`.
+- **Accessibility:** time-based and pointer-driven effects must respect **`prefers-reduced-motion`** (existing components already gate or degrade).
+- **Performance:** prefer updating CSS custom properties on `pointermove` over React state where effects need 60fps (see `GlowCard`, `CursorAurora`, particle wiring).
+- **Atmosphere tokens:** radial halos, grid mask, and editorial utilities live in `src/app/globals.css` — keep heavy motion choreography there or in scoped CSS when it avoids client JS.
+- **Do not** add gratuitous motion; new FX should match the “liveness × restraint” rule in `docs/redesign-2026-agentic-futurist.md`.
 
 ### Imports
 ```ts
