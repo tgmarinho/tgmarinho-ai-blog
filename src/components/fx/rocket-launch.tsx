@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const LAUNCH_INTERVAL_MS = 30_000;
-const FIRST_DELAY_MS = 8_000;
+const FIRST_DELAY_MS = 3_000;
 
 /**
  * A wireframe constellation rocket that periodically rises through
@@ -43,11 +43,11 @@ export function RocketLaunch() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute left-1/2 top-0 z-[5] flex h-full -translate-x-1/2 items-start justify-center"
+      className="pointer-events-none fixed inset-y-0 left-[24%] z-[5] hidden items-end md:flex lg:left-[37%]"
     >
       <div
         key={tick}
-        className="relative animate-[rocket-rise_8s_cubic-bezier(0.32,0,0.4,1)_forwards]"
+        className="relative animate-[rocket-rise_11s_cubic-bezier(0.32,0,0.4,1)_forwards]"
         style={{
           filter:
             "drop-shadow(0 0 22px rgba(34,211,238,0.55)) drop-shadow(0 0 40px rgba(217,70,239,0.25))",
