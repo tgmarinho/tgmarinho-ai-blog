@@ -9,6 +9,7 @@ import {
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CursorAurora } from "@/components/fx/cursor-aurora";
+import { ShootingStars } from "@/components/fx/shooting-stars";
 import { siteConfig } from "@/lib/constants";
 import "./globals.css";
 
@@ -58,11 +59,7 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   authors: [{ name: siteConfig.author }],
   creator: siteConfig.author,
-  icons: {
-    icon: "https://avatars.githubusercontent.com/u/380327?v=4",
-    shortcut: "https://avatars.githubusercontent.com/u/380327?v=4",
-    apple: "https://avatars.githubusercontent.com/u/380327?v=4",
-  },
+  // Favicon + apple-touch icon are auto-detected from src/app/icon.tsx and src/app/apple-icon.tsx
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -99,6 +96,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${manrope.variable} ${jetbrainsMono.variable} ${fraunces.variable} ${sourceSerif.variable} font-sans min-h-screen flex flex-col antialiased`}
       >
         <CursorAurora />
+        <ShootingStars />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
