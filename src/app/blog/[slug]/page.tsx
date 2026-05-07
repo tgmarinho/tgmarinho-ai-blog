@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { posts, type Post } from "#site/content";
 import { MdxContent } from "@/components/mdx/mdx-content";
@@ -28,6 +29,38 @@ const languageOrder: Record<string, number> = {
   "pt-BR": 1,
 };
 
+function getAbsoluteUrl(pathOrUrl?: string) {
+  if (!pathOrUrl) return undefined;
+
+  return new URL(pathOrUrl, siteConfig.url).toString();
+}
+
+function getReadingTime(post: Post) {
+  return readingTime(post.body || "");
+}
+
+function getReadingTimeText(post: Post) {
+  const stats = getReadingTime(post);
+  const minutes = Math.ceil(stats.minutes);
+
+  if (post.language === "pt-BR") {
+    return `${minutes} min de leitura`;
+  }
+
+  return stats.text;
+}
+
+function getFormattedDate(date: string, language?: string) {
+  return new Date(date).toLocaleDateString(
+    language === "pt-BR" ? "pt-BR" : "en-US",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }
+  );
+}
+
 function getPostTranslations(post: Post) {
   if (!post.translationKey) return [];
 
@@ -50,20 +83,53 @@ export async function generateMetadata({
   const post = getPostBySlug(slug);
   if (!post) return {};
 
+  const postUrl = `${siteConfig.url}/blog/${post.slug}`;
+  const imageUrl = getAbsoluteUrl(post.image);
+  const readingTimeText = getReadingTimeText(post);
+  const publishedDate = getFormattedDate(post.date, post.language);
+
   return {
     title: post.title,
     description: post.description,
+    authors: [{ name: siteConfig.author }],
+    alternates: {
+      canonical: postUrl,
+    },
     openGraph: {
       title: post.title,
       description: post.description,
       type: "article",
       publishedTime: post.date,
-      url: `${siteConfig.url}/blog/${post.slug}`,
+      url: postUrl,
+      siteName: siteConfig.name,
+      locale: post.language === "pt-BR" ? "pt_BR" : "en_US",
+      authors: [siteConfig.author],
+      tags: post.categories,
+      images: imageUrl
+        ? [
+            {
+              url: imageUrl,
+              width: 1024,
+              height: 683,
+              alt: post.title,
+            },
+          ]
+        : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.description,
+      creator: "@tgmarinho",
+      images: imageUrl ? [imageUrl] : undefined,
+    },
+    other: {
+      "article:published_time": post.date,
+      "article:author": siteConfig.author,
+      "twitter:label1": "Published",
+      "twitter:data1": publishedDate,
+      "twitter:label2": "Reading time",
+      "twitter:data2": readingTimeText,
     },
   };
 }
@@ -82,12 +148,46 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  const stats = readingTime(post.body || "");
+  const stats = getReadingTime(post);
+  const readingTimeText = getReadingTimeText(post);
+  const postUrl = `${siteConfig.url}/blog/${post.slug}`;
+  const imageUrl = getAbsoluteUrl(post.image);
   const translations = getPostTranslations(post);
   const hasTranslations = translations.length > 1;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    image: imageUrl ? [imageUrl] : undefined,
+    datePublished: post.date,
+    dateModified: post.date,
+    author: {
+      "@type": "Person",
+      name: siteConfig.author,
+      url: siteConfig.url,
+    },
+    publisher: {
+      "@type": "Person",
+      name: siteConfig.author,
+      url: siteConfig.url,
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": postUrl,
+    },
+    keywords: post.categories,
+    inLanguage: post.language ?? "en",
+    timeRequired: `PT${Math.ceil(stats.minutes)}M`,
+  };
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Back link */}
       <Button variant="ghost" size="sm" asChild className="mb-8 -ml-3">
         <Link href="/blog">
@@ -147,17 +247,26 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
-            {new Date(post.date).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            {getFormattedDate(post.date, post.language)}
           </span>
           <span className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
-            {stats.text}
+            {readingTimeText}
           </span>
         </div>
+
+        {post.image && (
+          <div className="relative mt-8 aspect-3/2 overflow-hidden rounded-xl border border-border/70 bg-muted/30">
+            <Image
+              src={post.image}
+              alt={post.title}
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 768px"
+              className="object-cover"
+            />
+          </div>
+        )}
       </header>
 
       {/* Separator */}
