@@ -64,24 +64,24 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: siteConfig.url,
-    title: siteConfig.name,
-    description: siteConfig.description,
+    title: siteConfig.shareTitle,
+    description: siteConfig.shareDescription,
     siteName: siteConfig.name,
     images: [
       {
-        url: "https://avatars.githubusercontent.com/u/380327?v=4",
-        width: 460,
-        height: 460,
-        alt: siteConfig.name,
+        url: siteConfig.defaultOgImage,
+        width: 612,
+        height: 408,
+        alt: `${siteConfig.name} — hybrid human · AI portrait`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description,
+    title: siteConfig.shareTitle,
+    description: siteConfig.shareDescription,
     creator: "@tgmarinho",
-    images: ["https://avatars.githubusercontent.com/u/380327?v=4"],
+    images: [siteConfig.defaultOgImage],
   },
 };
 
