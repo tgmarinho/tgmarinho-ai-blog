@@ -1,36 +1,59 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Spectral, JetBrains_Mono } from "next/font/google";
+import {
+  Geist,
+  Manrope,
+  JetBrains_Mono,
+  Fraunces,
+  Source_Serif_4,
+} from "next/font/google";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { CursorAurora } from "@/components/fx/cursor-aurora";
 import { siteConfig } from "@/lib/constants";
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const spectral = Spectral({
-  variable: "--font-spectral",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Editorial display serif — used inside long-form posts (titles, lede)
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  style: ["normal", "italic"],
+  display: "swap",
+  axes: ["opsz", "SOFT"],
+});
+
+// Editorial body serif — used inside long-form posts (paragraphs)
+const sourceSerif = Source_Serif_4({
+  variable: "--font-source-serif",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
     default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
+    template: `%s · ${siteConfig.name}`,
   },
   description: siteConfig.description,
   authors: [{ name: siteConfig.author }],
@@ -73,8 +96,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${spectral.variable} ${jetbrainsMono.variable} ${geistMono.variable} min-h-screen flex flex-col antialiased`}
+        className={`${geistSans.variable} ${manrope.variable} ${jetbrainsMono.variable} ${fraunces.variable} ${sourceSerif.variable} font-sans min-h-screen flex flex-col antialiased`}
       >
+        <CursorAurora />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

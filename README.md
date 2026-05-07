@@ -1,240 +1,185 @@
-# tgmarinho-ai-website
+# TG Marinho — Agentic Futurist Website
 
-Personal website and blog of Thiago Marinho - AI Product Engineer, Full-Stack Developer, and content creator focused on software development, AI, blockchain, and career.
+> Personal platform + technical blog crafted as a living AI interface.
 
-## 📋 About the Project
+![Next.js](https://img.shields.io/badge/Next.js-16.1.6-000000?style=flat&logo=next.js)
+![React](https://img.shields.io/badge/React-19.2.3-20232a?style=flat&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?style=flat&logo=typescript)
+![Tailwind](https://img.shields.io/badge/Tailwind-4.x-0b1120?style=flat&logo=tailwind-css)
+![Velite](https://img.shields.io/badge/Content-Velite-111827?style=flat)
 
-This is a modern website built with Next.js that serves as a personal portfolio and technical blog. The site features articles about software development, artificial intelligence, blockchain, career, and more.
+## ✦ Vision
+
+This repo powers two layers of the same digital system:
+- **Institutional layer**: `/about`, `/projects`, `/contact`, `/community`, `/cv`
+- **Editorial layer**: `/blog` and `/blog/[slug]` with MDX long-form content
+
+The visual direction is **Minimalismo Futurista + IA Agentic**:
+- rich dark canvas (`#05060a`)
+- cyan + magenta accent system
+- glassmorphism surfaces
+- atmospheric motion (particle field, liquid orb, cursor aurora)
+- editorial reading mode for articles (Fraunces + Source Serif 4)
+
+## ⚡ Experience Highlights
+
+- Reusable FX primitives in `src/components/fx`
+- Asymmetric blog cards with `feature/default/compact` variants
+- Fast fuzzy search with `Fuse.js`
+- Reading-time and rich MDX prose
+- Responsive navigation (desktop + sheet mobile nav)
+- Performance-oriented App Router architecture
+
+## 🧠 Tech Stack
+
+### Core
+- [Next.js 16](https://nextjs.org/)
+- [React 19](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+
+### Content & Rendering
+- [Velite](https://velite.js.org/) + MDX
+- `rehype-slug`
+- `rehype-autolink-headings`
+- [rehype-pretty-code](https://rehype-pretty-code.netlify.app/)
+- [Shiki](https://shiki.matsu.io/)
+
+### UI
+- [Tailwind CSS v4](https://tailwindcss.com/)
+- [Framer Motion](https://www.framer.com/motion/)
+- [Lucide React](https://lucide.dev/)
+- [React Icons](https://react-icons.github.io/react-icons/)
+- Radix primitives (via local UI composition)
 
 ### Features
+- [Fuse.js](https://fusejs.io/)
+- [reading-time](https://github.com/ngryman/reading-time)
+- [Upstash Redis](https://upstash.com/) (optional)
 
-- **Technical Blog**: Over 60 articles about development, AI, blockchain, and career
-- **Portfolio**: Showcase of projects and professional experience
-- **Performance**: Optimized for speed and SEO
-- **Responsive**: Adaptive design for all devices
-- **Search**: Search system and category filters
+## 🛰️ Architecture
 
-## 🛠️ Tech Stack
-
-### Core Framework
-- **[Next.js 16](https://nextjs.org/)** - React framework with App Router
-- **[React 19](https://react.dev/)** - UI library
-- **[TypeScript](https://www.typescriptlang.org/)** - Static typing
-
-### Content Management
-- **[Velite](https://velite.js.org/)** - MDX-based content management system
-- **MDX** - Markdown with React component support
-
-### Styling
-- **[Tailwind CSS v4](https://tailwindcss.com/)** - Utility-first CSS framework
-- **[Framer Motion](https://www.framer.com/motion/)** - Smooth animations
-
-### UI Components
-- **[Radix UI](https://www.radix-ui.com/)** - Accessible, unstyled components
-- **[Lucide React](https://lucide.dev/)** - Modern icon library
-- **[React Icons](https://react-icons.github.io/react-icons/)** - Icon library
-
-### Features
-- **[Fuse.js](https://fusejs.io/)** - Fuzzy search for posts
-- **[Reading Time](https://github.com/ngryman/reading-time)** - Reading time calculation
-- **[Rehype Pretty Code](https://rehype-pretty-code.netlify.app/)** - Syntax highlighting
-- **[Shiki](https://shiki.matsu.io/)** - TextMate-based syntax highlighter
-
-### Data & Storage
-- **[Upstash Redis](https://upstash.com/)** - Caching and data storage
-
-## 🏗️ Architecture
-
-### Directory Structure
-
-```
+```txt
 tgmarinho-ai-website/
 ├── content/
-│   └── posts/          # Blog posts in MDX format
+│   └── posts/                    # MDX sources
+├── docs/
+│   └── redesign-2026-agentic-futurist.md
+├── public/
 ├── src/
-│   ├── app/            # Next.js App Router
-│   │   ├── blog/       # Blog pages
-│   │   ├── about/      # About page
-│   │   ├── projects/   # Projects page
-│   │   └── contact/    # Contact page
-│   ├── components/     # Reusable React components
-│   │   ├── blog/       # Blog-specific components
-│   │   ├── home/       # Homepage components
-│   │   └── ui/         # Base UI components
-│   └── lib/            # Utilities and helpers
-├── public/             # Static files
-├── .velite/            # Velite generated output
-└── velite.config.ts    # Velite configuration
+│   ├── app/                      # Next.js routes
+│   │   ├── blog/
+│   │   ├── about/
+│   │   ├── projects/
+│   │   ├── contact/
+│   │   ├── community/
+│   │   └── cv/
+│   ├── components/
+│   │   ├── fx/                   # particle-field, liquid-orb, glow-card, cursor-aurora
+│   │   ├── blog/
+│   │   ├── home/
+│   │   ├── layout/
+│   │   └── ui/
+│   └── lib/
+├── velite.config.ts
+└── package.json
 ```
 
-### Data Flow
+## 🎨 Design System Entry Points
 
-1. **Content Layer (Velite)**
-   - MDX posts in `content/posts/` are processed by Velite
-   - Schema validation and transformation into typed data
-   - Slug and metadata generation
-   - Output to `.velite/posts.json`
+- `src/app/globals.css`
+- `src/components/fx/particle-field.tsx`
+- `src/components/fx/liquid-orb.tsx`
+- `src/components/fx/glow-card.tsx`
+- `src/components/fx/cursor-aurora.tsx`
 
-2. **Application Layer (Next.js)**
-   - Posts imported via `#site/content`
-   - Filtering and sorting by date
-   - Server-side and client-side rendering
+Deep context + lessons learned:
+- `docs/redesign-2026-agentic-futurist.md`
 
-3. **Presentation Layer (React)**
-   - Reusable components
-   - Client-side search and filters
-   - Animations and interactions
+## 🚀 Quick Start
 
-### Post Processing
+### Requirements
+- Node.js 20+
+- npm
 
-- **Frontmatter**: YAML with metadata (title, description, date, categories, etc.)
-- **Body**: MDX content with React component support
-- **Rehype Plugins**:
-  - `rehype-slug`: Heading ID generation
-  - `rehype-pretty-code`: Syntax highlighting
-  - `rehype-autolink-headings`: Automatic heading links
+### Install
 
-## 📝 Blog
+```bash
+git clone <repository-url>
+cd tgmarinho-ai-website
+npm install
+```
 
-### Post Structure
+### Dev
 
-Each post is an MDX file in `content/posts/` with the following format:
+```bash
+npm run dev
+```
+
+Pipeline:
+1. `velite` processes content
+2. `next dev` serves app at [http://localhost:3000](http://localhost:3000)
+
+### Build & Run
+
+```bash
+npm run build
+npm run start
+```
+
+## 🧩 Scripts
+
+- `npm run dev` → Velite + Next.js dev
+- `npm run build` → clean Velite + production build
+- `npm run start` → production server
+- `npm run velite` → content only
+- `npm run lint` → ESLint
+
+## ✍️ MDX Authoring
+
+Posts live in `content/posts/*.mdx`.
 
 ```mdx
 ---
 title: "Post Title"
 description: "Post description"
-date: "2024-01-15"
+date: "2026-05-07"
 published: true
-categories: ["Category 1", "Category 2"]
-image: "/assets/img/image.jpg"
+categories: ["AI", "Career"]
+image: "/images/example.png"
 ---
 
-Post content in MDX...
+Post content...
 ```
 
-### Blog Features
-
-- **Search**: Fuzzy search by title, description, and categories
-- **Filters**: Filter by categories
-- **Sorting**: Posts sorted by date (newest first)
-- **Syntax Highlighting**: Code with syntax highlighting
-- **Reading Time**: Estimated reading time
-- **RSS Feed**: RSS feed available at `/rss.xml`
-
-### Categories
-
-- Development
-- React
-- TypeScript
-- AI/ML
-- Blockchain/Web3
-- Career
-- Mobile
-- Database
-- And more...
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm, yarn, pnpm, or bun
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd tgmarinho-ai-website
-
-# Install dependencies
-npm install
-# or
-yarn install
-# or
-pnpm install
-```
-
-### Development
-
-```bash
-# Start the development server
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
-
-The site will be available at [http://localhost:3000](http://localhost:3000)
-
-### Build
-
-```bash
-# Generate production build
-npm run build
-# or
-yarn build
-# or
-pnpm build
-```
-
-### Available Scripts
-
-- `npm run dev` - Start development server (processes Velite + Next.js)
-- `npm run build` - Generate production build
-- `npm run start` - Start production server
-- `npm run velite` - Process content only (Velite)
-- `npm run lint` - Run linter
-
-## 📦 Main Dependencies
-
-### Runtime
-- `next` - Next.js framework
-- `react` & `react-dom` - React
-- `velite` - Content management
-- `fuse.js` - Fuzzy search
-- `reading-time` - Reading time calculation
-
-### Development
-- `typescript` - TypeScript
-- `tailwindcss` - Tailwind CSS
-- `eslint` - Linter
+Velite validates frontmatter and outputs typed content consumed from `#site/content`.
 
 ## 🌐 Deploy
 
-The project is configured for deployment on [Vercel](https://vercel.com), but can be deployed on any platform that supports Next.js:
+Recommended: [Vercel](https://vercel.com/).  
+Any host with Next.js support works.
 
-- **Vercel** (recommended)
-- **Netlify**
-- **AWS Amplify**
-- **Railway**
-- **Self-hosted**
+### Env Vars
 
-### Environment Variables
+No required environment variables for the core experience.  
+Redis-related variables are optional and only needed if Upstash features are enabled.
 
-No environment variables are required for basic functionality. Redis (Upstash) is optional for advanced features.
+## 🛠️ Troubleshooting
 
-## 📚 Resources
+- **Velite ENOENT on image assets**
+  - Happens when old MDX posts reference missing files.
+  - Fix paths in post frontmatter/body or restore files under `content/posts` or `public`.
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Velite Documentation](https://velite.js.org/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [MDX Documentation](https://mdxjs.com/)
-
-## 📄 License
-
-This project is private and personal.
+- **Variable font config with `next/font/google`**
+  - When using font `axes`, avoid conflicting `weight` arrays on the same font config.
 
 ## 👤 Author
 
 **Thiago Marinho**
 - Website: [tgmarinhopro.com](https://tgmarinhopro.com)
 - GitHub: [@tgmarinho](https://github.com/tgmarinho)
-- Twitter: [@tgmarinho](https://twitter.com/tgmarinho)
+- X/Twitter: [@tgmarinho](https://twitter.com/tgmarinho)
 - LinkedIn: [Thiago Marinho](https://linkedin.com/in/tgmarinho)
 
 ---
 
-Made with ❤️ using Next.js, React, and TypeScript
+Private personal project.

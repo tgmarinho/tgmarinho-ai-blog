@@ -1,41 +1,144 @@
 import Link from "next/link";
 import { siteConfig } from "@/lib/constants";
-import { FaGithub, FaTwitter, FaLinkedin, FaDiscord, FaYoutube } from "react-icons/fa";
+import {
+  FaGithub,
+  FaXTwitter,
+  FaLinkedin,
+  FaDiscord,
+  FaYoutube,
+} from "react-icons/fa6";
 
 const socialLinks = [
   { href: siteConfig.links.github, icon: FaGithub, label: "GitHub" },
-  { href: siteConfig.links.twitter, icon: FaTwitter, label: "Twitter" },
+  { href: siteConfig.links.twitter, icon: FaXTwitter, label: "X / Twitter" },
   { href: siteConfig.links.linkedin, icon: FaLinkedin, label: "LinkedIn" },
   { href: siteConfig.links.discord, icon: FaDiscord, label: "Discord" },
   { href: siteConfig.links.youtube, icon: FaYoutube, label: "YouTube" },
 ];
 
+const navColumns = [
+  {
+    title: "Explore",
+    links: [
+      { href: "/blog", label: "Blog" },
+      { href: "/projects", label: "Projects" },
+      { href: "/cv", label: "CV" },
+    ],
+  },
+  {
+    title: "Network",
+    links: [
+      { href: "/about", label: "About" },
+      { href: "/community", label: "Community" },
+      { href: "/contact", label: "Contact" },
+    ],
+  },
+];
+
 export function Footer() {
   return (
-    <footer className="border-t border-border/40 mt-auto">
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()}{" "}
-            <Link href="/" className="hover:text-foreground transition-colors">
-              {siteConfig.name}
+    <footer className="relative mt-16 overflow-hidden border-t border-white/[0.06]">
+      {/* atmosphere */}
+      <div
+        className="pointer-events-none absolute inset-x-0 -top-32 h-64 opacity-60 blur-3xl"
+        aria-hidden="true"
+        style={{
+          background:
+            "radial-gradient(600px 200px at 30% 50%, rgba(34,211,238,0.18), transparent 60%), radial-gradient(500px 200px at 75% 50%, rgba(217,70,239,0.14), transparent 60%)",
+        }}
+      />
+
+      <div className="relative mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+          {/* Brand */}
+          <div>
+            <Link href="/" className="inline-flex items-center gap-2.5">
+              <span className="relative grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/[0.03]">
+                <span className="font-display text-[12px] font-bold tracking-[0.18em] text-foreground/90">
+                  TG
+                </span>
+                <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_2px_rgba(34,211,238,0.7)] animate-pulse-soft" />
+              </span>
+              <span className="font-display text-[15px] font-semibold tracking-tight text-foreground">
+                {siteConfig.name}
+              </span>
             </Link>
-            . All rights reserved.
-          </p>
-          <div className="flex items-center gap-4">
-            {socialLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label={link.label}
-              >
-                <link.icon className="h-5 w-5" />
-              </a>
-            ))}
+            <p className="mt-4 max-w-xs text-[13.5px] leading-[1.65] text-muted-foreground">
+              Designing the agentic layer of software — pragmatic AI engineering
+              for products that ship.
+            </p>
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.02] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              </span>
+              system · operational
+            </div>
           </div>
+
+          {navColumns.map((col) => (
+            <div key={col.title}>
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
+                {col.title}
+              </h3>
+              <ul className="mt-4 space-y-2.5">
+                {col.links.map((l) => (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      className="text-[13.5px] text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+
+          <div>
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
+              Signals
+            </h3>
+            <p className="mt-4 text-[13px] text-muted-foreground">
+              Field notes, agent experiments, raw thoughts.
+            </p>
+            <a
+              href={siteConfig.newsletter.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.025] px-4 py-2 text-[12.5px] tracking-wide text-foreground/90 backdrop-blur-md transition-colors hover:border-cyan-300/40 hover:text-cyan-200"
+            >
+              Subscribe
+              <span className="text-muted-foreground">↗</span>
+            </a>
+            <div className="mt-6 flex items-center gap-1">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={link.label}
+                  className="grid h-9 w-9 place-items-center rounded-lg border border-transparent text-muted-foreground transition-all hover:border-white/10 hover:bg-white/[0.04] hover:text-foreground"
+                >
+                  <link.icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mesh-divider mt-14" />
+
+        <div className="mt-6 flex flex-col items-start gap-3 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+          </p>
+          <p>
+            Crafted in <span className="text-foreground/80">{siteConfig.location}</span> ·
+            Powered by intent
+          </p>
         </div>
       </div>
     </footer>

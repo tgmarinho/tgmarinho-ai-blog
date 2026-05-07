@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock } from "lucide-react";
+import { ArrowUpRight, Clock } from "lucide-react";
 import readingTime from "reading-time";
+import { GlowCard } from "@/components/fx/glow-card";
+import { cn } from "@/lib/utils";
 
 interface PostCardProps {
   title: string;
@@ -10,6 +13,9 @@ interface PostCardProps {
   slug: string;
   categories: string[];
   body: string;
+  /** Visual rhythm for asymmetric grids. */
+  variant?: "default" | "feature" | "compact";
+  className?: string;
 }
 
 export function PostCard({
@@ -19,46 +25,88 @@ export function PostCard({
   slug,
   categories,
   body,
+  variant = "default",
+  className,
 }: PostCardProps) {
   const stats = readingTime(body);
+  const formattedDate = new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  const sizing = {
+    default: "p-6",
+    feature: "p-7 md:p-9",
+    compact: "p-5",
+  }[variant];
+
+  const titleSize = {
+    default: "text-[20px] md:text-[22px]",
+    feature: "text-[28px] md:text-[34px]",
+    compact: "text-[17px]",
+  }[variant];
 
   return (
-    <Link
+    <GlowCard
+      as={Link as unknown as React.ElementType}
+      // @ts-expect-error — Link prop forwarded
       href={`/blog/${slug}`}
-      className="group block rounded-lg border border-border/50 bg-card/50 p-5 transition-all hover:border-border hover:bg-card"
+      intensity={variant === "feature" ? "strong" : "subtle"}
+      className={cn(
+        "border-conic group block hover-lift",
+        variant === "feature" && "md:row-span-2",
+        sizing,
+        className
+      )}
     >
-      <div className="flex flex-wrap gap-2 mb-3">
-        {categories.map((cat) => (
-          <Badge key={cat} variant="secondary" className="text-xs">
-            {cat}
-          </Badge>
-        ))}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {categories.slice(0, 3).map((cat) => (
+            <span
+              key={cat}
+              className="inline-flex items-center rounded-full border border-cyan-300/20 bg-cyan-300/[0.05] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/90"
+            >
+              {cat}
+            </span>
+          ))}
+        </div>
+        <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-cyan-300" />
       </div>
 
-      <h3 className="text-lg font-semibold tracking-tight group-hover:text-blue-500 transition-colors mb-2">
+      <h3
+        className={cn(
+          "font-display font-semibold leading-[1.15] tracking-[-0.025em] text-foreground transition-colors duration-300 group-hover:text-cyan-100",
+          variant === "feature" ? "mt-6" : "mt-4",
+          titleSize
+        )}
+      >
         {title}
       </h3>
 
-      {description && (
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+      {description && variant !== "compact" && (
+        <p
+          className={cn(
+            "mt-3 leading-[1.65] text-muted-foreground",
+            variant === "feature" ? "text-[15.5px] line-clamp-3" : "text-[13.5px] line-clamp-2"
+          )}
+        >
           {description}
         </p>
       )}
 
-      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Calendar className="h-3 w-3" />
-          {new Date(date).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-        <span className="flex items-center gap-1">
+      <div
+        className={cn(
+          "mt-6 flex items-center gap-4 border-t border-white/[0.06] pt-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground"
+        )}
+      >
+        <time dateTime={date}>{formattedDate}</time>
+        <span className="h-1 w-1 rounded-full bg-white/15" />
+        <span className="inline-flex items-center gap-1.5">
           <Clock className="h-3 w-3" />
           {stats.text}
         </span>
       </div>
-    </Link>
+    </GlowCard>
   );
 }

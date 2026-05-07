@@ -1,0 +1,103 @@
+# CLAUDE.md
+
+> Claude-specific instructions (Claude Code, Cursor with Claude, claude.ai with this repo open).
+> The source of truth is **`AGENTS.md`** — this file only adds what's specific to the Claude workflow.
+
+---
+
+## Read first
+
+1. **`AGENTS.md`** — general rules for any AI agent in this repo
+2. **`ARCHITECTURE.md`** — technical architecture, Velite pipeline, layers
+3. **`docs/redesign-2026-agentic-futurist.md`** — visual decisions and design changelog
+
+If your training conflicts with these files, **the files win**.
+
+---
+
+## Communication
+
+- **Always reply in Portuguese** (user rule).
+- Code, comments, and identifiers in English.
+- Don't announce tools you're about to use — just use them. (`"Let me read the file:" + Read tool` is noise.)
+- Concise. Bullet points instead of paragraphs when possible.
+
+---
+
+## Pre-approved commands (`.claude/settings.local.json`)
+
+Permissions already granted — run without asking:
+
+- `find:*`, `grep:*`
+- `npm run build:*`, `npx velite:*`
+- `pkill:*`, `node -e:*`
+- `git checkout:*`, `git add:*`, `git commit:*`, `git push:*`
+- `gh auth:*`, `gh pr create` (template already registered)
+- `WebFetch` on `github.com` and `raw.githubusercontent.com`
+
+**Even so, hold the line on these principles:**
+- **Don't commit** unless the user asks.
+- **Don't push** unless the user asks.
+- When searching for files/content, prefer the native tools (`Read`, `Glob`, `Grep`, `SemanticSearch`) over shell `find`/`grep`.
+
+---
+
+## Recommended workflow
+
+1. **Before editing:** `Read` the file. `Grep`/`SemanticSearch` for similar existing patterns.
+2. **Editing existing files** > creating new ones. Only create new files if there's nowhere to fit it.
+3. **After editing TSX/TS:** run `ReadLints` on the touched files.
+4. **After editing `content/posts/**` or `velite.config.ts`:** run `npm run velite` to validate the schema.
+5. **Before declaring done:** `npm run lint`. If you touched something build-sensitive (config, paths, types), `npm run build`.
+
+---
+
+## Parallel sub-tasks
+
+When the investigation has multiple independent fronts (e.g. "audit the Velite pipeline" + "audit the search system"), launch sub-agents in parallel via `Task` (`subagent_type: "explore"`) instead of going sequential. Saves time and context.
+
+---
+
+## Relevant skills (already installed for the user)
+
+This project benefits from these skills in the user's directories (`~/.cursor/skills/` and `~/.claude/skills/`):
+
+- **`agentic-futurist-website`** — the site's visual DNA (use it for substantive design changes)
+- **`blog-post-bilingual`** (project skill) — default/mandatory mirrored `pt-BR` + `en` post pair generation
+- **`frontend-design`** — UI best practices when creating new components
+- **Vercel skills** (`nextjs`, `next-cache-components`, `ai-sdk`, `ai-gateway`, `deployments-cicd`, `env-vars`) — consult per task
+
+Use a skill by **reading its `SKILL.md`** when the trigger fires — don't just mention it.
+
+### Blog authoring policy (important)
+
+For any request like "criar post", "novo artigo", "post em inglês/PT", or "versão bilíngue":
+1. Use the project skill (`blog-post-bilingual`) as the default and mandatory workflow.
+2. Follow repository MDX/frontmatter conventions.
+3. **Always request/create a contextual cover image** and set `image` in frontmatter.
+4. Run `npm run velite` after writing/editing posts.
+
+---
+
+## Project timeline (historical context)
+
+- **May/2026** — full "Agentic Futurism" redesign (a single Cursor + Claude Opus 4.7 pair-programming session). Documented in `docs/redesign-2026-agentic-futurist.md`.
+- **Mar/2026** — added the `/community` page.
+- **Before:** site in a neutral theme (gray-100), Spectral as the display serif. All of that was discarded intentionally.
+
+If the user asks to "go back to the old design", confirm first — they probably want to adjust, not revert.
+
+---
+
+## Anti-patterns observed (you, Claude, tend to commit these here)
+
+- **Suggesting swapping Velite for contentlayer/next-mdx-remote.** No. Velite was chosen deliberately.
+- **Wanting to add `<Callout/>` inside posts.** Today the `body` is markdown (not MDX), so JSX inside posts doesn't work. See `velite.config.ts` line 20.
+- **Creating new shadcn components via the CLI** when an equivalent already exists in `src/components/ui/`. Check first.
+- **Using Source Serif 4 / Fraunces outside `.prose`.** Editorial fonts are exclusive to posts. UI stays in sans (Geist/Manrope).
+- **Commenting in code what it's doing** (`// fetch posts`, `// import the helper`). Comment intent / trade-offs only.
+- **Adding `useEffect` for data fetching in RSCs.** Make it a server component and read directly.
+
+---
+
+**Last updated:** 2026-05 (blog skills policy added).
