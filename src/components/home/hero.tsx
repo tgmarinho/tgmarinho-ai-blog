@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 import { ParticleField } from "@/components/fx/particle-field";
-import { LiquidOrb } from "@/components/fx/liquid-orb";
+import { HeroPortrait } from "@/components/fx/hero-portrait";
+import { RocketLaunch } from "@/components/fx/rocket-launch";
 
 interface HeroProps {
   postCount: number;
@@ -25,7 +26,14 @@ export function Hero({ postCount }: HeroProps) {
         />
       </div>
 
-      <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 py-20 md:grid-cols-[1.05fr_1fr] md:gap-16 md:px-8 md:py-32">
+      {/* Rocket — rises through the column gap every 60 seconds (desktop only). */}
+      <div className="pointer-events-none absolute inset-0 hidden md:block">
+        <div className="relative mx-auto h-full max-w-6xl">
+          <RocketLaunch />
+        </div>
+      </div>
+
+      <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 py-20 md:grid-cols-[1fr_1.1fr] md:gap-12 md:px-8 md:py-32">
         {/* Left — copy */}
         <div className="relative z-10 max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/[0.04] px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-200/90 backdrop-blur-md">
@@ -90,10 +98,10 @@ export function Hero({ postCount }: HeroProps) {
           </dl>
         </div>
 
-        {/* Right — orb */}
+        {/* Right — morphing portrait */}
         <div className="relative flex items-center justify-center md:justify-end">
-          <div className="relative">
-            <LiquidOrb size={420} />
+          <div className="relative w-full max-w-[540px]">
+            <HeroPortrait size={540} />
             {/* Floating telemetry badges */}
             <FloatingBadge
               label="ROUTING"
