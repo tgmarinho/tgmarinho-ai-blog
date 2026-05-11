@@ -58,19 +58,11 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
   const [mode, setMode] = useState(0);
   const [hovered, setHovered] = useState(false);
   const directionRef = useRef<1 | -1>(1);
-  const reduceMotionRef = useRef(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const uid = useId().replace(/:/g, "");
 
-  useEffect(() => {
-    reduceMotionRef.current = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-  }, []);
-
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (reduceMotionRef.current) return;
     const el = rootRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -92,43 +84,26 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
     el.style.setProperty("--tilt-z", "0px");
   };
 
-  // Ping-pong auto-cycle. When we hit an extreme (0 or 2) we hold for one
-  // extra beat by returning the same mode; the direction flips so the
-  // next tick moves the other way.
+  // Ping-pong auto-cycle. Runs unconditionally (including on mobile and
+  // with prefers-reduced-motion — the morph itself is gentle opacity work).
   useEffect(() => {
-    if (reduceMotionRef.current) return;
     const interval = hovered ? HOVER_INTERVAL_MS : STEP_INTERVAL_MS;
     const id = window.setInterval(() => {
       setMode((m) => {
         const next = m + directionRef.current;
         if (next > STAGES.length - 1) {
           directionRef.current = -1;
-          return m;
+          return m - 1;
         }
         if (next < 0) {
           directionRef.current = 1;
-          return m;
+          return m + 1;
         }
         return next;
       });
     }, interval);
     return () => window.clearInterval(id);
   }, [hovered]);
-
-  const advance = () => {
-    setMode((m) => {
-      const next = m + directionRef.current;
-      if (next > STAGES.length - 1) {
-        directionRef.current = -1;
-        return Math.max(0, m - 1);
-      }
-      if (next < 0) {
-        directionRef.current = 1;
-        return Math.min(STAGES.length - 1, m + 1);
-      }
-      return next;
-    });
-  };
 
   const current = STAGES[mode];
   const dotClass = {
@@ -140,13 +115,14 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
   return (
     <div
       ref={rootRef}
-      className={`group relative aspect-square w-full will-change-transform ${className ?? ""}`}
+      className={`group relative aspect-square w-full select-none will-change-transform ${className ?? ""}`}
       style={{
         maxWidth: size,
         transform:
           "perspective(1400px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(var(--tilt-z, 0px))",
         transformStyle: "preserve-3d",
         transition: "transform 320ms cubic-bezier(0.16, 1, 0.3, 1)",
+        WebkitUserSelect: "none",
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => {
@@ -154,17 +130,8 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
         resetTilt();
       }}
       onMouseMove={handleMouseMove}
-      onClick={advance}
-      onTouchStart={advance}
-      role="button"
-      tabIndex={0}
-      aria-label={`Portrait morph — ${current.label}. Click to advance.`}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          advance();
-        }
-      }}
+      onDragStart={(e) => e.preventDefault()}
+      aria-label="Thiago Marinho portrait — morphing between human, hybrid, and agent modes"
     >
       {/* Wide ambient aurora — bleeds far beyond the portrait so the figure
           dissolves into the page atmosphere. */}
@@ -245,8 +212,11 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
                   alt={`Thiago Marinho — ${s.label}`}
                   fill
                   priority={i === 0}
-                  sizes="(max-width: 768px) 90vw, 640px"
-                  className="object-cover object-center"
+                  loading={i === 0 ? undefined : "lazy"}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  sizes="(max-width: 640px) 90vw, (max-width: 1024px) 60vw, 540px"
+                  className="select-none object-cover object-center"
                 />
               </div>
             </div>
@@ -297,18 +267,11 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
           >
             <feTurbulence
               type="fractalNoise"
-              baseFrequency="0.018 0.024"
-              numOctaves="3"
+              baseFrequency="0.02 0.026"
+              numOctaves="2"
               seed="9"
               result="n"
-            >
-              <animate
-                attributeName="baseFrequency"
-                dur="26s"
-                values="0.016 0.022;0.022 0.028;0.018 0.024;0.016 0.022"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
+            />
             <feDisplacementMap
               in="SourceGraphic"
               in2="n"
