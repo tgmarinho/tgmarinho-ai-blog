@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 interface HeroPortraitProps {
   size?: number;
@@ -10,17 +10,17 @@ interface HeroPortraitProps {
 
 const STAGES = [
   {
-    src: "/images/hero/portrait-human-v2.png",
+    src: "/images/hero/portrait-human-v2-removebg.png",
     label: "MODE · human",
     dot: "cyan",
   },
   {
-    src: "/images/hero/portrait-hybrid-v2.png",
+    src: "/images/hero/portrait-hybrid-v2-removebg.png",
     label: "MODE · hybrid",
     dot: "magenta",
   },
   {
-    src: "/images/hero/portrait-agent-v2.png",
+    src: "/images/hero/portrait-agent-v2-removebg.png",
     label: "MODE · agent",
     dot: "emerald",
   },
@@ -32,11 +32,14 @@ const STEP_INTERVAL_MS = 2400;
 const HOVER_INTERVAL_MS = 1400;
 const REVEAL_DURATION_MS = 1100;
 
-// Soft radial alpha mask — keeps the subject's center fully opaque and
-// dissolves the photo's dark backdrop edges into the page so there's no
-// visible square frame around the portrait.
+// Aggressive radial alpha mask — only the central face stays fully opaque,
+// the rest dissolves into the page atmosphere on a long tail so the
+// photograph's rectangular boundary is completely gone.
 const EDGE_FEATHER =
-  "radial-gradient(ellipse 72% 78% at 50% 48%, black 55%, rgba(0,0,0,0.85) 75%, transparent 100%)";
+  "radial-gradient(ellipse 56% 64% at 50% 44%, black 22%, rgba(0,0,0,0.92) 48%, rgba(0,0,0,0.55) 70%, rgba(0,0,0,0.18) 86%, transparent 100%)";
+
+// Maximum tilt (deg) for the mouse-driven 3D parallax.
+const MAX_TILT = 7;
 
 /**
  * Hero portrait with a "landonorris.com"-style materialization.
@@ -56,12 +59,38 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
   const [hovered, setHovered] = useState(false);
   const directionRef = useRef<1 | -1>(1);
   const reduceMotionRef = useRef(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const uid = useId().replace(/:/g, "");
 
   useEffect(() => {
     reduceMotionRef.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
   }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (reduceMotionRef.current) return;
+    const el = rootRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+    const ny = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      el.style.setProperty("--tilt-x", `${(-ny * MAX_TILT).toFixed(2)}deg`);
+      el.style.setProperty("--tilt-y", `${(nx * MAX_TILT).toFixed(2)}deg`);
+      el.style.setProperty("--tilt-z", `${(nx * 8).toFixed(2)}px`);
+    });
+  };
+
+  const resetTilt = () => {
+    const el = rootRef.current;
+    if (!el) return;
+    el.style.setProperty("--tilt-x", "0deg");
+    el.style.setProperty("--tilt-y", "0deg");
+    el.style.setProperty("--tilt-z", "0px");
+  };
 
   // Ping-pong auto-cycle. When we hit an extreme (0 or 2) we hold for one
   // extra beat by returning the same mode; the direction flips so the
@@ -110,10 +139,21 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
 
   return (
     <div
-      className={`group relative aspect-square w-full ${className ?? ""}`}
-      style={{ maxWidth: size }}
+      ref={rootRef}
+      className={`group relative aspect-square w-full will-change-transform ${className ?? ""}`}
+      style={{
+        maxWidth: size,
+        transform:
+          "perspective(1400px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(var(--tilt-z, 0px))",
+        transformStyle: "preserve-3d",
+        transition: "transform 320ms cubic-bezier(0.16, 1, 0.3, 1)",
+      }}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => {
+        setHovered(false);
+        resetTilt();
+      }}
+      onMouseMove={handleMouseMove}
       onClick={advance}
       onTouchStart={advance}
       role="button"
@@ -227,6 +267,68 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
           }}
         />
       </div>
+
+      {/* Dissolve fog — turbulent cyan/white vapor painted as a ring
+          around the silhouette boundary. Sits over the portrait stack
+          with screen blend, hiding any residual hard edge from the
+          photograph and reinforcing the "emerging from the cosmos" feel. */}
+      <svg
+        aria-hidden
+        className="pointer-events-none absolute -inset-[10%] z-[55]"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        style={{ mixBlendMode: "screen", opacity: 0.7 }}
+      >
+        <defs>
+          <radialGradient id={`${uid}-fog-ring`} cx="50%" cy="46%" r="50%">
+            <stop offset="0%" stopColor="rgba(186,230,253,0)" />
+            <stop offset="56%" stopColor="rgba(186,230,253,0)" />
+            <stop offset="70%" stopColor="rgba(186,230,253,0.38)" />
+            <stop offset="84%" stopColor="rgba(34,211,238,0.14)" />
+            <stop offset="100%" stopColor="rgba(34,211,238,0)" />
+          </radialGradient>
+          <filter
+            id={`${uid}-fog-warp`}
+            x="-10%"
+            y="-10%"
+            width="120%"
+            height="120%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.018 0.024"
+              numOctaves="3"
+              seed="9"
+              result="n"
+            >
+              <animate
+                attributeName="baseFrequency"
+                dur="26s"
+                values="0.016 0.022;0.022 0.028;0.018 0.024;0.016 0.022"
+                repeatCount="indefinite"
+              />
+            </feTurbulence>
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="n"
+              scale="32"
+              xChannelSelector="R"
+              yChannelSelector="G"
+              result="w"
+            />
+            <feGaussianBlur in="w" stdDeviation="1.4" />
+          </filter>
+        </defs>
+        <rect
+          x="0"
+          y="0"
+          width="100"
+          height="100"
+          fill={`url(#${uid}-fog-ring)`}
+          filter={`url(#${uid}-fog-warp)`}
+        />
+      </svg>
 
       {/* HUD chip — below the portrait, outside the alpha mask. */}
       <div className="pointer-events-none absolute -bottom-2 left-1/2 z-[70] flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/[0.08] bg-black/55 px-3 py-1.5 backdrop-blur-xl">
