@@ -7,6 +7,7 @@ import { ParticleField } from "@/components/fx/particle-field";
 import { HeroPortrait } from "@/components/fx/hero-portrait";
 import { RocketLaunch } from "@/components/fx/rocket-launch";
 import { BlackHole } from "@/components/fx/black-hole";
+import { VolumetricLight } from "@/components/fx/volumetric-light";
 
 interface HeroProps {
   postCount: number;
@@ -18,13 +19,7 @@ export function Hero({ postCount }: HeroProps) {
       {/* Atmosphere */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <ParticleField density={70} />
-        <div
-          className="absolute -top-40 left-1/2 h-[520px] w-[1000px] -translate-x-1/2 rounded-full opacity-60 blur-[120px]"
-          style={{
-            background:
-              "radial-gradient(circle at 30% 50%, rgba(34,211,238,0.30), transparent 60%), radial-gradient(circle at 70% 50%, rgba(217,70,239,0.22), transparent 60%)",
-          }}
-        />
+        <VolumetricLight />
         {/* Cosmic black hole — anchored to the top-left of the hero, near
             the "B" of the headline. Decorative only. */}
         <BlackHole

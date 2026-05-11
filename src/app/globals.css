@@ -429,6 +429,21 @@
   50% { transform: scaleY(1.25) scaleX(0.85); opacity: 1; }
 }
 
+@keyframes vlight-breathe {
+  0%, 100% { opacity: 0.78; transform: scale(1) translateX(0); }
+  50% { opacity: 1; transform: scale(1.05) translateX(-1.5%); }
+}
+
+@keyframes vlight-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-3%, -2%, 0); }
+}
+
+@keyframes vlight-noise-shift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(1.5%, -1%, 0); }
+}
+
 .animate-pulse-soft { animation: pulse-soft 2.4s ease-in-out infinite; }
 .animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
 .animate-drift { animation: drift 12s ease-in-out infinite alternate; }
