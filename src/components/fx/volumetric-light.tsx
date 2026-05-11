@@ -107,18 +107,11 @@ export function VolumetricLight({ className }: VolumetricLightProps) {
           >
             <feTurbulence
               type="fractalNoise"
-              baseFrequency="0.012 0.020"
-              numOctaves="3"
+              baseFrequency="0.013 0.021"
+              numOctaves="2"
               seed="11"
               result="n"
-            >
-              <animate
-                attributeName="baseFrequency"
-                dur="28s"
-                values="0.010 0.018;0.016 0.024;0.012 0.020;0.010 0.018"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
+            />
             <feDisplacementMap
               in="SourceGraphic"
               in2="n"
