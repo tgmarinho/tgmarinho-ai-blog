@@ -4,6 +4,7 @@ import { getPostsMeta, getAllCategories } from "@/lib/velite";
 import { BlogSearch } from "@/components/blog/search";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import { routing, type Locale } from "@/i18n/routing";
+import { siteConfig } from "@/lib/constants";
 
 export const revalidate = 3600;
 
@@ -44,8 +45,30 @@ export default async function BlogPage({ params }: BlogPageProps) {
   const categories = getAllCategories(localePosts);
   const t = await getTranslations("blog.list");
 
+  const blogUrl = localizedUrl(locale, "/blog");
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: t("title") + " " + t("titleAccent"),
+    description: t("subtitle"),
+    url: blogUrl,
+    inLanguage: locale,
+    isPartOf: { "@type": "WebSite", name: siteConfig.name, url: siteConfig.url },
+    hasPart: localePosts.slice(0, 50).map((p) => ({
+      "@type": "BlogPosting",
+      headline: p.title,
+      url: `${blogUrl}/${p.slug}`,
+      datePublished: p.date,
+      inLanguage: locale,
+    })),
+  };
+
   return (
     <div className="relative mx-auto max-w-6xl px-5 py-20 md:px-8 md:py-28">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
       <div className="mb-14 max-w-2xl">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
           {t("kicker", { count: localePosts.length })}
