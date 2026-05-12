@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 import { ParticleField } from "@/components/fx/particle-field";
@@ -14,6 +15,8 @@ interface HeroProps {
 }
 
 export function Hero({ postCount }: HeroProps) {
+  const t = useTranslations("home.hero");
+  const firstName = siteConfig.name.split(" ")[0];
   return (
     <section className="relative overflow-hidden">
       {/* Atmosphere */}
@@ -37,21 +40,19 @@ export function Hero({ postCount }: HeroProps) {
         <div className="relative z-10 max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/[0.04] px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-200/90 backdrop-blur-md">
             <Sparkles className="h-3 w-3" />
-            agentic systems · 2026
+            {t("badge")}
           </span>
 
           <h1 className="mt-6 font-display text-[44px] font-bold leading-[1.05] tracking-[-0.035em] text-foreground sm:text-[56px] md:text-[64px]">
-            Building the
+            {t("headlineLine1")}
             <br />
-            <span className="text-gradient-cm">agentic layer</span>
+            <span className="text-gradient-cm">{t("headlineAccent")}</span>
             <br />
-            of software.
+            {t("headlineLine3")}
           </h1>
 
           <p className="mt-6 max-w-md text-[15.5px] leading-[1.7] text-muted-foreground">
-            I&apos;m {siteConfig.name.split(" ")[0]} — an AI Product Engineer
-            designing autonomous agents, RAG pipelines and spec-driven products
-            that ship fast and learn faster.
+            {t("intro", { firstName })}
           </p>
 
           {/* Terminal status */}
@@ -74,7 +75,7 @@ export function Hero({ postCount }: HeroProps) {
                   "0 10px 32px -8px rgba(34,211,238,0.7), inset 0 1px 0 rgba(255,255,255,0.4)",
               }}
             >
-              Read the blog
+              {t("ctaPrimary")}
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
             </Link>
@@ -82,7 +83,7 @@ export function Hero({ postCount }: HeroProps) {
               href="/about"
               className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.025] px-5 py-2.5 text-[13px] tracking-wide text-foreground/90 backdrop-blur-md transition-colors hover:border-white/20 hover:bg-white/[0.05]"
             >
-              About me
+              {t("ctaSecondary")}
               <span className="text-muted-foreground transition-colors group-hover:text-cyan-300">
                 ↗
               </span>
@@ -91,9 +92,9 @@ export function Hero({ postCount }: HeroProps) {
 
           {/* Stats strip */}
           <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-white/[0.06] pt-6">
-            <Stat label="Years shipping" value={`${siteConfig.yearsOfExperience}+`} />
-            <Stat label="Articles" value={`${postCount}`} />
-            <Stat label="Stack" value="AI · TS · RN" mono />
+            <Stat label={t("stats.yearsLabel")} value={`${siteConfig.yearsOfExperience}+`} />
+            <Stat label={t("stats.articlesLabel")} value={`${postCount}`} />
+            <Stat label={t("stats.stackLabel")} value="AI · TS · RN" mono />
           </dl>
         </div>
 
@@ -103,20 +104,20 @@ export function Hero({ postCount }: HeroProps) {
             <HeroPortrait size={640} />
             {/* Floating telemetry badges */}
             <FloatingBadge
-              label="ROUTING"
+              label={t("badges.routingLabel")}
               value="agent.delegate"
               className="absolute -left-6 top-8 hidden md:flex animate-float-slow"
             />
             <FloatingBadge
-              label="LATENCY"
+              label={t("badges.latencyLabel")}
               value="38ms"
               tone="magenta"
               className="absolute -right-2 top-1/3 hidden md:flex animate-float-slow"
               style={{ animationDelay: "0.6s" }}
             />
             <FloatingBadge
-              label="STATE"
-              value="streaming"
+              label={t("badges.stateLabel")}
+              value={t("badges.stateValue")}
               tone="emerald"
               className="absolute -right-6 bottom-10 hidden md:flex animate-float-slow"
               style={{ animationDelay: "1.2s" }}

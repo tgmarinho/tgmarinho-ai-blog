@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Menu } from "lucide-react";
+import { Link, usePathname } from "@/i18n/navigation";
 import {
   Sheet,
   SheetContent,
@@ -15,6 +15,7 @@ import { useState } from "react";
 
 export function MobileNav() {
   const pathname = usePathname();
+  const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
 
   return (
@@ -52,7 +53,7 @@ export function MobileNav() {
                 )}
               >
                 <span className="font-display text-[16px] tracking-tight">
-                  {link.label}
+                  {t(link.key)}
                 </span>
                 <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
                   0{i + 1}

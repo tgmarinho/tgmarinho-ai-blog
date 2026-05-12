@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { PostCard } from "@/components/blog/post-card";
 
@@ -15,9 +16,10 @@ interface RecentPostsProps {
   posts: Post[];
 }
 
-export function RecentPosts({ posts }: RecentPostsProps) {
+export async function RecentPosts({ posts }: RecentPostsProps) {
   if (posts.length === 0) return null;
 
+  const t = await getTranslations("home.recent");
   const [feature, ...rest] = posts;
 
   return (
@@ -26,17 +28,17 @@ export function RecentPosts({ posts }: RecentPostsProps) {
         <div className="mb-12 flex items-end justify-between gap-4">
           <div>
             <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
-              ━ writing
+              {t("kicker")}
             </span>
             <h2 className="mt-3 font-display text-[34px] font-bold leading-[1.05] tracking-[-0.03em] text-foreground md:text-[44px]">
-              Field notes from the <span className="text-gradient-cyan">edge</span>.
+              {t("titleLine1")} <span className="text-gradient-cyan">{t("titleAccent")}</span>{t("titleSuffix")}
             </h2>
           </div>
           <Link
             href="/blog"
             className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.025] px-4 py-2 text-[12.5px] tracking-wide text-foreground/90 backdrop-blur-md transition-colors hover:border-cyan-300/40 hover:text-cyan-200"
           >
-            All posts
+            {t("viewAll")}
             <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         </div>

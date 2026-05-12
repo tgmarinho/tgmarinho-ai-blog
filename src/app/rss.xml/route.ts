@@ -1,35 +1,45 @@
 import { posts } from "#site/content";
 import { sortPostsByDate } from "@/lib/velite";
 import { siteConfig } from "@/lib/constants";
+import { getPostsForLocale } from "@/lib/posts-i18n";
+import { routing, type Locale } from "@/i18n/routing";
 
-export function GET() {
-  const publishedPosts = sortPostsByDate(posts);
+function buildFeed(locale: Locale, feedUrl: string) {
+  const localePosts = sortPostsByDate(getPostsForLocale(posts, locale));
+  const blogBase = locale === routing.defaultLocale ? "/blog" : `/en/blog`;
 
-  const items = publishedPosts
+  const items = localePosts
     .map(
       (post) => `
     <item>
       <title><![CDATA[${post.title}]]></title>
-      <link>${siteConfig.url}/blog/${post.slug}</link>
-      <guid>${siteConfig.url}/blog/${post.slug}</guid>
+      <link>${siteConfig.url}${blogBase}/${post.slug}</link>
+      <guid>${siteConfig.url}${blogBase}/${post.slug}</guid>
       <description><![CDATA[${post.description ?? ""}]]></description>
       <pubDate>${new Date(post.date).toUTCString()}</pubDate>
     </item>`
     )
     .join("\n");
 
-  const feed = `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${siteConfig.name}</title>
-    <link>${siteConfig.url}</link>
+    <title>${siteConfig.name}${locale === "pt-BR" ? "" : " (EN)"}</title>
+    <link>${siteConfig.url}${locale === "pt-BR" ? "" : "/en"}</link>
     <description>${siteConfig.description}</description>
-    <language>en</language>
+    <language>${locale}</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${siteConfig.url}/rss.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="${feedUrl}" rel="self" type="application/rss+xml"/>
     ${items}
   </channel>
 </rss>`;
+}
+
+export function GET(request: Request) {
+  const url = new URL(request.url);
+  const localeParam = url.searchParams.get("locale");
+  const locale: Locale = localeParam === "en" ? "en" : routing.defaultLocale;
+  const feed = buildFeed(locale, url.toString());
 
   return new Response(feed, {
     headers: {

@@ -19,9 +19,18 @@ interface Post {
 interface BlogSearchProps {
   posts: Post[];
   categories: string[];
+  searchPlaceholder?: string;
+  emptyLabel?: string;
+  allLabel?: string;
 }
 
-export function BlogSearch({ posts, categories }: BlogSearchProps) {
+export function BlogSearch({
+  posts,
+  categories,
+  searchPlaceholder = "Search posts, topics, ideas…",
+  emptyLabel = "no posts match · try another query",
+  allLabel = "all",
+}: BlogSearchProps) {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -66,7 +75,7 @@ export function BlogSearch({ posts, categories }: BlogSearchProps) {
           <SearchIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-cyan-300" />
           <input
             type="search"
-            placeholder="Search posts, topics, ideas…"
+            placeholder={searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="h-12 w-full rounded-full border border-white/[0.06] bg-white/[0.025] pl-11 pr-11 text-[14px] text-foreground placeholder:text-muted-foreground/70 backdrop-blur-md transition-all focus:border-cyan-300/40 focus:outline-none focus:ring-4 focus:ring-cyan-300/10"
@@ -92,7 +101,7 @@ export function BlogSearch({ posts, categories }: BlogSearchProps) {
       {categories.length > 0 && (
         <div className="mb-12 flex flex-wrap gap-1.5">
           <CategoryPill
-            label="all"
+            label={allLabel}
             active={selectedCategory === null}
             onClick={() => setSelectedCategory(null)}
           />
@@ -113,7 +122,7 @@ export function BlogSearch({ posts, categories }: BlogSearchProps) {
       {filteredPosts.length === 0 ? (
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] py-20 text-center">
           <p className="font-mono text-[12px] uppercase tracking-[0.2em] text-muted-foreground">
-            no posts match · try another query
+            {emptyLabel}
           </p>
         </div>
       ) : (
