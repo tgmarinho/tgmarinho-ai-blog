@@ -1,0 +1,312 @@
+---
+title: "Como fazer deploy de um monorepo com TurboRepo no Heroku"
+description: "Github + Monorepo + TurboRepo + Heroku"
+date: "2022-06-09"
+published: true
+categories: ["github", "heroku", "monorepo", "pt-br"]
+image: "/assets/img/2022-06-09-deploy-monorepo-turborepo-heroku.png"
+language: "pt-BR"
+slug: "como-fazer-deploy-de-monorepo-com-turborepo-no-heroku"
+translationKey: "how-to-deploy-a-monorepo-with-turborepo-on-heroku"
+---
+
+### **Introdução**
+
+Substituí quatro projetos no GitHub (sdk, smart-contract, indexer-api e frontend app) por apenas um, usando Monorepo / TurboRepo.
+
+Escrevi um post sobre isso. [Confira aqui](https://dev.to/tgmarinhodev/how-to-merge-two-or-more-repos-into-a-new-one-without-losing-the-history-cfh)
+
+A estrutura do meu monorepo:
+
+```
+~/Developer/blog/monorepo (main*) » tree -L 3 --gitignore
+.
+├── README.md
+├── apps
+│   ├── frontend
+│   │   ├── Procfile
+│   │   ├── README.md
+│   │   ├── __mocks__
+│   │   ├── __tests__
+│   │   ├── next-env.d.ts
+│   │   ├── next.config.js
+│   │   ├── package.json
+│   │   ├── public
+│   │   ├── src
+│   ├── contract
+│   │   ├── README.md
+│   │   ├── contracts
+│   │   ├── hardhat.config.ts
+│   │   ├── package.json
+│   │   ├── scripts
+│   └── backend
+│       ├── README.md
+│       ├── Procfile
+│       ├── build
+│       ├── package.json
+│       ├── src
+│       ├── tsup.config.ts
+├── package.json
+├── packages
+│   ├── contract-types
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── src
+│   │   └── tsconfig.json
+│   ├── sdk
+│   │   ├── README.md
+│   │   ├── jest.config.js
+│   │   ├── jest.setup.js
+│   │   ├── package.json
+│   │   ├── src
+│   │   └── tsup.config.ts
+│   ├── eslint-config-custom
+│   │   ├── index.js
+│   │   └── package.json
+│   └── tsconfig
+│       ├── README.md
+│       ├── base.json
+│       ├── nextjs.json
+│       ├── package.json
+│       └── react-library.json
+├── turbo.json
+└── yarn.lock
+
+// Omitindo alguns arquivos e packages desnecessários para este post
+
+```
+
+### **Um pouco de contexto**
+
+A parte difícil foi a hospedagem, e vou te contar como fazer isso no Heroku.
+
+Mas antes, quero te dar um pouco de contexto sobre como este projeto deve se comportar no processo de build:
+
+O smart-contract deve fazer o build para gerar todos os tipos usando a lib typechain, porque em vez de usar a ABI, eu quero usar os tipos (typescript for the win); esse build gera a pasta `types` dentro do projeto smart-contract; e meu script copia essa pasta `types` para um novo package chamado contract-types (que deve ser um pacote npm de tipos).
+
+O sdk deve fazer o build usando o contract-types, e então o frontend app faz o build usando o sdk, que por sua vez usa o contract-types.
+
+O indexer-api (backend) deve fazer o build usando o contract-types.
+
+Ordem do build:
+
+1. smart-contract
+2. os tipos do contract-types devem existir
+3. sdk
+4. frontend e backend em paralelo
+
+O [TurboRepo](https://turborepo.org/) faz isso de forma rápida e inteligente, sem muito esforço.
+
+Há outras coisas que estou omitindo porque não são tão importantes, mas temos outros packages.
+
+Com isso em mente, vamos ver **como configurar o Heroku para funcionar com monorepo**:
+
+### **Deploy - Criando as Apps**
+
+Crie duas apps no Heroku:
+
+1. frontend - `heroku create -a frontend`
+2. backend -  `heroku create -a backend`
+
+### **Adicionando Buildpacks**
+
+Em ambas as apps, você pode conectar suas apps do Heroku ao GitHub. Assim, você economiza tempo com CI/CD após cada commit na branch main.
+Em ambas, você precisa seguir os mesmos passos:
+
+Adicione (via GUI: settings -> buildpacks -> Add Buildpack) os buildpacks nesta ordem:
+
+1. https://github.com/heroku/heroku-buildpack-multi-procfile
+2. heroku/nodejs
+
+Ou via Heroku CLI:
+```
+heroku buildpacks:add -a frontend heroku-community/multi-procfile
+heroku buildpacks:add -a frontend heroku/nodejs
+
+heroku buildpacks:add -a backend heroku-community/multi-procfile
+heroku buildpacks:add -a backend heroku/nodejs
+```
+
+### **Criando o Procfile**
+
+*Procfile* é um arquivo que recebe os comandos a serem executados ao iniciar uma aplicação; se você tem uma app básica de node.js no Heroku, não precisa dele, já que o `package.json` tem o script `start`.
+
+Mas no nosso caso, precisamos dele para os pacotes frontend e backend:
+
+Frontend:
+```
+echo "web: cd apps/frontend && yarn start" > Procfile
+```
+Backend:
+```
+echo "web: cd apps/backend && yarn start" > Procfile
+```
+
+O comando acima cria o arquivo Procfile com o conteúdo: `web: cd apps/backend && yarn start`
+
+### Configurando a nova env PROCFILE com o caminho do Procfile:
+
+App Frontend:
+```
+heroku config:set -a frontend PROCFILE=apps/frontend/Procfile
+```
+
+App Backend:
+```
+heroku config:set -a backend PROCFILE=apps/backend/Procfile
+```
+
+
+### **Configurando o package.json raiz do monorepo**
+
+O Heroku agora sabe onde encontrar nossos Procfiles; no entanto, como temos duas aplicações separadas armazenadas dentro dos diretórios frontend (client) e backend (server), cada uma tem suas próprias dependências.
+
+Por padrão, o Heroku tenta instalar as dependências definidas no `package.json` na raiz do projeto e tentará executar o script de build configurado ali. Para garantir que instalamos as dependências corretas e executamos os scripts de build corretos para cada aplicação, precisamos definir um script `heroku-postbuild` na raiz do projeto.
+
+O ingrediente secreto da receita: no `package.json` da raiz, adicione os seguintes scripts:
+
+```
+"build:frontend": "turbo run build --filter=frontend",
+"build:backend": "turbo run build --filter=backend",
+"heroku-postbuild": "if [ $CLIENT_ENV ]; then yarn run prod-frontend; elif [ $SERVER_ENV ]; then yarn run prod-backend; else echo no environment detected, please set CLIENT_ENV or SERVER_ENV; fi",
+"prod-frontend": "yarn run build:frontend",
+"prod-backend": "yarn run build:backend"
+```
+
+Adicionamos três scripts: `heroku-postbuild`, `prod-frontend` e `prod-backend`.
+
+O Heroku roda automaticamente o script `heroku-postbuild` no deploy.
+
+Nosso `heroku-postbuild` olha as variáveis de ambiente `$CLIENT_ENV` ou `$SERVER_ENV` para decidir qual script rodar: `prod-frontend` ou `prod-backend`.
+
+### **Configurando as variáveis de ambiente no Heroku**
+
+Agora adicione as novas CLIENT_ENV e SERVER_ENV nas apps do Heroku:
+
+App Frontend:
+```
+heroku config:set -a frontend CLIENT_ENV=true
+```
+
+App Backend:
+```
+heroku config:set -a backend SERVER_ENV=true
+```
+
+Agora nosso script `heroku-postbuild` consegue rodar os scripts de install corretos para cada uma das nossas aplicações no deploy.
+
+Veja o *package.json* completo:
+```
+{
+  "name": "my-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "dev:app": "turbo run dev --filter=frontend",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "build:app": "turbo run build --filter=frontend",
+    "build:api": "turbo run build --filter=backend",
+    "start:app": "turbo run start --filter=frontend",
+    "start:api": "turbo run start --filter=backend",
+    "heroku-postbuild": "if [ $CLIENT_ENV ]; then yarn run prod-frontend; elif [ $SERVER_ENV ]; then yarn run prod-backend; else echo no environment detected, please set CLIENT_ENV or SERVER_ENV; fi",
+    "prod-frontend": "yarn run build:app",
+    "prod-backend": "yarn run build:api"
+  },
+  "devDependencies": {
+    "eslint-config-custom": "latest",
+    "prettier": "latest",
+    "turbo": "latest",
+    "tsup": "^5.12.6"
+  },
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=8.0.0 <=16.14.2"
+  },
+  "dependencies": {},
+  "packageManager": "yarn@1.22.18",
+}
+```
+
+🚨 Eu recomendo não usar os *caches*, mas isso não é uma boa prática; vale a pena estudar uma solução melhor; eu estava enfrentando problemas mantendo como `true`:
+
+```
+heroku config:set USE_YARN_CACHE=false -a frontend
+heroku config:set NODE_MODULES_CACHE=false -a frontend
+heroku config:set YARN_PRODUCTION=false -a frontend
+
+heroku config:set USE_YARN_CACHE=false -a backend
+heroku config:set NODE_MODULES_CACHE=false -a backend
+heroku config:set YARN_PRODUCTION=false -a backend
+
+```
+
+
+Meu `turbo.json`:
+
+```
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "start": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "start:app": {
+
+    },
+    "lint": {
+      "outputs": []
+    },
+    "dev": {
+      "cache": false
+    }
+  }
+}
+```
+
+Por último, mas não menos importante, rode o deploy e veja o resultado.
+
+✅ Build e Deploy devem passar. 🙏🏻
+
+### **Conclusão**
+
+Excelente, você tem um monorepo com turborepo rodando em produção dentro do Heroku.
+
+Agora está tudo pronto para fazer deploy de múltiplas aplicações versionadas dentro de um monorepo em várias aplicações Heroku.
+
+Basta configurar suas apps do Heroku para fazer deploy no push, e na próxima vez que você enviar qualquer alteração, estará pronto.
+
+Sempre há algo para melhorar; o que falta fazer? GitHub Actions, aguarde os próximos capítulos.
+
+
+Fim ✌🏻
+
+Leia no [Dev.To](https://dev.to/tgmarinhodev/how-to-deploy-a-monorepo-with-turborepo-on-heroku-3ge4)
+
+Referências:
+
+[Deploying a Monorepo to Heroku - by Sam](https://towardsdev.com/deploying-a-monorepo-to-heroku-74c0d5a1f79e)
+
+[Pruning dependencies - Heroku Support NodeJS](https://devcenter.heroku.com/articles/nodejs-support)
+
+[javascript-monorepos](https://www.robinwieruch.de/javascript-monorepos/)
+
+[monorepo.tools](https://monorepo.tools/)
+
+[turborepo](https://turborepo.org/)
+
+__
+
+
+Obrigado pela leitura 🚀
