@@ -270,7 +270,12 @@
     "updated": "updated",
     "yearsExp": "{years}+ years exp",
     "languageLabel": "language",
-    "loading": "loading cv…"
+    "loading": "loading cv…",
+    "recommendations": {
+      "kicker": "━ social proof · linkedin recommendations",
+      "title": "What people say",
+      "subtitle": "Recommendations from teammates, managers, and collaborators — sourced from LinkedIn."
+    }
   },
   "notFound": {
     "title": "Page not found",

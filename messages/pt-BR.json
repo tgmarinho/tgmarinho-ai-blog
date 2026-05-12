@@ -270,7 +270,12 @@
     "updated": "atualizado",
     "yearsExp": "{years}+ anos de exp",
     "languageLabel": "idioma",
-    "loading": "carregando cv…"
+    "loading": "carregando cv…",
+    "recommendations": {
+      "kicker": "━ prova social · recomendações do linkedin",
+      "title": "O que dizem sobre mim",
+      "subtitle": "Recomendações de colegas, líderes e parceiros de equipe — vindas do LinkedIn."
+    }
   },
   "notFound": {
     "title": "Página não encontrada",
