@@ -13,8 +13,8 @@ const posts = defineCollection({
       date: s.isodate(),
       published: s.boolean().default(true),
       slug: s.string().optional(),
-      language: s.string().optional(),
-      translationKey: s.string().optional(),
+      language: s.enum(["pt-BR", "en"]),
+      translationKey: s.string().min(1),
       categories: s.array(s.string()).default([]),
       image: s.string().optional(),
       body: s.markdown(), // Changed from mdx to markdown to fix compilation issues
