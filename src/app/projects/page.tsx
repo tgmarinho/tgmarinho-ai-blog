@@ -21,6 +21,28 @@ type Project = {
 
 const projects: Project[] = [
   {
+    title: "iTOP — Inscrições TOP",
+    status: "shipped",
+    year: "2024",
+    highlight: true,
+    description:
+      "Production SaaS multi-tenant para gestão de grandes eventos dos Legendários — inscrições, pagamentos (PIX/cartão com reconciliação por webhook), check-in via QR Code, geração de contratos com assinatura digital biométrica, plano de embarque e dashboards em tempo real. Processa dinheiro real, eventos reais e centenas de participantes em produção. Antecessor do inscricoestop.com.br antes do pivot.",
+    tags: [
+      "Next.js 14",
+      "TypeScript",
+      "tRPC",
+      "Prisma",
+      "MongoDB",
+      "NextAuth",
+      "CASL",
+      "Tailwind",
+      "Inngest",
+      "Resend",
+    ],
+    github: "https://github.com/tgmarinho/itop-lgnd",
+    live: "https://inscricoestop.com.br",
+  },
+  {
     title: "Unicrow",
     status: "shipped",
     year: "2023",
