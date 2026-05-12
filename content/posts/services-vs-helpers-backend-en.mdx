@@ -1,0 +1,46 @@
+---
+title: "Organizing Your Backend: Services or Helpers?"
+description: "The difference between services and helpers, and how to organize them in your backend folder structure."
+date: "2024-01-15"
+published: true
+categories: ["backend", "architecture", "en"]
+image: "/images/hero/portrait-hybrid-v2-removebg.png"
+language: "en"
+translationKey: "services-vs-helpers-backend"
+---
+
+When developing a robust backend, code organization is crucial to maintainability and scalability. In this article we'll look at the difference between two key components — **services** and **helpers** — and how to organize them in the folder structure.
+
+## Service: the backbone of business logic
+
+Services are the heart of your backend. They encapsulate application-specific business logic, handle complex operations, interact with the database, and enforce domain rules.
+
+- **Business logic abstraction**: services abstract complex operations, providing a clean interface for the rest of the app. This increases cohesion and makes the code easier to reason about.
+- **Database interaction**: services are usually tied to persistence — managing queries, updates, and ensuring data integrity.
+- **Reusability and scalability**: encapsulating business logic in services produces reusable building blocks that scale with the project.
+
+## Helper: versatile utilities for generic functionality
+
+Where services are application-specific, helpers are Swiss army knives offering generic utility functions.
+
+- **Generic functionality**: helpers hold functions that aren't tied to business logic but are essential for common tasks — string manipulation, date formatting, generic validations.
+- **Reuse across contexts**: because they're decoupled from domain rules, helpers can be used anywhere — promoting consistency and reducing duplication.
+- **Simpler maintenance**: isolating utilities in helpers means a single place to update a generic function.
+
+## Structuring your folders
+
+```
+/src/services    -> userService.ts, orderService.ts, paymentService.ts
+/src/helpers     -> stringHelper.ts, dateHelper.ts, validationHelper.ts
+```
+
+## When to use each
+
+The rule of thumb:
+
+- **Services** for application-specific business logic.
+- **Helpers** for generic, utility functionality.
+
+This separation keeps the code organized, eases maintenance, and supports sustainable growth.
+
+**PS.** While the service/helper distinction shows up most in the MVC pattern, I prefer folder-by-feature over folder-by-type — though many legacy systems still use the latter. That's a topic for another post.

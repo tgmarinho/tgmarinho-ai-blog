@@ -1,0 +1,88 @@
+---
+title: "Como adicionar texto borrado (blurred) em React Native"
+description: "Uma forma estilosa de esconder informações no seu app React Native usando BlurView."
+date: "2024-02-15"
+published: true
+categories: ["react-native", "ui", "pt-br"]
+image: "/images/hero/portrait-hybrid-v2-removebg.png"
+language: "pt-BR"
+translationKey: "blurred-text-react-native"
+---
+
+Se você procura uma forma visualmente atraente de esconder informações no seu app React Native, **texto borrado** é uma solução elegante. Neste tutorial vou mostrar como integrar texto borrado em componentes de forma simples.
+
+## Passo 1: instalação
+
+Dependendo do seu setup, instale `expo-blur` (Expo) ou `react-native-blur` (React Native puro):
+
+```bash
+yarn add expo-blur
+```
+
+ou
+
+```bash
+yarn add react-native-blur
+cd ios && pod-install
+```
+
+## Passo 2: criando o componente
+
+Vamos criar um componente `Blurred` que aceita `intensity` e `tint` opcionais:
+
+```javascript
+import { ReactNode } from 'react'
+import { BlurView } from 'expo-blur' // ou 'react-native-blur' em React Native puro
+import { View } from 'native-base'
+
+type BlurredProps = {
+  intensity?: number
+  tint?: 'light' | 'dark'
+  children: ReactNode
+}
+
+export const Blurred = ({ intensity = 8, tint = 'light', children }: BlurredProps) => {
+  return (
+    <View>
+      {children}
+      <BlurView
+        intensity={intensity}
+        tint={tint}
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+        }}
+      />
+    </View>
+  )
+}
+```
+
+## Passo 3: usando na sua lógica
+
+```javascript
+const Promotion = () => {
+  if (!userCanSeePromo) {
+    return (
+      <Blurred>
+        <Typography variant='body1' color='gray.500'>
+          {item.promo}
+        </Typography>
+      </Blurred>
+    )
+  }
+
+  return (
+    <Typography variant='body1' color='gray.500'>
+      {item.full_price}
+    </Typography>
+  )
+}
+```
+
+Ajuste `intensity` e `tint` para o efeito desejado. Funciona bem com React Native puro ou com bibliotecas como NativeBase.
+
+## Conclusão
+
+Incorporar efeitos de blur na sua aplicação React Native adiciona apelo visual e um toque moderno à UI. Experimente diferentes intensidades e tons até achar o efeito ideal para o seu app.

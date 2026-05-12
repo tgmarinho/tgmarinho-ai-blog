@@ -1,0 +1,91 @@
+---
+title: "Using for await...of to Iterate Sync and Async Arrays in JavaScript"
+description: "How the for await...of loop simplifies async data handling, with practical examples."
+date: "2023-07-31"
+published: true
+categories: ["javascript", "async", "en"]
+image: "/images/hero/rocket.png"
+language: "en"
+translationKey: "for-await-of-iterate-arrays"
+---
+
+Async programming is essential in JavaScript when dealing with time-consuming operations like API calls, file reads, or delays. ES6 introduced Promises and ES2018 introduced **`for await...of`**, which further simplifies handling async data when working with async iterables (Promises, Generators).
+
+Let's see how to use `for await...of` to iterate both sync and async arrays.
+
+## Example 1: array of Promises
+
+We have an array of delays and want to run async tasks for each.
+
+```javascript
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+const createDelays = [1000, 2000, 500, 3000, 5000, 10000, 100].map(ms => delay(ms));
+
+const asyncIterable = createDelays;
+
+(async () => {
+  for await (const delayTime of asyncIterable) {
+    console.log(`Waited for ${delayTime} milliseconds.`);
+  }
+  console.log("All delays processed.");
+})();
+```
+
+`delay` returns a Promise. `createDelays` is an array of Promises resolving at different times. `for await...of` awaits each Promise before moving to the next item.
+
+## Example 2: synchronous array
+
+A regular array, with an async task applied per item.
+
+```javascript
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function processDelays(delays) {
+  for await (const delayTime of delays) {
+    await delay(delayTime);
+    console.log(`Waited for ${delayTime} milliseconds.`);
+  }
+  console.log("All delays processed.");
+}
+
+const delaysArray = [1000, 2000, 500, 3000, 5000, 10000, 100];
+processDelays(delaysArray);
+```
+
+Even though the array is synchronous, the loop becomes async because of the inner `await` — each delay is handled one after another.
+
+## Example 3: mixed array with async operations
+
+```javascript
+function fetchData(data) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(`Data: ${data}`);
+    }, Math.random() * 5000);
+  });
+}
+
+async function processArrayWithAsyncOperations(dataArray) {
+  for (const data of dataArray) {
+    const result = await fetchData(data);
+    console.log(result);
+  }
+  console.log("All operations processed.");
+}
+
+const dataArray = [1, 2, 3, 4, 5];
+processArrayWithAsyncOperations(dataArray);
+```
+
+`fetchData` simulates a fetch with random delay. The loop processes each item sequentially thanks to `await`.
+
+## Conclusion
+
+`for await...of` lets you handle async data elegantly, ensuring sequential processing whether you're working with pure async data, sync data, or a mix.
+
+See the code in action on [replit.com](https://replit.com/@tgmarinho/for-await-test#index.js).

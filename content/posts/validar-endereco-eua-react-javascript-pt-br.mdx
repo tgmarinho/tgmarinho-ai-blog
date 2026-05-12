@@ -1,0 +1,181 @@
+---
+title: "Como validar endereço de entrega nos EUA com JavaScript e React"
+description: "Duas abordagens para validar shipping address nos EUA: Google Maps Geocoding API e validação no cliente com React Hook Form + Zod."
+date: "2023-05-04"
+published: true
+categories: ["javascript", "react", "validacao", "pt-br"]
+image: "/images/hero/portrait-hybrid-v2-removebg.png"
+language: "pt-BR"
+translationKey: "validate-ship-address-usa"
+---
+
+Validar um endereço de entrega (shipping address) nos EUA é um problema clássico de e-commerce. Tem dois caminhos comuns:
+
+1. **Validar geograficamente** (existe mesmo?) usando uma API como a do Google Maps Geocoding.
+2. **Validar formato/sintaxe** (CEP no padrão certo, campos obrigatórios) com uma schema validation no cliente.
+
+Idealmente, você combina os dois. Vamos ver cada abordagem.
+
+## Abordagem 1: Google Maps Geocoding API
+
+### Em JavaScript puro
+
+Inclua o script da API:
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
+  </head>
+  <body></body>
+</html>
+```
+
+Função de validação:
+
+```javascript
+function validateShippingAddress(address, callback) {
+  const geocoder = new google.maps.Geocoder();
+
+  geocoder.geocode(
+    { address: address, componentRestrictions: { country: 'US' } },
+    function (results, status) {
+      if (status === google.maps.GeocoderStatus.OK) {
+        const formattedAddress = results[0].formatted_address;
+        const location = results[0].geometry.location;
+        callback(true, formattedAddress, location);
+      } else {
+        callback(false);
+      }
+    }
+  );
+}
+```
+
+Uso:
+
+```javascript
+validateShippingAddress('1600 Amphitheatre Parkway, Mountain View, CA', (isValid, formatted, location) => {
+  if (isValid) {
+    console.log('Endereço válido:', formatted);
+    console.log('Lat/Lng:', location.lat(), location.lng());
+  } else {
+    console.log('Endereço inválido');
+  }
+});
+```
+
+### Em React com `@googlemaps/google-maps-services-js`
+
+```bash
+yarn add @googlemaps/google-maps-services-js
+```
+
+```javascript
+import React, { useState } from 'react';
+import { Client } from '@googlemaps/google-maps-services-js';
+
+const AddressValidationForm = () => {
+  const [address, setAddress] = useState('');
+  const [message, setMessage] = useState('');
+
+  const validateAddress = async () => {
+    const client = new Client();
+    try {
+      const response = await client.geocode({
+        params: {
+          address,
+          components: 'country:US',
+          key: 'YOUR_API_KEY',
+        },
+      });
+
+      if (response.data.status === 'OK') {
+        setMessage(`Endereço válido: ${response.data.results[0].formatted_address}`);
+      } else {
+        setMessage('Endereço inválido');
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage('Erro ao validar o endereço');
+    }
+  };
+
+  return (
+    <div>
+      <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Endereço" />
+      <button onClick={validateAddress}>Validar</button>
+      <p>{message}</p>
+    </div>
+  );
+};
+
+export default AddressValidationForm;
+```
+
+## Abordagem 2: validação de formato com React Hook Form + Zod
+
+Para validação local (campos obrigatórios, CEP no formato correto, etc.):
+
+```bash
+yarn add zod react-hook-form @hookform/resolvers
+```
+
+Schema com Zod:
+
+```javascript
+import { z } from 'zod';
+
+const AddressValidationSchema = z.object({
+  street: z.string().nonempty('Street is required'),
+  city: z.string().nonempty('City is required'),
+  state: z.string().nonempty('State is required'),
+  zip: z
+    .string()
+    .nonempty('Zip code is required')
+    .regex(/^\d{5}(-\d{4})?$/, 'Zip code is invalid'),
+});
+
+export default AddressValidationSchema;
+```
+
+Formulário:
+
+```javascript
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import AddressValidationSchema from './validation';
+
+const AddressValidationForm = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(AddressValidationSchema),
+  });
+
+  const onSubmit = (data) => console.log(data);
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input placeholder="Street" {...register('street')} />
+      {errors.street && <p>{errors.street.message}</p>}
+
+      <input placeholder="City" {...register('city')} />
+      {errors.city && <p>{errors.city.message}</p>}
+
+      <input placeholder="State" {...register('state')} />
+      {errors.state && <p>{errors.state.message}</p>}
+
+      <input placeholder="Zip" {...register('zip')} />
+      {errors.zip && <p>{errors.zip.message}</p>}
+
+      <button type="submit">Validar endereço</button>
+    </form>
+  );
+};
+```
+
+## Considerações finais
+
+- A Google Maps API tem custo proporcional ao uso. Alternativas: **USPS Web Tools API**, **SmartyStreets**, **EasyPost**.
+- Atente para conformidade (GDPR, LGPD) ao coletar e processar dados de endereço.
+- A melhor experiência geralmente combina validação de formato no cliente + validação geográfica no servidor.

@@ -1,0 +1,108 @@
+---
+title: "Conventional Commits in Practice: Patterns for a Better Git History"
+description: "Hands-on guide to writing better commit messages with Conventional Commits — types, scope, examples, and a cheat sheet."
+date: "2023-05-30"
+published: true
+categories: ["git", "best-practices", "en"]
+image: "/images/hero/rocket-alpha.png"
+language: "en"
+translationKey: "conventional-commits-hands-on"
+---
+
+When working with a team, meaningful commit messages make a huge difference. **Conventional Commits** is a convention for writing commit messages that helps everyone understand changes faster.
+
+This post consolidates the structure, common types, practical examples, and tips I've used across teams.
+
+## Message structure
+
+```
+<type>(<optional scope>): <short, present-tense description>
+
+[optional body explaining the why]
+
+[optional footer, e.g. "Fixes #123" or "BREAKING CHANGE: ..."]
+```
+
+- **Type**: what kind of change (see table below).
+- **Scope** (optional): what's affected (e.g. `auth`, `ui`, `docs`).
+- **Description**: short, present tense, 50–72 chars.
+- **Body**: more details, the why.
+- **Footer**: metadata like `Fixes #123` or `BREAKING CHANGE`.
+
+## Most common types
+
+| Type | Use case | Example |
+|------|----------|---------|
+| `feat` | New feature | `feat(ui): add dark mode toggle` |
+| `fix` | Bug fix | `fix(auth): resolve token expiry` |
+| `docs` | Documentation | `docs(readme): update install steps` |
+| `style` | Formatting, no logic change | `style(css): adjust padding` |
+| `refactor` | Cleanup, no behavior change | `refactor(api): simplify fetch` |
+| `test` | Add or update tests | `test(unit): cover login edge cases` |
+| `chore` | Maintenance (deps, tooling) | `chore(deps): update lodash` |
+| `perf` | Performance improvement | `perf(db): optimize query` |
+| `ci` | CI/CD changes | `ci(pipeline): add lint step` |
+| `build` | Build system changes | `build(webpack): minify output` |
+| `revert` | Revert a previous commit | `revert: undo feat(ui)` |
+
+## Practical examples
+
+### Simple feature
+
+```
+feat(api): add user profile endpoint
+```
+
+### Fix with details
+
+```
+fix(cart): prevent duplicate items
+
+- Added check for existing item ID
+
+Fixes #45
+```
+
+### Breaking change
+
+```
+feat(auth): switch to JWT tokens
+
+- Replaced session cookies with JWT
+
+BREAKING CHANGE: Old tokens invalid
+```
+
+### Chore
+
+```
+chore(deps): bump react to 18.3.0
+```
+
+### Refactor
+
+```
+refactor(utils): extract logger to module
+```
+
+## Applied to a TODO app
+
+1. `feat: add ability to set due dates for tasks`
+2. `fix: resolve issue with task deletion not working properly`
+3. `docs: update user guide with task categories`
+4. `style: adjust font size and color for task titles`
+5. `refactor: reorganize code structure for task filtering`
+6. `test: add test cases for task prioritization`
+7. `chore: update dependencies`
+8. `build: fix build configuration`
+9. `ci: integrate automated testing into the CI pipeline`
+10. `perf: optimize loading for large task lists`
+11. `revert: revert previous commit that broke task sorting`
+
+## Tips
+
+- **Scope**: lowercase, short (e.g. `ui`, `server`).
+- **Breaking changes**: flag with `!` after the type (e.g. `feat(ui)!: redo layout`) or note in the footer.
+- **Tooling**: pair with semantic versioning and changelog generators (`standard-version`, `semantic-release`).
+
+Apply this in your codebase — your future self (and your team) will thank you.

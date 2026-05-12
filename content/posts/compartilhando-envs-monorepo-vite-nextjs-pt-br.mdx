@@ -1,0 +1,70 @@
+---
+title: "Compartilhando variáveis de ambiente em um monorepo com Vite e Next.js"
+description: "Como manter um único arquivo .env.shared no monorepo e gerar arquivos específicos com os prefixos do Vite e do Next.js."
+date: "2023-05-04"
+published: true
+categories: ["monorepo", "vite", "nextjs", "pt-br"]
+image: "/images/hero/portrait-agent-v2-removebg.png"
+language: "pt-BR"
+translationKey: "share-envs-monorepo-vite-nextjs"
+---
+
+Em um monorepo com apps em **Vite** e **Next.js** rola um detalhe chato: cada framework exige um prefixo diferente para expor variáveis ao cliente. Vite usa `VITE_PUBLIC_`, Next.js usa `NEXT_PUBLIC_`. Como manter um único lugar para variáveis comuns?
+
+Uma solução simples: um arquivo `.env.shared` na raiz, e um script que gera os `.env` específicos com os prefixos corretos para cada app.
+
+## Passo 1: criar `.env.shared`
+
+Na raiz do monorepo:
+
+```
+SECRET_KEY=your_secret_key
+API_URL=your_api_url
+```
+
+## Passo 2: script de geração
+
+Crie um `generate-env.js` na raiz:
+
+```javascript
+const fs = require('fs');
+const path = require('path');
+
+const envShared = path.join(__dirname, '.env.shared');
+const envVite = path.join(__dirname, 'vite-project', '.env');
+const envNext = path.join(__dirname, 'next-project', '.env');
+
+const sharedVars = fs.readFileSync(envShared, 'utf-8').split('\n');
+
+const viteVars = sharedVars.map((line) => {
+  if (line.startsWith('SECRET_KEY') || line.startsWith('API_URL')) {
+    return `VITE_PUBLIC_${line}`;
+  }
+  return line;
+});
+
+const nextVars = sharedVars.map((line) => {
+  if (line.startsWith('SECRET_KEY') || line.startsWith('API_URL')) {
+    return `NEXT_PUBLIC_${line}`;
+  }
+  return line;
+});
+
+fs.writeFileSync(envVite, viteVars.join('\n'), 'utf-8');
+fs.writeFileSync(envNext, nextVars.join('\n'), 'utf-8');
+```
+
+## Passo 3: rodar o script
+
+```bash
+node generate-env.js
+```
+
+Isso cria um `.env` em `vite-project/` com prefixo `VITE_PUBLIC_` e um `.env` em `next-project/` com prefixo `NEXT_PUBLIC_`.
+
+## Boas práticas
+
+- Adicione os `.env` gerados ao `.gitignore` para não vazar segredos.
+- Rode o script sempre que mudar o `.env.shared`.
+- Adicione o script como passo do build ou do deploy.
+- Para algo mais robusto, considere ferramentas como [dotenv-vault](https://www.dotenv.org/) ou um pacote interno no monorepo que exporte uma configuração tipada.

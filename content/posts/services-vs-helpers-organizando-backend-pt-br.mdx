@@ -1,0 +1,46 @@
+---
+title: "Organizando seu backend: services ou helpers?"
+description: "A diferença entre services e helpers, e como organizá-los na estrutura de pastas do seu backend."
+date: "2024-01-15"
+published: true
+categories: ["backend", "arquitetura", "pt-br"]
+image: "/images/hero/portrait-hybrid-v2-removebg.png"
+language: "pt-BR"
+translationKey: "services-vs-helpers-backend"
+---
+
+Quando se trata de desenvolver um backend robusto, a organização do código é crucial para manutenibilidade e escalabilidade. Neste artigo, vamos olhar a diferença entre dois componentes chave — **services** e **helpers** — e como organizá-los na estrutura de pastas.
+
+## Service: a espinha dorsal da lógica de negócio
+
+Services são o coração do seu backend. Eles encapsulam a lógica de negócio específica da aplicação, lidam com operações complexas, interagem com o banco e fazem cumprir as regras de domínio.
+
+- **Abstração da lógica de negócio**: services abstraem operações complexas, oferecendo uma interface limpa para o resto da aplicação. Isso aumenta a coesão e torna o código mais compreensível.
+- **Interação com o banco**: normalmente, services estão diretamente ligados à persistência. Eles gerenciam queries, updates e garantem a integridade dos dados.
+- **Reuso e escalabilidade**: encapsulando lógica de negócio em services, você cria componentes reutilizáveis que escalam conforme a necessidade.
+
+## Helper: utilitários versáteis para funcionalidades genéricas
+
+Enquanto services são específicos da aplicação, helpers são canivetes suíços com funcionalidades genéricas.
+
+- **Funcionalidade genérica**: helpers contêm funções não amarradas à lógica de negócio mas essenciais para tarefas comuns — manipulação de strings, formatação de datas, validações genéricas.
+- **Reuso entre contextos**: como são independentes da regra de negócio, podem ser usados em diversas partes do código, promovendo consistência e reduzindo duplicação.
+- **Manutenção simplificada**: isolando utilitários em helpers, ajustes em uma função genérica acontecem num único lugar.
+
+## Estruturando as pastas
+
+```
+/src/services    -> userService.ts, orderService.ts, paymentService.ts
+/src/helpers     -> stringHelper.ts, dateHelper.ts, validationHelper.ts
+```
+
+## Quando usar cada um?
+
+A regra prática:
+
+- **Services** para lógica de negócio específica da aplicação.
+- **Helpers** para funcionalidades genéricas e utilitárias.
+
+Essa separação mantém o código organizado, facilita a manutenção e sustenta o crescimento do projeto.
+
+**PS.** Embora a distinção entre service e helper apareça muito no contexto do MVC, prefiro a organização por feature (folder-by-feature) em vez de por tipo (folder-by-type) — embora vários sistemas legados ainda usem a segunda. Mas isso é assunto para outro post.

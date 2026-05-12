@@ -1,0 +1,70 @@
+---
+title: "Sharing Env Vars in a Monorepo with Vite and Next.js"
+description: "Keep a single .env.shared at the root of your monorepo and generate per-app .env files with the right Vite and Next.js prefixes."
+date: "2023-05-04"
+published: true
+categories: ["monorepo", "vite", "nextjs", "en"]
+image: "/images/hero/portrait-agent-v2-removebg.png"
+language: "en"
+translationKey: "share-envs-monorepo-vite-nextjs"
+---
+
+In a monorepo with **Vite** and **Next.js** apps there's an annoying detail: each framework requires a different prefix to expose vars to the client. Vite uses `VITE_PUBLIC_`, Next.js uses `NEXT_PUBLIC_`. How do you keep a single source of truth for shared variables?
+
+A simple solution: a `.env.shared` at the root, and a script that generates per-app `.env` files with the correct prefixes.
+
+## Step 1: create `.env.shared`
+
+At the root of the monorepo:
+
+```
+SECRET_KEY=your_secret_key
+API_URL=your_api_url
+```
+
+## Step 2: generation script
+
+Create a `generate-env.js` at the root:
+
+```javascript
+const fs = require('fs');
+const path = require('path');
+
+const envShared = path.join(__dirname, '.env.shared');
+const envVite = path.join(__dirname, 'vite-project', '.env');
+const envNext = path.join(__dirname, 'next-project', '.env');
+
+const sharedVars = fs.readFileSync(envShared, 'utf-8').split('\n');
+
+const viteVars = sharedVars.map((line) => {
+  if (line.startsWith('SECRET_KEY') || line.startsWith('API_URL')) {
+    return `VITE_PUBLIC_${line}`;
+  }
+  return line;
+});
+
+const nextVars = sharedVars.map((line) => {
+  if (line.startsWith('SECRET_KEY') || line.startsWith('API_URL')) {
+    return `NEXT_PUBLIC_${line}`;
+  }
+  return line;
+});
+
+fs.writeFileSync(envVite, viteVars.join('\n'), 'utf-8');
+fs.writeFileSync(envNext, nextVars.join('\n'), 'utf-8');
+```
+
+## Step 3: run the script
+
+```bash
+node generate-env.js
+```
+
+This creates a `.env` in `vite-project/` prefixed with `VITE_PUBLIC_` and a `.env` in `next-project/` prefixed with `NEXT_PUBLIC_`.
+
+## Best practices
+
+- Add generated `.env` files to `.gitignore` to avoid leaking secrets.
+- Run the script whenever `.env.shared` changes.
+- Add the script as a step in your build or deploy pipeline.
+- For something more robust, consider [dotenv-vault](https://www.dotenv.org/) or an internal monorepo package exposing a typed config.

@@ -1,0 +1,91 @@
+---
+title: "Usando for await...of para iterar arrays síncronos e assíncronos em JavaScript"
+description: "Como o loop for await...of simplifica o tratamento de dados assíncronos, com exemplos práticos."
+date: "2023-07-31"
+published: true
+categories: ["javascript", "async", "pt-br"]
+image: "/images/hero/rocket.png"
+language: "pt-BR"
+translationKey: "for-await-of-iterate-arrays"
+---
+
+Programação assíncrona é essencial em JavaScript quando lidamos com operações demoradas: requisições a APIs, leitura de arquivos, delays. O ES6 trouxe Promises e o ES2018 introduziu o **`for await...of`**, que simplifica ainda mais o consumo de dados assíncronos quando trabalhamos com iteráveis assíncronos (Promises, Generators).
+
+Vamos ver como usar `for await...of` para iterar arrays síncronos e assíncronos.
+
+## Exemplo 1: array de Promises
+
+Suponha que temos um array de delays e queremos executar tarefas assíncronas para cada um deles.
+
+```javascript
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+const createDelays = [1000, 2000, 500, 3000, 5000, 10000, 100].map(ms => delay(ms));
+
+const asyncIterable = createDelays;
+
+(async () => {
+  for await (const delayTime of asyncIterable) {
+    console.log(`Esperei ${delayTime} ms.`);
+  }
+  console.log("Todos os delays processados.");
+})();
+```
+
+`delay` retorna uma Promise. O array `createDelays` contém Promises resolvendo em tempos diferentes. O `for await...of` aguarda cada Promise antes de prosseguir, processando sequencialmente.
+
+## Exemplo 2: array síncrono
+
+Agora um array comum e uma tarefa assíncrona aplicada a cada item.
+
+```javascript
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function processDelays(delays) {
+  for await (const delayTime of delays) {
+    await delay(delayTime);
+    console.log(`Esperei ${delayTime} ms.`);
+  }
+  console.log("Todos os delays processados.");
+}
+
+const delaysArray = [1000, 2000, 500, 3000, 5000, 10000, 100];
+processDelays(delaysArray);
+```
+
+Mesmo o array sendo síncrono, o loop fica assíncrono por causa do `await` interno — cada delay é tratado um após o outro.
+
+## Exemplo 3: array misto com operações assíncronas
+
+```javascript
+function fetchData(data) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(`Data: ${data}`);
+    }, Math.random() * 5000);
+  });
+}
+
+async function processArrayWithAsyncOperations(dataArray) {
+  for (const data of dataArray) {
+    const result = await fetchData(data);
+    console.log(result);
+  }
+  console.log("Todas as operações processadas.");
+}
+
+const dataArray = [1, 2, 3, 4, 5];
+processArrayWithAsyncOperations(dataArray);
+```
+
+O `fetchData` simula um fetch com delay aleatório. O loop processa cada item sequencialmente devido ao `await`.
+
+## Conclusão
+
+`for await...of` permite tratar dados assíncronos de forma elegante, garantindo processamento sequencial seja com dados puramente assíncronos, síncronos ou mistos.
+
+Veja o código rodando em [replit.com](https://replit.com/@tgmarinho/for-await-test#index.js).
