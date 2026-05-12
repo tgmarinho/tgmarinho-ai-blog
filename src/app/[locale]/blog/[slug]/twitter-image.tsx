@@ -3,6 +3,5 @@ export {
   alt,
   size,
   contentType,
-  generateStaticParams,
   generateImageMetadata,
 } from "./opengraph-image";

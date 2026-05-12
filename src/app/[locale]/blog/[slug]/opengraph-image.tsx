@@ -3,27 +3,28 @@ import { posts } from "#site/content";
 import { siteConfig } from "@/lib/constants";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { getPostLanguage } from "@/lib/posts-i18n";
-import { routing, type Locale } from "@/i18n/routing";
+import { type Locale } from "@/i18n/routing";
 
 export const alt = `${siteConfig.name} — blog post`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export function generateImageMetadata({
+export async function generateImageMetadata({
   params,
 }: {
-  params: { locale: Locale; slug: string };
+  params: Promise<{ locale: Locale; slug: string }>;
 }) {
-  const post = posts.find((p) => p.slug === params.slug && p.published);
+  const { slug } = await params;
+  const post = posts.find((p) => p.slug === slug && p.published);
   return [{ id: "main", alt: post?.title ?? alt, contentType, size }];
 }
 
 export default async function PostOpengraphImage({
   params,
 }: {
-  params: { locale: Locale; slug: string };
+  params: Promise<{ locale: Locale; slug: string }>;
 }) {
-  const { slug, locale } = params;
+  const { slug, locale } = await params;
   const post = posts.find((p) => p.slug === slug && p.published);
 
   if (!post) {
@@ -154,14 +155,3 @@ export default async function PostOpengraphImage({
   );
 }
 
-export function generateStaticParams() {
-  const params: Array<{ locale: Locale; slug: string }> = [];
-  for (const post of posts) {
-    if (!post.published) continue;
-    const lang = getPostLanguage(post);
-    params.push({ locale: lang, slug: post.slug });
-  }
-  // Keep routing import referenced to avoid unused warnings if locales change.
-  void routing;
-  return params;
-}
