@@ -1,0 +1,461 @@
+---
+title: "Creating a Node.js project"
+description: "See how easy it is to bootstrap a Node.js project in Visual Studio Code"
+date: "2019-09-11"
+published: true
+categories: ["Development"]
+image: "/assets/img/nodejs.png"
+language: "en"
+slug: "creating-a-project-in-node"
+translationKey: "criando-um-projeto-em-node"
+---
+
+## Creating the server
+
+If you have [Yarn](https://www.tgmarinho.com/conceitos-do-node/) installed on your machine, just run the command in the terminal, inside a folder in your workstation _(where you keep your projects)_:
+
+`❯ yarn init -y`
+
+After that, the `package.json` file will be created. It contains the references to the project's dependencies and the startup scripts you run with **npm** or **yarn**.
+
+Example: `package.json`
+
+```
+{
+	"name":  "modulo01",
+	"version":  "1.0.0",
+	"main":  "index.js",
+	"license":  "MIT"
+}
+```
+
+To install new dependencies, just run the command from the project root, where `package.json` lives. I'll install Express, a micro framework for building the server.
+
+`❯ yarn add express`
+
+Example: `package.json` with Express installed.
+
+```
+{
+	"name":  "modulo01",
+	"version":  "1.0.0",
+	"main":  "index.js",
+	"license":  "MIT",
+	"dependencies": {
+		"express":  "^4.17.1"
+	}
+}
+```
+
+After running `yarn add express`, Express is downloaded to your machine into the `node_modules` folder. This folder is local to each environment and should NOT be _committed_ to git.
+
+How do you get the dependencies on other machines? Just clone the project and run `yarn` in the root — Yarn will read `package.json` and download every dependency declared under `dependencies`.
+
+Next, create the `index.js` file
+
+and put this inside it:
+
+```
+// import the express module
+const express =  require("express");
+// declare a port for the server to listen on
+process.PORT  =  3333;
+// start the express server
+const server =  express();
+// declare a /test route that accepts a GET request and just logs "test" to the server
+server.get("/test", () => {
+	console.log("test");
+});
+// Starts the server listening on port 3333
+server.listen(process.PORT, () => {
+	console.log("running express on port: "  +  process.PORT);
+});
+```
+
+To run the script, just run from the project root:
+
+`❯ node index.js`
+
+### Routes, requests and responses
+
+The server listens for and receives requests, which are dispatched to routes. In my case, `/test` is a route, and it takes a function with two parameters, `req` and `res`. `req` holds the request data, and `res` holds the response data the server sends back to the frontend. I'm returning a JSON object with a `message` attribute and its content.
+
+```
+server.get("/test", (req, res) => {
+	return res.json({message: 'Hi, I am a Node app'})
+});
+```
+
+### Query & Route params
+
+There are three kinds of parameters — two on GET and one on POST.
+
+_**Query params**_ receive request data as URL parameters and can carry one or more values.
+
+_**Route params**_ receive request data directly in the route — the best way to fetch something by ID, for example.
+
+The syntax is different for each. Check the code:
+
+```
+const express =  require("express");
+process.PORT  =  3333;
+const server =  express();
+
+/**
+* three kinds of parameters
+* Query params = ?test=1
+* Route params = /users/1
+* Request Body = { "name": "Thiago" }
+*/
+
+  
+// Query params = ?test=1
+// hit it in the browser: http://localhost:3333/teste/?nome=Thiago
+server.get("/teste", (req, res) => {
+const nome = req.query.nome;
+	return res.json({ message:  `Hello ${nome}` });
+});
+
+
+// Route params = /users/1
+// hit it in the browser: http://localhost:3333/users/1
+server.get("/users/:id", (req, res) => {
+// const id = req.params.id;
+const { id } = req.params; // destructured with ES06
+	return res.json({ message:  `Fetching user with ID: ${id}` });
+});
+
+// Starts the server listening on port 3333
+server.listen(process.PORT, () => {
+	console.log("running express on port: "  +  process.PORT);
+});
+```
+
+### Using Insomnia
+
+Request Body is the more special one — it's sent as JSON in the body of the request, accepts a lot of data, and travels more discreetly. It's heavily used with the POST and PUT methods.
+
+We need a tool to test BODY and PUT methods while we still don't have a frontend.
+
+Two options: [POSTMAN](https://www.getpostman.com/) and [INSOMNIA](https://insomnia.rest/download/). I've been using [Insomnia](https://insomnia.rest/download/) out of personal preference — it's open source and has a really nice layout.
+
+![](/assets/img/screen-shot-2019-09-10-at-12.12.27.png)
+
+![](/assets/img/screen-shot-2019-09-10-at-12.15.59.png)
+
+### Using Nodemon
+
+[Nodemon](https://nodemon.io/) is a utility that watches for code changes and automatically restarts the server, so you don't have to keep stopping and starting the app manually. It makes the workflow more fun and automated.
+
+`❯ yarn add nodemon -D`
+
+Note that `-D` means it's a development dependency — it won't be used or installed in production. Once a project is live, it doesn't make sense to keep those dependencies around, especially because the server app generally isn't restarted that way, but that's another topic.
+
+So far, these are our dependencies:
+
+```
+{
+	"name":  "modulo01",
+	"version":  "1.0.0",
+	"main":  "index.js",
+	"license":  "MIT",
+	"dependencies": {
+		"express":  "^4.17.1"
+	},
+	"devDependencies": {
+		"nodemon":  "^1.19.2"
+	}
+}
+```
+
+To run the project, we can use:
+
+`❯ yarn nodemon index.js`
+
+It's better to add a script to `package.json`:
+
+```
+{
+	"name":  "modulo01",
+	"version":  "1.0.0",
+	"main":  "index.js",
+	"license":  "MIT",
+	"scripts": {
+		"dev":  "nodemon index.js"
+	},
+	"dependencies": {
+		"express":  "^4.17.1"
+	},
+	"devDependencies": {
+		"nodemon":  "^1.19.2"
+	}
+}
+```
+
+And then run:
+
+`❯ yarn dev`
+
+Yarn will run whatever is inside `dev`.
+
+## CRUD
+
+_**CRUD**_ (_Create, Retrieve, Update, Delete_) is the operation set for creating, reading (one or many users), updating and deleting users.
+
+### Create
+
+Before creating the route, we need to tell the server to use the `json` plugin so it can read the **request** body. Without it, you'll get a 500 status code error.
+
+`server.use(express.json());`
+
+Now we can write the route. This route receives a `Request Body` — the user's data inside the request body, in `JSON` format. That's why we use Express's `json` plugin on the `server` instance. Note that we're now using the POST method, so in Insomnia you should use POST to send data.
+
+```
+server.post("/users", (req, res) => {
+	// Grab the name variable from the request body
+	const { name } = req.body;
+	// Append the user to the end of the array
+	users.push(name);
+	// Return all users, including the new one
+	return res.json(users);
+});
+```
+
+![](/assets/img/screen-shot-2019-09-11-at-09.21.40.png)
+
+Notice the response already brings back the newly created user.
+
+### Read
+
+To list all users we can create a route:
+
+```
+server.get("/users", (req, res) => {
+	return res.json(users);
+});
+```
+
+Hitting `http://localhost:3333/users` returns the users array:
+
+```
+[
+  "Thiago",
+  "Delacyr",
+  "Filipe",
+  "Pedro",
+]
+```
+
+### Update
+
+To change a user you can use PUT or POST, but PUT is preferred.
+The users route now takes a parameter: `http://localhost:3333/users/2`, which could be the user's ID — in our case it's the array index (position) of the name.
+
+```
+server.put("/users/:index", (req, res) => {
+	// Grab the number from the route parameter
+	const { index } = req.params;
+	// Grab the request data
+	const { name } = req.body;
+	// Update the user name at the given index
+	users[index] = name;
+	// Return all users with the updated name
+	return res.json(users);
+});
+```
+
+![](/assets/img/screen-shot-2019-09-11-at-09.30.18.png)
+
+### Delete
+
+To delete a user you need the DELETE method and the parameter on the route — in our case the index of the user's name in the array. With that, we'll use JavaScript's [splice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice) to manipulate the users array.
+
+```
+server.delete("/users/:index", (req, res) => {
+	// Grab the number from the route parameter
+	const { index } = req.params;
+	// Remove the element from the array
+	users.splice(index, 1);
+return res.json(users);
+});
+```
+
+In the screenshot you can see it returns the array with the user already removed.
+
+![](/assets/img/screen-shot-2019-09-11-at-10.14.50.png)
+
+Usually you don't need to return a list — you remove the user and send back a success or failure. But to keep it simple I'll just send a success message:
+
+```
+return res.json({ message:  "Deleted successfully" });
+```
+
+## Middleware
+
+[Middleware](https://expressjs.com/en/guide/using-middleware.html) is the foundation of an Express application. You can think of it as an interceptor.
+
+A middleware is a function that takes `req` and `res` as parameters (it can take more). In other words, every function we pass to a route is a middleware.
+
+It manipulates the `req` and `res` variables — the request and response. It intercepts every request.
+
+There are several ways to use middlewares. We can have a global middleware.
+
+```
+// hi, I'm a middleware
+((req, res) => {
+	return res.json(users);
+});
+```
+
+Now I'll show a global middleware that logs a message to the terminal on every request. Pay attention to the `next` parameter — it's a function called at the end that finishes the middleware execution and lets the application flow continue:
+
+```
+// Global middleware
+server.use((req, res, next) => {
+	console.log("The request was called");
+	// keeps the application flow going
+	// Without next(), the app gets stuck inside this function
+	next();
+});
+```
+
+Middleware can be used to log every route. For that we create a global middleware at the top of the application, and every route call passes through this interceptor.
+
+```
+server.use((req, res, next) => {
+	console.log(`Method: ${req.method}
+				on URL:  ${req.url}`);
+	next();
+});
+```
+
+Server console:
+
+```
+running express on port: 3333
+The request was called
+Method: GET on URL: /users 
+The request was called
+Method: DELETE on URL: /users/1 
+The request was called
+Method: GET on URL: /users/2 
+The request was called
+Method: POST on URL: /users 
+The request was called
+Method: PUT on URL: /users/2 
+```
+
+Notice that for every route I hit via Insomnia or the browser, it went through the middleware and printed the message with the method and URL used in the request.
+
+#### Local middleware
+
+These run only on a specific route. We previously defined a global middleware that ran on every request, on every route. Now we want a local middleware that runs only on a given route.
+
+The function that receives the method and the request function can take multiple middlewares.
+
+Creating a local middleware that checks whether the user exists:
+
+```
+function  checkUserExists(req, res, next) {
+	// the name attribute is required; if missing, send a Bad Request status code with a message.
+	if (!req.body.name) {
+	return res.status(400).json({ error:  "Name is required!" });
+}
+	return  next();
+}
+```
+
+With the middleware in place, just call it inside the create and update routes.
+
+```
+server.post("/users", checkUserExists, (req, res) => {
+	const { name } = req.body;
+	users.push(name);
+	return res.json(users);
+});
+
+server.put("/users/:index", checkUserExists, (req, res) => {
+	const { index } = req.params;
+	const { name } = req.body;
+	users[index] = name;
+	return res.json(users);
+});
+```
+
+![](/assets/img/screen-shot-2019-09-11-at-11.09.31.png)
+
+I mentioned a route function can take multiple middlewares, so let's add another one. This time it checks whether the user given in the route actually exists in the array, and if not, returns an error message. This is great because it stops the request from continuing without a valid user and can even prevent app errors:
+
+```
+// Specific local middleware
+function checkUserInArray(req, res, next) {
+	if (!users[req.params.index]) {
+	return res.status(400).json({ error:  "User does not exists!" });
+	}
+	return  next();
+}
+```
+
+Now we can apply it to every route that uses the index parameter. Note that PUT now has two middlewares.
+
+```
+// List user at the given index passed in the route
+server.get("/users/:index", checkUserInArray, (req, res) => {
+	const { index } = req.params;
+	return res.json(users[index]);
+});
+
+// Update
+server.put("/users/:index", checkUserInArray, checkUserExists, (req, res) => {
+	const { index } = req.params;
+	const { name } = req.body;
+	users[index] = name;
+	return res.json(users);
+});
+// Delete
+server.delete("/users/:index", checkUserInArray, (req, res) => {
+	const { index } = req.params;
+	users.splice(index, 1);
+	return res.json({ message:  "Deleted successfully" });
+});
+```
+
+Middlewares can also mutate `req` and `res` — specifically `req`. This is very handy for saving data that can be reused later in the request lifecycle, like a token, user data, etc.
+
+For example, I'll change `checkUserInArray` to put the user on `req`.
+
+```
+// Specific local middleware
+function checkUserInArray(req, res, next) {
+	const user = users[req.params.index];
+	if (!user) {
+		return res.status(400).json({ error:  "User does not exists!" });
+	}
+
+	req.user = user;
+
+	return  next();
+}
+```
+
+And now we can use it, updating the method that fetches the user by index:
+
+```
+server.get("/users/:index", checkUserInArray, (req, res) => {
+	return res.json(req.user);
+});
+```
+
+Since the middleware runs before, in the function above I can access the `user` variable straight off `req`. Same behavior, less code. Nice, right!
+
+![](/assets/img/screen-shot-2019-09-11-at-11.18.15.png)
+
+## Debugging the application
+
+I hope to make a video showing this, but here's the [official link](https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_access-loaded-scripts).
+
+
+
+We've reached the end of another article. I hope you enjoyed it — I learned a lot. Any questions, drop them in the comments.
+
+### _****_[_**Click here for the full code.**_](https://github.com/tgmarinho/node_basico)_****_

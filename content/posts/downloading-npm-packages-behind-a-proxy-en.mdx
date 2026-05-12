@@ -1,0 +1,43 @@
+---
+title: "Downloading npm packages behind a proxy"
+description: "How to install npm packages from inside a network with a proxy."
+date: "2018-09-01"
+published: true
+categories: ["Development"]
+image: "/assets/img/cienciada.jpg"
+language: "en"
+translationKey: "como-baixar-pacotes-npm-na-rede-com-proxy"
+slug: "downloading-npm-packages-behind-a-proxy"
+---
+
+I cloned a project with npm packages and, when I ran npm install, I got this error:
+
+```
+npm ERR! code SELF_SIGNED_CERT_IN_CHAIN
+```
+
+```
+npm ERR! self signed certificate in certificate chain
+```
+
+```
+npm ERR! A complete log of this run can be found in:
+```
+
+```
+npm ERR! /home/tgmarinho/.npm/_logs/2018–01–09T13_25_08_875Z-debug.log
+```
+
+The fix was running:
+
+```
+npm config set strict-ssl false
+```
+
+And then:
+
+```
+npm install
+```
+
+That's it — the dependencies downloaded just fine!

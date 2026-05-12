@@ -1,0 +1,57 @@
+---
+title: "Como manter seu repositório atualizado com o projeto principal"
+description: "Passo a passo para sincronizar seu fork com o repositório original usando git remote, fetch e rebase."
+date: "2019-09-02"
+published: true
+categories: ["Desenvolvimento"]
+image: "/assets/img/github-social-code.jpeg"
+language: "pt-BR"
+slug: "como-manter-seu-repositorio-atualizado-com-o-projeto-principal"
+translationKey: "how-to-keep-your-repository-updated-with-main-project"
+---
+
+![github social coding](/assets/img/github-social-code.jpeg)
+
+Olá, siga este **passo a passo**:
+
+Adicione um novo remoto, você pode chamá-lo de 'upstream':
+
+```
+git remote add upstream https://github.com/user/project.git
+```
+
+Receba todas as branches desse novo remoto, como a 'upstream/master', por exemplo:
+
+```
+git fetch upstream
+```
+
+Garanta que você está na branch master:
+
+```
+git checkout master
+```
+
+Reescreva sua branch master, de forma que seus commits que ainda não estão no projeto principal apareçam por cima da lista.
+
+```
+git rebase upstream/master
+```
+
+Se você não quiser reescrever o histórico da sua branch master (talvez porque alguém já tenha clonado), substitua o último comando por este:
+
+```
+git merge upstream/master
+```
+
+No entanto, para deixar os próximos pull requests mais limpos, é uma boa ideia fazer o rebase. Se você fez rebase da sua branch a partir do upstream/master, talvez precise forçar um push para o seu repositório no GitHub. Você pode fazer assim:
+
+```
+git push -f origin master
+```
+
+Você só vai precisar fazer isso uma vez, depois de cada rebase.
+
+Espero ter ajudado!
+
+Fonte em português: https://gist.github.com/tgmarinho/f3123ff0166da3ec46e84ccbd5b43a02
