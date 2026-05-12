@@ -7,7 +7,9 @@
     "dev": "velite && next dev",
     "build": "velite --clean && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "audit:refs": "node scripts/audit-broken-refs.mjs",
+    "audit:i18n-seo": "node scripts/validate-i18n-seo.mjs"
   },
   "dependencies": {
     "@upstash/redis": "^1.36.2",
