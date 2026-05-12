@@ -173,7 +173,7 @@ export default async function CommunityPage() {
 
         {/* ── Final CTA ── */}
         <section className="mt-20 text-center">
-          <p className="mx-auto max-w-md font-[family-name:var(--font-fraunces)] text-[18px] italic leading-[1.5] text-muted-foreground">
+          <p className="mx-auto max-w-md text-[18px] italic leading-[1.5] text-muted-foreground">
             {t("quote")}
           </p>
           <div className="mt-8">

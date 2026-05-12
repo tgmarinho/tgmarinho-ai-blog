@@ -2,17 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import {
-  Geist,
-  Manrope,
-  JetBrains_Mono,
-  Fraunces,
-  Source_Serif_4,
-} from "next/font/google";
+import { Geist, Manrope, JetBrains_Mono } from "next/font/google";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { CursorAurora } from "@/components/fx/cursor-aurora";
-import { ShootingStars } from "@/components/fx/shooting-stars";
+import { Atmospheric } from "@/components/fx/atmospheric";
 import { siteConfig } from "@/lib/constants";
 import { routing, type Locale } from "@/i18n/routing";
 
@@ -25,29 +18,14 @@ const geistSans = Geist({
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
-  display: "swap",
-});
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  display: "swap",
-  axes: ["opsz", "SOFT"],
-});
-
-const sourceSerif = Source_Serif_4({
-  variable: "--font-source-serif",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -113,11 +91,10 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className="dark">
       <body
-        className={`${geistSans.variable} ${manrope.variable} ${jetbrainsMono.variable} ${fraunces.variable} ${sourceSerif.variable} font-sans min-h-screen flex flex-col antialiased`}
+        className={`${geistSans.variable} ${manrope.variable} ${jetbrainsMono.variable} font-sans min-h-screen flex flex-col antialiased`}
       >
         <NextIntlClientProvider>
-          <CursorAurora />
-          <ShootingStars />
+          <Atmospheric />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
