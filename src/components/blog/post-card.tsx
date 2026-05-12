@@ -2,7 +2,6 @@
 
 import { useLocale } from "next-intl";
 import { ArrowUpRight, Clock } from "lucide-react";
-import readingTime from "reading-time";
 import { Link } from "@/i18n/navigation";
 import { GlowCard } from "@/components/fx/glow-card";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
@@ -14,7 +13,8 @@ interface PostCardProps {
   date: string;
   slug: string;
   categories: string[];
-  body: string;
+  /** Pre-computed reading time text (server-side). */
+  readingTimeText: string;
   /** Visual rhythm for asymmetric grids. */
   variant?: "default" | "feature" | "compact";
   className?: string;
@@ -26,12 +26,11 @@ export function PostCard({
   date,
   slug,
   categories,
-  body,
+  readingTimeText,
   variant = "default",
   className,
 }: PostCardProps) {
   const locale = useLocale();
-  const stats = readingTime(body);
   const formattedDate = formatIsoDateForDisplay(
     date,
     locale === "pt-BR" ? "pt-BR" : "en-US",
@@ -107,7 +106,7 @@ export function PostCard({
         <span className="h-1 w-1 rounded-full bg-white/15" />
         <span className="inline-flex items-center gap-1.5">
           <Clock className="h-3 w-3" />
-          {stats.text}
+          {readingTimeText}
         </span>
       </div>
     </GlowCard>

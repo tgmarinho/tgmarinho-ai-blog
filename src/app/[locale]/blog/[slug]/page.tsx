@@ -13,6 +13,8 @@ import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { getPostLanguage, getTranslationPair } from "@/lib/posts-i18n";
 import { routing, type Locale } from "@/i18n/routing";
 
+export const revalidate = 3600;
+
 interface PostPageProps {
   params: Promise<{ locale: Locale; slug: string }>;
 }
