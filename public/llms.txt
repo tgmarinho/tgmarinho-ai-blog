@@ -1,0 +1,67 @@
+# Thiago Marinho
+
+> Engineering leader writing about agentic systems, AI tooling, and the craft of building with LLMs.
+
+This site contains a bilingual technical blog (English and Brazilian Portuguese), a portfolio of projects, and notes on AI engineering. Posts mirror across languages when possible — each post has a `translationKey` linking its pair.
+
+## Site map
+
+- [Home](https://tgmarinhopro.com/)
+- [Blog](https://tgmarinhopro.com/blog)
+- [Projects](https://tgmarinhopro.com/projects)
+- [About](https://tgmarinhopro.com/about)
+- [CV](https://tgmarinhopro.com/cv)
+- [Community](https://tgmarinhopro.com/community)
+- [Contact](https://tgmarinhopro.com/contact)
+- [RSS feed](https://tgmarinhopro.com/rss.xml)
+- [Sitemap](https://tgmarinhopro.com/sitemap.xml)
+
+## Recent posts (English)
+
+- [Volumetric light, fog rings and 3D parallax: rebuilding the hero in pure CSS/SVG](https://tgmarinhopro.com/en/blog/hero-volumetric-light-3d-parallax): Five techniques used to redesign the home hero — Grok-style volumetric beam, dissolved photo edges, organic fog ring, mouse-driven 3D tilt, and AI background removal — taught both as prompts and as code.
+- [I fear regret more than failure](https://tgmarinhopro.com/en/blog/i-fear-regret-more-than-failure): A personal reflection on leaving stability, pursuing an international tech career, and accepting that some decisions are still worth it even when they hurt.
+- [The new visual identity of my website and blog: Futurist Minimalism + Agentic AI](https://tgmarinhopro.com/en/blog/new-website-visual-identity-agentic-futurism-en): The rationale behind the redesign: palette, typography, visual primitives, and engineering decisions to make the website more distinctive, modern, and alive.
+- [Harness Engineering: what makes AI agents ship real software](https://tgmarinhopro.com/en/blog/harness-engineering-ai-agents-inscricoes-top): Better models help, but the real quality leap in coding agents comes from the environment around them: context, sensors, memory, gates, and orchestration.
+- [Imposter Syndrome in Tech](https://tgmarinhopro.com/en/blog/imposter-syndrome-in-tech): A reflection inspired by Julie Pagano's talk on insecurity, anxiety, confidence, and the invisible monsters that follow people through tech careers.
+- [Software Developer/Engineer Career Levels](https://tgmarinhopro.com/en/blog/software-developer-engineer-career-levels): A practical guide to software engineering career levels, from junior to distinguished engineer, and the skills expected at each stage.
+- [Agent Harness Engineering in practice](https://tgmarinhopro.com/en/blog/agent-harness-engineering-in-practice): Why coding agent performance depends more on the harness than on the model alone, and how to apply that in day-to-day engineering.
+- [Vibe Coding vs Agentic Engineering](https://tgmarinhopro.com/en/blog/vibe-coding-vs-agentic-engineering): A quick and simple look at the difference between vibe coding and agentic engineering.
+- [Avoiding In-Memory Aggregation and Overfetching in MongoDB with Prisma](https://tgmarinhopro.com/en/blog/avoiding-in-memory-aggregation-and-overfetching-in-mongodb-with-prisma): How we stopped loading entire collections into Node.js and let the database do its job.
+- [Getting Started with Next.js 15](https://tgmarinhopro.com/en/blog/getting-started-with-next-js-15): Learn how to build modern web applications with Next.js 15, the latest version with App Router and React Server Components.
+- [TypeScript Tips for React Developers](https://tgmarinhopro.com/en/blog/typescript-tips-for-react-developers): Essential TypeScript patterns and tips that will make your React code more type-safe and maintainable.
+- [How to create a custom random ID with Postgres](https://tgmarinhopro.com/en/blog/how-to-create-a-custom-random-id-with-postgres): Helper function for creating a custom random ID like a9Kl12
+- [Web3 - What to build?](https://tgmarinhopro.com/en/blog/web3-what-to-build): Know about what kind of solutions you can build using web3 technology
+- [How to Deploy a Monorepo with TurboRepo on Heroku](https://tgmarinhopro.com/en/blog/how-to-deploy-a-monorepo-with-turborepo-on-heroku): Github + Monorepo + TurboRepo + Heroku
+- [How to merge two or more repos into a new one without losing the history of commits](https://tgmarinhopro.com/en/blog/how-to-merge-two-or-more-repos-into-a-new-one-without-losing-the-history-of-commits): TurboRepo in Action
+- [Becoming a fitness Dev](https://tgmarinhopro.com/en/blog/becoming-a-fitness-dev): The Five Do's for good daily habits that you should begin today.
+- [React Suspense - in the right way](https://tgmarinhopro.com/en/blog/react-suspense-in-the-right-way): Study case about how to use React Suspense
+- [Basic Wax blockchain](https://tgmarinhopro.com/en/blog/basic-wax-blockchain): Useful links, sample code about how to interact with
+- [How to get the first job](https://tgmarinhopro.com/en/blog/how-to-get-the-first-job): What I tell to my mentees - Tips to getting a Job
+- [Using find with delete flag](https://tgmarinhopro.com/en/blog/using-find-with-delete-flag): Nice command Unix find.
+
+## Posts recentes (Português)
+
+- [Luz volumétrica, anel de névoa e paralax 3D: reconstruindo o hero em CSS/SVG puro](https://tgmarinhopro.com/blog/hero-luz-volumetrica-paralax-3d): Cinco técnicas usadas no redesign do hero da home — feixe volumétrico estilo Grok, borda de foto dissolvida, anel de névoa orgânico, paralax 3D no mouse e remoção de fundo com IA — ensinadas como prompts e como código.
+- [A nova identidade visual do meu website e blog: Minimalismo Futurista + IA Agentic](https://tgmarinhopro.com/blog/nova-identidade-visual-website-blog-pt-br): O racional por trás do redesign: paleta, tipografia, componentes visuais e decisões técnicas para criar um site mais autoral, moderno e vivo.
+- [Tenho mais medo do arrependimento do que de quebrar a cara](https://tgmarinhopro.com/blog/tenho-mais-medo-do-arrependimento-do-que-de-quebrar-a-cara): Uma reflexão sobre sair da estabilidade, tentar uma carreira internacional em tecnologia e aceitar que algumas decisões fazem sentido mesmo quando doem.
+- [Harness Engineering: o que faz agentes de IA entregarem software de verdade](https://tgmarinhopro.com/blog/harness-engineering-agentes-ia-inscricoes-top): Modelos melhores ajudam, mas o salto de qualidade em agentes de código vem do ambiente ao redor: contexto, sensores, memória, gates e orquestração.
+- [Níveis de carreira de Software Developer/Engineer](https://tgmarinhopro.com/blog/niveis-de-carreira-de-software-developer-engineer): Um guia prático sobre os níveis de carreira em engenharia de software, do júnior ao distinguished engineer, e as habilidades esperadas em cada etapa.
+- [Síndrome do impostor na tecnologia](https://tgmarinhopro.com/blog/sindrome-do-impostor-na-tecnologia): Uma reflexão baseada na palestra de Julie Pagano sobre insegurança, ansiedade, confiança e os monstros invisíveis que afetam pessoas na tecnologia.
+- [Agent Harness Engineering na prática](https://tgmarinhopro.com/blog/agent-harness-engineering-na-pratica): Por que o desempenho de agentes de código depende mais do harness do que só do modelo, e como aplicar isso no dia a dia.
+- [Vibe Coding vs Agentic Engineering](https://tgmarinhopro.com/blog/vibe-coding-x-engenharia-agentica): Um olhar rápido e direto sobre a diferença entre vibe coding e agentic engineering.
+- [Evitando agregação em memória e overfetching no MongoDB com Prisma](https://tgmarinhopro.com/blog/evitando-agregacao-em-memoria-overfetching-mongodb-prisma): Como paramos de carregar coleções inteiras no Node.js e deixamos o banco fazer o trabalho dele.
+- [Começando com Next.js 15](https://tgmarinhopro.com/blog/comecando-com-nextjs-15): Aprenda a construir aplicações web modernas com Next.js 15, a versão mais recente com App Router e React Server Components.
+- [Dicas de TypeScript para Devs React](https://tgmarinhopro.com/blog/dicas-de-typescript-para-devs-react): Padrões e dicas essenciais de TypeScript para deixar seu código React mais type-safe e fácil de manter.
+- [Como criar um ID aleatório customizado no Postgres](https://tgmarinhopro.com/blog/como-criar-um-id-aleatorio-customizado-no-postgres): Função auxiliar para criar um ID aleatório customizado como a9Kl12
+- [Web3 - O que construir?](https://tgmarinhopro.com/blog/web3-o-que-construir): Conheça os tipos de soluções que você pode construir usando a tecnologia web3
+- [Como fazer deploy de um monorepo com TurboRepo no Heroku](https://tgmarinhopro.com/blog/como-fazer-deploy-de-monorepo-com-turborepo-no-heroku): Github + Monorepo + TurboRepo + Heroku
+- [Como mesclar dois ou mais repos em um só sem perder o histórico de commits](https://tgmarinhopro.com/blog/como-mesclar-dois-ou-mais-repos-sem-perder-historico): TurboRepo na prática
+- [Tornando-se um Dev fitness](https://tgmarinhopro.com/blog/tornando-se-um-dev-fitness): Os cinco hábitos diários que você deveria começar hoje.
+- [React Suspense - do jeito certo](https://tgmarinhopro.com/blog/react-suspense-do-jeito-certo): Estudo de caso sobre como usar o React Suspense
+- [Básico sobre a Wax Blockchain](https://tgmarinhopro.com/blog/basico-sobre-wax-blockchain): Links úteis e exemplos de código para começar a interagir com a Wax
+- [Como conseguir o primeiro emprego](https://tgmarinhopro.com/blog/como-conseguir-o-primeiro-emprego): O que eu digo para os meus mentorados - Dicas para conseguir um emprego
+- [Usando find com a flag delete](https://tgmarinhopro.com/blog/usando-find-com-flag-delete): Um comando útil do Unix find.
+
+## Optional
+
+- [Full content (Markdown)](https://tgmarinhopro.com/llms-full.txt) — concatenated post bodies for ingestion.
