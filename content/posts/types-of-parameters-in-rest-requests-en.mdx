@@ -1,0 +1,106 @@
+---
+title: "Types of Parameters in REST Requests"
+description: "Conceptualizing and differentiating the types of request parameters in REST APIs."
+date: "2020-03-29"
+published: true
+categories: ["Development"]
+image: "/assets/img/roadway-path-montain.jpg"
+language: "en"
+slug: "types-of-parameters-in-rest-requests"
+translationKey: "tipos-de-par-metros-das-requisi-es-rest"
+---
+
+There are three types of parameters: two used with the GET method and one with the POST method.
+
+- Query Params
+- Route Params
+- Body Params
+
+### Query & Route Params
+
+[Query params](https://en.wikipedia.org/wiki/Query_string) carry request data as parameters in the URL and can contain one or more parameters.
+
+Example:
+
+```
+http://minhaapi.com/movies?name=transformes&duration=2&actor=octimusprime
+```
+
+_**Route params**_ carry request data in the route itself. It's the best way to fetch, delete, or update something by ID, for example:
+
+```
+GET http://minhaapi.com/movies/1
+```
+
+```
+DELETE http://minhaapi.com/movies/1
+```
+
+```
+PUT http://minhaapi.com/movies/1
+```
+
+In the example above, we fetch, delete, and update the movie with ID 1.
+
+Both change the way you write your code. Take a look:
+
+```
+/**
+* three types of parameters
+* Query params = ?test=1
+* Route params = /users/1
+* Request Body = { "name": "Thiago" }
+*/
+
+// Query params = ?name=thiago
+// make the request in the browser: http://localhost:3333/users/?name=Thiago
+server.get("/users", (req, res) => {
+  const name = req.query.name;
+	return res.json({ message:  `Hello ${name}` });
+});
+
+
+// Route Params = /users/1
+// make the request in the browser: http://localhost:3333/users/1
+server.get("/users/:id", (req, res) => {
+// const id = req.params.id;
+const { id } = req.params; // destructured with ES06
+	return res.json({ message:  `Fetching user with ID: ${id}`});
+});
+
+```
+
+### Body Params
+
+_**Body Params**_ carry request data in the request body, as a JSON object. Always used with the POST method.
+
+```
+POST
+{
+ "name": "Thiago",
+ "age": 21,
+ "email": "thiago@mail.com"
+}
+```
+
+And in the controller you grab the request to save the data into the database.
+
+```
+server.post("/users", (req, res){
+    const { name, age, email } = req.body;
+
+    await connection("users").insert({ name, age, email });
+
+    return res.json({ id });
+ }
+```
+
+The goal was to show the differences and provide proper examples.
+
+Whenever the question of which is which comes up, just come back to this post.
+
+In summary:
+
+Query Param: you'll use `?name=thiago&lastname=oliveira`
+
+Route Param: you'll use `/users/1`

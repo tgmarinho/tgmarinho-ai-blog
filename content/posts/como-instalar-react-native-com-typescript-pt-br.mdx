@@ -1,0 +1,68 @@
+---
+title: "Como instalar React Native com TypeScript"
+description: "Vou mostrar como instalar React Native com TypeScript"
+date: "2019-11-12"
+published: true
+categories: ["mobile"]
+image: "/assets/img/react-native-header.png"
+language: "pt-BR"
+slug: "como-instalar-react-native-com-typescript"
+translationKey: "how-to-install-react-native-with-typescript"
+---
+
+Quando você precisa instalar alguma dependência no seu projeto, pode usar:
+
+```
+npx --ignore-existing ....
+```
+
+Isso permite pegar a versão mais nova do pacote do npm sem procurar no `node_modules/bin` que foi instalado no seu sistema operacional.
+
+Tive problemas com isso ao tentar instalar React Native com TypeScript!
+
+Tentei:
+
+```
+npm uninstall -g react-native-cli
+```
+
+e também:
+
+```
+yarn global add @react-native-community/cli
+```
+
+E nada funcionou. Então encontrei esta resposta:
+[https://github.com/react-native-community/react-native-template-typescript/issues/80#issuecomment-536419979](https://github.com/react-native-community/react-native-template-typescript/issues/80#issuecomment-536419979)
+
+Aí pesquisei sobre `npx --ignore-existing`
+
+e achei isto:
+
+> \--ignore-existing - If this flag is set, npx will not look in $PATH , or in the current package's node_modules/.bin for an existing version before deciding whether to install. Binaries in those paths will still be available for execution, but will be shadowed by any packages requested by this install.
+>
+> de: https://www.npmjs.com/package/npx
+
+Então, tentei:
+
+```
+npx --ignore-existing react-native init MyApp --template react-native-template-typescript
+```
+
+E funcionou \o/! Mas demora mais, porque baixa todo o conteúdo da Internet, sem usar os arquivos em cache.
+
+Agora seu projeto React Native será instalado sem problemas. Você pode rodar:
+
+```
+cd MyApp && yarn ios
+```
+
+ou
+
+```
+cd MyApp && yarn android
+```
+
+Para instalar no simulador iOS ou no emulador Android.
+
+crédito: [Imagem](https://medium.com/reactbrasil/quais-desafios-vou-enfrentar-ao-come%C3%A7ar-um-app-com-react-native-a456db89c081)

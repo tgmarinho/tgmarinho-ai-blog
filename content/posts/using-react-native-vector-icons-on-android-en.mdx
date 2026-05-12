@@ -1,0 +1,79 @@
+---
+title: "Using react-native-vector-icons in React Native - ANDROID"
+description: "How to set up and use react-native-vector-icons on Android in modern React Native projects"
+date: "2019-10-27"
+published: true
+categories: ["mobile"]
+image: "/assets/img/react-native-header.png"
+language: "en"
+translationKey: "utilizando-cones-do-react-native-vector-icons-no-react-native-android"
+---
+
+To use icons in React Native we need to install the library:
+
+```
+yarn add react-native-vector-icons
+```
+
+It ships with lots of nice icons from MaterialIcons, Font Awesome, and more. To see them all, [click here](https://oblador.github.io/react-native-vector-icons/).
+
+With the RN version I'm using, `"react-native":  "0.61.1",` (Fast Reload \o/),
+
+we **no longer need** to run:
+
+```
+react-native link react-native-vector-icons
+```
+
+But we [do need](https://github.com/oblador/react-native-vector-icons#android) to edit the file:
+```
+android/app/build.gradle
+```
+
+Not the `android/build.gradle` file — be careful, there are two of them; it's the one inside */app/*.
+
+
+Just add this line at the end of the file:
+
+```
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+```
+
+Or, if you want to pick specific fonts (which I recommend):
+
+```
+project.ext.vectoricons = [
+    iconFontNames: [ 'MaterialIcons.ttf', 'EvilIcons.ttf' ] // Name of the font files you want to copy
+]
+
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+```
+
+To use it, we need to import it in the code. In this case I'm importing from MaterialIcons:
+
+```
+import Icon from 'react-native-vector-icons/MaterialIcons'
+Icon.loadFont();
+```
+
+Yes, that `Icon.loadFont()` is required. If you switch MaterialIcons for another font, for example FontAwesome, `loadFont()` has to be called again. So it's best to keep it in the code even if you've already called it once with another font. It's a good idea to put this setup in a configuration file, for example: `loadFonts.js`.
+
+Now just use `Icon` in your code:
+
+```
+...
+<SubmitButton>
+   <Icon name="add" size={20} color="#FFF" />
+</SubmitButton>
+...
+```
+
+Done!
+
+This one was smooth — it ran perfectly on my phone! =)
+
+
+Source: https://github.com/oblador/react-native-vector-icons
+
+
+[Post image](https://medium.com/react-native-training/best-practices-for-creating-react-native-apps-part-1-66311c746df3)

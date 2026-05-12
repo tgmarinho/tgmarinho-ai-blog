@@ -1,0 +1,95 @@
+---
+title: "How to access Redis from inside Docker and run queries"
+description: "Connect to a Redis container and inspect keys/values with the redis-cli"
+date: "2019-11-05"
+published: true
+slug: "how-to-access-redis-from-inside-docker"
+categories: ["Development"]
+image: "/assets/img/redis.png"
+language: "en"
+translationKey: "como-acessar-o-redis-de-dentro-do-docker-e-fazer-consultas"
+---
+
+## **Concept**
+
+[Redis](https://redis.io/) is an open-source, in-memory key-value data store. It offers a versatile set of in-memory data structures that make it easy to build a wide range of custom applications. The most common Redis use cases include caching, session management, PUB/SUB, and leaderboards. It's the best-known key-value store today. It's BSD-licensed, written in optimized C, and supported by many programming languages. Redis stands for **RE**mote **DI**ctionary **S**erver. ([Source](https://aws.amazon.com/pt/elasticache/what-is-redis/)).
+
+It stores lists, sets, strings, and hashes. It's highly performant, great for query caching and managing job scheduling queues.
+
+## Using it
+
+There are plenty of articles online about installing Redis with Docker. After installing it, I wanted to inspect what was being persisted in memory — i.e., inside the Redis key/value store.
+
+Accessing Redis from inside the Docker container:
+
+```
+docker exec -it redisbarber sh
+```
+
+Now I just need to enter the Redis CLI by typing **redis-cli**:
+
+```
+/data # redis-cli
+```
+
+If everything works, you'll see the IP and port, and a prompt waiting for commands:
+
+```
+127.0.0.1:6379>
+```
+
+The two most useful commands for me so far have been:
+
+List all keys (they're strings):
+
+```
+127.0.0.1:6379> keys *
+```
+
+Output:
+
+1. "bq:CancellationMail:id"
+2. "**cache:providers**"
+3. ... _Note: there were many others that I'm omitting here._
+
+To fetch a specific key, just type KEYS "**key name**":
+
+```
+127.0.0.1:6379> KEYS "cache:providers"
+```
+
+And to get the value of a key:
+
+```
+127.0.0.1:6379> MGET key "cache:providers"
+```
+
+1. (nil)
+2. "JSON array with provider objects (values omitted for brevity)"
+   127.0.0.1:6379>
+
+_It returned an array with several objects. For context, this is the cache of a database query that returns my providers. If you'd like a post on how to handle caching in Node using Redis, drop a comment: Post about caching with Node + Redis._
+
+So, to recap, the commands are:
+
+```
+docker exec -it redisbarber sh
+```
+
+```
+/data # redis-cli
+```
+
+```
+keys *
+```
+
+```
+KEYS "cache:providers"
+```
+
+```
+MGET key "cache:providers"
+```
+
+Cheers =)
