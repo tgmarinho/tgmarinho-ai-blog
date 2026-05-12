@@ -308,9 +308,9 @@ export function parseMarkdown(content: string): ReactNode {
       flushList();
       flushIframe();
       elements.push(
-        <h1 key={`h1-${i}`} className="mb-4 text-3xl font-bold tracking-tight">
+        <h2 key={`h1-${i}`} className="mb-4 text-3xl font-bold tracking-tight">
           {formatInlineMarkdown(trimmed.substring(2))}
-        </h1>
+        </h2>
       );
       continue;
     }

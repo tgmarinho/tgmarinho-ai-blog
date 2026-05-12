@@ -185,12 +185,12 @@ function parseMarkdown(content: string) {
       flushLists();
       flushBlockquote();
       elements.push(
-        <h1
+        <h2
           key={`h1-${i}`}
           className="mb-2 font-display text-[36px] font-bold leading-[1.05] tracking-[-0.025em] text-foreground md:text-[44px]"
         >
           {formatInlineMarkdown(trimmed.substring(2))}
-        </h1>
+        </h2>
       );
       continue;
     }
