@@ -38,7 +38,7 @@ const projects: Project[] = [
       "Resend",
     ],
     github: "https://github.com/tgmarinho/itop-lgnd",
-    live: "https://inscricoestop.com.br",
+    live: "https://itop-lgnd-inscricoestop.vercel.app/demo",
   },
   {
     title: "Unicrow",
