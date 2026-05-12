@@ -3,17 +3,10 @@ import { Link } from "@/i18n/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { PostCard } from "@/components/blog/post-card";
 
-interface Post {
-  title: string;
-  description?: string;
-  date: string;
-  slug: string;
-  categories: string[];
-  body: string;
-}
+import type { PostMeta } from "@/lib/velite";
 
 interface RecentPostsProps {
-  posts: Post[];
+  posts: PostMeta[];
 }
 
 export async function RecentPosts({ posts }: RecentPostsProps) {

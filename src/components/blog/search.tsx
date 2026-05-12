@@ -1,27 +1,26 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import Fuse from "fuse.js";
+import { useState, useMemo, useRef, useCallback } from "react";
+import type FuseType from "fuse.js";
 import { Search as SearchIcon, X } from "lucide-react";
 import { PostCard } from "./post-card";
-
-interface Post {
-  title: string;
-  description?: string;
-  date: string;
-  slug: string;
-  categories: string[];
-  body: string;
-  plainBody: string;
-  published: boolean;
-}
+import type { PostMeta } from "@/lib/velite";
 
 interface BlogSearchProps {
-  posts: Post[];
+  posts: PostMeta[];
   categories: string[];
   searchPlaceholder?: string;
   emptyLabel?: string;
   allLabel?: string;
+}
+
+// Slim index — Fuse only needs the fields we score on; we resolve back to
+// the full PostMeta via slug after a hit. Keeps the indexed JSON small.
+interface SearchIndexItem {
+  title: string;
+  description: string;
+  categories: string[];
+  slug: string;
 }
 
 export function BlogSearch({
@@ -33,37 +32,58 @@ export function BlogSearch({
 }: BlogSearchProps) {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const fuseRef = useRef<FuseType<SearchIndexItem> | null>(null);
+  const [fuseReady, setFuseReady] = useState(false);
 
-  const fuse = useMemo(
+  const index = useMemo<SearchIndexItem[]>(
     () =>
-      new Fuse(posts, {
-        keys: [
-          { name: "title", weight: 3 },
-          { name: "description", weight: 2 },
-          { name: "categories", weight: 1.5 },
-          { name: "plainBody", weight: 1 },
-        ],
-        threshold: 0.3,
-        includeScore: true,
-      }),
+      posts.map((p) => ({
+        title: p.title,
+        description: p.description ?? "",
+        categories: p.categories,
+        slug: p.slug,
+      })),
     [posts]
   );
+
+  const ensureFuse = useCallback(async () => {
+    if (fuseRef.current) return;
+    const { default: Fuse } = await import("fuse.js");
+    fuseRef.current = new Fuse(index, {
+      keys: [
+        { name: "title", weight: 3 },
+        { name: "description", weight: 2 },
+        { name: "categories", weight: 1.5 },
+      ],
+      threshold: 0.3,
+      includeScore: true,
+    });
+    setFuseReady(true);
+  }, [index]);
 
   const filteredPosts = useMemo(() => {
     let results = posts;
 
-    if (query.trim()) {
-      results = fuse.search(query).map((r) => r.item);
+    if (query.trim() && fuseReady && fuseRef.current) {
+      const hits = fuseRef.current.search(query);
+      const order = new Map(hits.map((h, i) => [h.item.slug, i]));
+      results = posts
+        .filter((p) => order.has(p.slug))
+        .sort((a, b) => (order.get(a.slug)! - order.get(b.slug)!));
     }
 
     if (selectedCategory) {
       results = results.filter((p) => p.categories.includes(selectedCategory));
     }
 
-    return results.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [query, selectedCategory, posts, fuse]);
+    if (!query.trim()) {
+      results = [...results].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+    }
+
+    return results;
+  }, [query, selectedCategory, posts, fuseReady]);
 
   const [feature, ...rest] = filteredPosts;
 
@@ -77,7 +97,11 @@ export function BlogSearch({
             type="search"
             placeholder={searchPlaceholder}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onFocus={ensureFuse}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              if (e.target.value) void ensureFuse();
+            }}
             className="h-12 w-full rounded-full border border-white/[0.06] bg-white/[0.025] pl-11 pr-11 text-[14px] text-foreground placeholder:text-muted-foreground/70 backdrop-blur-md transition-all focus:border-cyan-300/40 focus:outline-none focus:ring-4 focus:ring-cyan-300/10"
           />
           {query && (

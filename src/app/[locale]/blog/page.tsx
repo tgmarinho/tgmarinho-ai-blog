@@ -1,11 +1,11 @@
 import { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { posts } from "#site/content";
-import { sortPostsByDate, getAllCategories } from "@/lib/velite";
-import { getPostsForLocale } from "@/lib/posts-i18n";
+import { getPostsMeta, getAllCategories } from "@/lib/velite";
 import { BlogSearch } from "@/components/blog/search";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import { routing, type Locale } from "@/i18n/routing";
+
+export const revalidate = 3600;
 
 interface BlogPageProps {
   params: Promise<{ locale: Locale }>;
@@ -40,7 +40,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const localePosts = sortPostsByDate(getPostsForLocale(posts, locale));
+  const localePosts = getPostsMeta(locale);
   const categories = getAllCategories(localePosts);
   const t = await getTranslations("blog.list");
 
