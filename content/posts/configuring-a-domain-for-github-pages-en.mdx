@@ -1,0 +1,35 @@
+---
+title: "Configuring a custom domain for GitHub Pages"
+description: "A quick tutorial on how to host a static site on GitHub Pages and point a custom domain to it."
+date: "2017-09-02"
+published: true
+categories: ["Development"]
+image: "/assets/img/lake.jpg"
+language: "en"
+slug: "configuring-a-domain-for-github-pages"
+translationKey: "configurando-o-dom-nio-para-o-github-pages"
+---
+
+Hey folks! I put together a quick tutorial for anyone who wants to host static sites on GitHub and wire up a custom domain.
+
+Take a look:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/51Eco4wDdvg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+In the video I walk through how to attach a domain (DNS) you own on GoDaddy to a static site hosted on GitHub.
+
+1. Add a `CNAME` file at the project root containing your domain
+2. Repository Settings – GitHub Pages – branch `master` and custom domain – `csmpsicologia.com` – SAVE
+3. Configure the DNS records on GoDaddy
+4. Wait a few minutes and test by visiting `csmpsicologia.com` or running `ping` / `dig` from the terminal
+5. Done
+
+Very handy for portfolios, landing pages, and other static sites out there.
+
+Case study:
+
+site with custom domain: [http://csmpsicologia.com/](http://csmpsicologia.com/)
+
+GitHub Pages: [https://tgmarinho.github.io/csmpsicologia/](https://tgmarinho.github.io/csmpsicologia/)
+
+repository: [https://github.com/tgmarinho/csmpsicologia](https://github.com/tgmarinho/csmpsicologia)
