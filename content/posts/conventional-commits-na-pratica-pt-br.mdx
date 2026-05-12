@@ -1,0 +1,109 @@
+---
+title: "Conventional Commits na prática: padrões para um histórico Git melhor"
+description: "Guia prático para escrever mensagens de commit melhores usando Conventional Commits — tipos, escopo, exemplos e cheat sheet."
+date: "2023-05-30"
+published: true
+categories: ["git", "boas-praticas", "pt-br"]
+image: "/images/hero/rocket-alpha.png"
+language: "pt-BR"
+translationKey: "conventional-commits-hands-on"
+---
+
+Quando você trabalha em time, é ótimo usar mensagens de commit significativas. Existe um padrão chamado **Conventional Commits**, uma convenção para escrever mensagens de commit em projetos de software que ajuda todo mundo a entender melhor as mudanças.
+
+Neste post vou consolidar o que aprendi escrevendo commits para times pequenos e grandes: a estrutura, os tipos mais usados, exemplos práticos e dicas.
+
+## Estrutura da mensagem
+
+```
+<tipo>(<escopo opcional>): <descrição curta no presente>
+
+[corpo opcional explicando o porquê]
+
+[rodapé opcional, ex: "Fixes #123" ou "BREAKING CHANGE: ..."]
+```
+
+- **Tipo**: que tipo de mudança é (ver tabela abaixo).
+- **Escopo** (opcional): o que está sendo afetado (ex: `auth`, `ui`, `docs`).
+- **Descrição**: curta, no presente, 50–72 caracteres.
+- **Corpo**: detalhes adicionais, justificando o porquê da mudança.
+- **Rodapé**: metadados como `Fixes #123` ou `BREAKING CHANGE`.
+
+## Tipos mais comuns
+
+| Tipo | Quando usar | Exemplo |
+|------|-------------|---------|
+| `feat` | Nova funcionalidade | `feat(ui): add dark mode toggle` |
+| `fix` | Correção de bug | `fix(auth): resolve token expiry` |
+| `docs` | Mudanças em documentação | `docs(readme): update install steps` |
+| `style` | Formatação, sem mudar lógica | `style(css): adjust padding` |
+| `refactor` | Reorganização sem mudar comportamento | `refactor(api): simplify fetch` |
+| `test` | Adicionar ou ajustar testes | `test(unit): cover login edge cases` |
+| `chore` | Manutenção (deps, ferramentas) | `chore(deps): update lodash` |
+| `perf` | Melhoria de performance | `perf(db): optimize query` |
+| `ci` | Mudanças no CI/CD | `ci(pipeline): add lint step` |
+| `build` | Mudanças no build system | `build(webpack): minify output` |
+| `revert` | Reverter commit anterior | `revert: undo feat(ui)` |
+
+## Exemplos práticos
+
+### Feature simples
+
+```
+feat(api): add user profile endpoint
+```
+
+### Fix com detalhes
+
+```
+fix(cart): prevent duplicate items
+
+- Added check for existing item ID
+
+Fixes #45
+```
+
+### Breaking change
+
+```
+feat(auth): switch to JWT tokens
+
+- Replaced session cookies with JWT
+
+BREAKING CHANGE: Old tokens invalid
+```
+
+### Chore
+
+```
+chore(deps): bump react to 18.3.0
+```
+
+### Refactor
+
+```
+refactor(utils): extract logger to module
+```
+
+## Exemplo aplicado a um app de TODO
+
+1. `feat: add ability to set due dates for tasks`
+2. `fix: resolve issue with task deletion not working properly`
+3. `docs: update user guide with task categories`
+4. `style: adjust font size and color for task titles`
+5. `refactor: reorganize code structure for task filtering`
+6. `test: add test cases for task prioritization`
+7. `chore: update dependencies`
+8. `build: fix build configuration`
+9. `ci: integrate automated testing into the CI pipeline`
+10. `perf: optimize loading for large task lists`
+11. `revert: revert previous commit that broke task sorting`
+
+## Dicas finais
+
+- **Escopo**: mantenha em minúsculas e curto (ex: `ui`, `server`).
+- **Breaking changes**: sinalize com `!` após o tipo (ex: `feat(ui)!: redo layout`) ou anote no rodapé.
+- **Ferramentas**: combine com versionamento semântico e geradores de changelog (ex: `standard-version`, `semantic-release`).
+- **Inglês ou português?** Recomendo inglês, é mais portável entre projetos open source.
+
+Agora é só aplicar no seu codebase. Seu histórico (e seu time) agradece.
