@@ -1,32 +1,27 @@
 import { MetadataRoute } from "next";
 import { posts } from "#site/content";
-import { siteConfig } from "@/lib/constants";
-import { routing, type Locale } from "@/i18n/routing";
+import { routing } from "@/i18n/routing";
 import { getPostLanguage, getTranslationPair } from "@/lib/posts-i18n";
-
-function localePath(locale: Locale, path: string) {
-  if (locale === routing.defaultLocale) return path;
-  return `/${locale === "en" ? "en" : locale}${path}`;
-}
-
-function buildAlternates(path: string) {
-  const languages: Record<string, string> = {};
-  for (const loc of routing.locales) {
-    languages[loc] = `${siteConfig.url}${localePath(loc, path)}`;
-  }
-  return languages;
-}
+import { buildAlternates, localizedUrl } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticPaths = ["", "/blog", "/about", "/projects", "/contact", "/community", "/cv"];
+  const staticPaths = [
+    "/",
+    "/blog",
+    "/about",
+    "/projects",
+    "/contact",
+    "/community",
+    "/cv",
+  ];
 
   const staticEntries: MetadataRoute.Sitemap = staticPaths.flatMap((path) =>
     routing.locales.map((locale) => ({
-      url: `${siteConfig.url}${localePath(locale, path || "/")}`,
+      url: localizedUrl(locale, path),
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
-      priority: path === "" ? 1.0 : 0.8,
-      alternates: { languages: buildAlternates(path || "/") },
+      priority: path === "/" ? 1.0 : 0.8,
+      alternates: { languages: buildAlternates(path) },
     }))
   );
 
@@ -34,7 +29,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const postEntries: MetadataRoute.Sitemap = [];
   for (const post of posts) {
     if (!post.published) continue;
-    const postLocale = getPostLanguage(post);
     const pair = getTranslationPair(posts, post);
     const key = post.translationKey ?? post.slug;
     if (seenKeys.has(key)) continue;
@@ -44,23 +38,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
     for (const loc of routing.locales) {
       const tr = pair[loc];
       if (tr) {
-        languages[loc] = `${siteConfig.url}${localePath(loc, `/blog/${tr.slug}`)}`;
+        languages[loc] = localizedUrl(loc, `/blog/${tr.slug}`);
       }
     }
 
     for (const loc of routing.locales) {
       const tr = pair[loc];
       if (!tr) continue;
+      // Prefer an explicit `updated` field if Velite ever exposes one; fall back
+      // to `date` from the post frontmatter.
+      const updatedRaw =
+        (tr as unknown as { updated?: string }).updated ?? tr.date;
+      const lastModified = new Date(updatedRaw);
       postEntries.push({
-        url: `${siteConfig.url}${localePath(loc, `/blog/${tr.slug}`)}`,
-        lastModified: new Date(tr.date),
+        url: localizedUrl(loc, `/blog/${tr.slug}`),
+        lastModified,
         changeFrequency: "monthly" as const,
         priority: 0.7,
         alternates: { languages },
       });
     }
-    // Fallback: post without language frontmatter still gets indexed under defaultLocale via getPostLanguage
-    void postLocale;
+
+    void getPostLanguage(post);
   }
 
   return [...staticEntries, ...postEntries];
