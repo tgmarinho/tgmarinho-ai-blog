@@ -10,6 +10,7 @@ import {
   FaYoutube,
 } from "react-icons/fa6";
 import { siteConfig } from "@/lib/constants";
+import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import { Link } from "@/i18n/navigation";
 import { GlowCard } from "@/components/fx/glow-card";
 import type { Locale } from "@/i18n/routing";
@@ -56,12 +57,22 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "about" });
+  const title = t("metaTitle");
+  const description = t("metaDescription", {
+    name: siteConfig.name,
+    role: siteConfig.role,
+  });
+  const url = localizedUrl(locale, "/about");
   return {
-    title: t("metaTitle"),
-    description: t("metaDescription", {
-      name: siteConfig.name,
-      role: siteConfig.role,
-    }),
+    title,
+    description,
+    alternates: buildAlternates(locale, "/about"),
+    openGraph: {
+      title,
+      description,
+      url,
+      locale: ogLocale(locale),
+    },
   };
 }
 

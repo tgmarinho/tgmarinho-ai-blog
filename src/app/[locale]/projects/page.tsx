@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { ArrowUpRight, Github, ExternalLink } from "lucide-react";
 import { GlowCard } from "@/components/fx/glow-card";
+import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import type { Locale } from "@/i18n/routing";
 
 type ProjectStatus = "shipped" | "open-source" | "archived";
@@ -87,9 +88,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "projects" });
+  const title = t("metaTitle");
+  const description = t("metaDescription");
+  const url = localizedUrl(locale, "/projects");
   return {
-    title: t("metaTitle"),
-    description: t("metaDescription"),
+    title,
+    description,
+    alternates: buildAlternates(locale, "/projects"),
+    openGraph: {
+      title,
+      description,
+      url,
+      locale: ogLocale(locale),
+    },
   };
 }
 

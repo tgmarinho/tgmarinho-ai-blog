@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { FaGithub, FaXTwitter, FaLinkedin } from "react-icons/fa6";
 import { siteConfig } from "@/lib/constants";
+import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import type { Locale } from "@/i18n/routing";
 
 export async function generateMetadata({
@@ -18,9 +19,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "contact" });
+  const title = t("metaTitle");
+  const description = t("metaDescription");
+  const url = localizedUrl(locale, "/contact");
   return {
-    title: t("metaTitle"),
-    description: t("metaDescription"),
+    title,
+    description,
+    alternates: buildAlternates(locale, "/contact"),
+    openGraph: {
+      title,
+      description,
+      url,
+      locale: ogLocale(locale),
+    },
   };
 }
 

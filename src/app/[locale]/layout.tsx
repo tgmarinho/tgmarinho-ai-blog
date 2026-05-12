@@ -14,6 +14,7 @@ import { Footer } from "@/components/layout/footer";
 import { CursorAurora } from "@/components/fx/cursor-aurora";
 import { ShootingStars } from "@/components/fx/shooting-stars";
 import { siteConfig } from "@/lib/constants";
+import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import { routing, type Locale } from "@/i18n/routing";
 
 const geistSans = Geist({
@@ -73,10 +74,11 @@ export async function generateMetadata({
     description: t("subtitle"),
     authors: [{ name: siteConfig.author }],
     creator: siteConfig.author,
+    alternates: buildAlternates(locale, "/"),
     openGraph: {
       type: "website",
-      locale: locale === "en" ? "en_US" : "pt_BR",
-      url: siteConfig.url,
+      locale: ogLocale(locale),
+      url: localizedUrl(locale, "/"),
       title: siteConfig.shareTitle,
       description: siteConfig.shareDescription,
       siteName: siteConfig.name,
