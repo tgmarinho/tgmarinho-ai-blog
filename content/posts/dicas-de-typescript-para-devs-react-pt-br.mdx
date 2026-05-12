@@ -1,0 +1,94 @@
+---
+title: "Dicas de TypeScript para Devs React"
+description: "Padrões e dicas essenciais de TypeScript para deixar seu código React mais type-safe e fácil de manter."
+date: "2024-11-15"
+published: true
+slug: "dicas-de-typescript-para-devs-react"
+categories: ["TypeScript", "React", "pt-br"]
+language: "pt-BR"
+translationKey: "typescript-tips-for-react-developers"
+---
+
+TypeScript se tornou o padrão para construir aplicações React. Aqui estão algumas dicas essenciais para melhorar seu fluxo com TypeScript + React.
+
+## 1. Tipando props de componentes
+
+Sempre defina tipos explícitos para as props:
+
+```typescript
+interface ButtonProps {
+  variant?: "primary" | "secondary" | "ghost";
+  size?: "sm" | "md" | "lg";
+  children: React.ReactNode;
+  onClick?: () => void;
+}
+
+function Button({ variant = "primary", size = "md", children, onClick }: ButtonProps) {
+  return (
+    <button className={`btn btn-${variant} btn-${size}`} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+```
+
+## 2. Componentes genéricos
+
+Use generics para criar componentes reutilizáveis:
+
+```typescript
+interface ListProps<T> {
+  items: T[];
+  renderItem: (item: T) => React.ReactNode;
+  keyExtractor: (item: T) => string;
+}
+
+function List<T>({ items, renderItem, keyExtractor }: ListProps<T>) {
+  return (
+    <ul>
+      {items.map((item) => (
+        <li key={keyExtractor(item)}>{renderItem(item)}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+## 3. Discriminated unions para estado
+
+Use discriminated unions para modelar estados complexos:
+
+```typescript
+type AsyncState<T> =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: T }
+  | { status: "error"; error: Error };
+
+function useAsync<T>() {
+  const [state, setState] = useState<AsyncState<T>>({ status: "idle" });
+  // ...
+}
+```
+
+## 4. Utility types
+
+Aproveite os utility types nativos do TypeScript:
+
+```typescript
+// Pegue só o que você precisa
+type CardProps = Pick<Post, "title" | "description" | "date">;
+
+// Torna todas as props opcionais
+type PartialUser = Partial<User>;
+
+// Torna todas as props obrigatórias
+type RequiredConfig = Required<Config>;
+
+// Omite props específicas
+type CreatePost = Omit<Post, "id" | "createdAt">;
+```
+
+## Conclusão
+
+Esses padrões vão te ajudar a escrever aplicações React mais type-safe e fáceis de manter. O sistema de tipos do TypeScript é poderoso — use a seu favor!

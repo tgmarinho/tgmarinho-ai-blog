@@ -1,0 +1,84 @@
+---
+title: "Começando com Next.js 15"
+description: "Aprenda a construir aplicações web modernas com Next.js 15, a versão mais recente com App Router e React Server Components."
+date: "2024-12-01"
+published: true
+slug: "comecando-com-nextjs-15"
+categories: ["React", "Next.js", "Tutorial", "pt-br"]
+language: "pt-BR"
+translationKey: "getting-started-with-nextjs-15"
+---
+
+O Next.js 15 traz novidades empolgantes e melhorias importantes para o framework React. Neste post, vamos explorar o que há de novo e como começar.
+
+## O que há de novo no Next.js 15
+
+O Next.js 15 introduz várias melhorias importantes:
+
+- **App Router aprimorado** - Melhor performance e experiência de desenvolvimento
+- **Suporte ao React 19** - Suporte completo aos recursos mais recentes do React
+- **Turbopack** - Builds mais rápidos em desenvolvimento
+- **Cache aprimorado** - Mais controle sobre estratégias de cache
+
+## Início rápido
+
+Começar é simples:
+
+```bash
+npx create-next-app@latest my-app --typescript --tailwind --app
+```
+
+Isso configura um novo projeto com TypeScript, Tailwind CSS e o App Router.
+
+## Fundamentos do App Router
+
+O App Router usa roteamento baseado no sistema de arquivos dentro do diretório `app`:
+
+```typescript
+// app/page.tsx - Página inicial
+export default function HomePage() {
+  return (
+    <div>
+      <h1>Bem-vindo ao meu site!</h1>
+    </div>
+  );
+}
+```
+
+```typescript
+// app/blog/[slug]/page.tsx - Rota dinâmica
+interface Props {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function BlogPost({ params }: Props) {
+  const { slug } = await params;
+  return <article>Post: {slug}</article>;
+}
+```
+
+## Server Components
+
+Por padrão, todos os componentes no App Router são **Server Components**. Isso significa que eles executam no servidor e podem acessar diretamente bancos de dados, APIs e outros recursos do lado do servidor.
+
+```typescript
+// Isto executa no servidor!
+async function PostList() {
+  const posts = await db.query("SELECT * FROM posts");
+  return (
+    <ul>
+      {posts.map(post => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Para componentes interativos que precisam de APIs do navegador, adicione `"use client"` no topo do arquivo.
+
+## Conclusão
+
+O Next.js 15 é uma ótima escolha para construir aplicações web modernas. O App Router, combinado com React Server Components, oferece uma excelente experiência de desenvolvimento e ótima performance de fábrica.
+
+Bom código!
