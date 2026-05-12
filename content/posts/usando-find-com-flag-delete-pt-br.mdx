@@ -1,0 +1,21 @@
+---
+title: "Usando find com a flag delete"
+description: "Um comando útil do Unix find."
+date: "2021-09-07"
+published: true
+language: "pt-BR"
+translationKey: "using-find-with-delete-flag"
+slug: "usando-find-com-flag-delete"
+---
+
+Quando precisar remover vários arquivos em lote, use isto:
+
+```bash
+find . -name "*.Identifier" -delete
+```
+
+O `find`, como o nome sugere, vai encontrar todos os arquivos com a extensão `.Identifier` e, ao passar a flag `-delete`, remove todos eles.
+
+Simples assim, muito útil.
+
+> Escrito com [StackEdit](https://stackedit.io/).

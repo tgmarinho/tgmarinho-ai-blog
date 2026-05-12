@@ -1,0 +1,149 @@
+---
+title: "Como mesclar dois ou mais repos em um só sem perder o histórico de commits"
+description: "TurboRepo na prática"
+date: "2022-06-01"
+published: true
+categories: ["github"]
+language: "pt-BR"
+slug: "como-mesclar-dois-ou-mais-repos-sem-perder-historico"
+translationKey: "how-to-merge-two-or-more-repos-into-a-new-one-without-losing-the-history-of-commits"
+---
+
+Sinta-se à vontade para ler também no [Dev.To](https://dev.to/tgmarinhodev/how-to-merge-two-or-more-repos-into-a-new-one-without-losing-the-history-cfh)
+
+
+### **Storytelling**
+
+Eu estava trabalhando em **quatro repositórios diferentes**: frontend, sdk, smart contract e indexer.
+
+Mas eu estava *gastando* um monte de tempo porque o contract gera novos types durante o build e o deploy usando a lib typechain.
+
+Eu precisava substituir todos os types no SDK e no indexer, e percebemos que o app de frontend também precisaria desses types.
+
+Esse trabalho era **manual**: copiar/colar, adaptar o código com as mudanças, commitar e fazer push toda vez que acontecia.
+
+Então decidi **dar uma chance** ao [Monorepo](https://monorepo.tools/) com [TurboRepo](https://turborepo.org/).
+
+Minha ideia era **mesclar todos os repos** sem perder o **histórico de commits** deles.
+
+Para isso, com a **ajuda** do meu **amigo** [@rjborba](https://twitter.com/rjborba), nós fizemos:
+
+1. criamos um novo repo no GitHub: `project` usando TurboRepo e sua estrutura (apps, packages).
+2. clonamos cada repo (frontend, sdk, smart contract, indexer) em uma pasta separada (frontend2, sdk2, smart-contract2, indexer2).
+3. removemos o origin de cada repo e adicionamos o origin do `project`.
+4. movemos os arquivos e pastas para outro diretório: exemplo: frontend2 agora é frontend2/apps/, mantendo apenas a pasta .git na raiz. sdk2 agora é packages/sdk.
+5. commitamos as mudanças em cada pasta e fizemos `git push --all` e `git pull origin main --allow-unrelated-histories` para mesclar e resolver conflitos.
+
+Dessa forma, eu consegui ter meu Monorepo com todos os projetos relacionados e o histórico de commits em ordem cronológica.
+
+
+
+### **Modo Técnico**
+
+> talk is cheap, show me the commands:
+
+1. `npx create-turbo@latest project`
+```
+~/Developer/project (main) » tree -L 3 --gitignore                                                                                             tgmarinho@Thiagos-MacBook-Pro
+.
+├── README.md
+├── apps
+│   ├── docs
+│   │   ├── README.md
+│   │   ├── next-env.d.ts
+│   │   ├── next.config.js
+│   │   ├── node_modules
+│   │   ├── package.json
+│   │   ├── pages
+│   │   └── tsconfig.json
+│   └── web
+│       ├── README.md
+│       ├── next-env.d.ts
+│       ├── next.config.js
+│       ├── node_modules
+│       ├── package.json
+│       ├── pages
+│       └── tsconfig.json
+├── package.json
+├── packages
+│   ├── eslint-config-acme
+│   │   ├── index.js
+│   │   ├── node_modules
+│   │   └── package.json
+│   ├── tsconfig
+│   │   ├── README.md
+│   │   ├── base.json
+│   │   ├── nextjs.json
+│   │   ├── package.json
+│   │   └── react-library.json
+│   └── ui
+│       ├── Button.tsx
+│       ├── index.tsx
+│       ├── node_modules
+│       ├── package.json
+│       └── tsconfig.json
+├── turbo.json
+└── yarn.lock
+```
+
+Em seguida, **hospede no GitHub** e pegue o endereço do origin: `git@github.com:myaccount/project.git`
+
+
+Clone o projeto **frontend**:
+
+```
+git clone git@github.com:myaccount/frontend.git frontend2
+cd frontend2 && mkdir -p apps/frontend
+mv $(ls -la) apps/frontend
+mv apps/frontend/.git .
+git remote remove origin
+git remote add origin git@github.com:myaccount/project.git
+git add . && git commit -m "send the frontend to monorepo"
+git fetch -a
+git pull origin main --allow-unrelated-histories
+git push --all
+```
+
+
+Repita o processo para o outro repo - **SDK**:
+Clone o projeto sdk:
+
+```
+git clone  git@github.com:myaccount/sdk.git sdk
+cd sdk && mkdir -p packages/sdk
+mv $(ls -la) packages/sdk
+mv packages/sdk/.git .
+git remote remove origin
+git remote add origin git@github.com:myaccount/project.git
+git add . && git commit -m "send the sdk to monorepo"
+git fetch -a
+git pull origin main --allow-unrelated-histories
+git push --all
+```
+
+Repita o processo para o outro repo - **INDEXER**:
+Clone o projeto indexer:
+
+```
+git clone git@github.com:myaccount/indexer.git indexer
+cd indexer && mkdir -p packages/indexer
+mv $(ls -la) packages/indexer
+mv packages/indexer/.git .
+git remote remove origin
+git remote add origin git@github.com:myaccount/project.git
+git add . && git commit -m "send the indexer to monorepo"
+git fetch -a
+git pull origin main --allow-unrelated-histories
+git push --all
+```
+
+Finalizado ✌🏻
+
+
+Ref: [gist x-yuri](https://gist.github.com/x-yuri/9890ab1079cf4357d6f269d073fd9731)
+
+
+
+__
+
+Obrigado pela leitura 🚀
