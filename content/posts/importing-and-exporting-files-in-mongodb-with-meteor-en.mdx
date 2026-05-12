@@ -1,0 +1,155 @@
+---
+title: "Importing and exporting files in MongoDB with Meteor"
+description: "Import/Export files in MongoDB using Meteor to handle the import flow"
+date: "2018-01-04"
+published: true
+slug: "importing-and-exporting-files-in-mongodb-with-meteor"
+categories: ["Development"]
+image: "/assets/img/ocean.jpg"
+language: "en"
+translationKey: "como-importar-e-exportar-arquivos-no-mongodb-utilizando-o-meteor"
+---
+
+Hi, let me start with the scenario: you built a TODO app with a task list containing a title and a description. You already had every task in Excel (or any other spreadsheet editor) and now you want to feed your database (Documents) that uses MongoDB.
+
+Open Excel or Calc (whatever spreadsheet editor you prefer) and, on row 1, put the name of each collection attribute.
+
+![](/assets/img/image_excel.png)
+
+Then Save As in CSV format.
+
+After that you need to convert it to JSON (it makes things easier).
+
+Open the CSV file and copy its content, then go to ([csvjson.com](https://www.csvjson.com/csv2json?source=post_page-----af967319aea1----------------------)), which converts CSV to JSON.
+
+Paste the CSV content in the indicated area and click "Convert".
+
+![](/assets/img/site-exemplo.png)
+
+The result shows up next to it in JSON: an array with several objects, each one with title and description as attributes.
+
+Download the file (faster) or select everything (CTRL+A), copy (CTRL+C), create your own file and paste it.
+
+Now comes the fun part…
+
+We could use the `mongoimport` command directly to import a CSV or JSON file:
+
+```
+mongoimport -h localhost:3001 -d meteor -c tasks  --file taks.json 
+```
+
+```
+mongoimport -h localhost:3001 -d meteor -c tasks  --file taks.json 
+```
+
+> -h: server location
+>
+> \-d: your database
+>
+> \-c: the collection
+>
+> — type: format of the files being imported
+>
+> — file: file name (if you're running `$mongoimport` in the same directory, the file name alone is enough)
+
+But it generates an Id in an inconvenient shape to work with: `_id: ObjectId("h1h23h1j2k12h1")`.
+
+So, since I use Meteor to build my projects, I prefer letting Meteor itself read the `.json` file and insert each array item into the database — it manages Id generation together with MongoDB.
+
+I drop the `csvjson.json` file (downloaded from the CSV → JSON site) into the `private` folder at the root of the Meteor project.
+
+Then I write this code in `main.js` inside the project's `server` folder.
+
+```
+// Add new todos
+import { Meteor } from 'meteor/meteor';
+import { TasksCollection } from 'my/path/to/collections/TasksCollection';
+
+
+Meteor.startup(function() {
+  // file lives in Meteor's private folder     console.log(data.length);
+  const data = JSON.parse(Assets.getText('csvjson.json')); 
+
+  data.forEach(item => {
+   TasksCollection.add(item);
+  });
+
+});
+```
+
+And of course `TasksCollection` needs an `add` method that calls Mongo's `insert` to save the task.
+
+```
+import { Mongo } from 'meteor/mongo';
+
+const tasksCollection = new Mongo.Collection('tasks');
+
+Object.assign(tasksCollection, {
+
+   add(task) {
+    this.insert({ ...task }));
+   });
+
+export { tasksCollection as TasksCollection };
+```
+
+Then start the app:
+
+```
+$meteor run
+```
+
+And that's it — your data is in MongoDB.
+
+Careful: every time you edit and save the file, `Meteor.startup()` runs again and you'll end up with duplicated data. Once it ran fine, comment out the code or remove it from `main.js`.
+
+Exporting your MongoDB collections is extremely easy:
+
+```
+mongoexport -h localhost:3001 -d meteor -c tasks -o output.json
+
+#remote
+
+#JSON
+##Import collection
+
+mongoimport -h database.mlab.com:34212 -d heroku_xxxxxxxx -c <collection> -u <user> -p <password> --file <input file>
+
+##Export collection
+
+mongoexport -h database.mlab.com:34212 -d heroku_xxxxxxxx -c <collection> -u <user> -p <password> -o <output file>
+
+##CSV
+
+##Import collection
+
+mongoimport -h database.mlab.com:34212 -d heroku_xxxxxxxx -c <collection> -u <user> -p <password> --file <input .csv file> --type csv --headerline
+
+##Export collection
+
+mongoexport -h database.mlab.com:34212 -d heroku_xxxxxxxx -c <collection> -u <user> -p <password> -o <output .csv file> --csv -f <comma-separated list of field names>
+```
+
+
+
+> \-h: server
+>
+> \-d: database (document)
+>
+> \-c: collection 
+>
+> \-o: the output file that will hold your exported collection.
+
+This helps a lot whenever you need to import/export files…
+
+Many folks in the Meteor and Mongo communities struggled to import files because of the ID, and with Meteor you solve that quickly and easily — even more so if your MongoDB project is already running on Meteor.
+
+References:
+
+[http://dweldon.silvrback.com/get-text](http://dweldon.silvrback.com/get-text)
+
+[https://docs.meteor.com/api/assets.html](https://docs.meteor.com/api/assets.html)
+
+[https://forums.meteor.com/t/loading-external-json-file-into-a-mongo-collection/1293](https://stackoverflow.com/questions/15329309/how-to-import-mongodb-objectid-from-csv-file-using-mongoimport)
+
+[https://stackoverflow.com/questions/15329309/how-to-import-mongodb-objectid-from-csv-file-using-mongoimport](https://stackoverflow.com/questions/15329309/how-to-import-mongodb-objectid-from-csv-file-using-mongoimport)
