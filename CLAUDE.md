@@ -48,7 +48,8 @@ Permissions already granted — run without asking:
 2. **Editing existing files** > creating new ones. Only create new files if there's nowhere to fit it.
 3. **After editing TSX/TS:** run `ReadLints` on the touched files.
 4. **After editing `content/posts/**` or `velite.config.ts`:** run `npm run velite` to validate the schema.
-5. **Before declaring done:** `npm run lint`. If you touched something build-sensitive (config, paths, types), `npm run build`.
+5. **After bilingual changes (i18n routing, frontmatter `language`/`translationKey`, messages):** run `npm run audit:i18n-seo` and `npm run audit:refs`.
+6. **Before declaring done:** `npm run lint`. If you touched something build-sensitive (config, paths, types), `npm run build`.
 
 ---
 
@@ -81,6 +82,8 @@ For any request like "criar post", "novo artigo", "post em inglês/PT", or "vers
 
 ## Project timeline (historical context)
 
+- **May/2026** — bilingual i18n landed (pt-BR default + en via `next-intl`); routes moved under `src/app/[locale]/...`; posts tagged with `language` + `translationKey`; Velite schema hardened (Phase 2.2).
+- **May/2026** — `llms.txt` + `llms-full.txt` generated at build (`scripts/generate-llms-txt.mjs`).
 - **May/2026** — full "Agentic Futurism" redesign (a single Cursor + Claude Opus 4.7 pair-programming session). Documented in `docs/redesign-2026-agentic-futurist.md`.
 - **Mar/2026** — added the `/community` page.
 - **Before:** site in a neutral theme (gray-100), Spectral as the display serif. All of that was discarded intentionally.
@@ -100,4 +103,4 @@ If the user asks to "go back to the old design", confirm first — they probably
 
 ---
 
-**Last updated:** 2026-05 (blog skills policy added).
+**Last updated:** 2026-05-12 (i18n bilíngue + llms.txt build pipeline).
