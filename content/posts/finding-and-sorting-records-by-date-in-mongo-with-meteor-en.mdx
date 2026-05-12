@@ -1,0 +1,57 @@
+---
+title: "Finding and Sorting Records by Date in Mongo with Meteor"
+description: "A quick tip on Meteor's Mongo sort syntax and why it differs from the raw MongoDB query."
+date: "2018-09-04"
+published: true
+categories: ["Development"]
+image: "/assets/img/mountains.jpg"
+language: "en"
+translationKey: "buscando-e-ordenando-registros-por-data-no-mongo-com-meteor"
+slug: "finding-and-sorting-records-by-date-in-mongo-with-meteor"
+---
+
+It's a pretty simple thing, but it can trip up beginners — even those with some Mongo experience. I started with Mongo this year, so I'm publishing this tip as a note to myself, since it's hard to find this explained clearly, especially in Portuguese, for newcomers.
+
+I tried running this query in [Robo3T](https://robomongo.org/):
+
+```
+db.getCollection(‘members’).find({ status: { $eq: true }, birth: { $ne: null} }).sort({ birth: 1 })
+```
+
+It returned what I expected: all active members with a birth date set, sorted ascending (smallest to largest).
+
+However, when I dropped the query into the project:
+
+```
+async birthdays(root, args) {
+
+return MembersCollection.find({ status: { $eq: true }, birth: { $ne: null } }).sort({ birth: 1 }).fetch();
+
+}
+```
+
+It didn't run the query and there was no server-side error — only a client-side one. The function's return value arrived as `undefined` on the client, and since I was calling `data.length` to read the size of the birthdays array, the typical JS error kicked in: cannot read property `length` of `undefined`.
+
+Meteor ships its own Mongo, with a few methods that differ slightly from MongoDB. To do a **sort** in Meteor, the syntax must be:
+
+```
+// Sorted by \`createdAt\` descending.
+
+Users.find({}, { sort: { createdAt: -1 } });
+
+And in my project it has to look like this:
+
+async birthdays(root, args) {
+
+return MembersCollection.find({ status: { $eq: true }, birth: { $ne: null } }, { sort: { birth: 1 } }).fetch();
+
+}
+```
+
+A small syntax difference was enough to send me Googling for the fix.
+
+So here's the tip: always check the MongoDB and Meteor docs when you run into trouble with your queries.
+
+References:
+
+[https://docs.mongodb.com/manual/reference/method/cursor.sort/](https://docs.mongodb.com/manual/reference/method/cursor.sort/)

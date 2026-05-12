@@ -1,0 +1,20 @@
+---
+title: "Ignoring git status when file or folder permissions change in a git-versioned project"
+description: "If someone runs chmod 777 -Rf * on a project directory or ..."
+date: "2019-09-02"
+published: true
+categories: ["Development"]
+image: "/assets/img/linux.jpg"
+language: "en"
+translationKey: "ignorando-git-status-quando-muda-permissao"
+---
+
+\[LINUX] \[GIT] if someone runs `chmod 777 -Rf *` on a project directory or changes permissions some other way and you want git to ignore it, just run this command:
+
+```
+git config core.filemode false
+```
+
+That way, when you run "git status" the change won't be listed and you don't have to commit it, in case it was unintentional.
+
+[https://stackoverflow.com/questions/1257592/how-do-i-remove-files-saying-old-mode-100755-new-mode-100644-from-unstaged-cha](https://stackoverflow.com/questions/1257592/how-do-i-remove-files-saying-old-mode-100755-new-mode-100644-from-unstaged-cha)

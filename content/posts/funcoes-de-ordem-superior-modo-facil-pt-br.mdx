@@ -1,0 +1,153 @@
+---
+title: "Funções de Ordem Superior — Modo Fácil"
+description: "Pretendo explicar um pouco sobre Funções de Ordem Superior (High Order Functions) com JavaScript."
+date: "2018-09-09"
+published: true
+categories: ["js"]
+image: "/assets/img/high-order-function.png"
+language: "pt-BR"
+translationKey: "high-order-functions-easy-mode"
+---
+
+Pretendo explicar um pouco sobre Funções de Ordem Superior (High Order Functions) com JavaScript.
+
+A propósito, uma função de ordem superior é uma função que recebe outra função como argumento, ou retorna uma função. É isso, nada de outro mundo.
+
+Esse recurso permite que o JS seja mais [flexível e plugável.](https://eloquentjavascript.net/05_higher_order.html)
+
+Olha o código abaixo, é simples: declaro três constantes que recebem uma função que exibe ao usuário um alerta aguardando uma resposta.
+
+```
+const fnName = () => prompt('Tell me your name.')
+```
+
+```
+const fnMiddle = () => prompt('Tell me your middle name.')
+```
+
+```
+const fnLastName = () => prompt('Tell me your last name.')
+```
+
+Então, se você executar fnName() no console, vai aparecer uma pequena janela (modal) assim:
+
+![](/assets/img/image-prompt.png)
+
+Quando você digita seu nome e clica em OK, o processo é finalizado.
+
+Agora, eu tenho abaixo uma nova função que recebe funções, dá uma olhada:
+
+```
+const withNameComplete = (...funcs) => funcs.map(func => func()).join(' ')
+```
+
+Graças ao [ES06++](https://github.com/tc39) posso usar isso: …funcs (destructuring de argumentos), recebendo vários argumentos dentro de um Array, ou seja, tenho um array de funções.
+
+No código acima, a const withNameComplete recebe outra função que faz qualquer coisa para nós. Mas há uma complexidade com Map além da própria HOC.
+
+Essa função pode receber vários argumentos como: withNameComplete(a,b,c,d,e,f), e eu tenho Array(a,b,c,d,e,f) quando uso …funcs como no exemplo acima.
+
+```
+// exemplo: declaro 3 funções e as passo para withNameComplete
+
+const fnName = () => prompt('Tell me your name')
+const fnMiddle = () => prompt('Tell me your middle name')
+const fnLastName = () => prompt('Tell me your lastname')
+
+const withNameComplete = (…funcs) => console.log(funcs);
+
+withNameComplete(fnName, fnMiddle, fnLastName)
+```
+
+O código acima produz isso:
+
+![](/assets/img/array-sample.png)
+
+Acima estou dando console em um array com três funções, como eu disse.
+
+Então, tudo que preciso fazer é chamar cada função dentro do array.
+
+Agora tenho várias alternativas: primeiro uso Map, depois uso Reduce. Por favor, se você tiver uma solução melhor, adoraria saber, compartilhe seu conhecimento também.
+
+**Primeira solução:**
+
+```
+const fnName = () => prompt('tell me your name')
+const fnMiddle = () => prompt('tell me your middle name')
+const fnLastName = () => prompt('tell me your lastname')
+
+
+// using Map
+const withNameComplete = (...funcs) => funcs.map(func => func()).join(' ')
+
+console.log(withNameComplete(fnName, fnMiddle, fnLastName))
+```
+
+Você pode ver na linha oito que estou chamando a função passando outras funções, mas quando passo esses argumentos não posso invocá-las, apenas passar. Por exemplo, não posso fazer assim, senão vai ocorrer um erro:
+
+```
+const fnName = () => prompt('tell me your name')
+const fnMiddle = () => prompt('tell me your middle name')
+const fnLastName = () => prompt('tell me your lastname')
+
+// using Map
+const withNameComplete = (...funcs) => funcs.map(func => func()).join(' ')
+
+console.log(withNameComplete(fnName(), fnMiddle(), fnLastName()))
+```
+
+Usando o Map do ES06 posso iterar cada função dentro do array funcs e executá-la, retornando um novo array (graças à imutabilidade, talvez tema de outro post) e então uso a função join(' ') que extrai os valores do novo array e os junta em uma String.
+
+**Segunda solução:**
+
+Dessa vez vou usar Reduce:
+
+```
+const fnName = () => prompt('Tell me your name')
+const fnMiddle = () => prompt('Tell me your middle name')
+const fnLastName = () => prompt('Tell me your lastname')
+
+
+// using Reduce
+const withNameComplete = (...funcs) => funcs.reduce((acc, cv) => \`${acc} ${cv()}\`.trimStart(), '')
+
+console.log(withNameComplete(fnName, fnMiddle, fnLastName))
+```
+
+Olha só, mudei apenas map para reduce e estou usando template string para concatenar strings, além da função trimStart para remover o espaço em branco do início da String, porque o acumulador começa com esse valor.
+
+Com a função reduce, o retorno do método é o valor acumulado (acc) mais o valor atual (cv). Como estou usando template string, fica um pouco difícil de perceber.
+
+Por fim, HOC, Array.Map e Array.Reduce são assuntos difíceis de entender no começo, mas com teoria e prática você pega fácil, não desista, continuar estudando é o melhor caminho.
+
+E de novo: se você tiver uma solução melhor, adoraria saber.
+
+**Tudo junto:**
+
+```
+// Training HOF => High Order Functions
+
+const fnName = () => prompt('tell me your name')
+const fnMiddle = () => prompt('tell me your middle name')
+const fnLastName = () => prompt('tell me your lastname')
+
+// Debuging
+//const withNameComplete = (...funcs) => console.log(funcs)
+
+// using Map
+//const withNameComplete = (...funcs) => funcs.map(func => func()).join(' ')
+
+// using Reduce
+
+const withNameComplete = (...funcs) => funcs.reduce((acc, cv, index, array) => \`${acc} ${cv()}\`.trimStart(), '')
+
+console.log(withNameComplete(fnName, fnMiddle, fnLastName))
+```
+
+Por último, mas não menos importante, se quiser ver algo legal e mais avançado sobre HOC e Reduce, dá uma olhada nisso: [https://github.com/acdlite/recompose/blob/master/src/packages/recompose/compose.js](https://github.com/acdlite/recompose/blob/master/src/packages/recompose/compose.js)
+
+Obrigado por ler!
+
+Você também pode ler sobre isso: [https://medium.com/javascript-scene/higher-order-functions-composing-software-5365cf2cbe99](https://medium.com/javascript-scene/higher-order-functions-composing-software-5365cf2cbe99)
+
+_Ps. Este foi meu primeiro artigo em inglês! \o/_

@@ -1,0 +1,138 @@
+---
+title: "My Development Environment"
+description: "A walkthrough of my hardware, IDE, extensions, terminal, plugins, fonts, theme, and tools for software development"
+date: "2019-09-09"
+published: true
+categories: ["Development"]
+image: "/assets/img/wallpaper_2.jpeg"
+language: "en"
+slug: "my-development-environment"
+translationKey: "meu-ambiente-de-desenvolvimento"
+---
+
+# Development environment
+
+## Hardware:
+
+* Macbook Pro 2015, core i5, 8 GB, 120 SSD
+* LG 25" widescreen monitor
+
+## Theme and font
+
+### IDE
+
+[VSCode](https://code.visualstudio.com/)
+
+### VSCode extensions:
+
+* [Dracula Official](https://draculatheme.com/visual-studio-code/)\
+  		 - The look and feel of my code editor.
+* Font: [FiraCode](https://github.com/tonsky/FiraCode) - [Download](https://github.com/tonsky/FiraCode/releases/download/1.207/FiraCode_1.207.zip)
+  		 - A stylish font that makes coding more enjoyable.
+
+To make it work you need to tweak `settings.json` (cmd/ctrl+,):
+enable `fontLigatures` and declare FiraCode in `fontFamily`.
+
+settings.json:
+
+```
+{
+"editor.fontFamily":  "Fira Code",
+"editor.fontLigatures":  true,
+"editor.fontSize":  18,
+"editor.lineHeight":  24,
+"editor.formatOnSave":  true,
+}
+```
+
+* [vscode-icons](https://marketplace.visualstudio.com/items?itemName=vscode-icons-team.vscode-icons)
+  		- Shows an icon next to each file based on its type.
+* [color-highlight](https://marketplace.visualstudio.com/items?itemName=naumovs.color-highlight)
+  		- Previews the color being defined in your CSS.
+* [EditorConfig](https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig)
+  		- Standardizes IDE settings across the whole team via an `.editorconfig` file.
+* [vscode-eslint](https://github.com/microsoft/vscode-eslint)
+  		- Keeps a consistent code style — you define the rules and ESLint flags any code that violates them with an error or warning. Great for enforcing conventions.
+* [prettier-vscode](https://github.com/prettier/prettier-vscode)
+  		- ESLint defines the rules; Prettier makes the code conform to them, fixing things like indentation, variable declarations, switching single quotes to double quotes if that's the rule, and so on.
+  		- Ensures ESLint rules are applied automatically on save, as long as you have `editor.formatOnSave: "true"` and `prettier.eslintIntegration: "true"` in your VSCode `settings.json`.
+  		- Always nice to have ESLint + Prettier set up together.
+* [rocketseat-vscode-react-native-snippets](https://github.com/Rocketseat/rocketseat-vscode-react-native-snippets)
+* [rocketseat-vscode-reactjs-snippets](https://github.com/Rocketseat/rocketseat-vscode-reactjs-snippets)
+  		- Since I'm working with React Native and React + Redux, I rely on these snippets.
+
+[my full VSCode settings](https://gist.github.com/tgmarinho/99785237d9d00c2a0f0e4d10fa293e6b)
+[my full VSCode settings with comments](https://gist.github.com/tgmarinho/8bbca48841602ed0a53662296f91beb6)
+
+## Terminal
+
+### Font
+
+* Terminal -> Preferences -> Fonts or Cmnd + ,
+  Font: [FiraCode](https://github.com/tonsky/FiraCode) - [Download](https://github.com/tonsky/FiraCode/releases/download/1.207/FiraCode_1.207.zip)
+
+### Theme
+
+* [https://draculatheme.com/terminal/](https://draculatheme.com/terminal/)
+  Install it by following the tutorial on the site and then import it into the terminal
+  	 - Terminal -> Preferences -> Profile -> Import or Cmd +
+
+### Oh My Zsh
+
+* [https://ohmyz.sh/](https://ohmyz.sh/)
+  		- Terminal.
+* [https://github.com/denysdovhan/spaceship-prompt](https://github.com/denysdovhan/spaceship-prompt)
+* Controls how items are rendered on screen.
+* Open [.zshrc](https://gist.github.com/tgmarinho/9256be40ec1344d0e20fd6d685ebb0eb) with: `❯  code  ~/.zshrc`, set: `ZSH_THEME="spaceship"`, save and close.
+* More configuration:
+
+
+```
+SPACESHIP_PROMPT_ORDER=(
+	user # Username section
+	dir # Current directory section
+	host # Hostname section
+	git # Git section (git_branch + git_status)
+	hg # Mercurial section (hg_branch + hg_status)
+	exec_time # Execution time
+	line_sep # Line break
+	vi_mode # Vi-mode indicator
+	jobs # Background jobs indicator
+	exit_code # Exit code section
+	char # Prompt character
+)
+SPACESHIP_PROMPT_ADD_NEWLINE=false
+SPACESHIP_CHAR_SYMBOL="❯"
+SPACESHIP_CHAR_SUFFIX=" "
+```
+
+### ZPlugin
+
+Helps you use the terminal with command suggestions and live feedback on whether the command you're typing is valid — green highlight if it is, red if it isn't.
+
+* [zplugin](https://github.com/zdharma/zplugin)
+  To set it up, open `.zshrc`, append the lines below at the end of the file, then save and close:
+
+
+```
+zplugin light zsh-users/zsh-autosuggestions
+zplugin light zsh-users/zsh-completions
+zplugin light zdharma/fast-syntax-highlighting
+```
+
+## Chrome extensions
+
+* [React Developer Tools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi)
+* [Dracula Devtools Theme](https://chrome.google.com/webstore/detail/dracula-devtools-theme/gdhgkfojgddhijhlnnnbopleoabkeife)
+* [JSON Viewer](https://chrome.google.com/webstore/detail/json-viewer/gbmdgpbipfallnflgajpaliibnhdgobh?hl=pt-BR)
+
+![](/assets/img/screen-shot-2019-09-09-at-14.22.24.png)
+
+## Tools
+
+* [Insomnia](https://insomnia.rest/download/)
+  		- An HTTP client similar to Postman, used to test and make calls against the REST APIs you're building.
+* [https://devdocs.io/](https://devdocs.io/) to browse web docs
+* [https://devdocs.egoist.moe/](https://devdocs.egoist.moe/) to install it as a desktop offline app
+
+That's it — now go code!

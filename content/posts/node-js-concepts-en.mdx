@@ -1,0 +1,206 @@
+---
+title: "Node.js Concepts"
+description: "An overview of the Node environment, NPM, Yarn, the Event Loop, the Call Stack, and more"
+date: "2019-09-10"
+published: true
+categories: ["Development"]
+image: "/assets/img/nodejs.png"
+language: "en"
+translationKey: "conceitos-do-node"
+slug: "node-js-concepts"
+---
+
+# Environment and concepts
+
+## Node
+
+The recommended approach is to use [nvm](https://github.com/nvm-sh/nvm) (Node Version Manager) on Unix systems (Linux and macOS). With it you can manage multiple Node versions on the same machine.
+
+After installing nvm, install a Node version with:
+
+`❯  nvm install 10.16.3`
+
+Setting it as the default version:
+
+`❯  nvm alias default 10.16.3`
+
+NPM (Node's package manager) ships with Node:
+`❯  node -v`
+`❯  npm -v`
+
+## Yarn (third-party package manager)
+
+[Yarn](https://yarnpkg.com/lang/en/) serves the same purpose as NPM, but it's more performant. It's used to download packages (third-party libraries) published on [npmjs.com](https://www.npmjs.com).
+
+Recommended installation on macOS:
+
+```
+❯ brew install yarn --without-node
+```
+
+The flag is there because Node is already installed on my machine.
+
+## Node.js concepts
+
+### What is Node.js?
+
+* JavaScript on the **backend** \o/
+  		- Integration with databases, payments, business-rule code;
+  		- We don't deal with end-user events in Node:
+  			- _HTML_ and _CSS_ manipulation is **NOT** done here — that's the frontend's job.
+  		- Routes and integrations:
+  			- The frontend calls a route that hits the server, which dispatches to the port running the application. The app listens for that request, checks whether the route exists on the Node server, and if so executes the business code and returns something to the frontend. If the route doesn't exist on the backend, the frontend receives an error message that it should surface to the user in a friendly way.
+  		- Node is not a language — it's a development platform.
+  		- Node is built on top of the [V8 engine](https://v8.dev/). V8 is Chrome's engine, the code that interprets JS for the browser, and the same structure and concept was reused to build Node so it could run on the operating system. What makes Node so widely adopted is that you can write JS that runs both on the frontend and the backend, aside from some APIs that are specific to each.
+  		- Node is comparable to PHP/Ruby/Python/Go
+  			- Node has some differences and advantages over those and other backend languages.
+
+### What is NPM?
+
+* NPM lets us **install** third-party libraries. Anyone can write a lib and **publish** it on [npmjs](https://www.npmjs.com/) so others can use it. That is, you can both install and publish libs.
+* Why use **Yarn**?
+  	- It's much faster and is advancing with new features more quickly than npm — for example [yarn workspaces](https://yarnpkg.com/lang/en/docs/workspaces/), which lets you work with multiple projects that share the same dependencies without duplicating them. See the **monorepo** concept.
+* NPM is comparable to
+  		- Composer in PHP;
+  		- Gems in Ruby;
+  		- PIP in Python;
+  		- Maven in Java; and so on.
+
+### Node characteristics
+
+* [Event-loop](https://imasters.com.br/front-end/node-js-o-que-e-esse-event-loop-afinal) architecture
+  		- Event-based (routes most of the time);
+  		- Call Stack (the central point of the architecture):
+  			- A stack of events. An event can be a function fired by our code, which Node processes inside a loop that checks whether there's new code to process. All of our code runs from within the Call Stack — each piece enters the stack and is executed as part of the event loop.
+  		- Node is single-threaded;
+  			- Regardless of how many cores the machine's processor has, Node code runs on only one (unlike Java, etc.).
+  			- Node uses C++'s [libuv](https://github.com/libuv/libuv), which makes Node faster because, under the hood, libuv allows Call Stack processes to run on processor threads. C++ can do that — Node itself cannot. In other words, multithreading does happen in a Node-based system.
+  			- [Non-blocking I/O](https://pt.stackoverflow.com/questions/185666/o-que-%C3%A9-non-blocking-i-o): Node can receive requests at any time, including while processing another one. That makes real-time applications easier to build — the moment the frontend calls the backend, the connection stays open so both can communicate. It's a simpler implementation in Node; in languages that don't share this architecture, building chats and similar features is more complex.
+
+![](/assets/img/call_stack_node.png)
+
+The last function called is the first to be executed — so the call stack receives several functions, and the first one to run in the event loop is the last one in.
+
+### Framework examples
+
+* Express as a base:
+  		 - Unopinionated: very flexible, no rigid structure — you can organize it however you want.
+  		 - It's a microframework — with very little you can already build an API.
+  		 - Microservices: with Express it's easier to build several services for the application.
+* Opinionated frameworks:
+  			- AdonisJS: great documentation, ships with an architecture and plugins, follows MVC.
+  			- NestJS: newer on the scene, but growing.
+
+## REST API concepts
+
+### How does it work?
+
+* Request and response flow with the server:
+  		- Request made by a client:
+  			- The browser (frontend) makes a request (via ajax) to the server on the backend;
+  			- Waits for the server's response.
+  		- Response returned through a data structure:
+  			- The server receives the request, processes it, and sends an object or an array of data back to the client that made the request.
+  		- The client receives the response and processes the result
+  			- The client manipulates the array and displays the information in a friendly way.
+
+Note: Unlike another type of application, which receives a request and sends back the HTML itself populated with data, with REST you receive a JSON as the response and the frontend handles the data.
+
+* HTTP methods are the same under the REST concept:
+
+
+```
+ - GET http://minhapi.com/users
+ - POST http://minhapi.com/users
+ - PUT http://minhapi.com/users/1
+ - DELETE http://minhapi.com/users/1
+```
+
+Methods:
+**GET**: fetches information — can return none, one, or many results;
+**POST**: sends information privately; the data does not appear in the URL — the best way to submit a form;
+**PUT**: updates information, a user attribute for example: status: active/inactive; gender: male/female;
+**DELETE**: deletes a record from the database — a user, for instance.
+
+HTTP method, Resource/Route
+
+### Benefits of a REST API
+
+* Multiple clients (frontends), sharing the same backend
+  		- You can have a website, a mobile app, and a desktop app all hitting the same API.
+* Standardized communication protocol:
+  		- Same structure for web / mobile / public API;
+  			- The response is always a **JSON**, which every application and every programming language uses to communicate between backend and frontend.
+  		- Communication with external services.
+
+### JSON
+
+* Structure:
+
+
+```
+{  
+	"user":{  
+		"name":"Thiago Marinho",  
+		"email":"tgmarinho@gmail.com",  
+		"tech":["ReactJS", "NodeJS", "React Native"],  
+		"company":{  
+			"name":"Freelancer",  
+			"url":"https:www.tgmarinho.com"  
+			}
+		}  
+}
+```
+
+**JSON** can hold dates as strings, Strings, Arrays, Numbers, Objects. Everything becomes easier to work with, especially in JavaScript.
+
+### Request content
+
+`GET http://api.com/company/1/users?page=2`
+
+Route: company
+Route Params: 1
+Query Params: ?page=2
+
+The **GET** method receives the request data in the URL itself, as you can see — the route, the route with parameters, and the query parameters.
+
+`POST http://api.com/company/1/users`
+
+The **POST** method receives the request data in the **body** (only POST/PUT), in JSON format.
+
+```
+{  
+	"user":{  
+		"name":"Thiago Marinho",  
+		"email":"tgmarinho@gmail.com",  
+		"tech":["ReactJS", "NodeJS", "React Native"],  
+}
+```
+
+The body is not visible in the URL.
+
+* **Headers**: additional data — used to send Locale, Token, the logged-in user.
+
+### HTTPS Codes
+
+A three-digit numeric code that reports the request's status:
+
+When it starts with:
+
+* 1xx: Informational
+* 2xx: Success
+  		- 200: SUCCESS
+  		- 201: CREATED
+* 3xx: Redirection
+  		- 301: Moved Permanently
+  		- 302: Moved
+* 4xx: Client Error
+  		- 400: Bad Request
+  		- 401: Unauthorized
+  		- 404: Not Found
+* 5xx: Server Error
+  		- 500: Internal Server Error
+
+Now it's time to code! The next post will cover more technical concepts.
+
+_**Show me the code!**_
