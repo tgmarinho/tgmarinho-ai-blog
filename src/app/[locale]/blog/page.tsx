@@ -4,6 +4,7 @@ import { posts } from "#site/content";
 import { sortPostsByDate, getAllCategories } from "@/lib/velite";
 import { getPostsForLocale } from "@/lib/posts-i18n";
 import { BlogSearch } from "@/components/blog/search";
+import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import { routing, type Locale } from "@/i18n/routing";
 
 interface BlogPageProps {
@@ -15,15 +16,18 @@ export async function generateMetadata({
 }: BlogPageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "blog.list" });
+  const title = t("title").replace(",", "") + t("titleAccent");
+  const description = t("subtitle");
+  const url = localizedUrl(locale, "/blog");
   return {
-    title: t("title").replace(",", "") + t("titleAccent"),
-    description: t("subtitle"),
-    alternates: {
-      canonical: locale === "en" ? "/en/blog" : "/blog",
-      languages: {
-        "pt-BR": "/blog",
-        en: "/en/blog",
-      },
+    title,
+    description,
+    alternates: buildAlternates(locale, "/blog"),
+    openGraph: {
+      title,
+      description,
+      url,
+      locale: ogLocale(locale),
     },
   };
 }
