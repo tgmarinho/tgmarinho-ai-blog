@@ -9,7 +9,8 @@
 ## 1. What this project is
 
 Personal website and technical blog of Thiago Marinho — `tgmarinhopro.com`.
-Stack: **Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4 + Velite (MDX) + Vercel**.
+Stack: **Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4 + Velite (MDX) + next-intl + Vercel**.
+**Bilingual:** pt-BR (default) + en. All app routes live under `src/app/[locale]/...`. UI strings in `messages/{pt-BR,en}.json`. Posts carry `language` + `translationKey` in frontmatter.
 Aesthetic: "Agentic Futurism" — dark canvas, cyan/magenta accents, editorial typography inside posts. Details in `docs/redesign-2026-agentic-futurist.md`.
 
 ---
@@ -17,11 +18,14 @@ Aesthetic: "Agentic Futurism" — dark canvas, cyan/magenta accents, editorial t
 ## 2. Canonical commands
 
 ```bash
-npm run dev      # velite + next dev (always run velite before next)
-npm run velite   # regenerates .velite/ from content/posts/*.mdx
-npm run build    # velite --clean && next build
-npm run lint     # eslint
-npm run start    # serve production build
+npm run dev               # velite + next dev (always run velite before next)
+npm run velite            # regenerates .velite/ from content/posts/*.mdx
+npm run build             # velite --clean && generate llms.txt && next build
+npm run lint              # eslint
+npm run start             # serve production build
+npm run llms              # regenerate public/llms.txt + public/llms-full.txt
+npm run audit:refs        # scan posts/pages for broken internal references
+npm run audit:i18n-seo    # validate hreflang, translationKey pairs, canonical
 ```
 
 **Whenever you touch `content/posts/**` or `velite.config.ts`** → run `npm run velite` before `next dev` or the build will use stale data.
@@ -31,13 +35,19 @@ npm run start    # serve production build
 ## 3. Essential structure (memorize)
 
 ```
-content/posts/         # MDX — source of truth for the blog (70+ posts)
-src/app/               # Routes (App Router) — server components by default
+content/posts/         # MDX — source of truth for the blog (bilingual)
+messages/              # next-intl UI strings: pt-BR.json, en.json
+public/llms.txt        # GENERATED at build (SEO for LLMs)
+public/llms-full.txt   # GENERATED at build (full corpus)
+scripts/               # build helpers: generate-llms-txt, audit-broken-refs, validate-i18n-seo, tag-post-languages
+src/app/[locale]/      # All bilingual routes (App Router) — server components by default
+src/app/api/           # route handlers (stubs)
 src/components/        # blog/ cv/ forms/ fx/ home/ layout/ mdx/ ui/
+src/i18n/              # next-intl routing + request config
 src/lib/               # constants.ts (siteConfig), utils.ts (cn), velite.ts (helpers)
 src/app/globals.css    # design tokens + utilities + .prose editorial
 docs/                  # redesign-2026-agentic-futurist.md (visual decisions)
-velite.config.ts       # post schema + rehype pipeline
+velite.config.ts       # post schema + rehype pipeline (hardened in Phase 2.2)
 .velite/               # GENERATED OUTPUT — never edit by hand, imported via "#site/content"
 ```
 
@@ -142,6 +152,10 @@ Mandatory behavior enforced by the skills:
 - `src/app/api/subscribe/route.ts` — Buttondown HTTP. Requires `BUTTONDOWN_API_KEY`.
 
 When migrating to Upstash Redis, follow the `Redis.fromEnv()` pattern documented in the `// TODO`s of the handlers.
+
+### Build-time generators
+
+- `scripts/generate-llms-txt.mjs` runs inside `npm run build` and writes `public/llms.txt` + `public/llms-full.txt` from the Velite output. Re-run manually via `npm run llms` after large content changes.
 
 ---
 

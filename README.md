@@ -2,17 +2,20 @@
 
 > Personal platform + technical blog crafted as a living AI interface.
 
-![Next.js](https://img.shields.io/badge/Next.js-16.1.6-000000?style=flat&logo=next.js)
-![React](https://img.shields.io/badge/React-19.2.3-20232a?style=flat&logo=react)
+![Next.js](https://img.shields.io/badge/Next.js-16.2.6-000000?style=flat&logo=next.js)
+![React](https://img.shields.io/badge/React-19.2.6-20232a?style=flat&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?style=flat&logo=typescript)
 ![Tailwind](https://img.shields.io/badge/Tailwind-4.x-0b1120?style=flat&logo=tailwind-css)
 ![Velite](https://img.shields.io/badge/Content-Velite-111827?style=flat)
+![i18n](https://img.shields.io/badge/i18n-next--intl-7c3aed?style=flat)
 
 ## ✦ Vision
 
-This repo powers two layers of the same digital system:
+This repo powers two layers of the same digital system, **bilingual (pt-BR default + en)** via `next-intl`:
 - **Institutional layer**: `/about`, `/projects`, `/contact`, `/community`, `/cv`
 - **Editorial layer**: `/blog` and `/blog/[slug]` with MDX long-form content
+
+All routes live under `src/app/[locale]/...`. UI strings come from `messages/{pt-BR,en}.json`. Posts carry `language` + `translationKey` in frontmatter so PT/EN versions are linked.
 
 The visual direction is **Minimalismo Futurista + IA Agentic**:
 - rich dark canvas (`#05060a`)
@@ -33,9 +36,10 @@ The visual direction is **Minimalismo Futurista + IA Agentic**:
 ## 🧠 Tech Stack
 
 ### Core
-- [Next.js 16](https://nextjs.org/)
+- [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
 - [React 19](https://react.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
+- [next-intl](https://next-intl.dev/) — bilingual routing + messages
 
 ### Content & Rendering
 - [Velite](https://velite.js.org/) + MDX
@@ -61,24 +65,30 @@ The visual direction is **Minimalismo Futurista + IA Agentic**:
 ```txt
 tgmarinho-ai-website/
 ├── content/
-│   └── posts/                    # MDX sources
+│   └── posts/                    # MDX sources (bilingual: language + translationKey)
 ├── docs/
 │   └── redesign-2026-agentic-futurist.md
+├── messages/                     # next-intl: pt-BR.json, en.json
 ├── public/
+│   ├── llms.txt                  # generated at build (SEO for LLMs)
+│   └── llms-full.txt             # generated at build (full corpus)
+├── scripts/
+│   ├── generate-llms-txt.mjs     # runs in `npm run build`
+│   ├── audit-broken-refs.mjs     # `npm run audit:refs`
+│   └── validate-i18n-seo.mjs     # `npm run audit:i18n-seo`
 ├── src/
-│   ├── app/                      # Next.js routes
-│   │   ├── blog/
-│   │   ├── about/
-│   │   ├── projects/
-│   │   ├── contact/
-│   │   ├── community/
-│   │   └── cv/
+│   ├── app/
+│   │   ├── [locale]/             # bilingual routes (blog, about, projects, contact, community, cv)
+│   │   ├── api/
+│   │   ├── sitemap.ts
+│   │   └── robots.ts
 │   ├── components/
 │   │   ├── fx/                   # particle-field, liquid-orb, glow-card, cursor-aurora
 │   │   ├── blog/
 │   │   ├── home/
 │   │   ├── layout/
 │   │   └── ui/
+│   ├── i18n/                     # routing + request config for next-intl
 │   └── lib/
 ├── velite.config.ts
 └── package.json
@@ -98,7 +108,7 @@ Deep context + lessons learned:
 ## 🚀 Quick Start
 
 ### Requirements
-- Node.js 20+
+- Node.js 20+ (Vercel runtime is Node 24 LTS / Fluid Compute)
 - npm
 
 ### Install
@@ -129,10 +139,13 @@ npm run start
 ## 🧩 Scripts
 
 - `npm run dev` → Velite + Next.js dev
-- `npm run build` → clean Velite + production build
+- `npm run build` → clean Velite + generate llms.txt + production build
 - `npm run start` → production server
 - `npm run velite` → content only
 - `npm run lint` → ESLint
+- `npm run llms` → regenerate `public/llms.txt` + `public/llms-full.txt`
+- `npm run audit:refs` → scan posts/pages for broken internal references
+- `npm run audit:i18n-seo` → validate bilingual SEO (hreflang, translationKey pairs, canonical)
 
 ## ✍️ MDX Authoring
 
@@ -144,6 +157,8 @@ title: "Post Title"
 description: "Post description"
 date: "2026-05-07"
 published: true
+language: "en"                                  # or "pt-BR"
+translationKey: "shared-slug-across-locales"    # links pt-BR ↔ en versions
 categories: ["AI", "Career"]
 image: "/images/example.png"
 ---
