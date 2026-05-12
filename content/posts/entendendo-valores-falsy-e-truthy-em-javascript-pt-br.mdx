@@ -1,0 +1,174 @@
+---
+title: "Entendendo valores Falsy e Truthy em JavaScript"
+description: "Ambos os conceitos são muito comuns e essenciais para quem desenvolve em JavaScript. São amplamente usados em aplicações Back-end e Front-end."
+date: "2020-08-15"
+published: true
+categories: ["js"]
+image: "/assets/img/fasly-and-truthy.jpg"
+language: "pt-BR"
+slug: "entendendo-valores-falsy-e-truthy-em-javascript"
+translationKey: "understanding-falsy-and-truthy-values-in-javascript"
+---
+
+Vamos ver na prática, com alguns códigos, a importância de conhecer e aplicar esses conceitos.
+
+Este post foi traduzido e adaptado do inglês. [Você pode ler a versão original no Blog Rocketseat](https://blog.rocketseat.com.br/entendendo-falsy-e-truthy-no-javascript/). Todos os créditos para [eles](https://rocketseat.com.br/), uma escola de tecnologia incrível.
+
+## Falsy
+
+Um valor Falsy é algo avaliado como falso no processo de coerção de tipos (type coercion).
+
+Existem sete valores Falsy:
+
+```
+console.log("List the 7 falsy values")
+
+0 ? console.log("truthy") : console.log("falsy")
+
+0n ? console.log("truthy") : console.log("falsy")
+
+null ? console.log("truthy") : console.log("falsy")
+
+undefined ? console.log("truthy") : console.log("falsy")
+
+false ? console.log("truthy") : console.log("falsy")
+
+NaN ? console.log("truthy") : console.log("falsy")
+
+"" ? console.log("truthy") : console.log("falsy")
+```
+
+_0n é a notação de BigInt._
+
+Ao executar o código acima, o resultado será falsy para todos eles.
+
+## Truthy
+
+Diferente do Falsy, um valor Truthy é algo avaliado como verdadeiro no processo de coerção.
+
+Todos os valores são truthy, exceto aqueles avaliados como falsy, obviamente.
+
+Veja alguns exemplos abaixo:
+
+```
+console.log("Some truthy values")
+true  ? console.log("truthy")  : console.log("falsy")
+({})  ? console.log("truthy")  : console.log("falsy")
+([])  ? console.log("truthy")  : console.log("falsy")
+1n  ? console.log("truthy")  : console.log("falsy")
+17  ? console.log("truthy")  : console.log("falsy")
+new  Date()  ? console.log("truthy")  : console.log("falsy")
+3.4  ? console.log("truthy")  : console.log("falsy")
+-99  ? console.log("truthy")  : console.log("falsy")
+Infinity  ? console.log("truthy")  : console.log("falsy")
+-Infinity  ? console.log("truthy")  : console.log("falsy")
+"Rocketseat"  ? console.log("truthy")  : console.log("falsy")
+"🚀 💺"  ? console.log("truthy")  : console.log("falsy")
+" "  ? console.log("truthy")  : console.log("falsy")  // String with white space is truthy (be careful)!
+```
+
+Embora sejam todos valores truthy, isso não significa que sejam iguais.
+
+Por exemplo:
+
+```
+console.log({}  ==  []);  // false
+console.log({}  ===  []);  // It's even falser because compare value and type
+```
+
+O objeto `{}` não é um array `[]`.
+
+## Obtendo um valor falsy e truthy
+
+Para obter um valor falsy ou truthy via coerção de tipos, podemos usar `!!`.
+
+Exemplo:
+
+```
+ console.log(!!" ");  // with white space is truthy
+ console.log(!!"");  // empty string is falsy
+```
+
+Atenção: cuidado! Se o usuário digitar espaços em branco no formulário, isso pode quebrar a validação.
+
+```
+console.log(!!" ".trim());  // now is false!!!
+```
+
+## Exemplos do mundo real
+
+Se o array estiver vazio, renderize o `<p>`.
+
+```
+{
+  todoList.length ===  0  &&  (  <p>Nothing todo! 🏖️ </p>  )
+ }
+```
+
+O número 0 é falsy.
+
+Outro exemplo:
+
+Renderize a `div` com título, mas só renderize a descrição se a string for truthy:
+
+```
+<div>
+   <strong>{message.title}</strong>
+     {!!message.description &&  <p>{message.description}</p>}
+</div>
+
+```
+
+Aqui vemos a coerção de tipos na prática.
+
+`message.description` é uma String; com o operador `!!message.description`, estou obtendo o valor falsy ou truthy.
+
+Se a String description for falsa, a condição para. Se for verdadeira, a operação continua e mostra o `<p>{message.description}</p>`.
+
+Vejamos outro exemplo:
+
+```
+if(password && !old_password) {
+   throw  new  Error('You need to inform the password and old password.');
+}
+```
+
+Veja, `password` e `old_password` são strings. Se `password` estiver preenchida (true) e `!old_password` não, então passa pela condição e lança um erro para o usuário.
+
+```
+""  // falsy
+"1234Passwd"  // truthy
+```
+
+Último exemplo:
+
+```
+if(token[1]  && user[1]) {
+  setData({ token: token[1], user:  JSON.parse(user[1])  });
+}
+```
+
+Verifica se a posição 1 dos arrays token e user tem valores. Se sim, passa pela condição e envia para a função `setData` como parâmetro do objeto.
+Interessante: se o valor não estiver presente nessas posições, é falso, e a condição não é satisfeita.
+
+## 🏁 Conclusão
+
+Esses conceitos, junto com lógica de programação, serão usados diariamente por quem desenvolve ao longo da carreira! Saber falsy/truthy vai ajudar a construir aplicações React ou usar qualquer tecnologia do ecossistema JavaScript.
+
+## 🗽 O que significa true vs truthy
+
+Você sabe a **diferença entre** essas duas palavras em inglês: **True** vs **Truth**? A palavra **TRUE** é a sua perspectiva sobre algo. A palavra **TRUTH** é universal e não pode ser mudada.
+
+## 🔗 Links
+
+- [https://developer.mozilla.org/pt-BR/docs/Glossario/Falsy](https://developer.mozilla.org/pt-BR/docs/Glossario/Falsy)
+- [https://developer.mozilla.org/pt-BR/docs/Glossario/Truthy](https://developer.mozilla.org/pt-BR/docs/Glossario/Truthy)
+- [https://medium.com/coding-at-dawn/what-are-falsy-values-in-javascript-ca0faa34feb4](https://medium.com/coding-at-dawn/what-are-falsy-values-in-javascript-ca0faa34feb4)
+
+Espero que tenha gostado! Deixe um feedback abaixo! ♥️
+
+**Sempre há algo a aprender!**
+
+_Boost yourself._ 🚀
+
+Obrigado [professor Lucas Pirani](https://www.instagram.com/teacher_lucas_pirani/) por revisar meu post!

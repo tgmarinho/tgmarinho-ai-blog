@@ -1,0 +1,32 @@
+---
+title: "Renaming a Branch in Git"
+description: "Commands to rename a local and remote branch in your git/GitHub repository"
+date: "2020-04-13"
+published: true
+categories: ["git"]
+image: "/assets/img/github-social-code.jpeg"
+language: "en"
+translationKey: "renomeando-uma-branch-no-git"
+---
+
+If you created a branch with the wrong name or simply want to change its name, you can.
+
+## Renaming your local branch:
+
+If you are already on the local branch:
+
+`git branch -m new-branch-name`
+
+If you are on another branch and want to rename a different one:
+
+`git branch -m branch-i-want-to-rename new-branch-name`
+
+Deleting the old remote branch and pushing with the new name.
+
+`git push origin :old-name new-name`
+
+Pushing the renamed local branch to remote.
+
+`git push origin -u new-name`
+
+**\#git #github**
