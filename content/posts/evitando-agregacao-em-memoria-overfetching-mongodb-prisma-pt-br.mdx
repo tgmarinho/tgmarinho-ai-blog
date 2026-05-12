@@ -1,0 +1,358 @@
+---
+title: "Evitando agregação em memória e overfetching no MongoDB com Prisma"
+description: "Como paramos de carregar coleções inteiras no Node.js e deixamos o banco fazer o trabalho dele."
+date: "2026-03-10"
+published: true
+slug: "evitando-agregacao-em-memoria-overfetching-mongodb-prisma"
+categories: ["mongodb", "database", "javascript", "performance", "pt-br"]
+image: "https://images.unsplash.com/photo-1658204238967-3a81a063d162?q=80&w=2662&auto=format&fit=crop&ixlib=rb-4.1.0"
+language: "pt-BR"
+translationKey: "avoiding-in-memory-aggregation-and-overfetching-in-mongodb-with-prisma"
+---
+
+A maioria dos engenheiros de backend aprende cedo sobre o **problema de query N+1**.
+
+Uma query carrega uma lista. Depois, N queries adicionais buscam dados relacionados.  
+É ineficiente e fácil de detectar nos logs.
+
+Mas em muitas aplicações MongoDB usando Prisma, um anti-padrão diferente costuma ser **mais danoso e mais comum**:
+
+**Overfetching combinado com agregação em memória.**
+
+Em vez de deixar o banco agregar os dados, a aplicação carrega milhares de registros no Node.js e processa tudo com JavaScript.
+
+Em pequena escala, funciona bem.
+
+Com alguns milhares de registros, vira gargalo.
+
+O padrão costuma se parecer com isso:
+
+```ts
+const orders = await prisma.order.findMany({ where: { eventId } })
+
+const confirmed = orders.filter(o => o.status === "CONFIRMED").length
+const pending = orders.filter(o => o.status === "PENDING").length
+```
+
+Isso significa:
+
+- O MongoDB envia cada documento pela rede
+- O Node.js carrega tudo na memória
+- O JavaScript percorre o array várias vezes
+
+Tudo isso para calcular algo que o banco faria instantaneamente.
+
+## O problema: um dashboard real
+
+Na nossa plataforma de gestão de eventos, construída com:
+
+- Next.js 15
+- tRPC
+- Prisma 6
+- MongoDB
+
+O dashboard administrativo mostra métricas como:
+
+- total de inscrições
+- pagamentos pendentes
+- check-ins
+- breakdown de receita
+
+A implementação original era assim:
+
+```ts
+// ❌ ANTES — carrega TODOS os pedidos na memória
+const allOrders = await ctx.db.order.findMany({
+  where: { eventId: input.eventId },
+  include: { ticketType: true, coupon: true },
+})
+
+const totalConfirmed = allOrders.filter(o => o.status === "CONFIRMED").length
+const totalPending = allOrders.filter(o => o.status === "PENDING").length
+const totalCancelled = allOrders.filter(o => o.status === "CANCELLED").length
+const totalRefunded = allOrders.filter(o => o.status === "REFUNDED").length
+
+let revenue = 0
+for (const order of allOrders) {
+  if (order.status === "CONFIRMED") {
+    revenue += order.organizerReceivedCents
+  }
+}
+```
+
+Funcionou bem durante o desenvolvimento.
+
+Mas, quando os eventos passaram a ter milhares de pedidos, o dashboard ficou lento.
+
+## Por que isso é caro
+
+### 1. Pressão de memória
+
+Um evento com 10.000 pedidos carrega 10.000 documentos na memória do Node.js.
+
+A maior parte desses campos nunca é usada.
+
+### 2. Overhead de rede
+
+O MongoDB envia documentos serializados em BSON.
+
+Mesmo que cada documento tenha ~1 KB:
+
+10.000 pedidos ≈ 10 MB transferidos
+
+Tudo isso trafega pela rede só para calcular alguns contadores.
+
+### 3. Uso de CPU no Node.js
+
+Cada `.filter()` percorre o array inteiro.
+
+- `orders.filter(...)`
+- `orders.filter(...)`
+- `orders.filter(...)`
+
+Ou seja, várias passagens completas sobre o mesmo dataset.
+
+### 4. Uso ruim de índices
+
+Os índices do MongoDB são otimizados para filtrar e contar.
+
+Mas, quando você carrega cada documento e agrega em JavaScript, o banco não consegue aproveitar esses índices de forma efetiva.
+
+## Por que isso acontece mais com MongoDB
+
+O MongoDB suporta aggregation pipelines, incluindo `$group`.
+
+Exemplo:
+
+```js
+db.orders.aggregate([
+  { $match: { eventId } },
+  {
+    $group: {
+      _id: "$status",
+      total: { $sum: 1 }
+    }
+  }
+])
+```
+
+No entanto, o adapter de MongoDB do Prisma não expõe uma API completa de groupBy como os conectores SQL.
+
+Por causa dessa limitação, é comum o desenvolvedor cair no padrão:
+
+`findMany()` → agregar em JavaScript
+
+Mas o Prisma suporta `count()`, e o MongoDB executa essa operação de forma muito eficiente — especialmente com índices.
+
+## A solução: contar no nível do banco
+
+Em vez de carregar todos os documentos, deixe o banco contar.
+
+```ts
+// ✅ DEPOIS — counts em paralelo
+const [
+  totalConfirmed,
+  totalPending,
+  totalCancelled,
+  totalRefunded,
+] = await Promise.all([
+  ctx.db.order.count({
+    where: { eventId: input.eventId, status: "CONFIRMED" },
+  }),
+  ctx.db.order.count({
+    where: { eventId: input.eventId, status: "PENDING" },
+  }),
+  ctx.db.order.count({
+    where: { eventId: input.eventId, status: "CANCELLED" },
+  }),
+  ctx.db.order.count({
+    where: { eventId: input.eventId, status: "REFUNDED" },
+  }),
+])
+```
+
+Cada query retorna um único inteiro.
+
+Em vez de transferir megabytes de documentos, a resposta tem só alguns bytes.
+
+Com `Promise.all`, as queries rodam em paralelo.
+
+## Por que isso é mais rápido
+
+Com um índice composto como:
+
+`[eventId, status]`
+
+O MongoDB consegue responder a query direto pelo índice, sem varrer a coleção inteira.
+
+Isso reduz drasticamente:
+
+- acesso a disco
+- uso de CPU
+- payload de rede
+
+## Adicionando os índices certos
+
+Os índices precisam casar com o padrão de query.
+
+Exemplo de schema Prisma:
+
+```prisma
+model Order {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId @map("event_id")
+  status    String
+  createdAt DateTime @default(now())
+
+  @@index([eventId, status])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+```
+
+Aplique com:
+
+```bash
+npx prisma db push
+```
+
+O MongoDB usa db push no lugar de migrations.
+
+## Padrão: filtrar no banco
+
+Outro anti-padrão clássico é filtrar em JavaScript.
+
+**❌ Ruim**
+
+```ts
+const orders = await prisma.order.findMany()
+
+const confirmed = orders.filter(o => o.status === "CONFIRMED")
+```
+
+**✅ Melhor**
+
+```ts
+const confirmed = await prisma.order.findMany({
+  where: {
+    status: "CONFIRMED"
+  }
+})
+```
+
+Isso permite que o MongoDB use os índices.
+
+## Padrão: paginar no banco
+
+Carregar tudo e paginar na memória é outro assassino de performance.
+
+**❌ Ruim**
+
+```ts
+const orders = await prisma.order.findMany()
+const page = orders.slice(skip, skip + take)
+```
+
+**✅ Melhor**
+
+```ts
+const orders = await prisma.order.findMany({
+  skip,
+  take,
+  orderBy: { createdAt: "desc" }
+})
+```
+
+Agora o MongoDB varre apenas o intervalo necessário.
+
+## Quando o findMany ainda é necessário
+
+Às vezes você precisa de dados reais, não só de contagens.
+
+Exemplo: cálculo de receita.
+
+A chave é minimizar o que você carrega.
+
+```ts
+const orders = await prisma.order.findMany({
+  where: {
+    eventId,
+    status: { in: ["CONFIRMED", "PENDING"] }
+  },
+  select: {
+    status: true,
+    organizerReceivedCents: true
+  }
+})
+
+let revenue = 0
+
+for (const order of orders) {
+  if (order.status === "CONFIRMED") {
+    revenue += order.organizerReceivedCents
+  }
+}
+```
+
+Melhorias importantes:
+
+- filtrar os status indesejados no banco
+- usar `select` em vez de `include`
+- agregar em uma única passagem
+
+## Além da otimização de query: contadores precomputados
+
+Em escala maior, mesmo queries `count()` eficientes podem ficar caras quando o dashboard é acessado com frequência.
+
+Muitos sistemas de alta escala resolvem isso com contadores precomputados.
+
+Exemplo de documento:
+
+```json
+{
+  "eventId": "evt_123",
+  "confirmedOrders": 182,
+  "pendingOrders": 21,
+  "revenue": 21840
+}
+```
+
+Sempre que um pedido muda de status:
+
+- order.confirmed → incrementa confirmedOrders
+- order.cancelled → decrementa confirmedOrders
+
+Essa abordagem permite carregar o dashboard com uma única leitura.
+
+## Checklist rápido
+
+Antes de subir qualquer query, se pergunte:
+
+- Estou carregando registros só para contar?
+- Estou filtrando em JavaScript?
+- Estou paginando com `.slice()`?
+- Estou usando `include` quando `select` resolveria?
+- Meus índices casam com o padrão das queries?
+- Várias queries podem rodar em paralelo com `Promise.all`?
+
+## Resultados
+
+Depois de aplicar esses padrões:
+
+| Métrica | Melhoria |
+|--------|-------------|
+| Tempo de carga do dashboard | ~2s → ~200ms |
+| Uso de memória | -60% |
+| Varreduras no banco | eliminadas |
+
+Overfetching raramente aparece como um bug óbvio.
+
+Seus logs mostram uma única query.  
+Seu banco parece saudável.
+
+Enquanto isso, o Node.js está silenciosamente fazendo o trabalho do banco —  
+um `.filter()` de cada vez.
+
+A correção é simples:
+
+**Deixe o banco fazer aquilo para o qual ele foi construído.**
