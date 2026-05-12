@@ -1,0 +1,53 @@
+---
+title: "Meet Polished: a JS library for color manipulation"
+description: "I really enjoyed lightening and darkening colors with the polished library — it pairs nicely with Styled Components for component styling."
+date: "2019-09-30"
+published: true
+categories: ["js"]
+image: "/assets/img/javascript.png"
+language: "en"
+slug: "polished-lib-color-manipulation-js"
+translationKey: "conhe-endo-a-lib-polished-para-manipular-cores-no-js"
+---
+
+I really enjoyed lightening and darkening colors with the polished library — it pairs nicely with Styled Components for component styling.
+
+* Install
+
+
+```
+yarn add polished styled-components
+```
+
+* Usage
+
+
+```
+import styled from 'styled-components';
+import { darken } from 'polished';
+
+button {
+      background: #7169c1;
+      color: #fff;
+      border: 0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: auto;
+
+      display: flex; 
+      align-items: center;
+
+      &:hover {
+        background: ${darken(0.03, '#7169c1')};
+      }
+}
+```
+
+See it in action:
+
+https://youtu.be/CbFMwHvHK1Y
+
+
+Check out more on the official site: https://polished.js.org
+
+[code](https://gist.github.com/tgmarinho/0022665c69c2b1089f6dc1c98fe0df10)

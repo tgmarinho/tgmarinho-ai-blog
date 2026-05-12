@@ -1,0 +1,51 @@
+---
+title: "React Hooks + Redux (useSelector) + Unform"
+description: "Boosting productivity with React Hooks + Redux (useSelector) and Unform"
+date: "2019-10-10"
+published: true
+slug: "react-hooks-redux-useselector-unform-en"
+categories: ["Development"]
+image: "/assets/img/praia-top.jpg"
+language: "en"
+translationKey: "react-hooks-redux-useselector-unform"
+---
+
+See this layout? It's really easy to populate these fields with [React Hooks](https://reactjs.org/docs/hooks-intro.html) + [Redux](https://redux.js.org) + [Unform](https://github.com/Rocketseat/unform).
+
+![form with react hooks](/assets/img/screen_shot_2019-10-10_at_09.37.48.png)
+
+Take a look:
+
+![form code with react hooks](/assets/img/screen_shot_2019-10-10_at_09.50.26.png)
+
+Just grab the data from the **user** **reducer** using **useSelector** from **React Redux** (Hooks):
+
+```
+const profile = useSelector(state => state.user.profile);
+```
+
+Pass it into the Form's `initialData={profile}`.
+
+The Inputs only need the `name` prop matching the field names coming from the **API** or from the **reducer** values.
+
+In short, once you understand the concepts of **React Hooks**, **Redux**, and how to use Rocketseat's new **Unform** library for forms built with React Hooks, your productivity goes up a lot. Hooks already cut a lot of verbosity in your code, and with **Unform** that verbosity shrinks even further — a lot is abstracted away by the library. You just pull data from the API, render it on the screen, and that's it. Submitting form data is just as easy.
+
+Once you grasp the full **Redux** and **React Hooks** flow — which is rough at first — productivity ramps up significantly in the medium term.
+
+I'm a big fan of Hooks and Redux's **useSelector**, and there's also **useDispatch**, which is super handy and makes things even easier. Goodbye **mapStateToProps**, **mapActionsToProps**, **bindActionCreators**.
+
+There are other libraries on the market that compete with [Unform](https://github.com/Rocketseat/unform), each with their own pros and cons:
+
+
+
+* [React Hook Form](https://react-hook-form.com/)
+* [Redux Form](https://redux-form.com/8.2.2/)
+* [Formik](https://jaredpalmer.com/formik/docs/overview)
+
+If you want to see the styling with styled-components for this code:
+
+
+
+If you want to see the styling: [https://gist.github.com/tgmarinho/8ab80ea0951abad6f2069e98e55850f5](https://gist.github.com/tgmarinho/8ab80ea0951abad6f2069e98e55850f5)
+
+Profile code: [https://gist.github.com/tgmarinho/e551383fedbec22d1d5b202e31a0a745](https://gist.github.com/tgmarinho/e551383fedbec22d1d5b202e31a0a745)
