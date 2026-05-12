@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { CVViewer } from "@/components/cv/cv-viewer";
+import { Recommendations } from "@/components/cv/recommendations";
 import { Download, Printer } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 
@@ -187,6 +188,8 @@ export default function CVPage() {
             <CVViewer content={cvContent} />
           </div>
         )}
+
+        <Recommendations />
       </div>
     </div>
   );
