@@ -1,0 +1,1942 @@
+---
+title: "Flux Architecture: A Rocketshoes E-commerce"
+description: "Let's build a Rocketshoes e-commerce to learn Flux through a Redux implementation, using Redux Saga to handle side effects for asynchronous features"
+date: "2019-10-03"
+published: true
+slug: "flux-architecture-rocketshoes-ecommerce"
+categories: ["Development"]
+image: "/assets/img/arquitetura_flux.png"
+language: "en"
+translationKey: "arquitetura-flux-um-ecommerce-da-rocketshoes"
+---
+
+Let's build a beautiful e-commerce from scratch with Create React App using Redux. See the screenshots at the end of the post.
+
+These are my class notes from the Rocketseat Bootcamp:
+
+### We'll use Redux to explain Flux.
+
+## Lesson 01 - Redux Concepts
+
+* A library that implements the Flux architecture;
+	 - It can be used with any JavaScript framework (Angular, Vue, React), or even with plain JS
+	 - Redux implements Flux. [Flux](https://facebook.github.io/flux/) is an architecture, a concept that simplifies communication between elements on the screen.
+
+* Global application state control. A global state is one without a specific owner: it can be used in any component or piece of code to render a screen;
+
+* When should you use Redux?
+	-  Does my state have more than one "owner"? When the state is shown in multiple places, not just a specific component.
+	-  Is my state manipulated by multiple components? If so, Redux is a good fit.
+	- Do user actions cause side effects on the data? Example: adding a product to the cart could trigger a message to the user or change a counter in another component on screen.
+
+Redux is used to manage global state. Good examples: shopping cart, logged-in user data with permissions, music player, etc.
+
+When the state has no specific owner or has to be shown in multiple places, Redux is a good solution — usually for medium to large projects where state spreads across the application.
+
+## Flux Architecture
+
+Whenever we want to read or update state, we dispatch an Action.
+
+In an e-commerce, when the user clicks the product catalog, an action is dispatched (an action isn't only fired by user input — the system itself can fire it; for example, when a component mounts in React's `componentDidMount`, we can dispatch an `action` to do something).
+
+An Action has this shape:
+
+```
+{
+  type: ADD_TO_CART,
+  product: { ... }
+}
+```
+
+A type and the payload — the value it carries.
+
+In our case, we're dispatching an Add-to-cart action with a product the user liked and chose.
+
+This action goes to the `Redux Store`, which contains the `reducers` (the term used to designate state separation inside the Redux Store). In Redux we can have many slices of state, and each reducer separates state by feature. We can have one Store with multiple reducers.
+We might have a Cart Reducer and a User Reducer, where Cart holds the purchase values and User holds data about the logged-in user, etc.
+In the example above, the Cart Reducer receives the ADD_TO_CART action, mutates the state, and adds a new product to the cart.
+
+Now the Cart component in the app's header listens for the change, and it can dispatch an action itself to update the quantity inserted in the cart:
+
+```
+{
+  type: UPDATE_QUANTITY,
+  product: { ... },
+  quantity: 5
+}
+```
+
+A reducer receives that action, updates the state again, and the value is replicated to anything listening to that state.
+
+## Principles
+
+* Every action must have a "type" describing it, and it must be a unique string.
+* Redux state is the single source of truth. If cart state lives in Redux, every piece of cart-related data must live in Redux — it can't live in both the component and Redux at the same time, since that causes inconsistencies and is hard to maintain.
+* We can't change Redux state without an action. State is immutable; only the Reducer can change it in response to action calls.
+* Actions and reducers are pure functions — they don't deal with asynchronous side effects. They don't access databases, call APIs, etc. This helps a lot with unit tests, because a pure function always returns the same result for the same input. To handle async side effects we use Redux Saga, which we'll see later.
+* Any synchronous business-rule logic should live in the reducer, never in the action. The action doesn't change data; it only carries values. The reducer mutates the state.
+* Not every application needs Redux. Start without it and add it when you feel the need — that's one of the easiest ways to understand Redux. Adding Redux upfront makes you write more code without grasping why it's useful. It only makes sense to add it upfront if you know the project will grow and the requirements are clear.
+
+
+## Cart Example
+
+The Cart Reducer always starts with an empty state, an empty `[ ]` for example.
+
+The Cart Reducer always listens to actions dispatched by the application. If it hears the action type, it does what it needs to. So the Cart Reducer listens for the action of type ADD_TO_CART:
+
+```
+{
+  type: "ADD_TO_CART",
+  product: {
+    id: 1,
+    title: "New product",
+    price: 129.9
+  }
+}
+```
+
+And the Cart Reducer puts the product into state:
+
+```
+[
+  {
+    id: 1,
+    title: "New product",
+    price: 129.9,
+    amount: 1,
+    priceFormatted: "R$129,90"
+  }
+]
+```
+
+The reducer can add fields even if the action didn't send them — see `amount` and `priceFormatted`. The reducer knows we'll need the formatted price, so it built that for us, and since this is the first product added to the cart, the amount is 1. That amount will be used somewhere, so we have it ready.
+
+Later, the user might pick the same product (ID 1), so we simply update the quantity.
+
+We dispatch another action of type UPDATE_AMOUNT with product ID 1 and amount 5.
+
+```
+{
+    type: "UPDATE_AMOUNT",
+    product: 1,
+    amount: 5,
+}
+```
+
+The Cart Reducer listens for that action and manipulates the state accordingly:
+
+```
+[{
+    id: 1,
+    title: "New product",
+    price: 129.9,
+    amount: 5,
+    priceFormatted: "R$129,90"
+}]
+```
+
+Done — only the amount value was updated.
+
+Redux is easy: just understand the concepts of Actions, Store, and Reducers, and most importantly when to use Redux in your application.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-01-conceitos-redux](https://github.com/tgmarinho/rocketshoes/tree/aula-01-conceitos-redux)
+
+## Lesson 02 - Project Structure
+
+Let's create a virtual shoe store (Rocketshoes) to learn the Redux implementation.
+
+We'll use Create React App to create the frontend in React:
+
+```
+npx create-react-app rocketshoes
+```
+
+And I configured it as in the [lesson](https://github.com/tgmarinho/front-react/commit/287881809382cf33c18a14dec9b01d6965aa90e5)
+
+I ran in the terminal:
+```
+yarn & yarn start
+```
+
+Done — everything running!
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-02-estutura-projeto](https://github.com/tgmarinho/rocketshoes/tree/aula-02-estutura-projeto)
+
+
+## Lesson 03 - Configuring Routes
+
+Let's set up the project navigation.
+
+I didn't import `BrowserRouter` inside `routes.js` because we'll create a Header component that also needs access to route data.
+
+So the components that need Routes will live in App.js.
+
+Check out the code.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-03-configurando-rotas](https://github.com/tgmarinho/rocketshoes/tree/aula-03-configurando-rotas)
+
+## Lesson 04 - Global Styles
+
+* We installed the styled-components lib;
+* We created `globals.js` with the global styles;
+* We imported the styles into App.js
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-04-estilos-globais](https://github.com/tgmarinho/rocketshoes/tree/aula-04-estilos-globais)
+
+
+## Lesson 05 - Creating the Header
+
+* I create the header styling component
+* I create the Header component with a logo, a link to home, and a link to the cart
+* I place the Header at the top of App.js
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-05-criando-header](https://github.com/tgmarinho/rocketshoes/tree/aula-05-criando-header)
+
+
+## Lesson 06 - Styling the Home
+
+* We created the styling in `styled.js` and applied it in the Home's `index.js`
+* Highlight for the [polished](https://polished.js.org/) lib we installed with `yarn add polished`. Now we can manipulate colors with it.
+
+[https://www.youtube.com/watch?v=CbFMwHvHK1Y](https://www.youtube.com/watch?v=CbFMwHvHK1Y)
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-06-estilizando-home](https://github.com/tgmarinho/rocketshoes/tree/aula-06-estilizando-home)
+
+
+## Lesson 07 - Styling the Cart
+
+* We created the styling in `styled.js` and applied it in the Cart's `index.js`
+* We used polished again to manage the hover color of the checkout button.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-07-estilizando-carrinho](https://github.com/tgmarinho/rocketshoes/tree/aula-07-estilizando-carrinho)
+
+## Lesson 08 - Configuring the API
+
+Set up the API to consume products.
+
+We use the [json-server](https://github.com/typicode/json-server) lib to create a Fake API simulating what a real API would do.
+
+Just create a JSON with fake data and run json-server to simulate the API — you can even configure response time and other things.
+
+To install globally on the machine:
+
+```
+yarn add json-server -D
+```
+Then create a `server.json` file at the project root with the data including stock and products, even relating them by id.
+
+We'll have a `stock` route that returns the product stock, and a `products` route that returns the products.
+
+Let's configure axios to consume this API.
+
+```
+yarn add axios
+```
+
+See the `api.js` file in the source code.
+
+To run the fake API:
+
+```
+yarn json-server server.json -p 3333 -w
+```
+
+We can also add a script in package.json:
+
+```
+...
+"server":  "json-server server.json -p 3333 -w"
+...
+```
+
+And run `yarn server` to start the API.
+
+* json-server is the lib name
+* server.json is the fake-api file at the project root, so I don't pass a path, only the filename. It's at the same level as package.json
+* -p 3333 is the port I chose for the API
+* -w is to keep `watching` every change I make to the API — I don't have to rerun the command after each change.
+
+Now, to access it, just hit the route you want:
+
+```
+http://localhost:3333/stock
+```
+
+and
+
+```
+http://localhost:3333/products
+```
+
+Both routes will return an array with their respective objects.
+
+Cool: if I call the product passing the id, it returns only the product with that id:
+```
+[http://localhost:3333/products/4](http://localhost:3333/products/4)
+```
+If I pass a non-existent ID, it returns an empty object.
+
+You can even delete and update values in this API — really nice!
+
+Excellent for frontend development mode when the backend API hasn't been built yet.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-08-configurando-api](https://github.com/tgmarinho/rocketshoes/tree/aula-08-configurando-api)
+
+
+## Lesson 09 - Fetching products from the API
+
+In this lesson we'll fetch data from the API and render it on the user's screen, following some good code practices.
+
+* Convert the stateless Home component into a stateful class to store the products returned from the API.
+* I created a `format.js` file inside `src/util` exporting a function that formats values in Brazilian currency, using JavaScript's `Intl.NumberFormat`.
+* We fetch the API data, store it in the products state, and populate the product list on screen.
+* As soon as we fetch the data from the API, we map it to return a product array with the price already formatted, instead of using `formatPrice()` inside render on the `price` variable of the product. It's not recommended to put functions that manipulate variables inside render, because every state change calls that function again, hurting performance. The idea is to always hand the render values that are ready to be rendered — any formatting should be done beforehand.
+
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-09-buscando-produtos-api](https://github.com/tgmarinho/rocketshoes/tree/aula-09-buscando-produtos-api)
+
+
+## Lesson 10 - Configuring Redux
+
+In this lesson we'll configure Redux in the application.
+
+```
+yarn add redux react-redux
+```
+We installed Redux itself and the React-Redux integration.
+
+Let's create a `store` folder inside `src` with an `index.js`:
+
+```
+import { createStore } from 'redux';
+
+const store = createStore();
+
+export default store;
+```
+
+Now in App.js we'll import `Provider` from `react-redux` to make the `store` available across the application, so `Provider` has to wrap every component. The provider receives a prop called `store`, which is the store we created above.
+
+```
+import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import Routes from './routes';
+import GlobalStyle from './styles/globals';
+import Header from './components/Header';
+import store from './store';
+
+function App() {
+  return (
+    <Provider store={store}>
+      <BrowserRouter>
+        <Header />
+        <GlobalStyle />
+        <Routes />
+      </BrowserRouter>
+    </Provider>
+  );
+}
+
+export default App;
+```
+
+The store is now available across the application — and the project *crashed*.
+
+```
+Error: Expected the reducer to be a function.
+```
+
+That happened because whenever we create a store, we must pass a function that is a **reducer**.
+
+Let's create our first reducer to make it available in the store.
+
+```
+import { createStore } from 'redux';
+
+function cart() {
+  return [];
+}
+
+const store = createStore(cart);
+
+export default store;
+```
+Done — the app is working again.
+
+But if the application grows a lot, it's a good idea to separate reducers into another file, by module and feature.
+
+So let's create a `models` folder and inside it another `cart` folder with a `reducers.js`:
+
+And put the cart reducer in it.
+
+```
+export  default  function  cart() {
+	return [];
+}
+```
+
+Then import it in the store's index.js:
+
+```
+import { createStore } from 'redux';
+import reducer from './models/cart/reducer';
+
+const store = createStore(reducer);
+
+export default store;
+```
+
+But since we'll have several reducers, we need to change the store again. Let's create a `rootReducer.js` inside `models` — it'll contain all reducer functions and combine them so the store has access to a single combined state.
+
+`rootReducer.js`:
+```
+import { combineReducers } from 'redux';
+
+import cart from './cart/reducer';
+
+export default combineReducers({
+  cart,
+});
+```
+
+And in the store's `index.js`, we import `rootReducer`, which contains the reducers:
+
+```
+import { createStore } from 'redux';
+import rootReducer from './models/rootReducer';
+
+const store = createStore(rootReducer);
+
+export default store;
+```
+
+So far the application is working, but we're not using the reducers yet — we've only configured the store and the reducers. We still need the actions and access to the stores.
+
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-10-configurando-redux ](https://github.com/tgmarinho/rocketshoes/tree/aula-10-configurando-redux )
+
+
+
+## Lesson 11 - Adding to the cart
+
+Let's add the product to the Cart. All the on-screen data will be passed to the cart reducer we're about to create.
+
+We'll use Redux now in the Home component.
+
+To connect the component to Redux we'll use the `connect` function from `react-redux`.
+
+`Home/index.js`:
+```
+import { connect } from 'react-redux';
+```
+
+`connect` returns another function, and with that returned function we call it passing the component as a parameter:
+
+`Home/index.js`:
+```
+...
+class  Home  extends  Component { ... }
+...
+export  default  connect()(Home);
+```
+
+`connect()` takes some parameters that we'll cover later:
+
+To dispatch an action to Redux we need a function — so when the user clicks the add-to-cart button, we'll dispatch an action.
+
+```
+ <button
+   type="button"
+   onClick={() => this.handleAddProduct(product)}
+>
+```
+
+When we use `connect`, it passes a `prop` named `dispatch` to the component, which is used to call an **action** — i.e., to dispatch an action.
+
+```
+this.props.dispatch
+```
+
+**Dispatch** is a function that takes an action; the action has a type and a value it carries. The type (*type*) is mandatory.
+
+Example of an action:
+```
+// action
+{
+	type: 'ADD_TO_CART',
+	product,
+}
+```
+
+So when the user clicks the button, the `handleAddProduct` function will use the `dispatch` prop to execute the function with a parameter, specifying type: 'ADD_TO_CART', which some reducer (the cart reducer) will listen to and handle, processing the `product` value sent as a parameter:
+
+```
+...
+  handleAddProduct = product => {
+    const { dispatch } = this.props;
+    dispatch({
+      type: 'ADD_TO_CART',
+      product,
+    });
+  };
+...
+```
+
+Now let's test this function call by adding a log to `cart/reducer.js`:
+
+```
+export default function cart() {
+	console.log('test');
+	return [];
+}
+```
+
+Now opening the browser's console, we'll see ***test*** appear three times — i.e., the function was called even though we didn't click the add-to-cart button. I'll explain why later. As soon as we click add-to-cart, the dispatch fires and ***test*** appears in the browser.
+
+Every time a *dispatch* fires, all reducers listen and execute the function. Keep that in mind. Which reducer actually handles it depends on the type and the reducer listening for that type — we'll see this better shortly.
+
+How do we receive the values from the parameter sent in the dispatch?
+
+Every reducer receives, by default, a `state` variable and an `action` variable.
+
+```
+export default function cart(state, action) {
+  console.log(action);
+  return [];
+}
+```
+
+Now if we run this function, we'll see the actions being logged in the console:
+
+```
+{type: "@@redux/INITp.i.5.b.k.v"} type: "@@redux/INITp.i.5.b.k.v" __proto__: Object
+reducer.js:2 {type: "@@redux/PROBE_UNKNOWN_ACTIONv.t.j.3.7"} type: "@@redux/PROBE_UNKNOWN_ACTIONv.t.j.3.7" __proto__: Object
+reducer.js:2 {type: "@@redux/INITp.i.5.b.k.v"}
+reducer.js:2 {type: "ADD_TO_CART", product: {...}}
+reducer.js:2 {type: "ADD_TO_CART", product: {...}}
+reducer.js:2 {type: "ADD_TO_CART", product: {...}}
+```
+
+And how cool — the first three logs are the React/Redux initialization and integration. The other three are me clicking the add-to-cart button.
+
+Notice the **action** brought our object with **type** and **product**.
+
+The state is the state before the dispatch. Whenever an action comes in, some variable's state will probably change. So the reducer receives the current state, and the action brings a value that will change the current state — and the change is done in a way that respects store immutability, where we recreate the state by passing a new value to it.
+
+Now let's see the full shape of a reducer:
+
+```
+export default function cart(state, action) {
+  switch (action.type) {
+    case 'ADD_TO_CART':
+      return [];
+    default:
+      return state;
+  }
+}
+```
+
+This is the reducer template: a function that takes the current state and an action, with an if (by convention, a switch) over the action's type value.
+If the action's type matches a case in the switch, the reducer does something with the state and returns the new state. If no type matches, it returns the current state.
+
+As I said above, all reducers hear every dispatch — what makes a reducer change state is having the same type as `action.type` in the switch. Otherwise it does nothing, simply returning the current state. Yes, if I dispatched an action of type DELETE_CATEGORY_PRODUCT, another reducer (say, categoryProduct) would handle it, but our cart reducer would also hear it and would just return the current state, since it doesn't handle that action.
+
+Now I'll show the state change:
+
+```
+export default function cart(state = [], action) {
+  console.log(state);
+
+  switch (action.type) {
+    case 'ADD_TO_CART':
+      return [...state, action.product];
+    default:
+      return state;
+  }
+}
+```
+
+The state always starts as an empty array, so we pass an empty array as the default for `state`.
+
+Cool: when I click add-to-cart the first time, it logs an empty array (because I'm logging the state before mutating the store), but on the next click it shows the store with the product inside it:
+
+```
+[]
+reducer.js:2 [{…}]0: {id: 1, title: "Light Comfortable Walking Sneaker", price: 179.9, image: "https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis1.jpg", priceFormatted: "R$ 179,90"}length: 1__proto__: Array(0)
+```
+
+As I keep clicking, it keeps adding to the cart.
+
+Now, how to access the cart data from the cart store in the **Header** component:
+
+Since we want to access reducers, let's import `connect` inside `Header/index.js`:
+
+```
+...
+import { connect } from 'react-redux';
+...
+```
+
+OK, now we want to access the reducer. **connect** takes two parameters — I'll cover the first one now and the second one later.
+
+The first parameter is a function that receives the state and returns the reducer's state into a variable that we hand to React.
+
+```
+export  default  connect(state  => ({
+	cart: state.cart,
+}))(Header);
+```
+
+Notice we pass a function with a `state` parameter that returns an object with the `cart` property, holding the cart reducer's state. **cart** is the name we set in `rootReducer.js`.
+
+Just as a reminder:
+```
+import { combineReducers } from 'redux';
+import cart from './cart/reducer';
+
+export default combineReducers({
+  cart,
+});
+```
+
+Now let's see the full code in practice:
+
+```
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { MdShoppingBasket } from 'react-icons/md';
+import { connect } from 'react-redux';
+import { Layout, Cart } from './styles';
+import logo from '../../assets/images/logo.svg';
+
+function Header({ cart }) {
+  console.log(cart);
+
+  return (
+    <Layout>
+      <Link to="/">
+        <img src={logo} alt="Rocketshoes" />
+      </Link>
+
+      <Cart to="/cart">
+        <div>
+          <strong>My cart</strong>
+          <span>3 items</span>
+        </div>
+        <MdShoppingBasket size={36} color="#FFF" />
+      </Cart>
+    </Layout>
+  );
+}
+
+export default connect(state => ({
+  cart: state.cart,
+}))(Header);
+```
+
+The **Header** receives a `cart` prop containing every value from `state.cart`.
+
+Now when we click **add to cart**, we see the current state in *console.log* on each click. Cool — and this is in a component other than Cart. Remember, we're in the Header, where we can show the number of products in the shopping cart.
+
+So every component with **connect** listening to reducers gets recreated with the new value when a reducer changes — remembering that in React, every state change calls *render*, which recreates the component from scratch.
+
+But in the Header I don't need the whole cart, just the number of items in the cart array.
+
+So I tweak it:
+
+```
+export  default  connect(state  => ({
+	cartSize: state.cart.length,
+}))(Header);
+```
+Instead of getting the whole cart, I only get the cart's length and add it to the `cartSize` prop.
+
+```
+...
+function  Header({ cartSize }) {
+console.log(cartSize);
+...
+<div>
+	<strong>My cart</strong>
+	<span>{cartSize} items</span>
+</div>
+...
+}
+```
+
+I use the `cartSize` variable to show the number of items in the cart. Now, with every change to the cart — adding or removing items — the **Header** is recreated with the new total count.
+
+Let's recap and summarize what happened:
+
+It all started in Home's `index.js`. We connected Home to Redux using **connect**, and when we do that the component gets access to `dispatch` in its `props`.
+
+**dispatch** is used to fire Redux actions; actions tell Redux that we want to change state and they carry a type and a value. The type is mandatory, and we pass the product to the cart.
+
+The `reducer.js` file listens to all actions, hears the action of type 'ADD_TO_CART', and recreates a state with the action's value — the product. The cart function takes a state (an empty array by default if nothing is provided) and also takes the actions.
+
+When the change is made, Redux notifies every component that uses connect and needs the state in cart that the data has been updated. It runs the function inside connect again, passing the component the new state value it needs to render.
+
+So our component dispatches an action, the action notifies the reducer, the reducer makes the changes, Redux notifies every connect-ed component, and the components update with that change.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-11-adicionando-ao-carrinho](https://github.com/tgmarinho/rocketshoes/tree/aula-11-adicionando-ao-carrinho)
+
+
+## Lesson 12 - Reactotron + Redux
+
+Let's set up Reactotron to display Redux logs — it helps a lot when debugging Redux.
+
+To do this on the web in React + Redux projects, we add the libs:
+
+```
+yarn add reactotron-react-js reactotron-redux
+```
+
+Then we create a `src/config/Reactotron.js` file with the configuration.
+
+Even though it's a debugging tool, it has to be installed as a regular project dependency, because its configuration code runs in production too. However, it only actually works in development — you'll see why now:
+
+```
+import Reactotron from 'reactotron-react-js';
+import { reactotronRedux } from 'reactotron-redux';
+
+if (process.env.NODE_ENV === 'development') {
+  const tron = Reactotron.configure()
+    .use(reactotronRedux())
+    .connect();
+
+  tron.clear();
+
+  console.tron = tron;
+}
+```
+
+We import the two installed libs. Create React App (CRA) sets the NODE_ENV environment variable — in dev it's 'development', and 'production' once the site is live.
+If we're in development, the configuration runs.
+
+We declare a `tron` variable holding the Reactotron configuration, which uses a Redux plugin to log actions and reducers.
+
+I clear the console every time the app restarts and assign the tron configuration to the global `console` object's `tron` property. That way I don't need to import tron everywhere I want to log — I just call `console.tron.log('my log')`.
+
+Then just import the configuration at the application root, which can be the first line of App.js:
+
+```
+import  './config/ReactotronConfig';
+...
+```
+
+And finally we can use `console.tron.log('logged');`.
+
+That alone isn't enough to log actions and reducers — we have to configure it in the store:
+
+```
+import { createStore } from 'redux';
+import rootReducer from './models/rootReducer';
+
+const enhancer =
+  process.env.NODE_ENV === 'development' ? console.tron.createEnhancer() : null;
+
+const store = createStore(rootReducer, enhancer);
+
+export default store;
+```
+
+We'll create a middleware in Redux that intercepts action calls to reducers — Reactotron will then log every action for us.
+
+So if the enhancer has a configuration value, it's passed to createStore and the integration is set up successfully!
+
+![](https://github.com/tgmarinho/Images/blob/master/bootcamp-rocketseat/reacto-tron-com-actions-redux.png?raw=true)
+
+In this case you don't even need to call `console.tron.log('')`; the integration alone lets Reactotron hear actions through the middleware.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-12-reactotron-com-redux](https://github.com/tgmarinho/rocketshoes/tree/aula-12-reactotron-com-redux)
+
+## Lesson 13 - Listing in the cart
+
+Now let's list the cart's products in the cart listing.
+To do this, we'll connect `cart/index.js` (our Cart component) to Redux. So we import connect and export the Cart wrapped with that high-order function.
+
+The only new thing here is that we'll create a function and pass its reference into `connect`.
+
+By Redux convention, when using `connect` we create a function called `mapStateToProps` and pass its reference as the first parameter of `connect(mapStateToProps)`.
+
+`mapStateToProps`: map the reducer's state to a component prop.
+
+```
+...
+const  mapStateToProps  =  state  => ({
+	cart: state.cart,
+});
+
+export  default  connect(mapStateToProps)(Cart);
+```
+
+From here on it's the same idea: the Cart component will get a `cart` prop with the cart reducer's state from the Redux store.
+
+Now we can feed the Cart component with these values.
+
+```
+import React from 'react';
+import { connect } from 'react-redux';
+import {
+  MdRemoveCircleOutline,
+  MdAddCircleOutline,
+  MdDelete,
+} from 'react-icons/md';
+import { Layout, ProductTable, Total } from './styles';
+
+function Cart({ cart }) {
+  return (
+    <Layout>
+      <ProductTable>
+        <thead>
+          <tr>
+            <th />
+            <th>PRODUCT</th>
+            <th>QTY</th>
+            <th>SUBTOTAL</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {cart.map(product => (
+            <tr>
+              <td>
+                <img src={product.image} alt={product.title} />
+              </td>
+              <td>
+                <strong>{product.title}</strong>
+                <span>{product.price}</span>
+              </td>
+              <td>
+                <div>
+                  <button type="button">
+                    <MdRemoveCircleOutline size={20} color="#7169c1" />
+                  </button>
+                  <input type="number" readOnly value={1} />
+                  <button type="button">
+                    <MdAddCircleOutline size={20} color="#7169c1" />
+                  </button>
+                </div>
+              </td>
+              <td>
+                <strong>R$ 258,80</strong>
+              </td>
+              <td>
+                <div>
+                  <button type="button">
+                    <MdDelete size={20} color="#7169c1" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </ProductTable>
+
+      <footer>
+        <button type="button">Checkout</button>
+
+        <Total>
+          <span>TOTAL</span>
+          <strong>R$ 1.920,28</strong>
+        </Total>
+      </footer>
+    </Layout>
+  );
+}
+
+const mapStateToProps = state => ({
+  cart: state.cart,
+});
+
+export default connect(mapStateToProps)(Cart);
+```
+
+We still need to make the quantity update, item removal, formatted price, and total calculation work.
+
+For that we'll change the cart reducer: `cart/reducer.js`.
+
+First, let's add an `amount` property for the product in the cart.
+
+```
+export default function cart(state = [], action) {
+  switch (action.type) {
+    case 'ADD_TO_CART':
+      return [...state, { ...action.product, amount: 1 }];
+    default:
+      return state;
+  }
+}
+```
+
+Done — whenever a product is added, a state is created with the product's data and amount 1.
+
+In the next lesson we'll fix the duplicate-product problem, since the expected behavior is to update the quantity rather than duplicate the same product when we add it multiple times.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-13-listando-no-carinho](https://github.com/tgmarinho/rocketshoes/tree/aula-13-listando-no-carinho)
+
+
+## Lesson 14 - Duplicate product
+
+When the user adds the same product to the cart, we'll sum the quantity instead of duplicating it.
+
+We'll use the [immerjs](https://github.com/immerjs/immer) lib to deal with immutable objects and arrays.
+
+```
+yarn add immer
+```
+
+With immer we import the `produce` function. It takes the current state and a draft (`draftState`) we can do anything with — coding without worrying about immutability. We can push to the array, set values directly, etc. (see the example below). It takes the draft and applies the changes the right way (immutably) and exposes the result in `nextState`.
+
+> The basic idea is that you will apply all your changes to a temporary
+> _draftState_, which is a proxy of the _currentState_. Once all your mutations are completed, Immer will produce the _nextState_ based on
+> the mutations to the draft state. This means that you can interact
+> with your data by simply modifying it while keeping all the benefits
+> of immutable data.
+
+Example:
+```
+import produce from "immer"
+
+const baseState = [
+    {
+        todo: "Learn typescript",
+        done: true
+    },
+    {
+        todo: "Try immer",
+        done: false
+    }
+]
+
+const nextState = produce(baseState, draftState => {
+    draftState.push({todo: "Tweet about it"})
+    draftState[1].done = true
+})
+```
+
+Let's see it in practice in our project.
+
+We need to return the next state that `produce` produces. It receives the current state and the draft (a copy of the state); with that we check the cart array to see whether the product is already in it, returning its position.
+
+If the product is there, `productIndex` gets its id.
+
+I check if it's greater than zero — i.e., if it found the product.
+
+So I update the `amount` value, adding one more.
+
+If the product weren't there, it would be added with amount 1, and on subsequent additions the amount would just keep incrementing.
+
+```
+import produce from 'immer';
+
+export default function cart(state = [], action) {
+  switch (action.type) {
+    case 'ADD_TO_CART':
+      return produce(state, draft => {
+        const productIndex = draft.findIndex(p => p.id === action.product.id);
+        if (productIndex >= 0) {
+          draft[productIndex].amount += 1;
+        } else {
+          draft.push({ ...action.product, amount: 1 });
+        }
+      });
+    default:
+      return state;
+  }
+}
+```
+
+Done — just test it! The product doesn't duplicate; instead the amount increases.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-14-produto-duplicado](https://github.com/tgmarinho/rocketshoes/tree/aula-14-produto-duplicado)
+
+
+## Lesson 15 - Remove product
+
+When the user clicks the trash icon to remove a product, we'll remove it from the cart reducer's array.
+
+The cart is already connected to Redux, so we just pass the dispatch function to fire an action to delete the product from the cart, informing the product's id.
+
+```
+...
+function  Cart({ cart, dispatch }) { ... }
+...
+```
+
+```
+<MdDelete
+   size={20}
+   color="#7169c1"
+   onClick={() => dispatch({ type: 'REMOVE_FROM_CART', id: product.id })}
+/>
+```
+
+Done — the action will be dispatched. Now the reducer just needs to handle it (it's already listening). You can test it in Reactotron and see the log appear.
+
+In cart/reducer.js:
+
+```
+case 'REMOVE_FROM_CART':
+  return produce(state, draft => {
+    const productIndex = draft.findIndex(p => p.id === action.id);
+    if (productIndex >= 0) {
+      draft.splice(productIndex, 1);
+    }
+ });
+```
+I look up the product's position by id; if it's in the array, I remove one item using splice, passing the position and how many items to remove (just 1 — the product itself).
+
+Done — just test it.
+
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-15-remover-produto](https://github.com/tgmarinho/rocketshoes/tree/aula-15-remover-produto)
+
+
+## Lesson 16 - Refactoring actions
+
+A nice practice is to separate actions into a single file per feature instead of leaving them scattered through the code, and also create a variable to store the action name to avoid typos and make it easier to maintain those action names.
+
+To do this, let's create an `actions.js` file inside `store/models/cart`:
+
+```
+export function addToCart(product) {
+  return {
+    type: 'ADD_TO_CART',
+    product,
+  };
+}
+
+export function removeFromCart(id) {
+  return {
+    type: 'REMOVE_FROM_CART',
+    id,
+  };
+}
+```
+
+Now we use these functions in the Home and Cart components.
+
+```
+import  *  as CartActions from  '../../store/models/cart/actions';
+
+ handleAddProduct = product => {
+    const { dispatch } = this.props;
+
+    dispatch(CartActions.addToCart(product));
+  };
+```
+
+Done — we can keep adding products to the cart this way, but we can tweak it to improve the code.
+
+Import `bindActionCreators` from Redux:
+
+```
+import { bindActionCreators } from  'redux';
+```
+
+And, just like `mapStateToProps`, let's create `mapDispatchToProps`:
+
+```
+const mapDispatchToProps = dispatch =>
+  bindActionCreators(CartActions, dispatch);
+```
+
+It receives Redux's dispatch, and `bindActionCreators` binds the actions. Now, on top of having state in our props, we'll also have the actions.
+
+We pass `mapDispatchToProps` as the second parameter of `connect`.
+
+`null` was set in the first position because this component doesn't deal with state.
+```
+export default connect(
+  null,
+  mapDispatchToProps
+)(Home);
+```
+
+Done! It's working, and I'll do the same step by step in the cart.
+
+It's also nice to keep action names as feature + action, so I'll tweak them:
+
+```
+export function addToCart(product) {
+  return {
+    type: '@cart/ADD',
+    product,
+  };
+}
+
+export function removeFromCart(id) {
+  return {
+    type: '@cart/REMOVE',
+    id,
+  };
+}
+```
+
+I also updated the reducer to listen correctly — see details in the code.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-16-refatorando-as-actions](https://github.com/tgmarinho/rocketshoes/tree/aula-16-refatorando-as-actions)
+
+
+## Lesson 17 - Changing quantity
+
+Let's add or remove the product quantity.
+
+First, we create an action to update the quantity:
+
+```
+export function updateAmount(id, amount) {
+  return {
+    type: '@cart/UPDATE_AMOUNT',
+    id,
+    amount,
+  };
+}
+```
+
+The action takes the product id and the new quantity.
+
+Then we wire this function into the Cart component:
+
+```
+import React from 'react';
+import { connect } from 'react-redux';
+import {
+  MdRemoveCircleOutline,
+  MdAddCircleOutline,
+  MdDelete,
+} from 'react-icons/md';
+import { bindActionCreators } from 'redux';
+import { Layout, ProductTable, Total } from './styles';
+import * as CartActions from '../../store/models/cart/actions';
+
+function Cart({ cart, removeFromCart, updateAmount }) {
+  function increment(product) {
+    updateAmount(product.id, product.amount + 1);
+  }
+  function decrement(product) {
+    updateAmount(product.id, product.amount - 1);
+  }
+
+  return (
+    <Layout>
+      <ProductTable>
+        <thead>
+          <tr>
+            <th />
+            <th>PRODUCT</th>
+            <th>QTY</th>
+            <th>SUBTOTAL</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {cart.map(product => (
+            <tr>
+              <td>
+                <img src={product.image} alt={product.title} />
+              </td>
+              <td>
+                <strong>{product.title}</strong>
+                <span>{product.price}</span>
+              </td>
+              <td>
+                <div>
+                  <button type="button">
+                    <MdRemoveCircleOutline
+                      size={20}
+                      color="#7169c1"
+                      onClick={() => decrement(product)}
+                    />
+                  </button>
+                  <input type="number" readOnly value={product.amount} />
+                  <button type="button">
+                    <MdAddCircleOutline
+                      size={20}
+                      color="#7169c1"
+                      onClick={() => increment(product)}
+                    />
+                  </button>
+                </div>
+              </td>
+              <td>
+                <strong>R$ 258,80</strong>
+              </td>
+              <td>
+                <div>
+                  <button type="button">
+                    <MdDelete
+                      size={20}
+                      color="#7169c1"
+                      onClick={() => removeFromCart(product.id)}
+                    />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </ProductTable>
+
+      <footer>
+        <button type="button">Checkout</button>
+
+        <Total>
+          <span>TOTAL</span>
+          <strong>R$ 1.920,28</strong>
+        </Total>
+      </footer>
+    </Layout>
+  );
+}
+
+const mapDispatchToProps = dispatch =>
+  bindActionCreators(CartActions, dispatch);
+
+const mapStateToProps = state => ({
+  cart: state.cart,
+});
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Cart);
+```
+
+We created two functions used by the buttons to increment and decrement the product quantity in the cart:
+
+```
+  function increment(product) {
+    updateAmount(product.id, product.amount + 1);
+  }
+  function decrement(product) {
+    updateAmount(product.id, product.amount - 1);
+  }
+```
+
+Finally, we created another case to handle the update-amount action:
+```
+...
+    case '@cart/UPDATE_AMOUNT': {
+      if (action.amount <= 0) {
+        return state;
+      }
+      return produce(state, draft => {
+        const productIndex = draft.findIndex(p => p.id === action.id);
+        if (productIndex >= 0) {
+          draft[productIndex].amount = Number(action.amount);
+        }
+      });
+ ...
+```
+
+Done — just test it.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-17-alterando-quantidade](https://github.com/tgmarinho/rocketshoes/tree/aula-17-alterando-quantidade)
+
+
+## Lesson 18 - Calculating totals
+
+Let's calculate the product subtotal: quantity x price.
+
+It's not a good practice to do calculations inside React's render, because every value change re-runs the calculation, burdening the page with unnecessary work.
+
+The best place to compute values is when mapping the state to props — once the state has been updated and is about to be returned, we can make some additional tweaks.
+
+Since we want to format the subtotal, we'll use the `formatPrice` function again:
+
+```
+import { formatPrice } from  '../../util/format';
+```
+And add the subtotal calculation for each product:
+```
+const mapStateToProps = state => ({
+  cart: state.cart.map(product => ({
+    ...product,
+    subtotal: formatPrice(product.price * product.amount),
+  })),
+});
+```
+
+For the `cart` prop, we return an array of products adding the `subtotal` property to each product.
+
+Then we just use that property:
+
+```
+<td>
+   <strong>{product.subtotal}</strong>
+</td>
+```
+
+Done — every change in `amount` recalculates the subtotal for all values.
+
+Now let's compute the cart total:
+
+```
+const mapStateToProps = state => ({
+  cart: state.cart.map(product => ({
+    ...product,
+    subtotal: formatPrice(product.price * product.amount),
+  })),
+  total: formatPrice(
+    state.cart.reduce((total, product) => {
+      return total + product.price * product.amount;
+    }, 0)
+  ),
+});
+```
+We created a new `total` prop containing the total value of items in the cart.
+
+Just grab the total prop:
+```
+function  Cart({ cart, removeFromCart, updateAmount, total }) { ... }
+```
+
+And use it where it belongs:
+
+```
+<Total>
+	<span>TOTAL</span>
+	<strong>{total}</strong>
+</Total>
+```
+
+Done — just test it!
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-18-calculando-totais](https://github.com/tgmarinho/rocketshoes/tree/aula-18-calculando-totais)
+
+
+## Lesson 19 - Showing quantity
+
+Now let's display the quantities that appear in the ADD TO CART button on the HOME screen.
+
+We'll use `mapStateToProps`:
+
+```
+const mapStateToProps = state => ({
+  amount: state.cart.reduce((amount, product) => {
+    amount[product.id] = product.amount;
+    return amount;
+  }, {}),
+});
+```
+
+I'm building an object that holds several values — really a map of key/value, where the key is the product id and the value is the product quantity.
+
+This reduce returns an object with values like: { 1 : 2 }
+
+Something like:
+```
+{
+	1: 2,
+	2: 6,
+	3: 0,
+	4:15,
+	...
+}
+```
+
+And so on — the left value is the product id and the right value is its quantity.
+
+Then we just use the `amount` prop:
+
+```
+<div>
+   <MdAddShoppingCart size={16} color="#fff" />{' '}
+   {amount[product.id] || 0}
+</div>
+```
+With the product's id as the key, I access its quantity!
+
+This algorithm turned out really cool.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-19-exibindo-quantidades ](https://github.com/tgmarinho/rocketshoes/tree/aula-19-exibindo-quantidades )
+
+## Lesson 20 - Configuring Redux Saga
+
+Let's learn the new concept of middleware in Redux. Middleware is an action interceptor in Redux — the same concept used in Node.js with Express, applied here to Redux. The middleware intercepts an action, does something, and calls another action for the reducer. The state changes and the component updates on screen.
+
+Whenever we dispatch an action, Saga can apply a *side effect* to it, and we'll see some of the effect functions.
+
+In our app, when we add a sneaker to the cart, we send the full product that was already on the user's screen, but we'd need to check stock and gather more product info. We'll use Redux Saga to intercept that action call and do something for us. For now we'll just grab the product ID from the frontend React component and pass it to an action call.
+
+Let's add Redux Saga to the app:
+
+```
+yarn add redux-saga
+```
+
+Let's create the saga and then integrate it with Redux.
+
+We'll create a `sagas.js` file inside `models/cart`, so this saga will be responsible only for the shopping cart. We can have other sagas for each model — i.e., each application feature — remember we organized things that way.
+
+We'll create a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*), which is an asynchronous function. Generators have more capabilities than the widely used async/await, and are mandatory here in redux-saga.
+
+```
+import { call, put, all, takeLatest } from 'redux-saga/effects';
+import api from '../../../services/api';
+import { addToCartSuccess } from './actions';
+
+function* addToCart({ id }) {
+  const response = yield call(api.get, `/products/${id}`);
+  yield put(addToCartSuccess(response.data));
+}
+
+export default all([takeLatest('@cart/ADD_REQUEST', addToCart)]);
+```
+
+We're changing the current structure, adding an extra step to the add-product-to-cart flow.
+
+In this code we use methods from `redux-saga/effects`:
+
+`call`: responsible for calling the external API. We pass the reference of the `get` function from the `api` constant, and pass the parameters separated by `,`. It's a weird syntax, but that's how it has to be.
+
+`put`: responsible for executing a function, used to call the reducer.
+
+`all`: a grouper of sagas, like Redux's combineReducers.
+
+`takeLatest`: a function that runs only on the user's latest request. If the user clicks add-to-cart three times and the action is fired three times, the first two are canceled — only the last one proceeds. It's an excellent way to deal with duplicate requests.
+
+So we built an async function, `addToCart`, that calls our API configured in `api.js` and then dispatches an action so the reducer can receive the product from the request.
+
+Finally, we export our saga with the ability to add more sagas in this file, using `takeLatest` to handle actions.
+
+Now in `cart/actions.js`, let's change the structure:
+
+`addToCart` becomes `addToCartRequest` and takes only the product ID. This action is dispatched in the Home React component:
+
+```
+export function addToCartRequest(id) {
+  return {
+    type: '@cart/ADD_REQUEST',
+    id,
+  };
+}
+
+We also create a new `addToCartSuccess` function — the action dispatched in the saga when it finishes fetching the product from the API and forwards it to the reducer. This action will be listened to by the reducer:
+
+export function addToCartSuccess(product) {
+  return {
+    type: '@cart/ADD_SUCCESS',
+    product,
+  };
+}
+```
+
+And in `cart/reducer.js` we change `@cart/ADD_TO_CART` to `@cart/ADD_SUCCESS`:
+
+```
+...
+case  '@cart/ADD_SUCCESS':
+...
+```
+
+Now the data in the saga will be forwarded to the reducer.
+
+Now, to make it work, we integrate Saga with the Redux Store:
+
+```
+import { createStore, applyMiddleware, compose } from 'redux';
+import createSagaMiddleware from 'redux-saga';
+import rootReducer from './models/rootReducer';
+import rootSaga from './models/rootSaga';
+
+const sagaMiddleware = createSagaMiddleware();
+
+const enhancer =
+  process.env.NODE_ENV === 'development'
+    ? compose(
+        console.tron.createEnhancer(),
+        applyMiddleware(sagaMiddleware)
+      )
+    : applyMiddleware(sagaMiddleware);
+
+const store = createStore(rootReducer, enhancer);
+
+sagaMiddleware.run(rootSaga);
+
+export default store;
+```
+
+We import `applyMiddleware` to apply the middleware we hand to the store, and `compose` to group functions inside the enhancer.
+
+We import `createSagaMiddleware` to configure the saga middleware.
+
+We import our rootSaga as well.
+
+I declared a `sagaMiddleware` constant holding the redux-saga configuration. In the enhancer, if we're in development we compose Reactotron and sagaMiddleware; otherwise we apply only sagaMiddleware so it works in both development and production.
+
+Finally, we run sagaMiddleware with all sagas the app has.
+
+This setup is painful and hard to memorize, but in Rocketseat's scripts there are snippets to generate all of this. The best thing is to learn the concepts and then just copy/paste =)
+
+Now in the Home component, we change `handleAddProduct` to receive only the id, not the product.
+
+```
+ ...
+ handleAddProduct = id => {
+    const { addToCartRequest } = this.props;
+    addToCartRequest(id);
+  };
+
+ ...
+ <button type="button" onClick={() => this.handleAddProduct(product.id)}>
+ ...
+```
+
+Done — just test it; everything is working.
+
+Check the logs in Reactotron and you'll notice that the actions fired in the saga aren't being shown. We'll set that up in the next lesson!
+
+Check the commits to better understand the configuration.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-20-configurando-redux-saga](https://github.com/tgmarinho/rocketshoes/tree/aula-20-configurando-redux-saga)
+
+
+## Lesson 21 - Integrating Reactotron with Saga
+
+Let's configure the Reactotron plugin in Redux Saga.
+
+We add the plugin:
+
+```
+ yarn add reactotron-redux-saga
+```
+
+And in the configuration file we add:
+
+```
+import Reactotron from 'reactotron-react-js';
+import { reactotronRedux } from 'reactotron-redux';
+import reactotronSaga from 'reactotron-redux-saga';
+
+if (process.env.NODE_ENV === 'development') {
+  const tron = Reactotron.configure()
+    .use(reactotronRedux())
+    .use(reactotronSaga())
+    .connect();
+
+  tron.clear();
+
+  console.tron = tron;
+}
+```
+
+Done — just test it!
+
+Notice the SAGA log appears, with the methods called on every `yield` of the saga along with their parameters and values:
+
+![](https://github.com/tgmarinho/Images/blob/master/bootcamp-rocketseat/reactotron-redux-saga-working-well.png?raw=true)
+
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-21-reactotron-com-saga](https://github.com/tgmarinho/rocketshoes/tree/aula-21-reactotron-com-saga)
+
+
+## Lesson 22 - Splitting Actions
+
+Let's split the reducer's responsibilities and move them into the saga. The reducer will only take data and store it in the store, and validation will be done in the saga.
+
+`cart/reducer`:
+```
+ case '@cart/ADD_SUCCESS':
+      return produce(state, draft => {
+        const { product } = action;
+        draft.push(product);
+      });
+```
+Now ADD_SUCCESS receives only the product, with all modifications done in the saga, and pushes it to the global state.
+
+```
+import { call, select, put, all, takeLatest } from 'redux-saga/effects';
+import api from '../../../services/api';
+import { addToCartSuccess, updateAmount } from './actions';
+import { formatPrice } from '../../../util/format';
+
+function* addToCart({ id }) {
+  const productExists = yield select(state =>
+    state.cart.find(p => p.id === id)
+  );
+
+  if (productExists) {
+    const amount = productExists.amount + 1;
+    yield put(updateAmount(id, amount));
+  } else {
+    const response = yield call(api.get, `/products/${id}`);
+    const data = {
+      ...response.data,
+      amount: 1,
+      priceFormatted: formatPrice(response.data.price),
+    };
+
+    yield put(addToCartSuccess(data));
+  }
+}
+
+export default all([takeLatest('@cart/ADD_REQUEST', addToCart)]);
+```
+
+Now we use `select` to read the reducer's current state by passing a function and checking if the product matches the id we're adding.
+
+If it exists, we take the existing product, add one, and call `updateAmount`, which knows how to update the product quantity. Notice we call an action inside the saga before the executing action finishes, and the flow ends. If it doesn't exist, we fetch the product and add the amount and the formatted price. Finally `addToCartSuccess` is called, ending the flow.
+
+In the next lesson we'll check whether the product is available in stock, making the benefit of the Redux Saga architecture mediating requests even clearer.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-22-separando-actions](https://github.com/tgmarinho/rocketshoes/tree/aula-22-separando-actions)
+
+
+## Lesson 23 - Stock check on add
+
+Let's check the stock before adding the product to see if it's available.
+
+```
+import { call, select, put, all, takeLatest } from 'redux-saga/effects';
+import api from '../../../services/api';
+import { addToCartSuccess, updateAmount } from './actions';
+import { formatPrice } from '../../../util/format';
+
+function* addToCart({ id }) {
+  const productExists = yield select(state =>
+    state.cart.find(p => p.id === id)
+  );
+
+  const stock = yield call(api.get, `/stock/${id}`);
+
+  const stockAmount = stock.data.amount;
+  const currentAmount = productExists ? productExists.amount : 0;
+
+  const amount = currentAmount + 1;
+
+  if (amount > stockAmount) {
+    console.tron.warn('ERROR!');
+    return;
+  }
+
+  if (productExists) {
+    yield put(updateAmount(id, amount));
+  } else {
+    const response = yield call(api.get, `/products/${id}`);
+    const data = {
+      ...response.data,
+      amount: 1,
+      priceFormatted: formatPrice(response.data.price),
+    };
+
+    yield put(addToCartSuccess(data));
+  }
+}
+
+export default all([takeLatest('@cart/ADD_REQUEST', addToCart)]);
+```
+
+After checking whether the product is already in state,
+
+I call the stock route passing the product id and store it in the `stock` variable.
+
+I created the `stockAmount` variable to hold the stock quantity.
+
+I created the `currentAmount` variable to hold the current quantity of the product already in the cart.
+
+I created the `amount` variable to hold the current value plus one.
+
+I check whether the new product quantity is greater than the stock value — if so, I send an error message and stop the request with `return`.
+
+Now just test it.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-23-estoque-na-adicao](https://github.com/tgmarinho/rocketshoes/tree/aula-23-estoque-na-adicao)
+
+
+## Lesson 24 - React Toastify
+
+Let's use the [React Toastify](https://github.com/fkhadra/react-toastify) lib — great for visual feedback for success, warning, and error messages in the app.
+
+```
+yarn add react-toastify
+```
+
+In `App.js` we import `ToastContainer` from `react-toastify`, pass it into the component inside `BrowserRouter`, and give it an auto-close duration of three seconds.
+
+```
+import { ToastContainer } from  'react-toastify';
+
+...
+ <Provider store={store}>
+  <BrowserRouter>
+     <Header />
+     <GlobalStyle />
+     <ToastContainer autoClose={3000} />
+     <Routes />
+  </BrowserRouter>
+</Provider>
+...
+```
+
+In `globals.js` we import the toastify styles:
+
+```
+...
+import  'react-toastify/dist/ReactToastify.css';
+...
+```
+
+And finally, in the cart's `sagas.js`, we add:
+
+```
+...
+ if (amount > stockAmount) {
+    toast.error('Requested quantity out of stock');
+    return;
+  }
+ ...
+```
+
+Done — now we'll have visual feedback when the user tries to add more products than are available in stock.
+
+This lib has many useful configurations and is great for web use.
+
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-24-react-tostify](https://github.com/tgmarinho/rocketshoes/tree/aula-24-react-tostify)
+
+
+
+## Lesson 25 - Stock check on update
+
+Let's check the stock when the user clicks the increase or decrease quantity buttons.
+
+We'll let the saga do the check, since we need to consult the stock as well.
+
+```
+export function updateAmountRequest(id, amount) {
+  return {
+    type: '@cart/UPDATE_AMOUNT_REQUEST',
+    id,
+    amount,
+  };
+}
+
+export function updateAmountSuccess(id, amount) {
+  return {
+    type: '@cart/UPDATE_AMOUNT_SUCCESS',
+    id,
+    amount,
+  };
+}
+```
+
+We created another saga to handle quantity-update requests:
+
+```
+import { call, select, put, all, takeLatest } from 'redux-saga/effects';
+import { toast } from 'react-toastify';
+import api from '../../../services/api';
+import { addToCartSuccess, updateAmountSuccess } from './actions';
+import { formatPrice } from '../../../util/format';
+
+function* addToCart({ id }) {
+  const productExists = yield select(state =>
+    state.cart.find(p => p.id === id)
+  );
+
+  const stock = yield call(api.get, `/stock/${id}`);
+
+  const stockAmount = stock.data.amount;
+  const currentAmount = productExists ? productExists.amount : 0;
+
+  const amount = currentAmount + 1;
+
+  if (amount > stockAmount) {
+    toast.error('Requested quantity out of stock');
+    return;
+  }
+
+  if (productExists) {
+    yield put(updateAmountSuccess(id, amount));
+  } else {
+    const response = yield call(api.get, `/products/${id}`);
+    const data = {
+      ...response.data,
+      amount: 1,
+      priceFormatted: formatPrice(response.data.price),
+    };
+
+    yield put(addToCartSuccess(data));
+  }
+}
+
+function* updateAmount({ id, amount }) {
+  if (amount <= 0) return;
+
+  const stock = yield call(api.get, `stock/${id}`);
+
+  const stockAmount = stock.data.amount;
+
+  if (amount > stockAmount) {
+    toast.error('Requested quantity out of stock');
+    return;
+  }
+
+  yield put(updateAmountSuccess(id, amount));
+}
+
+export default all([
+  takeLatest('@cart/ADD_REQUEST', addToCart),
+  takeLatest('@cart/UPDATE_AMOUNT_REQUEST', updateAmount),
+]);
+```
+
+We change the reducer to listen only for `@cart/UPDATE_AMOUNT_SUCCESS` and update the cart's new `amount` value.
+
+```
+    case '@cart/UPDATE_AMOUNT_SUCCESS': {
+      return produce(state, draft => {
+        const productIndex = draft.findIndex(p => p.id === action.id);
+        if (productIndex >= 0) {
+          draft[productIndex].amount = Number(action.amount);
+        }
+      });
+    }
+```
+
+And in the cart component we change the action:
+
+```
+...
+function Cart({ cart, removeFromCart, updateAmountRequest, total }) {
+  function increment(product) {
+    updateAmountRequest(product.id, product.amount + 1);
+  }
+  function decrement(product) {
+    updateAmountRequest(product.id, product.amount - 1);
+  }
+....
+```
+
+Done — just test it!
+
+We've wrapped up the application. The next lesson is just a quick intro to route navigation using the saga.
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-25-estoque-na-alteracao](https://github.com/tgmarinho/rocketshoes/tree/aula-25-estoque-na-alteracao)
+
+
+
+## Lesson 26 - Navigation in the Saga
+
+Now whenever we add a new product to the cart, we'll redirect to the cart. This is just an extra feature to understand route navigation using the saga; the way the application is right now is better.
+
+We'll use the [history](https://github.com/ReactTraining/history) lib to control the browser's History API — the routes that react-router-dom uses.
+
+```
+yarn add history
+```
+
+Then I create a `history.js` file inside the `services` folder with:
+
+```
+import { createBrowserHistory } from 'history';
+
+const history = createBrowserHistory();
+
+export default history;
+```
+
+And in App.js we use this lib:
+
+
+```
+import './config/ReactotronConfig';
+import React from 'react';
+import { Router } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { ToastContainer } from 'react-toastify';
+import Routes from './routes';
+import GlobalStyle from './styles/globals';
+import Header from './components/Header';
+import store from './store';
+
+import history from './services/history';
+
+function App() {
+  return (
+    <Provider store={store}>
+      <Router history={history}>
+        <Header />
+        <GlobalStyle />
+        <ToastContainer autoClose={3000} />
+        <Routes />
+      </Router>
+    </Provider>
+  );
+}
+
+export default App;
+```
+
+We swap BrowserRouter for Router and pass `history` as a prop. react-router-dom listens for whatever happens to `history`.
+
+Finally, in the saga, when the request finishes, the user is redirected:
+
+```
+...
+import history from  '../../../services/history';
+...
+
+function* addToCart({ id }) {
+  const productExists = yield select(state =>
+    state.cart.find(p => p.id === id)
+  );
+
+  const stock = yield call(api.get, `/stock/${id}`);
+
+  const stockAmount = stock.data.amount;
+  const currentAmount = productExists ? productExists.amount : 0;
+
+  const amount = currentAmount + 1;
+
+  if (amount > stockAmount) {
+    toast.error('Requested quantity out of stock');
+    return;
+  }
+
+  if (productExists) {
+    yield put(updateAmountSuccess(id, amount));
+  } else {
+    const response = yield call(api.get, `/products/${id}`);
+    const data = {
+      ...response.data,
+      amount: 1,
+      priceFormatted: formatPrice(response.data.price),
+    };
+
+    yield put(addToCartSuccess(data));
+
+    history.push('/cart');
+  }
+}
+...
+```
+
+Since we're forcing the browser to go to `/cart/`, react-router-dom hears it and obliges:
+
+```
+history.push('/cart');
+```
+
+To test, we can run json-server with a 2-second delay per request:
+
+```
+json-server server.json -p 3000 -w -d 2000
+```
+
+Notice each API request will take a bit longer now, and the page will be redirected to the cart as soon as the product is added.
+
+Done — the app is complete. We've got a solid grip on React, Redux, Saga, react-router-dom, JsonServer, Reactotron, etc.
+
+
+Code: [https://github.com/tgmarinho/rocketshoes/tree/aula-26-navegacao-no-sagas](https://github.com/tgmarinho/rocketshoes/tree/aula-26-navegacao-no-sagas)
+
+Check the final result:
+
+![HOME](https://github.com/tgmarinho/Images/blob/master/bootcamp-rocketseat/rocketshoes-home.png?raw=true)
+
+![CART](https://github.com/tgmarinho/Images/blob/master/bootcamp-rocketseat/rocketshoes-cart.png?raw=true)

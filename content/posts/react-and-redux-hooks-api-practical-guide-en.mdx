@@ -1,0 +1,1129 @@
+---
+title: "React and Redux Hooks API: a practical guide"
+description: "Let's continue the GoBarber app and learn some advanced techniques and best practices."
+date: "2019-10-06"
+published: true
+categories: ["Development"]
+image: "/assets/img/react-hooks.jpg"
+language: "en"
+translationKey: "api-react-e-redux-hooks-um-guia-pr-tico"
+---
+
+# React Hooks!
+
+[React Hooks](https://reactjs.org/docs/hooks-intro.html) is the new React API for speeding up component building — it cuts the verbosity around sharing logic, state, and lifecycle between components.
+
+The [documentation](https://reactjs.org/docs/hooks-intro.html) is excellent and easy to follow, but here we'll go through it with a practical project from the Rocketseat Bootcamp.
+
+
+## Lesson 01 - Setting up the project structure
+
+To learn hooks, let's create a project:
+
+```
+npx create-react-app react-hooks
+```
+
+Install ESLint:
+
+```
+yarn add eslint -D
+```
+
+Run:
+
+```
+yarn eslint --init
+```
+
+And configure with the following steps:
+
+```
+yarn eslint --init
+yarn run v1.12.0
+warning package.json: No license field
+$ /Users/tgmarinho/Developer/bootcamp_rocketseat_studies/node_modules/.bin/eslint --init
+? How would you like to use ESLint? To check syntax, find problems, and enforce code style
+? What type of modules does your project use? JavaScript modules (import/export)
+? Which framework does your project use? React
+? Does your project use TypeScript? No
+? Where does your code run? (Press <space> to select, <a> to toggle all, <i> to invert selection)Browser
+? How would you like to define a style for your project? Use a popular style guide
+? Which style guide do you want to follow? Airbnb (https://github.com/airbnb/javascript)
+? What format do you want your config file to be in? JavaScript
+Checking peerDependencies of eslint-config-airbnb@latest
+The config that you've selected requires the following dependencies:
+eslint-plugin-react@^7.14.3 eslint-config-airbnb@latest eslint@^5.16.0 || ^6.1.0 eslint-plugin-import@^2.18.2 eslint-plugin-jsx-a11y@^6.2.3 eslint-plugin-react-hooks@^1.7.0
+? Would you like to install them now with npm? Yes
+```
+
+Then create the `.editorConfig` file:
+
+```
+root = true
+
+[*]
+end_of_line = lf
+indent_style = space
+indent_size = 2
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+```
+
+Next, install `prettier`, its plugins, and `babel-eslint`:
+
+```
+yarn add prettier eslint-config-prettier eslint-plugin-prettier babel-eslint -D
+```
+
+Create the `.prettierrc` file:
+
+```
+{
+  "singleQuote": true,
+  "trailingComma": "es5"
+}
+```
+
+And finally, configure `.eslintrc.js`:
+
+```
+module.exports = {
+  env: {
+    browser: true,
+    es6: true,
+  },
+  extends: ['airbnb', 'prettier', 'prettier/react'],
+  globals: {
+    Atomics: 'readonly',
+    SharedArrayBuffer: 'readonly',
+  },
+  parser: 'babel-eslint',
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 2018,
+    sourceType: 'module',
+  },
+  plugins: ['react', 'prettier'],
+  rules: {
+    'prettier/prettier': 'error',
+    'react/jsx-filename-extension': ['warn', { extensions: ['.jsx', 'js'] }],
+    'import/prefer-default-export': 'off',
+  },
+};
+```
+
+Done! These are the basic settings to structure a React project. From here on everything will be about React Hooks. First, install a dependency that helps us avoid writing hooks the wrong way — it will flag anything we're doing incorrectly:
+
+```
+yarn add eslint-plugin-react-hooks -D  
+```
+
+In `.eslintrc.js`, add the plugin:
+
+```
+plugins: ['react', 'prettier', 'react-hooks'],
+```
+
+And in `rules` add two more lines:
+
+```
+ rules: {
+    'prettier/prettier': 'error',
+    'react/jsx-filename-extension': ['warn', { extensions: ['.jsx', 'js'] }],
+    'import/prefer-default-export': 'off',
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
+  },
+```
+
+Explanation:
+`react-hooks/rules-of-hooks`: warns about every violation of the hooks rules
+`react-hooks/exhaustive-deps`: helps you handle the dependency array of `useEffect`, which we'll see later.
+
+Now we're ready to code!
+
+Code [https://github.com/tgmarinho/react-hooks/tree/aula-01-configurando-estrutura](https://github.com/tgmarinho/react-hooks/tree/aula-01-configurando-estrutura)
+
+
+
+## Lesson 02 - useState hook
+
+Until now, to keep state in the app we needed a Class component — a class extending `React.Component` defining a `state` variable. In version 16.8 the Hooks API was created to cut verbosity, removing the need to use classes for stateful components and lifecycle handling. It also reduces verbosity when integrating with Redux and Apollo (GraphQL).
+
+The first hook we'll see is `useState`.
+
+### useState
+
+It's the hook used inside the function that returns a variable and a function that updates that same variable's state.
+
+`useState` returns the state and the function that updates it.
+
+```
+const [tech, setTech] =  useState([]);
+```
+
+We create a const that destructures a state variable and a setter, and `useState` takes the initial state value as a parameter — in our case, an empty array.
+
+But if we pass some values, we can list the technologies:
+
+```
+import React, { useState } from 'react';
+
+function App() {
+  const [tech, setTech] = useState(['ReactJS', 'ReactNative', 'NodeJS']);
+
+  return (
+    <ul>
+      {tech.map(t => (
+        <li>{t}</li>
+      ))}
+    </ul>
+  );
+}
+
+export default App;
+```
+
+See how much simpler and less verbose it is.
+
+Now let's change state with `setTech`:
+
+```
+import React, { useState } from 'react';
+
+function App() {
+  const [tech, setTech] = useState(['ReactJS', 'ReactNative']);
+
+  function handleAdd() {
+    setTech([...tech, 'Node.JS']);
+  }
+
+  return (
+    <>
+      <ul>
+        {tech.map(t => (
+          <li key={t}>{t}</li>
+        ))}
+      </ul>
+      <button onClick={handleAdd}>Add</button>
+    </>
+  );
+}
+
+export default App;
+```
+
+When the user clicks Add, `handleAdd` runs, `setTech` is invoked, and since state is immutable, we replicate the array and append the new value.
+
+`tech` stores the data, and `setTech` updates its state.
+
+Every time `tech` changes, render is invoked again.
+
+`useState` is the simplest hook — it can store any JavaScript type.
+
+We can also create another hook in the same component — as many as we want.
+
+Let's create a new hook:
+
+```
+const [newTech, setNewTech] =  useState('');
+```
+
+It will store the technology I type in an input I'm about to create:
+
+```
+<input  value={newTech}  onChange={e  =>  setNewTech(e.target.value)}  />
+```
+The input receives a value being typed; `onChange` runs a function that takes the typing event and forwards the value to the `newTech` setter.
+
+When the user clicks Add, we call `handleAdd()`, which forwards the new tech to `setTech` and clears the input by passing an empty string:
+
+```
+  function handleAdd() {
+    setTech([...tech, newTech]);
+    setNewTech('');
+  }
+```
+Simple as that! This is the simplest, easiest hook to learn!
+
+Code [https://github.com/tgmarinho/react-hooks/tree/aula-02-hook-useState](https://github.com/tgmarinho/react-hooks/tree/aula-02-hook-useState)
+
+
+## Lesson 03 - useEffect hook
+
+`useEffect` replaces the previous lifecycle methods we used with classes: `componentDidMount`, `componentDidUpdate`, `componentWillUnmount`. In this lesson we'll learn how to apply `useEffect` to replace these three.
+
+### componentDidUpdate
+
+If we wanted to store the tech variables in localStorage every time a state variable changed, we'd have to compare the incoming state with the current one, see if they were different, update the state with the new value, and call `localStorage.setItem(...)` to persist the array.
+
+With `useEffect`, we do it like this:
+
+```
+import React, { useEffect } from  'react';
+...
+useEffect(() => {
+    localStorage.setItem('tech', JSON.stringify(tech));
+}, [tech]);
+```
+
+We pass `useEffect` a function that does whatever we need — in this case, sending a new `tech` item to localStorage as a JSON array. The second parameter is a dependency array; when we pass an array with a value, every time that state changes, the effect runs. Here, every time `tech` changes, the effect is called.
+
+### componentDidMount
+
+But if I want it to run only once, when the component mounts? Just leave the dependency array empty:
+
+```
+  useEffect(() => {
+    const storageTech = localStorage.getItem('tech');
+    if (storageTech) {
+      setTech(JSON.parse(storageTech));
+    }
+  }, []);
+```
+
+We can have several `useEffect`s. In this one we're doing the same thing `componentDidMount` did: after the component mounts, since the dependency array is empty, it runs once. It grabs everything from localStorage under the `tech` key and, if there's a value, passes it to `setTech`, populating the array and rendering it. Since it doesn't watch any variable, it runs only once.
+
+
+### componentWillUnmount
+
+To run a function when the component unmounts, return a function from inside the `useEffect`. That returned function runs as soon as the component is about to unmount — useful for canceling event listeners, `setTimeout`s or `setInterval`s. We can create this cleanup function for each `useEffect` as needed.
+
+```
+useEffect(() => {
+    const storageTech = localStorage.getItem('tech');
+    if (storageTech) {
+      setTech(JSON.parse(storageTech));
+    }
+
+    return () => {
+      document.removeEventListener();
+    };
+  }, []);
+```
+
+Done — with hooks we cover the main lifecycle moments and the code is much more readable and maintainable. It's still important to understand all the concepts so you don't misapply them; with ESLint set up with the `react-hooks/exhaustive-deps` rule, it becomes hard to do anything wrong.
+
+Here's how our component looks so far:
+
+```
+import React, { useState, useEffect } from 'react';
+
+function App() {
+  const [tech, setTech] = useState([]);
+  const [newTech, setNewTech] = useState('');
+
+  function handleAdd() {
+    setTech([...tech, newTech]);
+    setNewTech('');
+  }
+
+  useEffect(() => {
+    const storageTech = localStorage.getItem('tech');
+    if (storageTech) {
+      setTech(JSON.parse(storageTech));
+    }
+
+    return () => {
+      document.removeEventListener();
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('tech', JSON.stringify(tech));
+  }, [tech]);
+
+  return (
+    <>
+      <ul>
+        {tech.map(t => (
+          <li key={t}>{t}</li>
+        ))}
+      </ul>
+      <input value={newTech} onChange={e => setNewTech(e.target.value)} />
+      <button type="button" onClick={handleAdd}>
+        Add
+      </button>
+    </>
+  );
+}
+
+export default App;
+```
+
+Code [https://github.com/tgmarinho/react-hooks/tree/aula-03-hook-useEffect](https://github.com/tgmarinho/react-hooks/tree/aula-03-hook-useEffect)
+
+
+
+## Lesson 04 - useMemo hook
+
+This hook is meant for more complex calculations in a component, and is useful for sensitive components that re-render a lot. So components that have calculations and many state changes will re-render on every state update; `useMemo` is there to optimize that. We can create a property that holds a value and is recalculated only when a specific state in its dependency array changes.
+
+Example: `<strong>You have {tech.length} technologies</strong>`
+
+Every time any state changes, `tech.length` runs again. It's trivial here, but imagine it were `formatPrice` or `calculateTax` — those are costly. And imagine an unrelated state changes and forces a recalculation of something that has nothing to do with that update.
+
+We can use `useMemo` instead, importing it:
+
+```
+import React, { useMemo } from  'react';
+...
+```
+
+Create a variable that stores a value; every time `tech` changes, `useMemo` runs and updates `techSize`:
+
+```
+const techSize =  useMemo(() => tech.length, [tech]);
+```
+
+And update the markup to optimize the code:
+
+```
+...
+<strong>You have {techSize} technologies</strong>
+...
+```
+
+Done — `techSize` is only recalculated when `tech` changes. Very nice!
+
+So whenever you need to do a calculation in `render`, reach for `useMemo`.
+
+Code [https://github.com/tgmarinho/react-hooks/tree/aula-04-hook-useMemo](https://github.com/tgmarinho/react-hooks/tree/aula-04-hook-useMemo)
+
+
+## Lesson 05 - useCallback hook
+
+It's similar to `useMemo`, except it returns a function. We use `useCallback` when we create functions inside components — like `handleAdd()` inside the `App` component. Every time render runs, that inner `handleAdd` function (and any others in the component) is recreated, and creating each function consumes processing. In this case, that's wasted work — we only need the function to be created once. That's where `useCallback` comes in.
+ 
+```
+import React, { useCallback } from  'react';
+```
+
+Let's refactor `handleAdd` to use `useCallback`:
+
+```
+  function handleAdd() {
+    setTech([...tech, newTech]);
+    setNewTech('');
+  }
+```
+
+See how similar it is to everything we've done with the other hooks:
+
+```
+ const handleAdd = useCallback(() => {
+    setTech([...tech, newTech]);
+    setNewTech('');
+  }, [newTech, tech]);
+```
+
+I declare a `handleAdd` const that receives `useCallback`, passing an arrow function with all the logic, and at the end a dependency array. Everything keeps working.
+
+And now the inner `handleAdd` will only be recreated when `newTech` or `tech` change — similar to `useMemo` and `useEffect`.
+
+`useCallback` is only used for functions that change the component's internal state.
+
+Done! Simple as that! We've covered the main React Hooks.
+
+Code [https://github.com/tgmarinho/react-hooks/tree/aula-05-hook-useCallback](https://github.com/tgmarinho/react-hooks/tree/aula-05-hook-useCallback)
+
+
+
+## Lesson 06 - Converting class to hooks
+
+I'm going to convert the Rocketshoes frontend project (React) to use hooks. I'll use the latest branch with classes.
+
+Download the project: [https://github.com/tgmarinho/rocketshoes/tree/aula-26-navegacao-no-sagas](https://github.com/tgmarinho/rocketshoes/tree/aula-26-navegacao-no-sagas)
+
+First, install the ESLint plugin for hooks:
+
+```
+yarn add eslint-plugin-react-hooks -D
+```
+
+In `.eslintrc` add the `react-hooks` plugin:
+
+```
+plugins: ['react', 'prettier', 'react-hooks'],
+```
+
+And in `rules`, add:
+
+```
+...
+'react-hooks/rules-of-hooks':  'error',
+'react-hooks/exhaustive-deps':  'warn',
+...
+```
+
+Now let's refactor the stateful Home component:
+
+The imports change like this:
+from:
+```
+import React, { Component } from  'react';
+```
+to:
+```
+import React, { useState, useEffect } from  'react';
+```
+
+First let's change the state declarations.
+
+from:
+```
+state = {
+ products: []
+}
+```
+
+to: 
+```
+const [products, setProducts] =  useState([])
+```
+
+Then change class to function:
+from: 
+```
+class  Home  extends  Component { ... }
+```
+to:
+```
+function  Home() { ... }
+```
+
+And now let's refactor `componentDidMount` into `useEffect`:
+
+from:
+```
+async componentDidMount() {
+    const response = await api.get('products');
+    const data = response.data.map(product => ({
+      ...product,
+      priceFormatted: formatPrice(product.price),
+    }));
+    this.setState({ products: data });
+  }
+```
+
+to:
+```
+ useEffect(() => {
+   async function loadProducts() {
+    const response = await api.get('products');
+    const data = response.data.map(product => ({
+      ...product,
+      priceFormatted: formatPrice(product.price),
+    }));
+
+    setProducts(data)
+   }
+
+   loadProducts()
+ }, [])
+```
+
+I'll admit it looks more complex at first, because since we're dealing with an async call, we can't just do what would be most obvious on first contact:
+
+```
+ useEffect( async () => {
+    const response = await api.get('products');
+    const data = response.data.map(product => ({
+      ...product,
+      priceFormatted: formatPrice(product.price),
+    }));
+    setProducts(data)
+   }
+
+ }, [])
+```
+
+I think everyone tries that on the first try — I did it before! lol
+
+The correct way is the one above: declare an async function that runs the same logic and calls `setProducts` to update state — the React Hooks way. Then call the function at the end.
+
+Note also that I didn't pass any state in the dependency array `[]`, so this `useEffect` runs only when the component mounts, and only that once. Here we just need to load products once on mount, just like we did in the class version with `componentDidMount`.
+
+Now let's refactor the `render()` method.
+
+from:
+```
+render() {
+    const { products } = this.state;
+    const { amount } = this.props;
+    return (
+      <ProductList>
+        {products.map(product => (
+          <li key={product.id}>
+            <img src={product.image} alt={product.title} />
+            <strong>{product.title}</strong>
+            <span>{product.priceFormatted}</span>
+            <button
+              type="button"
+              onClick={() => this.handleAddProduct(product.id)}
+            >
+              <div>
+                <MdAddShoppingCart size={16} color="#fff" />{' '}
+                {amount[product.id] || 0}
+              </div>
+
+              <span>ADICIONAR AO CARRINHO</span>
+            </button>
+          </li>
+        ))}
+      </ProductList>
+    );
+  }
+```
+
+to:
+```
+return (
+    <ProductList>
+      {products.map(product => (
+        <li key={product.id}>
+          <img src={product.image} alt={product.title} />
+          <strong>{product.title}</strong>
+          <span>{product.priceFormatted}</span>
+          <button type="button" onClick={() => handleAddProduct(product.id)}>
+            <div>
+              <MdAddShoppingCart size={16} color="#fff" />{' '}
+              {amount[product.id] || 0}
+            </div>
+            <span>ADICIONAR AO CARRINHO</span>
+          </button>
+        </li>
+      ))}
+    </ProductList>
+  );
+```
+
+The `handleAddProduct` function can be removed, and `addToCartRequest` can be passed via props to the Home component.
+ 
+We can pull that prop in `function Home({ amount, addToCartRequest }) {...}`.
+
+Everything looks like this:
+```
+import React, { useState, useEffect } from 'react';
+import { MdAddShoppingCart } from 'react-icons/md';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ProductList } from './styles';
+import api from '../../services/api';
+import { formatPrice } from '../../util/format';
+import * as CartActions from '../../store/models/cart/actions';
+
+function Home({ amount, addToCartRequest }) {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    async function loadProducts() {
+      const response = await api.get('products');
+      const data = response.data.map(product => ({
+        ...product,
+        priceFormatted: formatPrice(product.price),
+      }));
+
+      setProducts(data);
+    }
+
+    loadProducts();
+  }, []);
+
+  return (
+    <ProductList>
+      {products.map(product => (
+        <li key={product.id}>
+          <img src={product.image} alt={product.title} />
+          <strong>{product.title}</strong>
+          <span>{product.priceFormatted}</span>
+          <button type="button" onClick={() => addToCartRequest(product.id)}>
+            <div>
+              <MdAddShoppingCart size={16} color="#fff" />{' '}
+              {amount[product.id] || 0}
+            </div>
+
+            <span>ADICIONAR AO CARRINHO</span>
+          </button>
+        </li>
+      ))}
+    </ProductList>
+  );
+}
+
+const mapStateToProps = state => ({
+  amount: state.cart.reduce((amount, product) => {
+    amount[product.id] = product.amount;
+    return amount;
+  }, {}),
+});
+
+const mapDispatchToProps = dispatch =>
+  bindActionCreators(CartActions, dispatch);
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Home);
+```
+
+Done!
+
+Now everything uses functions, and the only stateful component uses a function with hooks.
+
+Code [https://github.com/tgmarinho/rocketshoes/tree/aula-27-convertendo-classes-para-hooks](https://github.com/tgmarinho/react-hooks/tree/aula-27-convertendo-classes-para-hooks)
+
+
+## Lesson 07 - Hooks with Redux
+
+With hooks, using Redux became much simpler.
+
+Let's convert the ecommerce Header to use hooks with Redux.
+
+I'll use `useSelector` instead of `connect` from `react-redux`:
+out:
+```
+import { connect } from  'react-redux';
+```
+in:
+```
+import { useSelector } from  'react-redux';
+```
+
+Remove the props from the Header function:
+out:
+```
+function  Header({ cartSize }) { ... }
+```
+
+in, a new `cartSize` const:
+```
+const cartSize =  useSelector(state => state.cart.length);
+```
+
+And instead of using `connect` at the bottom with `export default`, everything lives inside the `useSelector` call.
+
+Remove:
+```
+export default connect(state => ({
+  cartSize: state.cart.length,
+}))(Header);
+```
+
+And the export becomes:
+```
+export default function Header() { ... }
+```
+
+Much simpler — five fewer lines and less verbose!
+
+Here's the component:
+
+```
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { MdShoppingBasket } from 'react-icons/md';
+import { useSelector } from 'react-redux';
+import { Layout, Cart } from './styles';
+import logo from '../../assets/images/logo.svg';
+
+export default function Header() {
+  const cartSize = useSelector(state => state.cart.length);
+
+  return (
+    <Layout>
+      <Link to="/">
+        <img src={logo} alt="Rocketshoes" />
+      </Link>
+
+      <Cart to="/cart">
+        <div>
+          <strong>My cart</strong>
+          <span>{cartSize} items</span>
+        </div>
+        <MdShoppingBasket size={36} color="#FFF" />
+      </Cart>
+    </Layout>
+  );
+}
+```
+
+Now let's refactor `Home`:
+
+FROM:
+```
+import React, { useState, useEffect } from 'react';
+import { MdAddShoppingCart } from 'react-icons/md';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ProductList } from './styles';
+import api from '../../services/api';
+import { formatPrice } from '../../util/format';
+import * as CartActions from '../../store/models/cart/actions';
+
+function Home({ amount, addToCartRequest }) {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    async function loadProducts() {
+      const response = await api.get('products');
+      const data = response.data.map(product => ({
+        ...product,
+        priceFormatted: formatPrice(product.price),
+      }));
+
+      setProducts(data);
+    }
+
+    loadProducts();
+  }, []);
+
+  return (
+    <ProductList>
+      {products.map(product => (
+        <li key={product.id}>
+          <img src={product.image} alt={product.title} />
+          <strong>{product.title}</strong>
+          <span>{product.priceFormatted}</span>
+          <button type="button" onClick={() => addToCartRequest(product.id)}>
+            <div>
+              <MdAddShoppingCart size={16} color="#fff" />{' '}
+              {amount[product.id] || 0}
+            </div>
+            <span>ADICIONAR AO CARRINHO</span>
+          </button>
+        </li>
+      ))}
+    </ProductList>
+  );
+}
+
+const mapStateToProps = state => ({
+  amount: state.cart.reduce((amount, product) => {
+    amount[product.id] = product.amount;
+    return amount;
+  }, {}),
+});
+
+const mapDispatchToProps = dispatch =>
+  bindActionCreators(CartActions, dispatch);
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Home);
+```
+
+TO: 
+```
+import React, { useState, useEffect } from 'react';
+import { MdAddShoppingCart } from 'react-icons/md';
+import { useSelector, useDispatch } from 'react-redux';
+import { ProductList } from './styles';
+import api from '../../services/api';
+import { formatPrice } from '../../util/format';
+import * as CartActions from '../../store/models/cart/actions';
+
+export default function Home() {
+  const [products, setProducts] = useState([]);
+  const amount = useSelector(state =>
+    state.cart.reduce((sumAmount, product) => {
+      sumAmount[product.id] = product.amount;
+      return sumAmount;
+    }, {})
+  );
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    async function loadProducts() {
+      const response = await api.get('products');
+      const data = response.data.map(product => ({
+        ...product,
+        priceFormatted: formatPrice(product.price),
+      }));
+
+      setProducts(data);
+    }
+
+    loadProducts();
+  }, []);
+
+  return (
+    <ProductList>
+      {products.map(product => (
+        <li key={product.id}>
+          <img src={product.image} alt={product.title} />
+          <strong>{product.title}</strong>
+          <span>{product.priceFormatted}</span>
+          <button
+            type="button"
+            onClick={() => dispatch(CartActions.addToCartRequest(product.id))}
+          >
+            <div>
+              <MdAddShoppingCart size={16} color="#fff" />{' '}
+              {amount[product.id] || 0}
+            </div>
+            <span>ADICIONAR AO CARRINHO</span>
+          </button>
+        </li>
+      ))}
+    </ProductList>
+  );
+}
+```
+
+We use `useSelector` and `useDispatch` to simplify Redux usage — no more `connect` or `bindActionCreators`. Complexity drops along with verbosity.
+
+And everything works again!
+
+Now let's refactor `Cart` to use `useSelector` and `useDispatch`:
+
+FROM:
+```
+import React from 'react';
+import { connect } from 'react-redux';
+import {
+  MdRemoveCircleOutline,
+  MdAddCircleOutline,
+  MdDelete,
+} from 'react-icons/md';
+import { bindActionCreators } from 'redux';
+import { Layout, ProductTable, Total } from './styles';
+import * as CartActions from '../../store/models/cart/actions';
+import { formatPrice } from '../../util/format';
+
+function Cart({ cart, removeFromCart, updateAmountRequest, total }) {
+  function increment(product) {
+    updateAmountRequest(product.id, product.amount + 1);
+  }
+  function decrement(product) {
+    updateAmountRequest(product.id, product.amount - 1);
+  }
+
+  return (
+    <Layout>
+      <ProductTable>
+        <thead>
+          <tr>
+            <th />
+            <th>PRODUTO</th>
+            <th>QTD</th>
+            <th>SUBTOTAL</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {cart.map(product => (
+            <tr>
+              <td>
+                <img src={product.image} alt={product.title} />
+              </td>
+              <td>
+                <strong>{product.title}</strong>
+                <span>{product.price}</span>
+              </td>
+              <td>
+                <div>
+                  <button type="button">
+                    <MdRemoveCircleOutline
+                      size={20}
+                      color="#7169c1"
+                      onClick={() => decrement(product)}
+                    />
+                  </button>
+                  <input type="number" readOnly value={product.amount} />
+                  <button type="button">
+                    <MdAddCircleOutline
+                      size={20}
+                      color="#7169c1"
+                      onClick={() => increment(product)}
+                    />
+                  </button>
+                </div>
+              </td>
+              <td>
+                <strong>{product.subtotal}</strong>
+              </td>
+              <td>
+                <div>
+                  <button type="button">
+                    <MdDelete
+                      size={20}
+                      color="#7169c1"
+                      onClick={() => removeFromCart(product.id)}
+                    />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </ProductTable>
+
+      <footer>
+        <button type="button">Finalizar Pedido</button>
+
+        <Total>
+          <span>TOTAL</span>
+          <strong>{total}</strong>
+        </Total>
+      </footer>
+    </Layout>
+  );
+}
+
+const mapDispatchToProps = dispatch =>
+  bindActionCreators(CartActions, dispatch);
+
+const mapStateToProps = state => ({
+  cart: state.cart.map(product => ({
+    ...product,
+    subtotal: formatPrice(product.price * product.amount),
+  })),
+  total: formatPrice(
+    state.cart.reduce((total, product) => {
+      return total + product.price * product.amount;
+    }, 0)
+  ),
+});
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Cart);
+```
+
+TO:
+```
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  MdRemoveCircleOutline,
+  MdAddCircleOutline,
+  MdDelete,
+} from 'react-icons/md';
+import { Layout, ProductTable, Total } from './styles';
+import * as CartActions from '../../store/models/cart/actions';
+import { formatPrice } from '../../util/format';
+
+export default function Cart() {
+  const cart = useSelector(state =>
+    state.cart.map(product => ({
+      ...product,
+      subtotal: formatPrice(product.price * product.amount),
+    }))
+  );
+
+  const total = useSelector(state =>
+    formatPrice(
+      state.cart.reduce((sumTotal, product) => {
+        return sumTotal + product.price * product.amount;
+      }, 0)
+    )
+  );
+
+  const dispatch = useDispatch();
+
+  function increment(product) {
+    dispatch(CartActions.updateAmountRequest(product.id, product.amount + 1));
+  }
+  function decrement(product) {
+    dispatch(CartActions.updateAmountRequest(product.id, product.amount - 1));
+  }
+
+  return (
+    <Layout>
+      <ProductTable>
+        <thead>
+          <tr>
+            <th />
+            <th>PRODUTO</th>
+            <th>QTD</th>
+            <th>SUBTOTAL</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {cart.map(product => (
+            <tr>
+              <td>
+                <img src={product.image} alt={product.title} />
+              </td>
+              <td>
+                <strong>{product.title}</strong>
+                <span>{product.price}</span>
+              </td>
+              <td>
+                <div>
+                  <button type="button">
+                    <MdRemoveCircleOutline
+                      size={20}
+                      color="#7169c1"
+                      onClick={() => decrement(product)}
+                    />
+                  </button>
+                  <input type="number" readOnly value={product.amount} />
+                  <button type="button">
+                    <MdAddCircleOutline
+                      size={20}
+                      color="#7169c1"
+                      onClick={() => increment(product)}
+                    />
+                  </button>
+                </div>
+              </td>
+              <td>
+                <strong>{product.subtotal}</strong>
+              </td>
+              <td>
+                <div>
+                  <button type="button">
+                    <MdDelete
+                      size={20}
+                      color="#7169c1"
+                      onClick={() =>
+                        dispatch(CartActions.removeFromCart(product.id))
+                      }
+                    />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </ProductTable>
+
+      <footer>
+        <button type="button">Finalizar Pedido</button>
+
+        <Total>
+          <span>TOTAL</span>
+          <strong>{total}</strong>
+        </Total>
+      </footer>
+    </Layout>
+  );
+}
+```
+
+Done — now, whenever we need a piece of Redux state we use `useSelector`, and whenever we need to dispatch an action we use `useDispatch`, both from `react-redux`.
+
+Everything works and the code looks great with React Hooks. From here on, all code can use the hooks API.
+
+Code [https://github.com/tgmarinho/rocketshoes/tree/aula-28-hooks-com-redux](https://github.com/tgmarinho/react-hooks/tree/aula-28-hooks-com-redux)
+
+Now the challenge is refactoring the Rocketshoes mobile project to use React and Redux hooks:
+
+Feel free to [fork the project](https://github.com/tgmarinho/RocketshoesRN) and complete the [challenge](https://github.com/tgmarinho/RocketshoesRN).
+
+
+The end!
+
+
+
+[Image credits](https://pescaprendiz.wordpress.com/2015/05/07/um-pouco-sobre-a-pesca/)

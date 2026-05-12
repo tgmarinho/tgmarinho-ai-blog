@@ -1,0 +1,58 @@
+---
+title: "Using react-native-vector-icons in React Native - iOS"
+description: "How to install and use react-native-vector-icons on iOS with React Native 0.61+ (autolinking)."
+date: "2019-09-26"
+published: true
+categories: ["mobile"]
+image: "/assets/img/react-native.png"
+language: "en"
+translationKey: "utilizando-cones-do-react-native-vector-icons-no-react-native-ios"
+slug: "using-react-native-vector-icons-on-ios"
+---
+
+To use icons in React Native, we need to install the lib:
+
+```
+yarn add react-native-vector-icons
+```
+
+It ships with a bunch of nice icons from MaterialIcons, Font Awesome, and more. To browse all of them, [click here](https://oblador.github.io/react-native-vector-icons/).
+
+With the RN version I'm using, `"react-native": "0.61.1",` (Fast Reload \o/)
+
+**We no longer need** to run:
+
+```
+react-native link react-native-vector-icons
+```
+
+But we [do need](https://github.com/react-native-community/cli/blob/master/docs/autolinking.md) to step into the `ios` folder and run `pod install`, then go back with `cd ..` and run `react-native run-ios` at the project root again.
+
+To use it, we import it in our code — in this case I'm importing from MaterialIcons.
+
+```
+import Icon from 'react-native-vector-icons/MaterialIcons'
+Icon.loadFont();
+```
+
+Yes, that `Icon.loadFont()` is required. If you swap MaterialIcons for another font, e.g. FontAwesome, `loadFont()` has to be called again. In other words, it's better to keep it in the code even if you've already called it once with another font. A good idea is to centralize this setup in a config file, for example: `loadFonts.js`.
+
+Now just drop `Icon` into your code:
+
+```
+...
+<SubmitButton>
+   <Icon name="add" size={20} color="#FFF" />
+</SubmitButton>
+...
+```
+
+Done!
+
+I'll update this for Android later as well!
+
+Source: https://github.com/oblador/react-native-vector-icons
+
+Kudos to Hugo Duarte and William Amorim, who gave me a hand!
+
+[Post image](https://medium.com/react-native-training/best-practices-for-creating-react-native-apps-part-1-66311c746df3)

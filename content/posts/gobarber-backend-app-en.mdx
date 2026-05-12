@@ -1,0 +1,1068 @@
+---
+title: "GoBarber - Backend Application"
+description: "My class notes and code from Rocketseat's bootcamp — in this project we build an API with NodeJS"
+date: "2019-09-14"
+published: true
+categories: ["Development"]
+image: "/assets/img/js_wallpaper.jpg"
+language: "en"
+translationKey: "gobarber-aplica-o-backend"
+slug: "gobarber-backend-app"
+---
+
+# GoBarber
+
+In this project we'll build a backend API using NodeJS, Express, Postgres, Nodemon, Sucrase, among other libs. These are my class notes from the [Rocketseat](https://rocketseat.com.br) bootcamp.
+
+Topics:
+
+* Lesson 1 - Setting up the Project
+* Lesson 2 - Nodemon & Sucrase
+* Lesson 3 - Docker Concepts
+* Lesson 4 - Hands On
+* Lesson 5 - Sequelize & MVC
+* Lesson 6 - Code Standards - Eslint, Prettier & EditorConfig
+* Lesson 7 - Configuring Sequelize
+* Lesson 8 - User Migration
+* Lesson 9 - Creating the User Model
+* Lesson 10 - Models Loader
+* Lesson 11 - Creating users
+* Lesson 12 - Sending password_hash
+* Lesson 13 - JWT Concepts
+* Lesson 14 - JWT Authentication
+* Lesson 15 - Authentication Middleware
+* Lesson 16 - User Update
+* Lesson 17 - Validating Input Data
+
+Project code on [Github](https://github.com/tgmarinho/gobarber).
+
+## Lesson 1 - Setting up the Project
+A nice way to structure the backend is to use Classes.
+
+In this commit a node project was created using `yarn init -y` and the `express` dependency was installed.
+
+The folders were structured, separating the application logic.
+Routes are middlewares too, but they are kept apart from middlewares to give more semantics.
+
+The server is started from inside `server.js` where the app instance is imported — this decouples things to make testing easier.
+
+See the code: [https://github.com/tgmarinho/gobarber/tree/aula1](https://github.com/tgmarinho/gobarber/tree/aula1)
+
+
+## Lesson 2 - Nodemon & Sucrase
+
+To use `import/export` we can use babel or other tools, but in this project we'll use `sucrase` which is fast and easy.
+
+`yarn add sucrase nodemon -D`
+
+Done — now just switch to import/export.
+
+However, we can no longer run `node src/index.js` to execute the project.
+
+It can be like this: `yarn sucrase-node src/server.js`
+
+But I want to use nodemon as well.
+
+Nodemon detects code changes and restarts the server.
+
+I need to create a `nodemon.json` file at the project root with the following configuration:
+
+```
+{
+  "execMap": {
+    "js": "sucrase-node"
+  }
+}
+```
+
+In `package.json` I create a script:
+
+````
+"scripts": {
+    "dev": "nodemon src/server"
+  },
+````
+
+and now I can run the project with: `yarn dev`
+
+See the code: [https://github.com/tgmarinho/gobarber/tree/aula2](https://github.com/tgmarinho/gobarber/tree/aula2)
+
+
+## Lesson 3 - Docker Concepts
+
+Docker helps control the application's external services: Database, Redis, etc.
+
+### How does it work?
+
+- Creation of isolated environments (containers)
+	- You download an image with a pre-configured environment — you don't need to install the software on your machine and modify your operating system. When we install Postgres with Docker it becomes a subsystem, running on Docker's virtual machine without interfering with the environment. This is great because we can replicate the same development or production environment on other machines, with no architecture or OS-difference issues.
+	- Containers expose ports so we can connect to them.
+	- Installing Postgres, we always use port :5432; with MongoDB it would be port :27017 — but swapping ports in Docker is very simple.
+
+#### Main concepts
+
+- Image: The main services we'll use, e.g.: postgres, mongodb, redis, etc.
+- Layout: an instance of an image — if we have a mongodb image, we can create one or more mongodb containers, even to serve other applications on the machine.
+- Docker Registry (Docker Hub) is where we can browse and download images (ISOs). It's basically the image repository — we can even create our own images and host them there.
+- Dockerfile
+  - Recipe for an image: Defines how our application image will work on another computer, in an environment from scratch.
+  - Example Dockerfile to run our application:
+
+```
+# Start from an existing image
+FROM node:10
+# Define the folder and copy the files
+WORKDIR /usr/app
+COPY . ./
+# Install dependencies
+RUN yarn
+# Which port do we want to expose?
+EXPOSE 3333
+# Run our application
+CMD yarn start
+
+```
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula3](https://github.com/tgmarinho/gobarber/tree/aula3)
+
+
+## Lesson 4 - Hands On
+
+Download Docker (Mac, Linux, Windows): [https://docs.docker.com/install/](https://docs.docker.com/install/)
+
+To check if it's installed:
+`docker -v` or `docker -help`
+
+Docker image repository: [https://hub.docker.com/](https://hub.docker.com/)
+
+Installing Postgres:
+[https://hub.docker.com/_/postgres](https://hub.docker.com/_/postgres)
+
+```
+❯ docker run --name database -e POSTGRES_PASSWORD=docker -p 5432:5432 -d postgres
+```
+
+Port forwarding — every time a service is called on the server's port 5432, it will be redirected to port 5432 of the container in Docker:
+`-p 5432:5432`
+
+If you already have Postgres on the machine without it having been installed via Docker, and it's running, you can change it in the application to: `-p 5433:5432` — that is, when the Postgres service on 5433 is called, it gets redirected to the default port inside Docker: 5432. Really nice decoupling.
+
+When you already have an image in Docker:
+
+to run an image:
+
+```
+❯ docker run -d 30bf4f039abe
+```
+
+To run a container:
+
+```
+docker  start a46a366365bb
+```
+
+Those strange characters are the image ID — to see them just type:
+
+```
+❯ docker image ls
+```
+
+```
+❯ docker image ls
+REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
+kartoza/postgis           latest              5a242bc9bf9f        4 months ago        990MB
+redis                     alpine              c8eda26fcdab        5 months ago        50.9MB
+mongo                     latest              a3abd47e8d61        6 months ago        394MB
+mongoclient/mongoclient   latest              436b2a2bbe16        6 months ago        1.11GB
+adminer                   latest              709d7ce11f75        6 months ago        83.2MB
+postgres                  latest              30bf4f039abe        6 months ago        312MB
+mongo                     4                   0da05d84b1fe        7 months ago        394MB
+```
+
+It will list all images and their respective IDs.
+
+
+And to check that it's running, just run `docker ps` — this will list all containers currently running:
+
+```
+❯ docker ps                 
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+6f0b42548e9e        30bf4f039abe        "docker-entrypoint.s…"   2 minutes ago       Up 2 minutes        5432/tcp            goofy_hopper
+~ 
+```
+
+Now to see the database working, you can connect from the terminal command line or install a GUI:
+
+Linux, Mac and Windows: [https://electronjs.org/apps/postbird](https://electronjs.org/apps/postbird)
+or
+Mac: [https://eggerapps.at/postico/](https://eggerapps.at/postico/) 
+
+Just use the connection data to connect to Postgres.
+
+and create the database: `create database gobarber`
+
+When you restart the machine, Docker stops — to bring it up again just follow the commands:
+
+`docker ps -a` to show all containers, even those not running.
+
+and then run the command to bring up the container:
+
+```
+docker  start postgres 
+```
+
+It can be the container ID or name.
+
+To see the container logs:
+
+```
+docker logs postgres
+```
+
+The same container can be used for other applications, but you can also make a container just for one application.
+
+To remove a container: 
+
+```
+docker rm "container ID or name"
+```
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula4](https://github.com/tgmarinho/gobarber/tree/aula4)
+
+
+
+## Lesson 5 - Sequelize & MVC
+
+Sequelize is an [ORM](https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping) (Object-relational mapping) — basically it maps objects as entities in the database.
+Databases have the concept of Entities, Tables, Attributes, while the application has the concept of Objects, Attributes (or properties) and methods (or functions). What the ORM does is map the object — creating a table and mapping attributes to database fields.
+Sequelize also helps run database queries: instead of using native SQL, we can use objects with their methods and write JavaScript to perform CRUD persistence operations on the DB.
+
+Database tables become Models (MVC).
+
+In the database we have:
+
+users, products, productsItem 
+
+and in JS we'll have Users.js, Products.js, ProductsItem.js.
+
+Difference between SQL and Sequelize:
+
+SQL:
+
+```
+INSERT INTO users (name, email) VALUES ("Thiago Marinho", "tgmarinho@gmail.com")
+```
+
+```
+SELECT * FROM users WHERE email = "tgmarinho@gmail.com" LIMIT 1
+```
+
+Sequelize:
+
+```
+User.create({ name: 'Diego Fernandes' , email: 'diego@rocketseat.com.br' , })
+```
+
+```
+User.findOne({ where: { email: 'tgmarinho@gmail.com' } })
+```
+
+###  In Sequelize we also have Migrations:
+
+- Version control for the database:
+	- Every change to the table — adding or removing fields, or creating new tables — is done in migrations, where we create the structure. It's a proper version controller: you can roll back to undo something, and the database keeps a record of every migration that was run.
+- Each file contains instructions for creating, altering or removing
+tables or columns;
+- Keeps the database up to date across all developers on the team and also
+in the production environment;
+- Each file is a migration, and they are ordered by date;
+
+Migration example:
+
+```
+module.exports = {
+    up: (queryInterface, Sequelize) != {
+        return queryInterface.createTable('users', {
+            id: {
+                allowNull: false,
+                autoIncrement: true,
+                primaryKey: true,
+                type: Sequelize.INTEGER
+            },
+            name: {
+                allowNull: false,
+                type: Sequelize.STRING
+            },
+            email: {
+                allowNull: false,
+                unique: true,
+                type: Sequelize.STRING
+            }
+        })
+    },
+    down: (queryInterface, Sequelize) != {
+        return queryInterface.dropTable('users')
+    }
+}
+```
+
+[https://sequelize.org/master/manual/migrations.html](https://sequelize.org/master/manual/migrations.html)
+
+Notes:
+
+- You can undo a migration if you mess something up while still
+developing the feature;
+- Once a migration has been shipped to other devs or to production
+it must NEVER be edited — a new one must be created;
+- Each migration should only alter a single table — you can
+create several migrations for larger changes;
+
+### We also have Seeds
+• Populating the database for development:
+	- We can use it to generate data at runtime — when we start the project it creates fake data.
+• Heavily used to populate data for tests;
+• Executable from code only;
+• Will never be used in production;
+	- The idea here is to use only fake data, to test the system flow and the performance of lists, etc. There are several JS libs that generate fake data which can be used in Seeds.
+• If it's data that must go to production, the migration itself
+can manipulate table data;
+	- Data going to production should be in Migrations, not in Seeds.
+
+## MVC Architecture
+
+Model, View, Controller is a very old architecture, still widely used today, where:
+
+M = Model = Database structure code, using an ORM or not;
+V = View = HTML, CSS, JS, JSX — the code that builds and manipulates the site/app screens;
+C = Controller = JS code containing the business logic — it's the intermediary between Model and View
+
+```
+M <-> C <-> V
+```
+
+The View makes a request, the Controller receives it, processes it, calls the database (Model), the DB returns to the Controller, and the Controller passes the response back to the View, which renders it for the user.
+
+Controller example:
+
+```
+class UserController {
+ index() { } !/ List users
+ show() { } !/ Show a single user
+ store() { } !/ Create user
+ update() { } !/ Update user
+ delete() { } !/ Remove user
+}
+```
+
+A good practice when creating Controllers — in REST and MVC in general — is that the controller should have only the five methods below, or fewer, no more. If you feel the need for another method, it's because you actually need to create another object, e.g.: SessionController.js, LoginController.js.
+
+
+## Lesson 6 - Code Standards - Eslint, Prettier & EditorConfig
+
+Code standards are very useful when working with a team, because everyone can do things their own way and the codebase will end up messy — some developers will use `var`, others `const`, others `let`, some will add a final newline, others won't, some will use `export default`, others won't — and that creates a mess. So we have tools that help define the code rules (the standard) and a code stylizer that uses those rules. The most adopted in the JS community is Eslint to define the rules and Prettier to format the code according to the rules defined in Eslint.
+
+But ESLint doesn't have rules of its own either — you can use some of the most popular ones in the industry, like the style guides from [Airbnb](https://github.com/airbnb/javascript), [Standard](https://standardjs.com/) and others. Each has its own characteristics and writing styles — it comes down to taste and to the standard your framework adopts. Adonis, for example, uses Standard, so it's sensible to use Standard to create your project following that style.
+
+### Configuring the project
+
+Adding eslint as a dev dependency:
+
+```
+ yarn add eslint -D
+```
+
+Done — just initialize eslint:
+
+```
+yarn eslint --init
+```
+It will ask a few questions and you can configure it to your liking. I used the third option:
+
+```
+gobarber on  aula6 [!] took 10s 
+❯ yarn eslint --init
+yarn run v1.12.0
+$ /Users/tgmarinho/Developer/bootcamp_rocketseat_studies/gobarber/node_modules/.bin/eslint --init
+? How would you like to use ESLint? 
+  To check syntax only 
+  To check syntax and find problems 
+❯ To check syntax, find problems, and enforce code style 
+```
+
+Then just keep answering Eslint's prompts. At the end it asks to install the dependencies — just install them, remove the package-lock.json and run yarn to update dependencies. I do this because I'm not using npm but yarn as the dependency manager, and eslint under the hood uses npm to install.
+
+At the end it creates a file: ` .eslintrc.js ` with the following default settings:
+```
+module.exports = {
+    env: {
+        es6: true,
+        node: true,
+    },
+    extends: [
+        'airbnb-base',
+    ],
+    globals: {
+        Atomics: 'readonly',
+        SharedArrayBuffer: 'readonly',
+    },
+    parserOptions: {
+        ecmaVersion: 2018,
+        sourceType: 'module',
+    },
+    rules: {},
+};
+```
+
+NOTE: You need eslint in the VSCode extensions.
+
+And for eslint to fix things automatically when the file is saved, you need to add the following config to VSCode's settings.json:
+
+```
+  "eslint.autoFixOnSave": true,
+  
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    {
+      "language": "typescript",
+      "autoFix": true
+    },
+    {
+      "language": "typescriptreact",
+      "autoFix": true
+    }
+  ],
+```
+
+Done — it should be fine now. If VSCode isn't flagging Eslint errors in app.js (with the Airbnb standard quotes must be single, and there must be a `;` at the end of each statement), close VSCode and reopen it, or try removing node_modules and reinstalling: `rm -rf node_modules/ yarn.lock && yarn`.
+
+In .eslintrc.js we'll have a definition for new rules — kind of like overriding the default rules of the Airbnb style guide in eslint. This is sometimes necessary because of some framework we'll use day-to-day.
+`.eslintrc.js`:
+
+```
+ rules: {
+    "class-methods-use-this": "off",
+    "no-param-reassign": "off",
+    camelcase: "off",
+    "no-unused-vars": ["error", { argsIgnorePattern: "next" }]
+  }
+```
+
+### Installing Prettier
+Prettier improves the code, making it prettier — it does extra styling on top of what eslint already does.
+
+```
+ yarn add prettier eslint-config-prettier eslint-plugin-prettier -D
+```
+
+and in .eslintrc.js I need to declare:
+
+```
+extends: ["airbnb-base", "prettier"],
+plugins: ["prettier"],
+```
+
+```
+ rules: {
+    "prettier/prettier": "error",
+    "class-methods-use-this": "off",
+    "no-param-reassign": "off",
+    camelcase: "off",
+    "no-unused-vars": ['error', { argsIgnorePattern:  'next' }],
+  }
+```
+
+With this, prettier is ready to be used — but there are some rules that conflict between prettier and airbnb, so more configuration is needed to disable the settings that prettier overrides from airbnb.
+
+Create the file: `prettier.rc`:
+
+```
+{
+	"singleQuote":  true,
+	"trailingComma":  "es5"
+}
+```
+
+I set the rule to keep single quotes and to leave `;` at the end of each code statement. Done!
+
+To fix all files just run:
+
+```
+yarn eslint --fix src --ext .js
+```
+Caption: --fix fixes everything inside the src folder that has the extension (--ext) of .js files.
+
+
+We can put it in package.json:
+
+```
+ "scripts": {
+    "dev": "nodemon src/server",
+    "eslintify": "yarn eslint --fix src --ext .js"
+  },
+```
+
+and run: `yarn eslintify`
+
+With that we can now keep the code standard across the application's codebase — if we get any warning or error, just adjust according to ESLint's suggestion.
+
+But what if other developers don't use VSCode? They use Sublime, Vim, Atom or WebStorm?
+
+That's where **EditorConfig** comes in.
+
+It ensures that the rules defined in Eslint and Prettier are applied across all IDEs.
+
+For this, just create a `.editorConfig` file at the project root with the settings:
+
+```
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+```
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula6](https://github.com/tgmarinho/gobarber/tree/aula6)
+
+
+## Lesson 7 - Configuring Sequelize
+
+- Create folder structure inside `src`
+- add the dependency: `yarn add sequelize` to the project
+- add Sequelize's command-line interface: `yarn add sequelize-cli -D`
+- create a `.sequelizerc` file at the project root to configure paths for models, config, etc., so we can run sequelize-cli commands:
+
+```
+const { resolve } = require('path');
+
+module.exports = {
+  config: resolve(__dirname, 'src', 'config', 'database.js'),
+  'models-path': resolve(__dirname, 'src', 'app', 'models'),
+  'migrations-path': resolve(__dirname, 'src', 'database', 'migrations'),
+  'seeders-path': resolve(__dirname, 'src', 'database', 'seeds'),
+};
+```
+
+Configuring the database:
+- add the dependencies: ```yarn add pg pg-hstore```
+- in the file config/database.js:
+
+```
+module.exports = {
+  dialect: 'postgres',
+  host: 'localhost',
+  username: 'postgres',
+  password: 'docker',
+  database: 'gobarber',
+  define: {
+    timestamps: true, // ensures a created_at and updated_at attribute is created in the database table.
+    underscored: true, // allows the ORM to create table names like products_item
+    underscoredAll: true, // allows the ORM to create attribute names in lowercase with _ instead of camelCase, as that's the writing convention in the database
+  },
+};
+```
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula7](https://github.com/tgmarinho/gobarber/tree/aula7)
+
+
+## Lesson 8 - User Migration
+
+To create migrations just run:
+
+```
+yarn sequelize migration:create --name=create-users 
+```
+
+It will create a file:
+
+```
+20190913144153-create-users.js
+```
+
+With a template:
+
+```
+'use strict';
+
+module.exports = {
+  up: (queryInterface, Sequelize) => {
+    /*
+      Add altering commands here.
+      Return a promise to correctly handle asynchronicity.
+
+      Example:
+      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
+    */
+  },
+
+  down: (queryInterface, Sequelize) => {
+    /*
+      Add reverting commands here.
+      Return a promise to correctly handle asynchronicity.
+
+      Example:
+      return queryInterface.dropTable('users');
+    */
+  },
+};
+
+```
+
+The `up` method runs when the migration is executed, and `down` runs to perform a rollback.
+
+### User Migration
+
+```
+module.exports = {
+  up: (queryInterface, Sequelize) => {
+    return queryInterface.createTable('users', {
+      id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      name: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      email: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      password_hash: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      provider: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+    });
+  },
+
+  down: queryInterface => {
+    return queryInterface.dropTable('users');
+  },
+};
+
+```
+
+
+To run the migration:
+
+``` 
+❯ yarn sequelize db:migrate
+yarn run v1.12.0
+$ /Users/tgmarinho/Developer/bootcamp_rocketseat_studies/gobarber/node_modules/.bin/sequelize db:migrate
+
+Sequelize CLI [Node: 10.16.3, CLI: 5.5.1, ORM: 5.18.4]
+
+Loaded configuration file "src/config/database.js".
+== 20190913144153-create-users: migrating =======
+== 20190913144153-create-users: migrated (0.040s)
+
+✨  Done in 1.02s.
+```
+
+And we can see the DDL in the Postgres GUI:
+
+```
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name character varying(255) NOT NULL,
+    email character varying(255) NOT NULL UNIQUE,
+    password_hash character varying(255) NOT NULL,
+    provider boolean NOT NULL DEFAULT false,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+-- Indices -------------------------------------------------------
+
+CREATE UNIQUE INDEX users_pkey ON users(id int4_ops);
+CREATE UNIQUE INDEX users_email_key ON users(email text_ops);
+```
+
+In addition to the users table, a SequelizeMeta table is created, which keeps records of each migration that has been run.
+
+To undo migrations:
+
+```
+yarn sequelize db:migrate:undo                      
+```
+
+With that the users table no longer exists.
+
+Undo everything — undo all migrations that were run, not just the last one:
+
+```
+yarn sequelize db:migrate:undoAll                      
+```
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula8](https://github.com/tgmarinho/gobarber/tree/aula8)
+
+
+## Lesson 9 - Creating the User Model
+
+To create a sequelize model, inside the models folder, create a file: user.js:
+
+```
+import Sequelize, { Model } from 'sequelize';
+
+class User extends Model {
+  static init(sequelize) {
+    super.init(
+      {
+        name: Sequelize.STRING,
+        email: Sequelize.STRING,
+        password_hash: Sequelize.STRING,
+        provider: Sequelize.BOOLEAN,
+      },
+      {
+        sequelize,
+      }
+    );
+  }
+}
+
+export default User;
+```
+
+I created the User class which extends Sequelize's Model to inherit all the methods Model has — so our domain class User is now a Model via inheritance.
+Inside the static `init` method I pass a `sequelize` parameter (the database connection) and call Model's super, informing the users table attributes — and with that the ORM maps between the database entities and the application object for the User entity.
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula9](https://github.com/tgmarinho/gobarber/tree/aula9)
+
+## Lesson 10 - Models Loader
+
+To connect the application with the database and load the models, we have to create an index.js file in the database folder.
+```
+import Sequelize from 'sequelize';
+import User from '../app/models/User';
+import databaseConfig from '../config/database';
+
+const models = [User];
+
+class Database {
+  constructor() {
+    this.init();
+  }
+
+  init() {
+    this.connection = new Sequelize(databaseConfig);
+    models.map(model => model.init(this.connection));
+  }
+}
+export default new Database();
+```
+
+When this file is imported, it receives a Database instance which calls the `init` function — that assigns to `this.connection` the Sequelize instance with the database connection settings. And for every model I imported, I pass the connection.
+
+And now just test it — [see the lesson's code](https://github.com/tgmarinho/gobarber/tree/aula10).
+
+```
+// When I call the '/' route, I register the user and return the data from the database
+// http://localhost:3333/
+
+{
+  "id": 1,
+  "name": "Thiago Marinho",
+  "email": "tgmarinho@gmail.com",
+  "password_hash": "1232131",
+  "updatedAt": "2019-09-13T15:39:29.116Z",
+  "createdAt": "2019-09-13T15:39:29.116Z",
+  "provider": false
+}
+```
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula10](https://github.com/tgmarinho/gobarber/tree/aula10)
+
+
+## Lesson 11 - Creating users
+
+- Create the User controller
+- Create the users route to receive the request and pass it to `UserController.store`, so it runs when the route is called.
+- Validate whether the user already exists, since email is a unique field in the database (backend validation matters).
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula11](https://github.com/tgmarinho/gobarber/tree/aula11)
+
+
+## Lesson 12 - Sending password_hash
+
+When the user types their password and sends it to the controllers, we want a hash to be generated to save the password in the database. Later, when they log in, they type the normal password, we generate a hash and compare it to the hash saved in `password_hash` in the database — if it matches, OK, they're authenticated.
+
+To do this we need a lib to generate the password hash:
+
+```
+yarn add bcryptjs 
+```
+
+Bcryptjs is used in the User model — we create a virtual field used to receive the password from the frontend, and the hash is generated via bcrypt into the `password_hash` variable, which is the String actually saved in the database.
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula12](https://github.com/tgmarinho/gobarber/tree/aula12)
+
+## Lesson 13 - JWT Concepts
+
+Json Web Token ([JWT](https://jwt.io/)) is used for authentication.
+
+**JWT (JSON Web Token)** is a data transfer system that can be sent via POST or in an HTTP header in a "safe" way. The information is digitally signed by an HMAC algorithm, or a public/private key pair using RSA. ([Learn more...](https://imasters.com.br/desenvolvimento/json-web-token-conhecendo-o-jwt-na-teoria-e-na-pratica))
+
+It generates a token with headers (token type, algorithm), Payload (additional data) and Signature (which guarantees the token's authenticity — it cannot be modified).
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula13](https://github.com/tgmarinho/gobarber/tree/aula13)
+
+## Lesson 14 - JWT Authentication
+  
+We'll use the [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) lib:
+
+ ```yarn add jsonwebtoken```
+
+To create user authentication, we can create a controller: SessionController.js, which handles authentication and not user creation.
+
+To generate a random string (secret):
+[https://www.md5online.org/](https://www.md5online.org/)
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula14](https://github.com/tgmarinho/gobarber/tree/aula14)
+
+
+## Lesson 15 - Authentication Middleware
+
+Create a Middleware to **block** the user if they aren't logged into the application.
+
+To ensure the user is logged in, they must have the token in the header.
+
+So when calling the update route using the `put` method on `/users`, before calling `UserController.update`, we must call `authMiddleware`, which checks whether the `token` is present in the request.
+
+Middleware code:
+`app/middleware/auth.js`:
+
+```
+export default (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  console.log(authHeader);
+
+  next();
+};
+```
+
+`routes.js`:
+
+```
+routes.put('/users', authMiddleware, UserController.update);
+```
+
+Or we can use it globally — every route below `use(authMiddleware)` must be authenticated:
+
+```
+import { Router } from 'express';
+import UserController from './app/controllers/UserController';
+import SessionController from './app/controllers/SessionController';
+import authMiddleware from './app/middlewares/auth';
+
+const routes = new Router();
+
+routes.post('/users', UserController.store);
+routes.post('/sessions', SessionController.store);
+
+// All routes called from here onward must be authenticated
+routes.use(authMiddleware);
+routes.put('/users', UserController.update);
+
+export default routes;
+```
+
+Full authentication middleware:
+
+```
+import jwt from 'jsonwebtoken';
+import { promisify } from 'util';
+import authConfig from '../../config/auth';
+
+export default async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Token not provided' });
+  }
+
+  const [, token] = authHeader.split(' ');
+
+  try {
+    const decoded = await promisify(jwt.verify)(token, authConfig.secret);
+
+    req.userId = decoded.id;
+    return next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Token invalid' });
+  }
+};
+```
+
+I'm using node's `promisify` to turn `jwt.verify`'s callback into a promise so I can use async/await to resolve it — much nicer. Invoking `promisify`, I pass the callback-based function, it returns me a promisified verify, and I pass the function's arguments. That way I check whether the token is valid.
+
+`decoded` receives the user's ID because that's the attribute we passed as the payload when the token was generated (see `SessionController.js`):
+
+```
+token: jwt.sign({ id }, authConf.secret, {
+	expiresIn: authConf.expireIn,
+}),
+```
+
+Besides the id, decoded contains `exp`: the timestamp date and time at which the token will expire.
+
+A JS trick is used to remove the `Bearer` from the token string — the token arrives as a string:
+```
+Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwiaWF0IjoxNTY4NDA1MDAyLCJleHAiOjE1NjkwMDk4MDJ9.NPwa4vr80wAeEJvX9XWNMQAsUWXaDoSUwuw1KAR4wVw
+```
+We only need the token value — so we destructure the array returned by `split(' ')`, which cut the string in two on the spaces (there's only one space in the string) and returned the array:
+
+```
+const [, token] = authHeader.split(' ');
+```
+
+```
+['Bearer','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwiaWF0IjoxNTY4NDA1MDAyLCJleHAiOjE1NjkwMDk4MDJ9.NPwa4vr80wAeEJvX9XWNMQAsUWXaDoSUwuw1KAR4wVw']
+```
+
+And since we don't need `Bearer`, we simply do: `const [, token]` — we ignore the value in the first position, since the word `Bearer` is irrelevant in our context, and we keep just the `token`.
+
+Finally we take the user's ID from the token's payload and store it in the request:
+
+```
+req.userId = decoded.id;
+```
+
+And now with this, in the UserController.js update method we have access to it — as do all controllers that go through the authentication check:
+
+`UserController.js`:
+
+```
+ async update(req, res) {
+    console.log(req.userId);
+    return res.json({ ok: true });
+}
+```
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula15](https://github.com/tgmarinho/gobarber/tree/aula15)
+
+
+## Lesson 16 - User Update
+
+User update code in the file: `UserController.js`
+
+```
+  async update(req, res) {
+    const { email, oldPassword } = req.body;
+    const user = await User.findByPk(req.userId);
+    if (email !== user.email) {
+      const userExists = await User.findOne({
+        where: { email },
+      });
+      if (userExists) {
+        return res.status(400).json({ error: 'User already exists.' });
+      }
+    }
+    // only do this if the old password was provided, i.e., the user wants to change the password
+    if (oldPassword && !(await user.checkPassword(oldPassword))) {
+      return res.status(401).json({ error: 'Password does not match.' });
+    }
+
+    const { id, name, provider } = await user.update(req.body);
+
+    return res.json({ id, name, email, provider });
+  }
+```
+
+In this code:
+- I must always have the user's email;
+- The user can provide the old password if they want to change the password;
+- They can change all attributes;
+- We check whether the old password matches the user's current password;
+- I reuse the user instance returned by findByPk and update the user's data, which returns the new user;
+- I return all the user's data via json, except the password.
+
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula16](https://github.com/tgmarinho/gobarber/tree/aula16)
+
+## Lesson 17  - Validating Input Data
+
+Let's validate the user's data — it's a good practice to validate user input on both the frontend and the backend. The advantage of having it on the frontend is that validation is faster; you don't need to go all the way to the server to check whether some data is wrong or missing — you gain in speed, less server traffic, and especially in security. Having validation only on the frontend is not good practice — actually, it's terrible practice.
+
+We'll validate on the backend with the [Yup](https://github.com/jquense/yup) library, which performs schema validation:
+
+```
+yarn add yup
+```
+
+### Code snippet with Yup Validation
+
+This code is from the update method in UserController.js
+
+```
+import  *  as Yup from  'yup';
+
+  const schema = Yup.object().shape({
+      name: Yup.string(),
+      email: Yup.string().email(),
+      oldPassword: Yup.string().min(6),
+      password: Yup.string()
+        .min(6)
+        .when('oldPassword', (oldPassword, field) =>
+          oldPassword ? field.required() : field
+        ),
+      confirmPassword: Yup.string().when('password', (password, field) =>
+        password ? field.required().oneOf([Yup.ref('password')]) : field
+      ),
+    });
+```
+
+I use Yup to create a schema, passing an object with the body I defined — note the conditional fields: if `oldPassword` is provided, the `password` field becomes required, and the `field` in the second parameter is the password.
+
+But if the user types a password they must confirm it, so they provide `confirmPassword`, and both must match. For that I use the `oneOf` function, which receives an array — and Yup has references to every field, so I use: `Yup.ref('password')`.
+
+With the schema defined, I just need to validate it against the data that came in the request (req.body):
+
+```
+if (!(await schema.isValid(req.body))) {
+	return res.status(400).json({ error:  'Validation fails' });
+}
+```
+
+The method is asynchronous so I use await. If anything fails to meet the Schema Validation requirements, return a message to the user with error: 'Validation Fails'.
+
+
+We can validate the data provided on Login, inside SessionController.js:
+
+```
+  const schema = Yup.object().shape({
+      email: Yup.string()
+        .email()
+        .required(),
+      password: Yup.string().required(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails' });
+    }
+```
+
+Here we just check whether the user provided an email and password.
+
+End: [https://github.com/tgmarinho/gobarber/tree/aula17](https://github.com/tgmarinho/gobarber/tree/aula17)
+
+
+End of the first part of building the API! Really cool \o/

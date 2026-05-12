@@ -1,0 +1,597 @@
+---
+title: "First Project with ReactJS"
+description: "Let's build an app with React and Styled Components that fetches a repository from GitHub, persists it to localStorage, and lets us view its GitHub issues."
+date: "2019-09-24"
+published: true
+categories: ["Development"]
+image: "/assets/img/logo-og.png"
+language: "en"
+slug: "first-project-with-reactjs"
+translationKey: "primeiro-projeto-com-reactjs"
+---
+
+## Lesson 01 - Creating a project from scratch
+
+To start a project we don't need to configure webpack, babel, etc. by hand — there's a nice boilerplate called Create React App.
+
+To use it, run in the terminal:
+
+```
+yarn create react-app project-name
+```
+
+I'm calling mine `fron-react` (Frontend with react).
+
+CRA scaffolds the whole structure for us without any setup.
+
+All the configuration lives inside `react-scripts`, which is referenced in `package.json`.
+
+I'll delete the default eslint config because I'll set it up myself.
+
+Delete this:
+
+```
+"eslintConfig": {
+	"extends":  "react-app"
+},
+```
+
+To run the app:
+
+```
+yarn start
+```
+
+The cool thing is that webpack-dev-server already comes wired up too! =)
+
+The project ships with some default files, including PWA-related ones. I'll remove a few — you can follow along through the commit.
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula01-criando-projeto-do-zero](https://github.com/tgmarinho/front-react/tree/aula01-criando-projeto-do-zero)
+
+## Lesson 02 - ESLint, Prettier and EditorConfig
+
+Let's set up ESLint, Prettier and EditorConfig to keep a consistent _style guide_ in the project.
+
+### Editor Config
+
+First, with VSCode and the EditorConfig extension installed, right-click and pick `generate .editorConfig` — VSCode creates the file for us.
+
+I make a small tweak:
+
+```
+root = true
+
+[*]
+end_of_line = lf # force unix line endings
+indent_style = space
+indent_size = 2
+charset = utf-8
+trim_trailing_whitespace = true # set to true
+insert_final_newline = true # set to true
+
+```
+
+### Eslint
+
+Install eslint as a dev dependency:
+
+```
+yarn add eslint -D
+```
+
+and run:
+
+```
+yarn eslint --init
+```
+
+Options:
+
+```
+❯ To check syntax, find problems, and enforce code style
+
+❯ JavaScript modules (import/export)
+
+❯ React
+
+❯ Typscript -> No
+
+❯ Browser
+
+❯ Use a popular style guide
+
+❯ Airbnb (https://github.com/airbnb/javascript)
+
+❯ JavaScript
+
+❯ Y
+```
+
+The dependencies are installed.
+
+Eslint uses npm by default, so after the install I delete `package-lock.json` and run `yarn` again to refresh `yarn.lock`.
+
+Now the code will start showing some errors. To finish the setup let's install Prettier.
+
+### Prettier
+
+To install prettier and a few config plugins:
+
+```
+yarn add prettier eslint-config-prettier eslint-plugin-prettier babel-eslint -D
+```
+
+And then configure `.eslintrc`:
+
+```
+module.exports = {
+  env: {
+    browser: true,
+    es6: true,
+  },
+  extends: ['airbnb', 'prettier', 'prettier/react'],
+  globals: {
+    Atomics: 'readonly',
+    SharedArrayBuffer: 'readonly',
+  },
+  parser: 'babel-eslint',
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 2018,
+    sourceType: 'module',
+  },
+  plugins: ['react', 'prettier'],
+  rules: {
+    'prettier/prettier': 'error',
+    'react/jsx-filename-extension': ['warn', { extensions: ['.jsx', 'js'] }],
+    'import/prefer-default-export': 'off',
+  },
+};
+```
+
+Then create a `.prettierrc` at the project root with:
+
+```
+{
+	"singleQuote":  true,
+	"trailingComma":  "es5"
+}
+```
+
+This improves Prettier's integration with the airbnb style guide we're using.
+
+Done! Now Prettier makes the code prettier and eslint hunts for style-guide violations.
+
+Every time you open a file and save it, eslint checks the rules against the style guide and Prettier formats the code accordingly.
+
+We can automate this with a script in `package.json`:
+
+```
+"lint":  "eslint --fix src --ext .js"
+```
+
+and run:
+
+```
+yarn lint
+```
+
+to align the code with the style guide.
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula02-eslint-prettier-editorconfig](https://github.com/tgmarinho/front-react/tree/aula02-eslint-prettier-editorconfig)
+
+## Lesson 03 - Routing in React
+
+We're building an SPA: our pages will have navigation, but the screen won't refresh when changing pages — it's instant. The user requests another route, the page swaps, data is fetched, and the screen doesn't even blink!
+
+For frontend route management we'll use the [React Router Dom](https://reacttraining.com/react-router/web/guides/quick-start) library:
+
+```
+yarn add react-router-dom
+```
+
+Create a `routes.js` file inside `src`.
+
+Also create a `pages` folder containing a `Main` folder with an `index.js`. And another `Repository` folder with an `index.js`.
+
+The file content is on the GitHub link.
+
+Inside `routes.js` we import `BrowserRouter` from `react-router-dom`. `BrowserRouter` enables navigation between routes and updates the address bar.
+
+** BrowserRouter **: must wrap all routes.
+
+** Switch ** ensures only one route is rendered at a time.
+
+In ** react-router-dom ** more than one route can match at once.
+
+** Route ** represents each individual route in the app.
+
+** Route ** takes a path and a Component.
+
+Note: any time we use JSX syntax we need to import react.
+
+```
+import React from 'react';
+import { BrowserRouter, Switch, Route } from 'react-router-dom';
+
+import Main from './pages/Main';
+import Repository from './pages/Repository';
+
+export default function Routes() {
+  return (
+    <BrowserRouter>
+      <Switch>
+        <Route path="/" component={Main} />
+        <Route path="/repository" component={Repository} />
+      </Switch>
+    </BrowserRouter>
+  );
+}
+
+```
+
+So far we created a Routes component, imported into `App.js`. It returns a BrowserRouter wrapping every route to manage the address bar, with a Switch child that ensures only one route renders at a time, holding one or more Route children each with a path and a Component.
+
+Now just import the routes into App.js:
+
+```
+import React from 'react';
+
+import Routes from './routes';
+
+function App() {
+  return <Routes />;
+}
+
+export default App;
+```
+
+If we test the app we'll see unexpected behavior.
+
+We can only hit `/`, which routes to the Main component.
+
+When we try `/repository`, it still renders Main!
+
+This happens because react-router-dom doesn't match paths by equality — it matches by prefix. Since both start with `/`, the first route matching `/` wins. Main always shows up.
+
+To force exact equality, use the `exact` prop.
+
+```
+import React from 'react';
+import { BrowserRouter, Switch, Route } from 'react-router-dom';
+
+import Main from './pages/Main';
+import Repository from './pages/Repository';
+
+export default function Routes() {
+  return (
+    <BrowserRouter>
+      <Switch>
+        <Route path="/" exact component={Main} />
+        <Route path="/repository" component={Repository} />
+      </Switch>
+    </BrowserRouter>
+  );
+}
+```
+
+Now both pages render correctly!
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula03-roteamento-no-react](https://github.com/tgmarinho/front-react/tree/aula03-roteamento-no-react)
+
+## Lesson 04 - Styled Components
+
+Let's install a great library for styling React apps.
+
+```
+yarn add styled-components
+```
+
+It changes how we write CSS in React and React Native.
+
+We no longer use the `style` or `className` props — the component itself is styled.
+
+VSCode has a styled-components extension that helps a lot since it understands CSS syntax inside JS.
+
+Code is written in JS while still using CSS syntax.
+
+Cool: styled-components supports CSS nesting too. And styles are scoped — not global — so they apply only to the component.
+
+We can also access component props from within the CSS.
+
+Create `styles.js` inside `Main`:
+
+```
+import styled from 'styled-components';
+
+export const Title = styled.h1`
+  font-size: 24px;
+  color: ${({ error }) => (error ? 'red' : '#7159c1')};
+  font-family: Arial, Helvetica, sans-serif;
+
+  small {
+    font-size: 14px;
+    color: #333;
+  }
+`;
+```
+
+Now we build styled components.
+
+Apply it in `Main/index.js`:
+
+```
+import React from 'react';
+
+import { Title } from './styles';
+
+const Main = () => (
+  <Title error>
+    Main
+    <small>menor</small>
+  </Title>
+);
+
+export default Main;
+```
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula04-styled-components](https://github.com/tgmarinho/front-react/tree/aula04-styled-components)
+
+## Lesson 05 - Global Styles
+
+Component styles are local, but styled-components also exposes global styles — applied across the whole app.
+
+For that, create a `styles` folder with a `global.js` file inside.
+
+```
+import { createGlobalStyle } from 'styled-components';
+
+export default createGlobalStyle`
+* {
+  margin: 0;
+  padding: 0;
+  outline: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  background: #7159c1;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+`;
+```
+
+I import `createGlobalStyle` from Styled Components, pass the CSS reset and global styles, and export the function so it can be used at the project's root component.
+
+Then in `App.js`:
+
+```
+import React from 'react';
+
+import Routes from './routes';
+import GlobalStyle from './styles/globals';
+
+function App() {
+  return (
+    <>
+      <GlobalStyle />
+      <Routes />
+    </>
+  );
+}
+
+export default App;
+```
+
+Done — the app now picks up the global styles.
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula05-estilos-globais](https://github.com/tgmarinho/front-react/tree/aula05-estilos-globais)
+
+## Lesson 06 - Styling the Main page
+
+Let's style the main page of the app: `Main.js`.
+
+We'll hit GitHub's REST API to consume the user's repositories, save them in localStorage, and view some info about each repo.
+
+Install the React icons library:
+
+```
+yarn add react-icons
+```
+
+styles.js:
+
+```
+import styled from 'styled-components';
+
+export const Layout = styled.div`
+  max-width: 700px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  margin: 80px auto;
+
+  h1 {
+    font-size: 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    svg {
+      margin-right: 10px;
+    }
+  }
+`;
+
+export const Form = styled.form`
+  margin-top: 30px;
+  display: flex;
+  flex-direction: row;
+
+  input {
+    flex: 1;
+    border: 1px solid #eee;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+`;
+
+export const SubmitButton = styled.button.attrs({
+  type: 'submit',
+})`
+  background: #7159c1;
+  border: 0;
+  padding: 0 15px;
+  margin-left: 10px;
+  border-radius: 4px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+```
+
+Main.js:
+
+```
+import React from 'react';
+
+import { FaGithubAlt, FaPlus } from 'react-icons/fa';
+
+import { Layout, Form, SubmitButton } from './styles';
+
+const Main = () => (
+  <Layout>
+    <h1>
+      <FaGithubAlt />
+      Repositories
+    </h1>
+
+    <Form onSubmit={() => {}}>
+      <input type="text" placeholder="Add repository" />
+
+      <SubmitButton>
+        <FaPlus color="#FFF" size={14} />
+      </SubmitButton>
+    </Form>
+  </Layout>
+);
+
+export default Main;
+```
+
+Note that with styled-components we don't need to pass basic component attributes inline — we can set them in the styling:
+
+We don't have to write:
+
+```
+<SubmitButton type="submit">
+```
+
+We can do this instead:
+
+```
+...
+ <SubmitButton>
+   <FaPlus color="#FFF" size={14} />
+ </SubmitButton>
+...
+
+export const SubmitButton = styled.button.attrs({
+  type: 'submit',
+})`
+...
+```
+
+Which keeps the component cleaner. Later on this matters even more, especially in RN where components like FlatList and TouchableOpacity have lots of props.
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula06-estilizando-pagina-main](https://github.com/tgmarinho/front-react/tree/aula06-estilizando-pagina-main)
+
+## Lesson 07 - Adding repositories
+
+When the user types a valid repo name we'll fetch it and save it to state.
+
+Install axios to call the external API:
+
+```
+yarn add axios
+```
+
+We can configure a `baseURL` so we only need to pass the route and query parameters.
+
+Create a `services` folder inside `src` and an `api.js` file inside it:
+
+```
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://api.github.com',
+});
+
+export default api;
+```
+
+And in `Main.js`'s `handleSubmit`, when the user submits the form, we grab the typed value and query GitHub for the repository:
+
+```
+...
+  handleSubmit = async e => {
+    e.preventDefault();
+
+    this.setState({ loading: true });
+
+    const { newRepo, repositories } = this.state;
+    const response = await api.get(`/repos/${newRepo}`);
+    const data = {
+      name: response.data.full_name,
+    };
+
+    this.setState({
+      repositories: [...repositories, data],
+      newRepo: '',
+      loading: false,
+    });
+  };
+ ...
+```
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula07-add-repositorios](https://github.com/tgmarinho/front-react/tree/aula07-add-repositorios)
+
+## Lesson 08 - Listing repositories
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula08-listando-repositorios](https://github.com/tgmarinho/front-react/tree/aula08-listando-repositorios)
+
+## Lesson 09 - Using LocalStorage
+
+Let's persist the repositories to localStorage — a browser-embedded key/value store for strings.
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula09-utilizando-localstorage](https://github.com/tgmarinho/front-react/tree/aula09-utilizando-localstorage)
+
+## Lesson 10 - Route navigation
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula10-navegacao-de-rotas](https://github.com/tgmarinho/front-react/tree/aula10-navegacao-de-rotas)
+
+## Lesson 11 - Loading data from the API
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula11-carregando-dados-api](https://github.com/tgmarinho/front-react/tree/aula11-carregando-dados-api)
+
+## Lesson 12 - Defining PropTypes
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula12-definindo-prop-types ](https://github.com/tgmarinho/front-react/tree/aula12-definindo-prop-types)
+
+## Lesson 13 - Showing a Repository
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula13-exibindo-repositorio](https://github.com/tgmarinho/front-react/tree/aula13-exibindo-repositorio)
+
+## Lesson 14 - Showing Issues
+
+End, source code: [https://github.com/tgmarinho/front-react/tree/aula14-exibindo-issues](https://github.com/tgmarinho/front-react/tree/aula14-exibindo-issues)
