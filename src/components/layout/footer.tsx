@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { siteConfig } from "@/lib/constants";
 import {
   FaGithub,
@@ -18,27 +19,29 @@ const socialLinks = [
 
 const navColumns = [
   {
-    title: "Explore",
+    titleKey: "exploreTitle",
     links: [
-      { href: "/blog", label: "Blog" },
-      { href: "/projects", label: "Projects" },
-      { href: "/cv", label: "CV" },
+      { href: "/blog", key: "blog" },
+      { href: "/projects", key: "projects" },
+      { href: "/cv", key: "cv" },
     ],
   },
   {
-    title: "Network",
+    titleKey: "networkTitle",
     links: [
-      { href: "/about", label: "About" },
-      { href: "/community", label: "Community" },
-      { href: "/contact", label: "Contact" },
+      { href: "/about", key: "about" },
+      { href: "/community", key: "community" },
+      { href: "/contact", key: "contact" },
     ],
   },
-];
+] as const;
 
-export function Footer() {
+export async function Footer() {
+  const t = await getTranslations("footer");
+  const tNav = await getTranslations("nav");
+
   return (
     <footer className="relative mt-16 overflow-hidden border-t border-white/[0.06]">
-      {/* atmosphere */}
       <div
         className="pointer-events-none absolute inset-x-0 -top-32 h-64 opacity-60 blur-3xl"
         aria-hidden="true"
@@ -50,7 +53,6 @@ export function Footer() {
 
       <div className="relative mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
-          {/* Brand */}
           <div>
             <Link href="/" className="inline-flex items-center gap-2.5">
               <span className="relative grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/[0.03]">
@@ -64,22 +66,21 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 max-w-xs text-[13.5px] leading-[1.65] text-muted-foreground">
-              Designing the agentic layer of software — pragmatic AI engineering
-              for products that ship.
+              {t("tagline")}
             </p>
             <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.02] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping" />
                 <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
               </span>
-              system · operational
+              {t("systemOperational")}
             </div>
           </div>
 
           {navColumns.map((col) => (
-            <div key={col.title}>
+            <div key={col.titleKey}>
               <h3 className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
-                {col.title}
+                {t(col.titleKey)}
               </h3>
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((l) => (
@@ -88,7 +89,7 @@ export function Footer() {
                       href={l.href}
                       className="text-[13.5px] text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      {l.label}
+                      {tNav(l.key)}
                     </Link>
                   </li>
                 ))}
@@ -98,10 +99,10 @@ export function Footer() {
 
           <div>
             <h3 className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
-              Signals
+              {t("signalsTitle")}
             </h3>
             <p className="mt-4 text-[13px] text-muted-foreground">
-              Field notes, agent experiments, raw thoughts.
+              {t("signalsDescription")}
             </p>
             <a
               href={siteConfig.newsletter.url}
@@ -109,7 +110,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.025] px-4 py-2 text-[12.5px] tracking-wide text-foreground/90 backdrop-blur-md transition-colors hover:border-cyan-300/40 hover:text-cyan-200"
             >
-              Subscribe
+              {t("subscribe")}
               <span className="text-muted-foreground">↗</span>
             </a>
             <div className="mt-6 flex items-center gap-1">
@@ -132,12 +133,14 @@ export function Footer() {
         <div className="mesh-divider mt-14" />
 
         <div className="mt-6 flex flex-col items-start gap-3 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>{t("copyright", { year: new Date().getFullYear() })}</p>
           <p>
-            © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
-          </p>
-          <p>
-            Crafted in <span className="text-foreground/80">{siteConfig.location}</span> ·
-            Powered by intent
+            {t.rich("craftedIn", {
+              location: (chunks) => (
+                <span className="text-foreground/80">{chunks}</span>
+              ),
+              loc: siteConfig.location,
+            })}
           </p>
         </div>
       </div>

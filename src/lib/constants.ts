@@ -29,10 +29,10 @@ export const siteConfig = {
 };
 
 export const navLinks = [
-  { href: "/blog", label: "Blog" },
-  { href: "/cv", label: "CV" },
-  { href: "/about", label: "About" },
-  { href: "/projects", label: "Projects" },
-  { href: "/community", label: "Community" },
-  { href: "/contact", label: "Contact" },
+  { href: "/blog", key: "blog" },
+  { href: "/cv", key: "cv" },
+  { href: "/about", key: "about" },
+  { href: "/projects", key: "projects" },
+  { href: "/community", key: "community" },
+  { href: "/contact", key: "contact" },
 ] as const;

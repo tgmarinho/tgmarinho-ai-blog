@@ -1,0 +1,281 @@
+{
+  "nav": {
+    "home": "Home",
+    "blog": "Blog",
+    "projects": "Projects",
+    "about": "About",
+    "contact": "Contact",
+    "community": "Community",
+    "cv": "CV"
+  },
+  "footer": {
+    "tagline": "Designing the agentic layer of software — pragmatic AI engineering for products that ship.",
+    "systemOperational": "system · operational",
+    "exploreTitle": "Explore",
+    "networkTitle": "Network",
+    "signalsTitle": "Signals",
+    "signalsDescription": "Field notes, agent experiments, raw thoughts.",
+    "subscribe": "Subscribe",
+    "copyright": "© {year} Thiago Marinho. All rights reserved.",
+    "craftedIn": "Crafted in <location>{loc}</location> · Powered by intent"
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "pt-BR": "PT",
+    "en": "EN",
+    "switchTo": "Switch to {locale}"
+  },
+  "home": {
+    "hero": {
+      "kicker": "Product engineer · Applied AI",
+      "badge": "agentic systems · 2026",
+      "title": "I build systems that think.",
+      "headlineLine1": "Building the",
+      "headlineAccent": "agentic layer",
+      "headlineLine3": "of software.",
+      "subtitle": "Product engineering, AI agents, and the craft of shipping software that survives production.",
+      "intro": "I'm {firstName} — an AI Product Engineer designing autonomous agents, RAG pipelines and spec-driven products that ship fast and learn faster.",
+      "ctaPrimary": "Read the blog",
+      "ctaSecondary": "About me",
+      "stats": {
+        "yearsLabel": "Years shipping",
+        "articlesLabel": "Articles",
+        "stackLabel": "Stack"
+      },
+      "badges": {
+        "routingLabel": "ROUTING",
+        "latencyLabel": "LATENCY",
+        "stateLabel": "STATE",
+        "stateValue": "streaming"
+      }
+    },
+    "recent": {
+      "kicker": "━ writing",
+      "titleLine1": "Field notes from the",
+      "titleAccent": "edge",
+      "titleSuffix": ".",
+      "viewAll": "All posts",
+      "readingTime": "{minutes} min"
+    }
+  },
+  "blog": {
+    "list": {
+      "kicker": "━ archive · {count, plural, one {# entry} other {# entries}}",
+      "title": "The signal,",
+      "titleAccent": "not the noise.",
+      "subtitle": "Long-form essays and rapid field notes on AI agents, product engineering, careers, and the craft of shipping.",
+      "searchPlaceholder": "Search posts…",
+      "categoriesAll": "All",
+      "empty": "No posts found.",
+      "readingTime": "{minutes} min read"
+    },
+    "post": {
+      "back": "Back to blog",
+      "share": "Share",
+      "readInOtherLocale": "Ler em português",
+      "translationMissingTitle": "English version unavailable",
+      "translationMissingDescription": "This post hasn't been translated to English yet. Showing the original version.",
+      "related": "related reading",
+      "readingTime": "{minutes} min read"
+    }
+  },
+  "projects": {
+    "metaTitle": "Projects",
+    "metaDescription": "A selection of products, libraries and open-source work — shipped, indexed, in production.",
+    "kicker": "━ projects · {count, plural, one {# entry} other {# entries}}",
+    "title": "Things I've",
+    "titleAccent": "shipped.",
+    "subtitle": "A selection of products, libraries, and open-source work — some in production, some still teaching me lessons.",
+    "status": {
+      "shipped": "shipped · prod",
+      "openSource": "open · source",
+      "archived": "archived"
+    },
+    "source": "source",
+    "live": "live"
+  },
+  "about": {
+    "metaTitle": "About",
+    "metaDescription": "About {name} — {role}",
+    "profileKicker": "━ profile · v.{year}",
+    "intro": "{role} from {location}. {years}+ years building scalable web, mobile, AI and Web3 systems — full-stack to production.",
+    "fullCv": "full cv",
+    "letsTalk": "let's talk",
+    "bioKicker": "━ bio",
+    "bioTitleLine1": "Engineering software that",
+    "bioTitleLine2": "ships and learns",
+    "bioP1Prefix": "I'm an",
+    "bioP1Role": "AI Product Engineer",
+    "bioP1Middle": "with",
+    "bioP1Years": "10+ years",
+    "bioP1Tail": "building production systems across healthcare, fintech, Web3, and event platforms. My north star is shipping software that",
+    "bioP1Em": "does the work",
+    "bioP1End": "— not software that demos well.",
+    "bioP2Prefix": "These days I focus on",
+    "bioP2Strong": "agentic systems",
+    "bioP2Tail": ": LLM-powered workflows, RAG pipelines, AI Agents that orchestrate tools and humans, and the spec-driven engineering process that keeps them safe in production.",
+    "bioP3Prefix": "I shipped an event-management platform that processed",
+    "bioP3Strong": "R$6M in revenue",
+    "bioP3Tail": "on T3 Stack + Next.js + MongoDB Atlas, integrated with Woovi (PIX), Asaas (cards), Evolution API, and Inngest. I write at length on this blog about what I learn along the way.",
+    "achievementsKicker": "━ numbers, quiet",
+    "achievements": {
+      "nurseOnboarding": "nurse onboarding lift",
+      "mobileDropoff": "mobile drop-off reduction",
+      "sdkIntegration": "faster SDK integration",
+      "indexerAccuracy": "indexer accuracy",
+      "devsReached": "devs reached",
+      "githubFollowers": "GitHub followers"
+    },
+    "experienceKicker": "━ experience",
+    "experienceTitle": "Selected highlights.",
+    "fullTimeline": "full timeline",
+    "experiences": {
+      "popstand": {
+        "title": "Software Engineer",
+        "period": "May 2021 — Jan 2026",
+        "duration": "4y 9m",
+        "location": "Los Angeles, CA · Remote",
+        "h1": "Built complete healthcare platform (API, Frontend, Mobile) serving thousands of patients",
+        "h2": "Reduced mobile user drop-off by 25% via Branch.io deep linking optimization",
+        "h3": "Developed NFT Marketplace on WAX blockchain with complex minting flows",
+        "h4": "Established CI/CD pipelines reducing deployment time from hours to minutes"
+      },
+      "unicrow": {
+        "title": "Full Stack Developer",
+        "period": "Sep 2021 — Feb 2023",
+        "duration": "1y 6m",
+        "location": "Zurich, Switzerland · Remote",
+        "h1": "Built TypeScript SDK for Web3 escrow payments — 60% faster onboarding",
+        "h2": "Created real-time blockchain indexer processing thousands of Ethereum txs",
+        "h3": "Architected pipeline: Smart Contract → Indexer → PostgreSQL → GraphQL → FE"
+      },
+      "rocketseat": {
+        "title": "Dev & Tech Writer",
+        "period": "Jun 2020 — Apr 2021",
+        "duration": "11m",
+        "location": "Brazil",
+        "h1": "Created technical content reaching 50,000+ devs in the BR JS community",
+        "h2": "Published deep dives on React, Node.js, and TypeScript best practices",
+        "h3": "Mentored 100+ early-career developers through written guides"
+      }
+    },
+    "stackKicker": "━ stack",
+    "stackTitle": "What I reach for.",
+    "skillCategories": {
+      "ai": "ai",
+      "languages": "languages",
+      "frameworks": "frameworks",
+      "data": "data",
+      "cloud": "cloud",
+      "web3": "web3"
+    },
+    "connectKicker": "━ connect",
+    "connectTitle": "Find me online.",
+    "social": {
+      "discordHandle": "join server"
+    }
+  },
+  "contact": {
+    "metaTitle": "Contact",
+    "metaDescription": "Get in touch — projects, agentic systems, or just say hi.",
+    "kicker": "━ contact · channel open",
+    "title": "Let's",
+    "titleAccent": "build",
+    "titleTail": "something.",
+    "subtitle": "Project, podcast, or just a curious question — I read every message. The best path is email; the fastest one is X.",
+    "inboxStatus": "inbox · open · usually answers within 24h",
+    "channelsKicker": "━ channels",
+    "channelsTitle": "Pick your medium.",
+    "channels": {
+      "email": {
+        "label": "Email",
+        "badge": "best",
+        "note": "Best for project briefs and serious inquiries."
+      },
+      "linkedin": {
+        "label": "LinkedIn",
+        "handle": "in/tgmarinho",
+        "note": "Professional network — DMs are open."
+      },
+      "twitter": {
+        "label": "X / Twitter",
+        "handle": "@tgmarinho",
+        "note": "Hot takes, quick replies, public conversations."
+      },
+      "github": {
+        "label": "GitHub",
+        "handle": "tgmarinho",
+        "note": "Issues, PRs, code-level discussions."
+      }
+    },
+    "hintsKicker": "━ what to write about",
+    "hints": {
+      "briefs": {
+        "title": "Project briefs",
+        "text": "Agentic automation, AI consulting, custom AI products. Send scope + timeline."
+      },
+      "talks": {
+        "title": "Talks & podcasts",
+        "text": "Happy to talk about agentic engineering, RAG, and shipping AI in production."
+      },
+      "chats": {
+        "title": "Quick chats",
+        "text": "Curious about something I wrote? Drop a line — I read every email."
+      }
+    }
+  },
+  "community": {
+    "metaTitle": "Community",
+    "metaDescription": "Join the developer community on Discord — networking, deep dives, and growth.",
+    "statusBadge": "community · live",
+    "title": "Join the",
+    "titleAccent": "signal",
+    "titleTail": ".",
+    "subtitle": "A space for engineers shipping agentic software — networking, deep-dive threads, and the kind of conversation that moves your craft forward.",
+    "joinServer": "Join the server",
+    "followX": "Follow on X",
+    "stats": {
+      "platform": "platform",
+      "join": "to join",
+      "active": "active threads",
+      "languages": "languages",
+      "free": "free",
+      "languagesValue": "EN · PT"
+    },
+    "benefitsKicker": "━ what's inside",
+    "benefitsTitle": "Why it's worth joining.",
+    "benefits": {
+      "networking": {
+        "title": "Networking",
+        "description": "Connect with engineers building agentic systems, AI products, and real software around the world."
+      },
+      "deepDives": {
+        "title": "Deep dives",
+        "description": "Live discussions on RAG, eval loops, MCP, and the practical edges of shipping AI in production."
+      },
+      "growth": {
+        "title": "Growth",
+        "description": "Career advice, code reviews, and the tactical resources that move you to the next level."
+      }
+    },
+    "quote": "“Communities don't scale code — they scale taste.”",
+    "imIn": "i'm in"
+  },
+  "cv": {
+    "metaTitle": "CV",
+    "metaDescription": "Thiago Marinho's professional CV.",
+    "documentKicker": "━ document · curriculum vitae",
+    "downloadPdf": "pdf",
+    "printVersion": "print version",
+    "updated": "updated",
+    "yearsExp": "{years}+ years exp",
+    "languageLabel": "language",
+    "loading": "loading cv…"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "code": "404",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "back": "Back home"
+  }
+}

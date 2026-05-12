@@ -1,14 +1,16 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { navLinks } from "@/lib/constants";
 import { MobileNav } from "./mobile-nav";
+import { LocaleSwitcher } from "./locale-switcher";
 
 export function Header() {
   const pathname = usePathname();
+  const t = useTranslations("nav");
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -28,7 +30,6 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 md:px-8">
-        {/* Logomark */}
         <Link
           href="/"
           aria-label="Thiago Marinho — home"
@@ -46,7 +47,6 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden md:flex">
           <ul className="relative flex items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.025] px-1.5 py-1 backdrop-blur-xl">
             {navLinks.map((link) => {
@@ -72,7 +72,7 @@ export function Header() {
                         }}
                       />
                     )}
-                    {link.label}
+                    {t(link.key)}
                   </Link>
                 </li>
               );
@@ -81,6 +81,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <LocaleSwitcher />
           <span className="hidden items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.025] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:flex">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping" />

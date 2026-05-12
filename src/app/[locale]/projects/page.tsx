@@ -1,16 +1,14 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { ArrowUpRight, Github, ExternalLink } from "lucide-react";
 import { GlowCard } from "@/components/fx/glow-card";
+import type { Locale } from "@/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Projects",
-  description:
-    "A selection of products, libraries and open-source work — shipped, indexed, in production.",
-};
+type ProjectStatus = "shipped" | "open-source" | "archived";
 
 type Project = {
   title: string;
-  status: "shipped" | "open-source" | "archived";
+  status: ProjectStatus;
   year: string;
   description: string;
   tags: string[];
@@ -82,13 +80,33 @@ const projects: Project[] = [
   },
 ];
 
-const statusConfig = {
-  shipped: { label: "shipped · prod", color: "emerald" },
-  "open-source": { label: "open · source", color: "cyan" },
-  archived: { label: "archived", color: "neutral" },
-} as const;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "projects" });
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+  };
+}
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const t = await getTranslations("projects");
+
+  const statusLabel: Record<ProjectStatus, string> = {
+    shipped: t("status.shipped"),
+    "open-source": t("status.openSource"),
+    archived: t("status.archived"),
+  };
+  const statusColor: Record<ProjectStatus, "emerald" | "cyan" | "neutral"> = {
+    shipped: "emerald",
+    "open-source": "cyan",
+    archived: "neutral",
+  };
+
   return (
     <div className="relative">
       <div
@@ -104,21 +122,27 @@ export default function ProjectsPage() {
         {/* ── Header ── */}
         <header className="mb-14 max-w-3xl">
           <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
-            ━ projects · {projects.length} entries
+            {t("kicker", { count: projects.length })}
           </span>
           <h1 className="mt-3 font-display text-[44px] font-bold leading-[1.05] tracking-[-0.035em] text-foreground md:text-[60px]">
-            Things I&apos;ve <span className="text-gradient-cm">shipped</span>.
+            {t("title")} <span className="text-gradient-cm">{t("titleAccent")}</span>
           </h1>
           <p className="mt-5 max-w-xl text-[15.5px] leading-[1.7] text-muted-foreground">
-            A selection of products, libraries, and open-source work — some
-            in production, some still teaching me lessons.
+            {t("subtitle")}
           </p>
         </header>
 
         {/* ── Grid ── */}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:[grid-auto-flow:dense]">
           {projects.map((p) => (
-            <ProjectCard key={p.title} project={p} />
+            <ProjectCard
+              key={p.title}
+              project={p}
+              statusLabel={statusLabel[p.status]}
+              statusColor={statusColor[p.status]}
+              sourceLabel={t("source")}
+              liveLabel={t("live")}
+            />
           ))}
         </div>
       </div>
@@ -126,13 +150,24 @@ export default function ProjectsPage() {
   );
 }
 
-function ProjectCard({ project }: { project: Project }) {
-  const cfg = statusConfig[project.status];
+function ProjectCard({
+  project,
+  statusLabel,
+  statusColor,
+  sourceLabel,
+  liveLabel,
+}: {
+  project: Project;
+  statusLabel: string;
+  statusColor: "emerald" | "cyan" | "neutral";
+  sourceLabel: string;
+  liveLabel: string;
+}) {
   const dotColor = {
     emerald: "bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.7)]",
     cyan: "bg-cyan-300 shadow-[0_0_8px_2px_rgba(34,211,238,0.7)]",
     neutral: "bg-white/40",
-  }[cfg.color];
+  }[statusColor];
 
   return (
     <GlowCard
@@ -144,7 +179,7 @@ function ProjectCard({ project }: { project: Project }) {
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           <span className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
-          {cfg.label}
+          {statusLabel}
           <span className="text-white/15">·</span>
           <span className="text-foreground/85">{project.year}</span>
         </span>
@@ -168,12 +203,12 @@ function ProjectCard({ project }: { project: Project }) {
       </p>
 
       <div className="mt-6 flex flex-wrap gap-1.5">
-        {project.tags.map((t) => (
+        {project.tags.map((tag) => (
           <span
-            key={t}
+            key={tag}
             className="inline-flex items-center rounded-full border border-white/[0.06] bg-white/[0.02] px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/80"
           >
-            {t}
+            {tag}
           </span>
         ))}
       </div>
@@ -187,7 +222,7 @@ function ProjectCard({ project }: { project: Project }) {
             className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground transition-colors hover:border-cyan-300/30 hover:text-cyan-200"
           >
             <Github className="h-3 w-3" />
-            source
+            {sourceLabel}
           </a>
         )}
         {project.live && (
@@ -198,7 +233,7 @@ function ProjectCard({ project }: { project: Project }) {
             className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/25 bg-cyan-300/[0.06] px-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-200 transition-colors hover:border-cyan-300/50 hover:bg-cyan-300/[0.1]"
           >
             <ExternalLink className="h-3 w-3" />
-            live
+            {liveLabel}
           </a>
         )}
       </div>

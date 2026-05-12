@@ -1,42 +1,51 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { Users, MessageCircle, Rocket, ArrowUpRight } from "lucide-react";
 import { FaDiscord } from "react-icons/fa6";
 import { siteConfig } from "@/lib/constants";
+import type { Locale } from "@/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Community",
-  description: "Join the developer community on Discord — networking, deep dives, and growth.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "community" });
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+  };
+}
 
-const benefits = [
-  {
-    icon: Users,
-    title: "Networking",
-    description:
-      "Connect with engineers building agentic systems, AI products, and real software around the world.",
-  },
-  {
-    icon: MessageCircle,
-    title: "Deep dives",
-    description:
-      "Live discussions on RAG, eval loops, MCP, and the practical edges of shipping AI in production.",
-  },
-  {
-    icon: Rocket,
-    title: "Growth",
-    description:
-      "Career advice, code reviews, and the tactical resources that move you to the next level.",
-  },
-];
+export default async function CommunityPage() {
+  const t = await getTranslations("community");
 
-const stats = [
-  { value: "Discord", label: "platform" },
-  { value: "free", label: "to join" },
-  { value: "~24/7", label: "active threads" },
-  { value: "EN · PT", label: "languages" },
-];
+  const benefits = [
+    {
+      icon: Users,
+      title: t("benefits.networking.title"),
+      description: t("benefits.networking.description"),
+    },
+    {
+      icon: MessageCircle,
+      title: t("benefits.deepDives.title"),
+      description: t("benefits.deepDives.description"),
+    },
+    {
+      icon: Rocket,
+      title: t("benefits.growth.title"),
+      description: t("benefits.growth.description"),
+    },
+  ];
 
-export default function CommunityPage() {
+  const stats = [
+    { value: "Discord", label: t("stats.platform") },
+    { value: t("stats.free"), label: t("stats.join") },
+    { value: "~24/7", label: t("stats.active") },
+    { value: t("stats.languagesValue"), label: t("stats.languages") },
+  ];
+
   return (
     <div className="relative">
       {/* Discord-tinted halo */}
@@ -57,7 +66,7 @@ export default function CommunityPage() {
               <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping" />
               <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
             </span>
-            community · live
+            {t("statusBadge")}
           </span>
 
           {/* Discord glyph centerpiece */}
@@ -75,12 +84,11 @@ export default function CommunityPage() {
           </div>
 
           <h1 className="mt-8 mx-auto max-w-2xl font-display text-[44px] font-bold leading-[1.05] tracking-[-0.035em] text-foreground md:text-[60px]">
-            Join the <span className="text-gradient-cm">signal</span>.
+            {t("title")} <span className="text-gradient-cm">{t("titleAccent")}</span>
+            {t("titleTail")}
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-[15.5px] leading-[1.7] text-muted-foreground">
-            A space for engineers shipping agentic software — networking,
-            deep-dive threads, and the kind of conversation that moves your
-            craft forward.
+            {t("subtitle")}
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -95,7 +103,7 @@ export default function CommunityPage() {
               }}
             >
               <FaDiscord className="h-4 w-4" />
-              Join the server
+              {t("joinServer")}
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
             </a>
@@ -105,7 +113,7 @@ export default function CommunityPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.025] px-6 py-3 text-[13px] tracking-wide text-foreground/90 backdrop-blur-md transition-colors hover:border-white/20 hover:bg-white/[0.05]"
             >
-              Follow on X
+              {t("followX")}
               <span className="text-muted-foreground">↗</span>
             </a>
           </div>
@@ -132,10 +140,10 @@ export default function CommunityPage() {
         <section className="mt-24">
           <div className="mb-10 text-center">
             <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
-              ━ what&apos;s inside
+              {t("benefitsKicker")}
             </span>
             <h2 className="mt-3 font-display text-[28px] font-bold leading-[1.15] tracking-[-0.025em] text-foreground md:text-[36px]">
-              Why it&apos;s worth joining.
+              {t("benefitsTitle")}
             </h2>
           </div>
 
@@ -166,7 +174,7 @@ export default function CommunityPage() {
         {/* ── Final CTA ── */}
         <section className="mt-20 text-center">
           <p className="mx-auto max-w-md font-[family-name:var(--font-fraunces)] text-[18px] italic leading-[1.5] text-muted-foreground">
-            &ldquo;Communities don&apos;t scale code — they scale taste.&rdquo;
+            {t("quote")}
           </p>
           <div className="mt-8">
             <a
@@ -176,7 +184,7 @@ export default function CommunityPage() {
               className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.025] px-5 py-2.5 font-mono text-[10.5px] uppercase tracking-[0.22em] text-foreground/85 backdrop-blur-md transition-colors hover:border-cyan-300/40 hover:text-cyan-200"
             >
               <FaDiscord className="h-3.5 w-3.5" />
-              i&apos;m in
+              {t("imIn")}
               <ArrowUpRight className="h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </a>
           </div>

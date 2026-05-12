@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import {
   Mail,
   ArrowUpRight,
@@ -8,52 +9,65 @@ import {
 } from "lucide-react";
 import { FaGithub, FaXTwitter, FaLinkedin } from "react-icons/fa6";
 import { siteConfig } from "@/lib/constants";
+import type { Locale } from "@/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description:
-    "Get in touch — projects, agentic systems, or just say hi.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "contact" });
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+  };
+}
 
-const channels = [
-  {
-    href: `mailto:${siteConfig.email}`,
-    icon: Mail,
-    label: "Email",
-    handle: siteConfig.email,
-    badge: "best",
-    note: "Best for project briefs and serious inquiries.",
-  },
-  {
-    href: siteConfig.links.linkedin,
-    icon: FaLinkedin,
-    label: "LinkedIn",
-    handle: "in/tgmarinho",
-    note: "Professional network — DMs are open.",
-  },
-  {
-    href: siteConfig.links.twitter,
-    icon: FaXTwitter,
-    label: "X / Twitter",
-    handle: "@tgmarinho",
-    note: "Hot takes, quick replies, public conversations.",
-  },
-  {
-    href: siteConfig.links.github,
-    icon: FaGithub,
-    label: "GitHub",
-    handle: "tgmarinho",
-    note: "Issues, PRs, code-level discussions.",
-  },
-];
+export default async function ContactPage() {
+  const t = await getTranslations("contact");
 
-const inquiryHints = [
-  { icon: Calendar, title: "Project briefs", text: "Agentic automation, AI consulting, custom AI products. Send scope + timeline." },
-  { icon: MessageCircle, title: "Talks & podcasts", text: "Happy to talk about agentic engineering, RAG, and shipping AI in production." },
-  { icon: Coffee, title: "Quick chats", text: "Curious about something I wrote? Drop a line — I read every email." },
-];
+  const channels = [
+    {
+      href: `mailto:${siteConfig.email}`,
+      icon: Mail,
+      label: t("channels.email.label"),
+      handle: siteConfig.email,
+      badge: t("channels.email.badge"),
+      note: t("channels.email.note"),
+    },
+    {
+      href: siteConfig.links.linkedin,
+      icon: FaLinkedin,
+      label: t("channels.linkedin.label"),
+      handle: t("channels.linkedin.handle"),
+      note: t("channels.linkedin.note"),
+      badge: undefined as string | undefined,
+    },
+    {
+      href: siteConfig.links.twitter,
+      icon: FaXTwitter,
+      label: t("channels.twitter.label"),
+      handle: t("channels.twitter.handle"),
+      note: t("channels.twitter.note"),
+      badge: undefined as string | undefined,
+    },
+    {
+      href: siteConfig.links.github,
+      icon: FaGithub,
+      label: t("channels.github.label"),
+      handle: t("channels.github.handle"),
+      note: t("channels.github.note"),
+      badge: undefined as string | undefined,
+    },
+  ];
 
-export default function ContactPage() {
+  const inquiryHints = [
+    { icon: Calendar, title: t("hints.briefs.title"), text: t("hints.briefs.text") },
+    { icon: MessageCircle, title: t("hints.talks.title"), text: t("hints.talks.text") },
+    { icon: Coffee, title: t("hints.chats.title"), text: t("hints.chats.text") },
+  ];
+
   return (
     <div className="relative">
       <div
@@ -69,14 +83,14 @@ export default function ContactPage() {
         {/* ── Header ── */}
         <header className="mb-14 max-w-3xl">
           <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
-            ━ contact · channel open
+            {t("kicker")}
           </span>
           <h1 className="mt-3 font-display text-[44px] font-bold leading-[1.05] tracking-[-0.035em] text-foreground md:text-[60px]">
-            Let&apos;s <span className="text-gradient-cm">build</span> something.
+            {t("title")} <span className="text-gradient-cm">{t("titleAccent")}</span>{" "}
+            {t("titleTail")}
           </h1>
           <p className="mt-5 max-w-xl text-[15.5px] leading-[1.7] text-muted-foreground">
-            Project, podcast, or just a curious question — I read every
-            message. The best path is email; the fastest one is X.
+            {t("subtitle")}
           </p>
 
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.02] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -84,16 +98,16 @@ export default function ContactPage() {
               <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping" />
               <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
             </span>
-            inbox · open · usually answers within 24h
+            {t("inboxStatus")}
           </div>
         </header>
 
         <section className="max-w-3xl">
           <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
-            ━ channels
+            {t("channelsKicker")}
           </span>
           <h2 className="mt-3 font-display text-[26px] font-bold leading-[1.15] tracking-[-0.025em] text-foreground md:text-[30px]">
-            Pick your medium.
+            {t("channelsTitle")}
           </h2>
 
           <ul className="mt-7 space-y-3">
@@ -141,7 +155,7 @@ export default function ContactPage() {
           {/* Inquiry hints */}
           <div className="mt-10">
             <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-fuchsia-300/80">
-              ━ what to write about
+              {t("hintsKicker")}
             </span>
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
               {inquiryHints.map((h) => (

@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { useLocale } from "next-intl";
 import { ArrowUpRight, Clock } from "lucide-react";
 import readingTime from "reading-time";
+import { Link } from "@/i18n/navigation";
 import { GlowCard } from "@/components/fx/glow-card";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { cn } from "@/lib/utils";
@@ -29,12 +30,13 @@ export function PostCard({
   variant = "default",
   className,
 }: PostCardProps) {
+  const locale = useLocale();
   const stats = readingTime(body);
-  const formattedDate = formatIsoDateForDisplay(date, "en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  const formattedDate = formatIsoDateForDisplay(
+    date,
+    locale === "pt-BR" ? "pt-BR" : "en-US",
+    { year: "numeric", month: "short", day: "numeric" }
+  );
 
   const sizing = {
     default: "p-6",

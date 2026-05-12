@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { CVViewer } from "@/components/cv/cv-viewer";
 import { Download, Printer } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 
 export default function CVPage() {
+  const t = useTranslations("cv");
   const [language, setLanguage] = useState<"en" | "pt">("en");
   const [cvContent, setCvContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -104,7 +106,7 @@ export default function CVPage() {
           {/* Title */}
           <div className="min-w-0">
             <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
-              ━ document · curriculum vitae
+              {t("documentKicker")}
             </span>
             <h1 className="mt-2 font-display text-[34px] font-bold leading-[1.05] tracking-[-0.025em] text-foreground md:text-[44px]">
               {siteConfig.name}
@@ -141,7 +143,7 @@ export default function CVPage() {
               }}
             >
               <Download className="h-3 w-3" />
-              pdf
+              {t("downloadPdf")}
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
             </button>
           </div>
@@ -154,12 +156,14 @@ export default function CVPage() {
               <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping" />
               <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
             </span>
-            updated
+            {t("updated")}
           </span>
           <span className="text-white/15">·</span>
-          <span>{siteConfig.yearsOfExperience}+ years exp</span>
+          <span>{t("yearsExp", { years: siteConfig.yearsOfExperience })}</span>
           <span className="text-white/15">·</span>
-          <span>language · {language.toUpperCase()}</span>
+          <span>
+            {t("languageLabel")} · {language.toUpperCase()}
+          </span>
           <span className="text-white/15">·</span>
           <button
             type="button"
@@ -167,7 +171,7 @@ export default function CVPage() {
             className="inline-flex items-center gap-1.5 transition-colors hover:text-cyan-300"
           >
             <Printer className="h-3 w-3" />
-            print version
+            {t("printVersion")}
           </button>
         </div>
 
@@ -175,7 +179,7 @@ export default function CVPage() {
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-              loading cv…
+              {t("loading")}
             </p>
           </div>
         ) : (
