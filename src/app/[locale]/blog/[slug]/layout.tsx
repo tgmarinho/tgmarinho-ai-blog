@@ -10,7 +10,6 @@ import { Fraunces, Source_Serif_4 } from "next/font/google";
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["400", "600"],
   style: ["normal", "italic"],
   display: "swap",
   axes: ["opsz", "SOFT"],

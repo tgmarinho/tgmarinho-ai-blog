@@ -1,15 +1,26 @@
-import { posts } from "#site/content";
-import { sortPostsByDate } from "@/lib/velite";
+import { setRequestLocale } from "next-intl/server";
+import { getPostsMeta } from "@/lib/velite";
 import { Hero } from "@/components/home/hero";
 import { RecentPosts } from "@/components/home/recent-posts";
+import { routing, type Locale } from "@/i18n/routing";
 
-export default function HomePage() {
-  const publishedPosts = sortPostsByDate(posts);
-  const recentPosts = publishedPosts.slice(0, 5);
+interface HomePageProps {
+  params: Promise<{ locale: Locale }>;
+}
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function HomePage({ params }: HomePageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const localePosts = getPostsMeta(locale);
+  const recentPosts = localePosts.slice(0, 5);
 
   return (
     <>
-      <Hero postCount={publishedPosts.length} />
+      <Hero postCount={localePosts.length} />
       <RecentPosts posts={recentPosts} />
     </>
   );

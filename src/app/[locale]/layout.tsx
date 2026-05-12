@@ -43,6 +43,8 @@ export async function generateMetadata({
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: "home.hero" });
 
+  const rssHref = localizedUrl(locale, "/rss.xml");
+
   return {
     metadataBase: new URL(siteConfig.url),
     title: {
@@ -52,7 +54,14 @@ export async function generateMetadata({
     description: t("subtitle"),
     authors: [{ name: siteConfig.author }],
     creator: siteConfig.author,
-    alternates: buildAlternates(locale, "/"),
+    alternates: {
+      ...buildAlternates(locale, "/"),
+      types: {
+        "application/rss+xml": [
+          { url: rssHref, title: `${siteConfig.name} RSS` },
+        ],
+      },
+    },
     openGraph: {
       type: "website",
       locale: ogLocale(locale),
@@ -60,21 +69,12 @@ export async function generateMetadata({
       title: siteConfig.shareTitle,
       description: siteConfig.shareDescription,
       siteName: siteConfig.name,
-      images: [
-        {
-          url: siteConfig.defaultOgImage,
-          width: 612,
-          height: 408,
-          alt: `${siteConfig.name} — hybrid human · AI portrait`,
-        },
-      ],
     },
     twitter: {
       card: "summary_large_image",
       title: siteConfig.shareTitle,
       description: siteConfig.shareDescription,
       creator: "@tgmarinho",
-      images: [siteConfig.defaultOgImage],
     },
   };
 }
@@ -90,11 +90,55 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
+  const homeUrl = localizedUrl(locale as Locale, "/");
+  const personJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: siteConfig.author,
+    alternateName: siteConfig.username,
+    url: siteConfig.url,
+    email: `mailto:${siteConfig.email}`,
+    jobTitle: siteConfig.role,
+    description: siteConfig.description,
+    image: `${siteConfig.url}${siteConfig.defaultOgImage}`,
+    sameAs: [
+      siteConfig.links.github,
+      siteConfig.links.twitter,
+      siteConfig.links.linkedin,
+      siteConfig.links.youtube,
+    ],
+  };
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteConfig.name,
+    url: homeUrl,
+    description: siteConfig.shareDescription,
+    inLanguage: locale,
+    publisher: { "@type": "Person", name: siteConfig.author, url: siteConfig.url },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${localizedUrl(locale as Locale, "/blog")}?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <html lang={locale} className="dark">
       <body
         className={`${geistSans.variable} ${manrope.variable} ${jetbrainsMono.variable} font-sans min-h-screen flex flex-col antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <NextIntlClientProvider>
           <Atmospheric />
           <Header />
