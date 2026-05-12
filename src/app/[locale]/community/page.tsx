@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Users, MessageCircle, Rocket, ArrowUpRight } from "lucide-react";
 import { FaDiscord } from "react-icons/fa6";
 import { siteConfig } from "@/lib/constants";
+import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import type { Locale } from "@/i18n/routing";
 
 export async function generateMetadata({
@@ -12,9 +13,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "community" });
+  const title = t("metaTitle");
+  const description = t("metaDescription");
+  const url = localizedUrl(locale, "/community");
   return {
-    title: t("metaTitle"),
-    description: t("metaDescription"),
+    title,
+    description,
+    alternates: buildAlternates(locale, "/community"),
+    openGraph: {
+      title,
+      description,
+      url,
+      locale: ogLocale(locale),
+    },
   };
 }
 
@@ -173,7 +184,7 @@ export default async function CommunityPage() {
 
         {/* ── Final CTA ── */}
         <section className="mt-20 text-center">
-          <p className="mx-auto max-w-md font-[family-name:var(--font-fraunces)] text-[18px] italic leading-[1.5] text-muted-foreground">
+          <p className="mx-auto max-w-md text-[18px] italic leading-[1.5] text-muted-foreground">
             {t("quote")}
           </p>
           <div className="mt-8">
