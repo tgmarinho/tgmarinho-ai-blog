@@ -30,6 +30,7 @@ export const siteConfig = {
 
 export const navLinks = [
   { href: "/blog", key: "blog" },
+  { href: "/daily", key: "daily" },
   { href: "/cv", key: "cv" },
   { href: "/about", key: "about" },
   { href: "/projects", key: "projects" },

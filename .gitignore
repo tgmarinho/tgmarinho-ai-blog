@@ -36,6 +36,9 @@ yarn-error.log*
 # velite
 .velite
 
+# local scratch (journal raw markdown, etc.)
+/tmp/
+
 # vercel
 .vercel
 
