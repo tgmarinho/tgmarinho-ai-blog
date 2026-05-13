@@ -38,9 +38,6 @@ const REVEAL_DURATION_MS = 1100;
 const EDGE_FEATHER =
   "radial-gradient(ellipse 56% 64% at 50% 44%, black 22%, rgba(0,0,0,0.92) 48%, rgba(0,0,0,0.55) 70%, rgba(0,0,0,0.18) 86%, transparent 100%)";
 
-// Maximum tilt (deg) for the mouse-driven 3D parallax.
-const MAX_TILT = 7;
-
 /**
  * Hero portrait with a "landonorris.com"-style materialization.
  *
@@ -58,31 +55,7 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
   const [mode, setMode] = useState(0);
   const [hovered, setHovered] = useState(false);
   const directionRef = useRef<1 | -1>(1);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
   const uid = useId().replace(/:/g, "");
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = rootRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-    const ny = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      el.style.setProperty("--tilt-x", `${(-ny * MAX_TILT).toFixed(2)}deg`);
-      el.style.setProperty("--tilt-y", `${(nx * MAX_TILT).toFixed(2)}deg`);
-      el.style.setProperty("--tilt-z", `${(nx * 8).toFixed(2)}px`);
-    });
-  };
-
-  const resetTilt = () => {
-    const el = rootRef.current;
-    if (!el) return;
-    el.style.setProperty("--tilt-x", "0deg");
-    el.style.setProperty("--tilt-y", "0deg");
-    el.style.setProperty("--tilt-z", "0px");
-  };
 
   // Ping-pong auto-cycle. Runs unconditionally (including on mobile and
   // with prefers-reduced-motion — the morph itself is gentle opacity work).
@@ -114,22 +87,13 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
 
   return (
     <div
-      ref={rootRef}
-      className={`group relative aspect-square w-full select-none will-change-transform ${className ?? ""}`}
+      className={`group relative aspect-square w-full select-none ${className ?? ""}`}
       style={{
         maxWidth: size,
-        transform:
-          "perspective(1400px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(var(--tilt-z, 0px))",
-        transformStyle: "preserve-3d",
-        transition: "transform 320ms cubic-bezier(0.16, 1, 0.3, 1)",
         WebkitUserSelect: "none",
       }}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        resetTilt();
-      }}
-      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setHovered(false)}
       onDragStart={(e) => e.preventDefault()}
       aria-label="Thiago Marinho portrait — morphing between human, hybrid, and agent modes"
     >
