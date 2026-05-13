@@ -28,7 +28,7 @@
     "rehype-autolink-headings": "^7.1.0",
     "rehype-pretty-code": "^0.14.1",
     "rehype-slug": "^6.0.0",
-    "shiki": "^3.22.0",
+    "shiki": "^4.0.0",
     "tailwind-merge": "^3.4.0",
     "velite": "^0.3.1"
   },
