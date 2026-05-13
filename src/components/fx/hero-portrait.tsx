@@ -54,8 +54,22 @@ const EDGE_FEATHER =
 export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
   const [mode, setMode] = useState(0);
   const [hovered, setHovered] = useState(false);
+  const [isLowPower, setIsLowPower] = useState(false);
   const directionRef = useRef<1 | -1>(1);
   const uid = useId().replace(/:/g, "");
+
+  // Detect mobile / reduced-motion. The SVG turbulence + displacement filter
+  // and stacked blur layers crash WebKit-based mobile browsers (OOM/GPU) after
+  // a few seconds. We gate the heaviest effects behind this flag.
+  useEffect(() => {
+    const mql = window.matchMedia(
+      "(max-width: 768px), (prefers-reduced-motion: reduce)",
+    );
+    const update = () => setIsLowPower(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
 
   // Ping-pong auto-cycle. Runs unconditionally (including on mobile and
   // with prefers-reduced-motion — the morph itself is gentle opacity work).
@@ -101,7 +115,7 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
           dissolves into the page atmosphere. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -inset-[18%] -z-20 rounded-full blur-[90px] transition-opacity duration-700"
+        className={`pointer-events-none absolute -inset-[18%] -z-20 rounded-full transition-opacity duration-700 ${isLowPower ? "blur-[40px]" : "blur-[90px]"}`}
         style={{
           background:
             "radial-gradient(circle at 30% 35%, rgba(34,211,238,0.35), transparent 55%), radial-gradient(circle at 70% 70%, rgba(217,70,239,0.28), transparent 55%), radial-gradient(circle at 50% 50%, rgba(8,12,30,0.55), transparent 70%)",
@@ -112,7 +126,7 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
       {/* Inner halo (closer to the figure) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 rounded-full blur-[60px] transition-opacity duration-700"
+        className={`pointer-events-none absolute inset-0 -z-10 rounded-full transition-opacity duration-700 ${isLowPower ? "blur-[28px]" : "blur-[60px]"}`}
         style={{
           background:
             "radial-gradient(circle at 30% 40%, rgba(34,211,238,0.4), transparent 60%), radial-gradient(circle at 70% 60%, rgba(217,70,239,0.28), transparent 60%)",
@@ -132,8 +146,8 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
           mask: "radial-gradient(circle at 50% 42%, transparent 52%, black 55%, black 56.5%, transparent 60%)",
           WebkitMask:
             "radial-gradient(circle at 50% 42%, transparent 52%, black 55%, black 56.5%, transparent 60%)",
-          animation: "orb-rotate 22s linear infinite",
-          opacity: hovered ? 0.85 : 0.45,
+          animation: isLowPower ? undefined : "orb-rotate 22s linear infinite",
+          opacity: isLowPower ? 0.35 : hovered ? 0.85 : 0.45,
           filter: "blur(0.5px)",
         }}
       />
@@ -205,7 +219,10 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
       {/* Dissolve fog — turbulent cyan/white vapor painted as a ring
           around the silhouette boundary. Sits over the portrait stack
           with screen blend, hiding any residual hard edge from the
-          photograph and reinforcing the "emerging from the cosmos" feel. */}
+          photograph and reinforcing the "emerging from the cosmos" feel.
+          Skipped on mobile / reduced-motion: feTurbulence + feDisplacementMap
+          on a large surface OOM-crashes WebKit mobile browsers. */}
+      {!isLowPower && (
       <svg
         aria-hidden
         className="pointer-events-none absolute -inset-[10%] z-[55]"
@@ -256,6 +273,7 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
           filter={`url(#${uid}-fog-warp)`}
         />
       </svg>
+      )}
 
       {/* HUD chip — below the portrait, outside the alpha mask. */}
       <div className="pointer-events-none absolute -bottom-2 left-1/2 z-[70] flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/[0.08] bg-black/55 px-3 py-1.5 backdrop-blur-xl">
