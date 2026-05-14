@@ -69,6 +69,23 @@ Default behavior:
 3. Use the same `image` path in pt-BR and EN frontmatter.
 4. Only use separate images if the user explicitly asks.
 
+### Image weight & format (mandatory)
+
+Social previews (WhatsApp, Telegram, iMessage, X) silently drop OG images
+above ~300 KB and fall back to the site favicon. To avoid that:
+
+1. **Format:** prefer `.jpg` (quality 82–85) over `.png` for photographic /
+   AI-generated covers. Only use `.png` when transparency is required.
+2. **Dimensions:** exactly **1200×630** (1.91:1 OG ratio).
+3. **Target size:** **< 300 KB**. Hard ceiling 500 KB.
+4. After generating, verify with `ls -lh` and `sips -g pixelWidth -g pixelHeight`.
+   If oversized, recompress:
+   ```sh
+   sips -z 630 1200 --setProperty format jpeg --setProperty formatOptions 85 \
+     input.png --out public/images/blog/<slug>-cover.jpg
+   ```
+5. Never commit cover PNGs larger than 500 KB.
+
 ## Localization rules
 
 1. Translate meaning, not sentence shape.
