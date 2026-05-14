@@ -1,0 +1,115 @@
+---
+title: "PRD vs SPEC: qual escrever primeiro (e por que com IA isso importa mais)"
+description: "A diferença prática entre Product Requirements Document e Technical Specification, o fluxo natural entre os dois, e por que pular o PRD na era da IA é a forma mais rápida de implementar a coisa errada."
+date: "2026-05-14"
+published: true
+slug: "prd-vs-spec-com-ia-pt-br"
+language: "pt-BR"
+translationKey: "prd-vs-spec-with-ai"
+categories: ["product", "software-engineering", "ai", "pt-br"]
+image: "/images/blog/photo-1516321318423-f06f85e504b3.jpg"
+---
+
+Toda vez que alguém me manda um prompt do tipo "escreve a SPEC dessa feature aqui", eu paro e pergunto a mesma coisa: **cadê o PRD?**
+
+Não é purismo de processo. É que, com IA no loop, a ordem dos documentos virou ainda mais importante — não menos.
+
+### O que é cada um
+
+**PRD (Product Requirements Document)** responde *o quê* e *por quê*:
+
+- Qual problema estamos resolvendo
+- Para quem (personas, público-alvo)
+- Por que agora (contexto de negócio, métricas)
+- Requisitos funcionais de alto nível
+- Critérios de sucesso e o que está fora do escopo
+
+É um documento estratégico, escrito tipicamente pelo Product Manager, voltado a alinhar negócio, design, engenharia e marketing.
+
+**SPEC (Technical Specification)** responde *como*:
+
+- Arquitetura proposta
+- Tecnologias, bibliotecas, padrões
+- Modelagem de dados, schemas, contratos de API
+- Fluxos detalhados, edge cases, tratamento de erro
+- Trade-offs técnicos e alternativas consideradas
+- Plano de rollout, migração, observabilidade
+
+É um documento técnico, escrito tipicamente por Tech Lead ou engenheiros.
+
+### Comparação rápida
+
+| Aspecto         | PRD                       | SPEC                  |
+| --------------- | ------------------------- | --------------------- |
+| Pergunta central | O quê / Por quê          | Como                  |
+| Autor típico    | Product Manager           | Engenheiro / Tech Lead |
+| Audiência       | Times multidisciplinares  | Engenharia            |
+| Linguagem       | Negócio + produto         | Técnica               |
+| Vem primeiro    | Sim                       | Depois do PRD         |
+
+### O fluxo natural
+
+PRD → discussão com engenharia → SPEC → implementação.
+
+Em times menores ou features simples, os dois colapsam em um único documento (às vezes chamado de RFC ou design doc). Em produtos maiores ou contextos regulados, separar mantém clareza de responsabilidade.
+
+### Por que com IA o PRD importa mais, não menos
+
+A IA é boa em gerar **volume de código rápido**. Isso é uma armadilha: você implementa rápido a coisa errada e descobre tarde.
+
+Quando você pede SPEC direto, sem PRD, a IA preenche as lacunas chutando por você. O código sai bonito, coerente, executável — resolvendo um problema que não é exatamente o seu.
+
+O PRD força a explicitação de:
+
+- O problema real
+- As regras de negócio
+- Os critérios de aceite
+- O que está fora do escopo
+
+Sem isso, a IA decide silenciosamente coisas que deveriam ser sua decisão.
+
+### Um exemplo concreto
+
+Recebi recentemente um prompt mais ou menos assim:
+
+> "Quero uma feature de termos juridicamente válidos pela legislação brasileira, parecido com o que a Autentique faz. A pessoa assina, tira selfie, faz upload do documento. O organizador aprova, reprova ou reenvia. O sistema recebe o termo em rich text e monta a capa com nome, CPF e email do participante."
+
+Parece descritivo, mas tem várias decisões escondidas:
+
+- **Validade jurídica.** MP 2.200-2/2001? Lei 14.063/2020? Assinatura simples, avançada ou qualificada? Cada uma exige arquitetura diferente.
+- **Build vs integrar.** Vai usar a API da Autentique ou reimplementar? Muda 100% da SPEC.
+- **Escopo do MVP.** Selfie + documento é suficiente? Ou precisa geolocalização, carimbo de tempo, hash, trilha de auditoria?
+- **LGPD.** Onde os documentos ficam armazenados? Por quanto tempo? Quem tem acesso?
+- **Versionamento de termos.** Se o termo muda, o que acontece com as assinaturas anteriores? Juridicamente relevante.
+
+Pedir SPEC direto pra IA com esse prompt resulta em código convicto resolvendo o problema errado.
+
+### Workflow que funciona
+
+**1. Brain dump → PRD (com IA, fazendo a IA perguntar primeiro)**
+
+O truque é não pedir o PRD direto. Peça antes:
+
+> "Vou descrever uma feature. Antes de escrever o PRD, me faça as perguntas necessárias pra eliminar ambiguidades de escopo, regras de negócio e critérios de aceite. Depois das minhas respostas, escreva o PRD."
+
+Isso muda o jogo. A IA passa a perguntar exatamente o que você ainda não pensou.
+
+**2. PRD → SPEC (em outro contexto)**
+
+Com o PRD pronto, abra uma nova conversa, cole o PRD e peça a SPEC. Agora a IA tem contexto suficiente pra propor arquitetura coerente.
+
+**3. SPEC → implementação**
+
+Aí sim, código — idealmente quebrado em tarefas menores, cada uma rastreável de volta a um critério de aceite do PRD.
+
+### Quando dá pra pular o PRD
+
+Pra coisas pequenas e bem definidas — "adiciona um botão de export CSV nessa tabela" — pular o PRD faz sentido. Vai direto pra SPEC ou pro código.
+
+A régua que uso: se a feature tem **mais de um ator**, **integração externa**, ou **implicação jurídica/financeira/regulatória**, faça o PRD. Sempre.
+
+### Fechamento
+
+PRD e SPEC não são burocracia. São formas de tornar explícito o que, sem documento, vira decisão implícita de quem implementa — humano ou IA.
+
+Com IA no loop, isso pesa o dobro: porque ela executa rápido, errar a definição custa caro em retrabalho. O PRD não te atrasa. Ele evita que você acelere na direção errada.
