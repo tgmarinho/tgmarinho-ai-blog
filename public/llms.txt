@@ -18,6 +18,7 @@ This site contains a bilingual technical blog (English and Brazilian Portuguese)
 
 ## Recent posts (English)
 
+- [PRD vs SPEC: which one to write first (and why with AI it matters more)](https://tgmarinhopro.com/en/blog/prd-vs-spec-with-ai-en): The practical difference between a Product Requirements Document and a Technical Specification, the natural flow between them, and why skipping the PRD in the AI era is the fastest path to shipping the wrong thing.
 - [Volumetric light, fog rings and 3D parallax: rebuilding the hero in pure CSS/SVG](https://tgmarinhopro.com/en/blog/hero-volumetric-light-3d-parallax): Five techniques used to redesign the home hero — Grok-style volumetric beam, dissolved photo edges, organic fog ring, mouse-driven 3D tilt, and AI background removal — taught both as prompts and as code.
 - [I fear regret more than failure](https://tgmarinhopro.com/en/blog/i-fear-regret-more-than-failure): A personal reflection on leaving stability, pursuing an international tech career, and accepting that some decisions are still worth it even when they hurt.
 - [The new visual identity of my website and blog: Futurist Minimalism + Agentic AI](https://tgmarinhopro.com/en/blog/new-website-visual-identity-agentic-futurism-en): The rationale behind the redesign: palette, typography, visual primitives, and engineering decisions to make the website more distinctive, modern, and alive.
@@ -29,18 +30,18 @@ This site contains a bilingual technical blog (English and Brazilian Portuguese)
 - [Avoiding In-Memory Aggregation and Overfetching in MongoDB with Prisma](https://tgmarinhopro.com/en/blog/avoiding-in-memory-aggregation-and-overfetching-in-mongodb-with-prisma): How we stopped loading entire collections into Node.js and let the database do its job.
 - [Getting Started with Next.js 15](https://tgmarinhopro.com/en/blog/getting-started-with-next-js-15): Learn how to build modern web applications with Next.js 15, the latest version with App Router and React Server Components.
 - [TypeScript Tips for React Developers](https://tgmarinhopro.com/en/blog/typescript-tips-for-react-developers): Essential TypeScript patterns and tips that will make your React code more type-safe and maintainable.
-- [How to create a custom random ID with Postgres](https://tgmarinhopro.com/en/blog/how-to-create-a-custom-random-id-with-postgres): Helper function for creating a custom random ID like a9Kl12
-- [Web3 - What to build?](https://tgmarinhopro.com/en/blog/web3-what-to-build): Know about what kind of solutions you can build using web3 technology
-- [How to Deploy a Monorepo with TurboRepo on Heroku](https://tgmarinhopro.com/en/blog/how-to-deploy-a-monorepo-with-turborepo-on-heroku): Github + Monorepo + TurboRepo + Heroku
-- [How to merge two or more repos into a new one without losing the history of commits](https://tgmarinhopro.com/en/blog/how-to-merge-two-or-more-repos-into-a-new-one-without-losing-the-history-of-commits): TurboRepo in Action
-- [Becoming a fitness Dev](https://tgmarinhopro.com/en/blog/becoming-a-fitness-dev): The Five Do's for good daily habits that you should begin today.
-- [React Suspense - in the right way](https://tgmarinhopro.com/en/blog/react-suspense-in-the-right-way): Study case about how to use React Suspense
-- [Basic Wax blockchain](https://tgmarinhopro.com/en/blog/basic-wax-blockchain): Useful links, sample code about how to interact with
-- [How to get the first job](https://tgmarinhopro.com/en/blog/how-to-get-the-first-job): What I tell to my mentees - Tips to getting a Job
-- [Using find with delete flag](https://tgmarinhopro.com/en/blog/using-find-with-delete-flag): Nice command Unix find.
+- [How to Add Blurred Text in React Native](https://tgmarinhopro.com/en/blog/how-to-add-blurred-text-in-react-native): A stylish way to hide information in your React Native app using BlurView.
+- [Organizing Your Backend: Services or Helpers?](https://tgmarinhopro.com/en/blog/organizing-your-backend-services-or-helpers): The difference between services and helpers, and how to organize them in your backend folder structure.
+- [Using for await...of to Iterate Sync and Async Arrays in JavaScript](https://tgmarinhopro.com/en/blog/using-for-await-of-to-iterate-sync-and-async-arrays-in-javascript): How the for await...of loop simplifies async data handling, with practical examples.
+- [Conventional Commits in Practice: Patterns for a Better Git History](https://tgmarinhopro.com/en/blog/conventional-commits-in-practice-patterns-for-a-better-git-history): Hands-on guide to writing better commit messages with Conventional Commits — types, scope, examples, and a cheat sheet.
+- [AbortController: Manage Memory Efficiently in React](https://tgmarinhopro.com/en/blog/abortcontroller-manage-memory-efficiently-in-react): How to use AbortController to cancel fetch requests and prevent memory leaks in React components.
+- [Sharing Env Vars in a Monorepo with Vite and Next.js](https://tgmarinhopro.com/en/blog/sharing-env-vars-in-a-monorepo-with-vite-and-next-js): Keep a single .env.shared at the root of your monorepo and generate per-app .env files with the right Vite and Next.js prefixes.
+- [How to Validate US Shipping Addresses with JavaScript and React](https://tgmarinhopro.com/en/blog/how-to-validate-us-shipping-addresses-with-javascript-and-react): Two approaches to validate US shipping addresses: Google Maps Geocoding API and client-side validation with React Hook Form + Zod.
+- [How to Learn Quick](https://tgmarinhopro.com/en/blog/how-to-learn-quick): Study techniques and habits to accelerate your learning — without falling for the illusion that you can learn everything in a few days.
 
 ## Posts recentes (Português)
 
+- [PRD vs SPEC: qual escrever primeiro (e por que com IA isso importa mais)](https://tgmarinhopro.com/blog/prd-vs-spec-com-ia-pt-br): A diferença prática entre Product Requirements Document e Technical Specification, o fluxo natural entre os dois, e por que pular o PRD na era da IA é a forma mais rápida de implementar a coisa errada.
 - [Luz volumétrica, anel de névoa e paralax 3D: reconstruindo o hero em CSS/SVG puro](https://tgmarinhopro.com/blog/hero-luz-volumetrica-paralax-3d): Cinco técnicas usadas no redesign do hero da home — feixe volumétrico estilo Grok, borda de foto dissolvida, anel de névoa orgânico, paralax 3D no mouse e remoção de fundo com IA — ensinadas como prompts e como código.
 - [A nova identidade visual do meu website e blog: Minimalismo Futurista + IA Agentic](https://tgmarinhopro.com/blog/nova-identidade-visual-website-blog-pt-br): O racional por trás do redesign: paleta, tipografia, componentes visuais e decisões técnicas para criar um site mais autoral, moderno e vivo.
 - [Tenho mais medo do arrependimento do que de quebrar a cara](https://tgmarinhopro.com/blog/tenho-mais-medo-do-arrependimento-do-que-de-quebrar-a-cara): Uma reflexão sobre sair da estabilidade, tentar uma carreira internacional em tecnologia e aceitar que algumas decisões fazem sentido mesmo quando doem.
@@ -52,15 +53,14 @@ This site contains a bilingual technical blog (English and Brazilian Portuguese)
 - [Evitando agregação em memória e overfetching no MongoDB com Prisma](https://tgmarinhopro.com/blog/evitando-agregacao-em-memoria-overfetching-mongodb-prisma): Como paramos de carregar coleções inteiras no Node.js e deixamos o banco fazer o trabalho dele.
 - [Começando com Next.js 15](https://tgmarinhopro.com/blog/comecando-com-nextjs-15): Aprenda a construir aplicações web modernas com Next.js 15, a versão mais recente com App Router e React Server Components.
 - [Dicas de TypeScript para Devs React](https://tgmarinhopro.com/blog/dicas-de-typescript-para-devs-react): Padrões e dicas essenciais de TypeScript para deixar seu código React mais type-safe e fácil de manter.
-- [Como criar um ID aleatório customizado no Postgres](https://tgmarinhopro.com/blog/como-criar-um-id-aleatorio-customizado-no-postgres): Função auxiliar para criar um ID aleatório customizado como a9Kl12
-- [Web3 - O que construir?](https://tgmarinhopro.com/blog/web3-o-que-construir): Conheça os tipos de soluções que você pode construir usando a tecnologia web3
-- [Como fazer deploy de um monorepo com TurboRepo no Heroku](https://tgmarinhopro.com/blog/como-fazer-deploy-de-monorepo-com-turborepo-no-heroku): Github + Monorepo + TurboRepo + Heroku
-- [Como mesclar dois ou mais repos em um só sem perder o histórico de commits](https://tgmarinhopro.com/blog/como-mesclar-dois-ou-mais-repos-sem-perder-historico): TurboRepo na prática
-- [Tornando-se um Dev fitness](https://tgmarinhopro.com/blog/tornando-se-um-dev-fitness): Os cinco hábitos diários que você deveria começar hoje.
-- [React Suspense - do jeito certo](https://tgmarinhopro.com/blog/react-suspense-do-jeito-certo): Estudo de caso sobre como usar o React Suspense
-- [Básico sobre a Wax Blockchain](https://tgmarinhopro.com/blog/basico-sobre-wax-blockchain): Links úteis e exemplos de código para começar a interagir com a Wax
-- [Como conseguir o primeiro emprego](https://tgmarinhopro.com/blog/como-conseguir-o-primeiro-emprego): O que eu digo para os meus mentorados - Dicas para conseguir um emprego
-- [Usando find com a flag delete](https://tgmarinhopro.com/blog/usando-find-com-flag-delete): Um comando útil do Unix find.
+- [Como adicionar texto borrado (blurred) em React Native](https://tgmarinhopro.com/blog/como-adicionar-texto-borrado-blurred-em-react-native): Uma forma estilosa de esconder informações no seu app React Native usando BlurView.
+- [Organizando seu backend: services ou helpers?](https://tgmarinhopro.com/blog/organizando-seu-backend-services-ou-helpers): A diferença entre services e helpers, e como organizá-los na estrutura de pastas do seu backend.
+- [Usando for await...of para iterar arrays síncronos e assíncronos em JavaScript](https://tgmarinhopro.com/blog/usando-for-await-of-para-iterar-arrays-s-ncronos-e-ass-ncronos-em-javascript): Como o loop for await...of simplifica o tratamento de dados assíncronos, com exemplos práticos.
+- [Conventional Commits na prática: padrões para um histórico Git melhor](https://tgmarinhopro.com/blog/conventional-commits-na-pr-tica-padr-es-para-um-hist-rico-git-melhor): Guia prático para escrever mensagens de commit melhores usando Conventional Commits — tipos, escopo, exemplos e cheat sheet.
+- [AbortController: gerenciando memória de forma eficiente no React](https://tgmarinhopro.com/blog/abortcontroller-gerenciando-mem-ria-de-forma-eficiente-no-react): Como usar AbortController para cancelar requisições fetch e evitar vazamentos de memória em componentes React.
+- [Compartilhando variáveis de ambiente em um monorepo com Vite e Next.js](https://tgmarinhopro.com/blog/compartilhando-vari-veis-de-ambiente-em-um-monorepo-com-vite-e-next-js): Como manter um único arquivo .env.shared no monorepo e gerar arquivos específicos com os prefixos do Vite e do Next.js.
+- [Como validar endereço de entrega nos EUA com JavaScript e React](https://tgmarinhopro.com/blog/como-validar-endere-o-de-entrega-nos-eua-com-javascript-e-react): Duas abordagens para validar shipping address nos EUA: Google Maps Geocoding API e validação no cliente com React Hook Form + Zod.
+- [Como aprender rápido](https://tgmarinhopro.com/blog/como-aprender-r-pido): Técnicas de estudo e hábitos para acelerar seu aprendizado — sem cair na ilusão de que se aprende tudo em pouco tempo.
 
 ## Optional
 
