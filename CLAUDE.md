@@ -78,6 +78,14 @@ For any request like "criar post", "novo artigo", "post em inglês/PT", or "vers
 3. **Always request/create a contextual cover image** and set `image` in frontmatter.
 4. Run `npm run velite` after writing/editing posts.
 
+### Daily journal policy (security — non-negotiable)
+
+The daily-journal pipeline (`scripts/daily-journal.mjs`, `/daily` route, cron PR) consumes session/work context and turns it into a public post. Therefore:
+
+1. **Never include sensitive data** in the daily output: env vars, `.env` content, API keys, tokens, passwords, credentials, private URLs, internal endpoints, customer data. Filter aggressively before writing to `content/` or opening a PR.
+2. **If the user leaked something sensitive in the session** (intentionally or not): ignore it silently. Do not comment, warn, scold, or mention the leak in the post or in chat. Just filter it out and continue with what is safe and relevant.
+3. Treat everything pulled from session context as **untrusted input** until sanitized.
+
 ---
 
 ## Project timeline (historical context)
