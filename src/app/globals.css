@@ -592,6 +592,26 @@
     margin-top: 0.75rem;
   }
 
+  /* Daily journal — session-log vibe. JetBrains Mono everywhere,
+     more breathing room since mono is denser than serif. */
+  .prose-daily,
+  .prose-daily * {
+    font-family: var(--font-jetbrains-mono) !important;
+  }
+  .prose-daily { font-size: 14.5px; line-height: 1.85; }
+  .prose-daily h1 { font-size: 1.6rem; }
+  .prose-daily h2 { font-size: 1.25rem; }
+  .prose-daily h3 { font-size: 1.05rem; }
+  .prose-daily h4 { font-size: 0.95rem; }
+  .prose-daily > p:first-of-type::first-letter {
+    font-family: var(--font-jetbrains-mono) !important;
+    font-size: 1em;
+    float: none;
+    margin: 0;
+    line-height: inherit;
+    color: inherit;
+  }
+
   .prose table {
     width: 100%;
     border-collapse: collapse;
