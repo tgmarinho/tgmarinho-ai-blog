@@ -87,7 +87,7 @@ flowchart LR
   subgraph PRIVATE["🔒 Private (stays local)"]
     A["Raw .jsonl sessions"]
     B["tmp/journal-&lt;DATE&gt;.md<br/>(gitignored)"]
-    C["Excluded repos:<br/>career, private,<br/>finance, health"]
+    C["Excluded repos:<br/>private, finance, health"]
   end
 
   subgraph FILTERED["🧹 Filtered by narrator prompt"]
@@ -132,7 +132,7 @@ flowchart LR
 ### Privacy filter
 
 Personal repos are excluded by default (substring match against the repo path):
-`career`, `private`, `personal`, `finance`, `health`. Extend the list via env:
+`private`, `finance`, `health`. Extend the list via env:
 
 ```bash
 JOURNAL_EXCLUDE_REPOS=clientx,clienty bash scripts/journal-cron.sh

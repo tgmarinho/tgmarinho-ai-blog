@@ -170,7 +170,7 @@ for (const s of sessions) {
 
 // Exclude personal repos (env: JOURNAL_EXCLUDE_REPOS=substring1,substring2)
 // Substring match against the repo path/name. Case-insensitive.
-const DEFAULT_EXCLUDES = ["career", "private", "personal", "finance", "health"];
+const DEFAULT_EXCLUDES = ["private", "finance", "health"];
 const userExcludes = (process.env.JOURNAL_EXCLUDE_REPOS || "")
   .split(",")
   .map((s) => s.trim().toLowerCase())
