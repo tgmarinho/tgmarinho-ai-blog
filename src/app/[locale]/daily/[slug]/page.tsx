@@ -113,10 +113,10 @@ export default async function JournalEntryPage({ params }: EntryPageProps) {
         >
           {formattedDate}
         </time>
-        <h1 className="mt-4 text-balance font-display text-[36px] font-bold leading-[1.08] tracking-[-0.025em] text-foreground md:text-[48px]">
+        <h1 className="mt-4 text-balance font-[family-name:var(--font-fraunces)] text-[40px] font-semibold leading-[1.05] tracking-[-0.02em] text-foreground md:text-[56px]">
           {entry.title}
         </h1>
-        <p className="mt-5 text-[16px] leading-[1.65] text-muted-foreground">
+        <p className="mt-6 font-[family-name:var(--font-fraunces)] text-[19px] italic leading-[1.5] text-muted-foreground md:text-[22px]">
           {entry.summary}
         </p>
 
