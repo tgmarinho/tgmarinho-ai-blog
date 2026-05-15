@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { ArrowUpRight, Github, ExternalLink } from "lucide-react";
+import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { FaGithub as Github } from "react-icons/fa6";
 import { GlowCard } from "@/components/fx/glow-card";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import type { Locale } from "@/i18n/routing";
