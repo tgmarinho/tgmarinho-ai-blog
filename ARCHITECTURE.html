@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>tgmarinho-ai-website — Architecture Map</title>
+<style>
+  :root {
+    --bg: #05060a;
+    --panel: #0a0c12;
+    --panel-2: #11141d;
+    --border: rgba(255,255,255,0.08);
+    --fg: #e2e8f0;
+    --muted: #8b94a6;
+    --cyan: #22d3ee;
+    --magenta: #d946ef;
+    --blue: #3b82f6;
+    --mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); }
+  body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(34,211,238,0.06), transparent 60%),
+      radial-gradient(ellipse 70% 60% at 80% 20%, rgba(217,70,239,0.05), transparent 60%),
+      linear-gradient(180deg, var(--bg), var(--bg));
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 56px 28px 120px; }
+  header h1 {
+    font-size: 36px; letter-spacing: -0.02em; margin: 0 0 8px;
+    background: linear-gradient(90deg, #fff, var(--cyan));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header p { color: var(--muted); margin: 0 0 8px; }
+  .meta { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em; color: var(--cyan); }
+  .tag { display: inline-block; padding: 2px 10px; border: 1px solid var(--border); border-radius: 999px; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted); margin-right: 6px; }
+  nav.toc {
+    position: sticky; top: 0; background: rgba(5,6,10,0.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border); padding: 14px 0; margin: 32px 0 24px;
+    display: flex; flex-wrap: wrap; gap: 8px 14px; font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.18em;
+  }
+  nav.toc a { color: var(--muted); text-decoration: none; }
+  nav.toc a:hover { color: var(--cyan); }
+  section { margin: 48px 0; }
+  section h2 {
+    font-size: 22px; letter-spacing: -0.01em; margin: 0 0 16px;
+    border-left: 2px solid var(--cyan); padding-left: 12px;
+  }
+  section h3 { font-size: 15px; color: var(--cyan); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.18em; margin: 28px 0 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 18px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; inset: -1px;
+    background: linear-gradient(135deg, transparent 40%, rgba(34,211,238,0.18) 50%, transparent 60%);
+    border-radius: 14px; pointer-events: none; opacity: 0; transition: opacity .25s;
+  }
+  .card:hover::before { opacity: 1; }
+  .card h4 { margin: 0 0 6px; font-size: 14px; color: #f4f6fb; letter-spacing: -0.005em; }
+  .card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+  .card code, code.inline { font-family: var(--mono); font-size: 12px; background: rgba(34,211,238,0.08); color: #cbd5f5; padding: 1px 6px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cyan); }
+  ul.bare { list-style: none; padding: 0; margin: 0; }
+  ul.bare li { padding: 6px 0; border-bottom: 1px dashed var(--border); color: var(--muted); font-size: 13px; }
+  ul.bare li::before { content: "›"; color: var(--cyan); margin-right: 8px; }
+  pre {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; color: #cbd5f5;
+    line-height: 1.55;
+  }
+  .pill { display: inline-flex; gap: 6px; align-items: center; padding: 3px 10px; border-radius: 999px; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.18em; }
+  .pill-cyan { background: rgba(34,211,238,0.1); color: var(--cyan); border: 1px solid rgba(34,211,238,0.25); }
+  .pill-mag { background: rgba(217,70,239,0.1); color: var(--magenta); border: 1px solid rgba(217,70,239,0.25); }
+  .pill-warn { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+  hr.mesh { height: 1px; border: 0; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 48px 0; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 60px; font-family: var(--mono); letter-spacing: 0.18em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Codebase Map · Generated 2026-05-14</div>
+  <h1>tgmarinho-ai-website</h1>
+  <p>Personal site + bilingual technical blog. Next.js 16 App Router, RSC-first, Velite for MDX, Tailwind v4. Aesthetic: Agentic Futurism.</p>
+  <div style="margin-top:14px">
+    <span class="tag">Next 16.1</span>
+    <span class="tag">React 19</span>
+    <span class="tag">TypeScript</span>
+    <span class="tag">Tailwind v4</span>
+    <span class="tag">Velite</span>
+    <span class="tag">Vercel · Fluid Compute</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#overview">Overview</a>
+  <a href="#stack">Stack</a>
+  <a href="#topology">Topology</a>
+  <a href="#content">Content Pipeline</a>
+  <a href="#routes">Routes</a>
+  <a href="#i18n">i18n</a>
+  <a href="#design">Design System</a>
+  <a href="#apis">APIs</a>
+  <a href="#automations">Automations</a>
+  <a href="#decisions">Decisions</a>
+  <a href="#extension">Extension Points</a>
+</nav>
+
+<section id="overview">
+  <h2>1. Overview</h2>
+  <p style="color:var(--muted); max-width: 760px; line-height:1.7">
+    Statically-generated personal site. Institutional pages, a 70+ MDX blog with fuzzy search, a bilingual daily journal auto-generated from Claude Code sessions, and three lightweight API routes. Philosophy: <b>content-first → build-time pipeline (Velite) → static-first rendering → progressive enhancement</b>.
+  </p>
+</section>
+
+<section id="stack">
+  <h2>2. Stack</h2>
+  <div class="grid">
+    <div class="card"><h4>Framework</h4><p>Next.js 16.1.6 (App Router, Turbopack)</p></div>
+    <div class="card"><h4>Runtime</h4><p>React 19.2.3 · Node 24 LTS</p></div>
+    <div class="card"><h4>Language</h4><p>TypeScript ^5 (strict)</p></div>
+    <div class="card"><h4>Styling</h4><p>Tailwind CSS v4 + <code class="inline">tw-animate-css</code></p></div>
+    <div class="card"><h4>Motion</h4><p>Framer Motion ^12</p></div>
+    <div class="card"><h4>UI primitives</h4><p>Radix UI ^1.4 + shadcn-style locals</p></div>
+    <div class="card"><h4>Content</h4><p>Velite ^0.3 (markdown → typed JSON)</p></div>
+    <div class="card"><h4>Highlight</h4><p>rehype-pretty-code + shiki (github-dark)</p></div>
+    <div class="card"><h4>Search</h4><p>Fuse.js ^7 (client-side fuzzy)</p></div>
+    <div class="card"><h4>i18n</h4><p>next-intl — pt-BR default, en under <code class="inline">/en</code></p></div>
+    <div class="card"><h4>KV / cache</h4><p>Upstash Redis (optional; in-memory stub today)</p></div>
+    <div class="card"><h4>Newsletter</h4><p>Buttondown (HTTP)</p></div>
+  </div>
+</section>
+
+<section id="topology">
+  <h2>3. Folder Topology</h2>
+<pre>
+tgmarinho-ai-website/
+├── content/
+│   ├── posts/                  # 70+ MDX posts (bilingual via language + translationKey)
+│   ├── journal/{pt-BR,en}/     # Auto-generated daily entries (YYYY-MM-DD.md)
+│   └── old/                    # Historical archive (not published)
+│
+├── public/
+│   ├── content/                # cv.md, cv_pt.md (served by /cv)
+│   ├── images/                 # Shared images
+│   └── static/                 # Velite-generated hashed assets
+│
+├── src/
+│   ├── app/[locale]/
+│   │   ├── layout.tsx          # next-intl, fonts, header, footer, cursor aurora
+│   │   ├── page.tsx            # Home (Hero + RecentPosts)
+│   │   ├── blog/
+│   │   │   ├── page.tsx
+│   │   │   └── [slug]/
+│   │   │       ├── layout.tsx  # Loads Fraunces + Source Serif 4 (editorial)
+│   │   │       └── page.tsx
+│   │   ├── daily/
+│   │   │   ├── page.tsx
+│   │   │   └── [slug]/
+│   │   │       ├── layout.tsx  # Mirrors blog: editorial fonts scoped here
+│   │   │       └── page.tsx
+│   │   ├── about|projects|community|contact/
+│   │   └── cv/                 # Client: fetches /content/cv.md
+│   ├── app/api/
+│   │   ├── page-views/route.ts # in-memory (TODO: Upstash)
+│   │   ├── feedback/route.ts   # in-memory (TODO: Upstash)
+│   │   └── subscribe/route.ts  # Buttondown
+│   ├── components/
+│   │   ├── layout|home|blog|cv|mdx|forms|fx|ui/
+│   └── lib/{constants,utils,velite}.ts
+│
+├── scripts/
+│   ├── daily-journal.mjs       # Sessions + git → raw bullets
+│   ├── journal-narrate.mjs     # claude CLI → narrated pt-BR + en
+│   ├── journal-cron.sh         # Orchestrator (LaunchAgent @ 23:00 America/Campo_Grande)
+│   └── generate-llms-txt.mjs   # llms.txt + llms-full.txt
+│
+├── velite.config.ts            # Post + JournalEntry schemas + pipeline
+├── next.config.ts              # Turbopack + remote images allowlist
+└── .velite/                    # Generated (#site/content)
+</pre>
+</section>
+
+<section id="content">
+  <h2>4. Content Pipeline (Velite)</h2>
+  <p style="color:var(--muted)">Two collections, both <code class="inline">s.markdown()</code> (pre-rendered HTML, no JSX in body).</p>
+  <div class="grid">
+    <div class="card">
+      <h4>Post <span class="pill pill-cyan">content/posts/**/*.mdx</span></h4>
+      <p>title · description · date · published · slug? · language · translationKey · categories · image · body · plainBody (stripped, for search)</p>
+    </div>
+    <div class="card">
+      <h4>JournalEntry <span class="pill pill-mag">content/journal/{pt-BR,en}/*.md</span></h4>
+      <p>title · summary · date · repos · commits · sessions · language · body. Slug from filename. URL: <code class="inline">/daily/&lt;slug&gt;</code> or <code class="inline">/en/daily/&lt;slug&gt;</code>.</p>
+    </div>
+  </div>
+  <h3>Import convention</h3>
+<pre>import { posts, journalEntries, type Post } from "#site/content";
+import { sortPostsByDate, getAllCategories } from "@/lib/velite";</pre>
+</section>
+
+<section id="routes">
+  <h2>5. Routes &amp; Rendering</h2>
+  <table>
+    <thead><tr><th>Route</th><th>Strategy</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code class="inline">/</code></td><td>Static (RSC)</td><td>Hero + 5 recent posts</td></tr>
+      <tr><td><code class="inline">/blog</code></td><td>Static + client island</td><td>Server passes posts[] to &lt;BlogSearch/&gt; (Fuse.js)</td></tr>
+      <tr><td><code class="inline">/blog/[slug]</code></td><td>SSG</td><td>Inline JSON-LD BlogPosting. Editorial fonts via co-located layout.</td></tr>
+      <tr><td><code class="inline">/daily</code></td><td>Static (RSC)</td><td>Lists JournalEntry by language</td></tr>
+      <tr><td><code class="inline">/daily/[slug]</code></td><td>SSG</td><td>Loads Fraunces + Source Serif 4 (mirrors blog).</td></tr>
+      <tr><td><code class="inline">/about /projects /community /contact</code></td><td>Static JSX</td><td>—</td></tr>
+      <tr><td><code class="inline">/cv</code></td><td>Client</td><td>Fetches <code class="inline">/content/cv.md</code> at runtime</td></tr>
+      <tr><td><code class="inline">/api/*</code></td><td>Route handlers</td><td>Node runtime (Fluid Compute)</td></tr>
+      <tr><td><code class="inline">/rss.xml /sitemap.ts /robots.ts</code></td><td>Metadata</td><td>Build-time</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="i18n">
+  <h2>6. i18n</h2>
+  <ul class="bare">
+    <li>Strategy: <b>next-intl</b> with <code class="inline">[locale]</code> segment. pt-BR is the default (no prefix), en under <code class="inline">/en</code>.</li>
+    <li>UI messages: <code class="inline">messages/{pt-BR,en}.json</code>.</li>
+    <li>Posts pair via <code class="inline">language</code> + <code class="inline">translationKey</code>. Detail page surfaces a switch.</li>
+    <li>Audits: <code class="inline">npm run audit:i18n-seo</code> and <code class="inline">npm run audit:refs</code>.</li>
+  </ul>
+</section>
+
+<section id="design">
+  <h2>7. Design System — "Agentic Futurism"</h2>
+  <div class="grid">
+    <div class="card"><h4>Canvas</h4><p><code class="inline">#05060a</code> — rich black with cool blue tinge</p></div>
+    <div class="card"><h4>Accents</h4><p>cyan <code class="inline">#22d3ee</code> · magenta <code class="inline">#d946ef</code> · blue <code class="inline">#3b82f6</code></p></div>
+    <div class="card"><h4>UI fonts</h4><p>Geist Sans · Manrope (display) · JetBrains Mono</p></div>
+    <div class="card"><h4>Editorial fonts</h4><p>Fraunces (display) · Source Serif 4 (body). Scoped to <code class="inline">.prose</code> only, loaded per-route in <code class="inline">/blog/[slug]/layout.tsx</code> and <code class="inline">/daily/[slug]/layout.tsx</code>.</p></div>
+    <div class="card"><h4>Atmosphere</h4><p>body radial gradients + 56px grid mask + global <code class="inline">&lt;CursorAurora/&gt;</code></p></div>
+    <div class="card"><h4>Utilities</h4><p>.glass · .text-gradient-cm · .glow-cyan · .ring-glow · .mesh-divider · .scanline · .hover-lift · .border-conic · .noise</p></div>
+  </div>
+  <p style="color:var(--muted); margin-top:14px">All keyframes are neutralized under <code class="inline">@media (prefers-reduced-motion: reduce)</code>.</p>
+</section>
+
+<section id="apis">
+  <h2>8. APIs</h2>
+  <table>
+    <thead><tr><th>Endpoint</th><th>State</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code class="inline">/api/page-views</code></td><td><span class="pill pill-warn">in-memory</span></td><td>GET <code class="inline">?slug</code>, POST <code class="inline">{ slug }</code>. TODO: Upstash Redis.</td></tr>
+      <tr><td><code class="inline">/api/feedback</code></td><td><span class="pill pill-warn">in-memory</span></td><td>POST <code class="inline">{ slug, type, message? }</code>. TODO: Upstash/Postgres.</td></tr>
+      <tr><td><code class="inline">/api/subscribe</code></td><td><span class="pill pill-cyan">Buttondown</span></td><td>Requires <code class="inline">BUTTONDOWN_API_KEY</code>. 409 treated as success.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="automations">
+  <h2>9. Automations — Daily Journal</h2>
+  <p style="color:var(--muted)">Local-only pipeline (reads <code class="inline">~/.claude/projects/*/*.jsonl</code>). LaunchAgent <code class="inline">com.tgmarinho.journal.daily</code> @ <b>23:00 America/Campo_Grande</b>.</p>
+<pre>raw bullets (daily-journal.mjs)
+  → narrate pt-BR (claude CLI)
+  → narrate en   (claude CLI)
+  → append footer
+  → commit on branch journal/&lt;DATE&gt;
+  → push + open draft PR (manual review gate)</pre>
+  <h3>Privacy boundaries</h3>
+  <ul class="bare">
+    <li>Default exclude repos (substring): <code class="inline">private</code>, <code class="inline">finance</code>, <code class="inline">health</code></li>
+    <li>Extend via <code class="inline">JOURNAL_EXCLUDE_REPOS=clientx,clienty</code></li>
+    <li>Narrator prompt forbids: people, job applications, credentials, client data, undisclosed security bugs</li>
+    <li>If session leaks something sensitive: filter silently, never comment on the leak</li>
+  </ul>
+</section>
+
+<section id="decisions">
+  <h2>10. Decisions (ADR-light)</h2>
+  <ul class="bare">
+    <li><b>Velite &gt; MDX runtime</b> — performance + type safety beat in-post JSX.</li>
+    <li><b>No CMS</b> — content in Git, reviews via PR.</li>
+    <li><b>Static-first</b> — 90% SSG, APIs are the exception.</li>
+    <li><b>Editorial fonts scoped to <code class="inline">.prose</code></b> — loaded per route layout, not globally.</li>
+    <li><b>In-memory APIs are provisional</b> — flagged <code class="inline">// TODO</code> on purpose.</li>
+    <li><b>Daily journal is local-only by design</b> — session files don't exist in CI.</li>
+  </ul>
+  <h3>Anti-patterns (don't)</h3>
+  <ul class="bare">
+    <li>Swap Velite for contentlayer / next-mdx-remote.</li>
+    <li>Add <code class="inline">&lt;Callout/&gt;</code> inside posts (body is <code class="inline">s.markdown()</code>).</li>
+    <li>Recreate shadcn components via CLI when an equivalent exists in <code class="inline">src/components/ui/</code>.</li>
+    <li>Use Fraunces / Source Serif 4 outside <code class="inline">.prose</code>.</li>
+    <li>Add <code class="inline">useEffect</code> for data fetching in RSCs.</li>
+  </ul>
+</section>
+
+<section id="extension">
+  <h2>11. Extension Points</h2>
+  <table>
+    <thead><tr><th>Idea</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td>Migrate /api/page-views &amp; /api/feedback to Upstash Redis</td><td><code class="inline">src/app/api/{page-views,feedback}/route.ts</code></td></tr>
+      <tr><td>Reactivate MDX with components (&lt;Callout/&gt;, &lt;Video/&gt;)</td><td><code class="inline">velite.config.ts</code> + <code class="inline">src/components/mdx/mdx-content.tsx</code></td></tr>
+      <tr><td>Vercel AI Gateway for chat / explainer</td><td>(not implemented)</td></tr>
+      <tr><td>Cache Components / "use cache" (Next 16)</td><td>(everything SSG today)</td></tr>
+      <tr><td>Full UI translation beyond posts</td><td><code class="inline">messages/</code>, layouts</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr class="mesh" />
+
+<footer>
+  Source of truth · AGENTS.md · ARCHITECTURE.md · CLAUDE.md · docs/redesign-2026-agentic-futurist.md
+</footer>
+
+</div>
+</body>
+</html>
