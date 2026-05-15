@@ -1,6 +1,6 @@
 "use client";
 
-import { Twitter } from "lucide-react";
+import { FaXTwitter as Twitter } from "react-icons/fa6";
 import { cn } from "@/lib/utils";
 
 interface ShareButtonProps {
