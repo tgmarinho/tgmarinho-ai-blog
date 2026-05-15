@@ -70,12 +70,12 @@ for OUT in "$OUT_PT" "$OUT_EN"; do
 done
 
 # 5b. Append AI-generation footer to each output.
-FOOTER_PT=$'\n---\n\n_Diário gerado automaticamente às 23h a partir das minhas sessões de trabalho com agentes de IA._\n'
-FOOTER_EN=$'\n---\n\n_Journal auto-generated at 23h from my work sessions with AI agents._\n'
-if ! grep -q "Diário gerado automaticamente às 23h" "$OUT_PT" 2>/dev/null; then
+FOOTER_PT=$'\n---\n\n_Diário gerado automaticamente às 23:00:00 a partir das minhas sessões de trabalho com agentes de IA._\n'
+FOOTER_EN=$'\n---\n\n_Journal auto-generated at 23:00:00 from my work sessions with AI agents._\n'
+if ! grep -q "Diário gerado automaticamente às 23:00:00" "$OUT_PT" 2>/dev/null; then
   printf '%s' "$FOOTER_PT" >> "$OUT_PT"
 fi
-if ! grep -q "Journal auto-generated at 23h" "$OUT_EN" 2>/dev/null; then
+if ! grep -q "Journal auto-generated at 23:00:00" "$OUT_EN" 2>/dev/null; then
   printf '%s' "$FOOTER_EN" >> "$OUT_EN"
 fi
 
