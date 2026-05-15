@@ -148,7 +148,7 @@ Actions can't see them.
 ## Manual run
 
 ```bash
-# today (America/Sao_Paulo) — designed to be run at 23:00
+# today (America/Campo_Grande) — designed to be run at 23:00
 bash scripts/journal-cron.sh
 
 # specific day
