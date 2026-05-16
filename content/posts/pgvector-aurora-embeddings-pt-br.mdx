@@ -1,0 +1,271 @@
+---
+title: "pgvector + Aurora PostgreSQL para embeddings: por que escolhi (e como uso)"
+description: "O racional para escolher Aurora PostgreSQL com pgvector em vez de um vector database dedicado, e um guia prático de setup, índice e queries com Drizzle."
+date: "2026-05-15"
+published: true
+slug: "pgvector-aurora-embeddings-pt-br"
+language: "pt-BR"
+translationKey: "pgvector-aurora-embeddings"
+categories: ["ai", "database", "postgres", "rag", "pt-br"]
+image: "/images/blog/pgvector-aurora-cover.jpg"
+---
+
+Toda aplicação de IA que sai do brinquedo cedo ou tarde encosta no mesmo problema:
+
+**onde guardar embeddings e como buscar por similaridade sem afundar latência nem custo.**
+
+A indústria respondeu a isso com uma leva de vector databases dedicados — Pinecone, Weaviate, Qdrant, Milvus, Chroma. Cada um com sua narrativa, seu SDK e sua fatura no fim do mês.
+
+Quando precisei resolver isso pra valer num produto agentic — armazenar embeddings de conteúdo, fazer RAG, filtrar por metadados, conviver com transações relacionais — não fui pra nenhum deles.
+
+Fui de **Aurora PostgreSQL + [pgvector](https://github.com/pgvector/pgvector)**.
+
+Este post é o racional dessa decisão e um mini-guia de implementação com Drizzle.
+
+### O problema, sem floreio
+
+Aplicações com IA costumam ter três classes de dado convivendo:
+
+1. **Dado relacional clássico** — usuários, projetos, permissões, billing.
+2. **Embeddings** — vetores de 768/1024/1536/3072 dimensões representando trechos de texto, código, imagens.
+3. **Metadados** — tags, autor, idioma, tipo de fonte, timestamp, score de qualidade.
+
+A query interessante quase nunca é "ache os 10 vetores mais próximos". É:
+
+> "Ache os 10 trechos mais similares à pergunta, **do projeto X**, em **português**, criados nos últimos **90 dias**, ignorando os que o usuário já viu."
+
+Isso é similarity search **mais** filtros relacionais **mais** joins. Em vector databases dedicados isso vira ginástica: você duplica metadados como payload, mantém dois sistemas sincronizados, paga banda pra trazer IDs e fazer o filtro do lado da aplicação.
+
+No Postgres, isso é uma query.
+
+### As opções na mesa
+
+Resumo brutal das alternativas que considerei:
+
+- **Pinecone** — managed, rápido, ótima DX. Mas é um SaaS a mais, com custo por dimensão/vetor e zero relação com o resto do seu schema. Você vai duplicar metadados e escrever código de sincronização.
+- **Weaviate / Qdrant** — open-source, performáticos, com filtros bons. Operar você mesmo significa mais um cluster pra cuidar. Managed deles existe, mais um vendor.
+- **Chroma / Milvus** — ótimos pra dev local e protótipos; pra produção séria entram nos mesmos trade-offs acima.
+- **pgvector em Postgres** — extensão open-source mantida pelo Andrew Kane (mesmo autor do `pg_search`, `pgvector` e cia). Plugin em C, performático, com índices HNSW e IVFFlat, distâncias L2, inner product, cosine, Hamming e Jaccard.
+
+A pergunta real não é "qual é o mais rápido em benchmark sintético". É **qual sistema dá menos atrito operacional pro meu caso**.
+
+### Por que Aurora + pgvector ganhou
+
+Quatro razões, em ordem de peso:
+
+**1. Um único sistema de fonte de verdade.**
+Embeddings, metadados, dados de produto, tudo no mesmo banco. Joins reais, transação ACID, foreign keys, RLS se eu quiser. Não tem job de sincronização. Não tem drift entre dois sistemas.
+
+**2. Aurora resolve o ops.**
+Auto-scaling de storage, leitura replicada multi-AZ, snapshots, point-in-time recovery, failover gerenciado. Não preciso operar um cluster vetorial separado. O time de dados já sabe lidar com Postgres.
+
+**3. pgvector é maduro.**
+O índice **HNSW** (Hierarchical Navigable Small World) entregou recall e latência comparáveis a vector DBs dedicados no meu workload (~1M vetores de 1536 dimensões). E pgvector ganhou suporte oficial no Aurora desde o PostgreSQL 15.
+
+**4. Custo previsível.**
+Pago Aurora que eu já pago. Não tem mais uma linha de fatura proporcional ao número de vetores.
+
+### Quando NÃO ir nesse caminho
+
+Sendo justo, pgvector **não** é a melhor escolha se:
+
+- Você tem **bilhões** de vetores e o vector store é seu produto principal — vai precisar de algo mais especializado (Vespa, Milvus em cluster, Pinecone enterprise).
+- Sua workload é 99% similarity search, sem componente relacional — aí o overhead do Postgres não compensa.
+- Você precisa de **filtros pré-search** muito agressivos com altíssimo throughput — alguns vector DBs dedicados otimizam isso melhor que o planner do Postgres.
+
+Pra a maioria dos produtos agentic — RAG sobre conteúdo próprio, memória de agente, busca semântica em catálogo — pgvector é mais que suficiente.
+
+### Setup no Aurora
+
+Aurora PostgreSQL traz pgvector pré-instalado a partir da versão 15.2. Você só precisa habilitar:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+Confirme a versão (idealmente 0.7.x ou superior, que traz HNSW maduro e suporte a half-precision `halfvec`):
+
+```sql
+SELECT extversion FROM pg_extension WHERE extname = 'vector';
+```
+
+### Schema com Drizzle
+
+Drizzle ganhou suporte nativo a `vector` em meados de 2024. Fica natural:
+
+```ts
+// db/schema.ts
+import { pgTable, uuid, text, timestamp, jsonb, vector, index } from "drizzle-orm/pg-core";
+
+export const documents = pgTable(
+  "documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id").notNull(),
+    source: text("source").notNull(),
+    chunk: text("chunk").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    embedding: vector("embedding", { dimensions: 1536 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    embeddingIdx: index("documents_embedding_idx")
+      .using("hnsw", t.embedding.op("vector_cosine_ops"))
+      .with({ m: 16, ef_construction: 64 }),
+    projectIdx: index("documents_project_idx").on(t.projectId),
+  }),
+);
+```
+
+Pontos importantes:
+
+- `dimensions: 1536` casa com `text-embedding-3-small` da OpenAI. Para `text-embedding-3-large` use 3072. Para `voyage-3` use 1024.
+- O índice é **HNSW com `vector_cosine_ops`** porque a maioria dos modelos de embedding normaliza vetores e cosine é a métrica esperada. Para inner product use `vector_ip_ops`, para L2 use `vector_l2_ops`.
+- `m=16` e `ef_construction=64` são bons defaults. Aumentar `m` melhora recall às custas de memória do índice; aumentar `ef_construction` melhora qualidade do build às custas de tempo de construção.
+
+### Gerando embeddings (AI SDK)
+
+```ts
+// lib/embed.ts
+import { embed, embedMany } from "ai";
+import { openai } from "@ai-sdk/openai";
+
+export async function embedOne(text: string) {
+  const { embedding } = await embed({
+    model: openai.embedding("text-embedding-3-small"),
+    value: text,
+  });
+  return embedding;
+}
+
+export async function embedBatch(texts: string[]) {
+  const { embeddings } = await embedMany({
+    model: openai.embedding("text-embedding-3-small"),
+    values: texts,
+  });
+  return embeddings;
+}
+```
+
+Em produção, prefira `embedMany` em lotes de 96–128 para amortizar latência da chamada HTTP.
+
+### Inserindo
+
+```ts
+import { db } from "./db";
+import { documents } from "./db/schema";
+import { embedBatch } from "./lib/embed";
+
+export async function ingest(
+  projectId: string,
+  source: string,
+  chunks: string[],
+) {
+  const embeddings = await embedBatch(chunks);
+
+  await db.insert(documents).values(
+    chunks.map((chunk, i) => ({
+      projectId,
+      source,
+      chunk,
+      embedding: embeddings[i],
+    })),
+  );
+}
+```
+
+### Query: similarity + filtro relacional
+
+Aqui mora a graça de ter tudo no Postgres.
+
+```ts
+import { sql, and, eq, gte } from "drizzle-orm";
+
+export async function search(opts: {
+  projectId: string;
+  query: string;
+  language: string;
+  sinceDays?: number;
+  k?: number;
+}) {
+  const queryEmbedding = await embedOne(opts.query);
+  const k = opts.k ?? 10;
+  const since = new Date(Date.now() - (opts.sinceDays ?? 90) * 86_400_000);
+
+  const distance = sql<number>`${documents.embedding} <=> ${queryEmbedding}`;
+
+  return db
+    .select({
+      id: documents.id,
+      chunk: documents.chunk,
+      source: documents.source,
+      distance,
+    })
+    .from(documents)
+    .where(
+      and(
+        eq(documents.projectId, opts.projectId),
+        sql`${documents.metadata}->>'language' = ${opts.language}`,
+        gte(documents.createdAt, since),
+      ),
+    )
+    .orderBy(distance)
+    .limit(k);
+}
+```
+
+O operador `<=>` é cosine distance no pgvector (`<->` é L2, `<#>` é negative inner product). Como o índice foi criado com `vector_cosine_ops`, o planner vai usá-lo no `ORDER BY`.
+
+Tuning de runtime que vale ouro:
+
+```sql
+SET hnsw.ef_search = 100;
+```
+
+Esse parâmetro controla o trade-off entre recall e latência **na hora da busca**. Default é 40. Subir pra 100–200 melhora recall significativamente com custo modesto de latência.
+
+### E se eu usar Prisma?
+
+Prisma ainda não tem suporte de primeira classe ao tipo `vector`, mas dá pra usar via `Unsupported` no schema e `$queryRaw` na query:
+
+```prisma
+model Document {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  chunk     String
+  embedding Unsupported("vector(1536)")
+  createdAt DateTime @default(now())
+}
+```
+
+```ts
+const results = await prisma.$queryRaw<Array<{ id: string; chunk: string; distance: number }>>`
+  SELECT id, chunk, embedding <=> ${queryEmbedding}::vector AS distance
+  FROM "Document"
+  WHERE "projectId" = ${projectId}::uuid
+  ORDER BY distance
+  LIMIT ${k};
+`;
+```
+
+Funciona, mas você perde type-safety dentro do vetor e o índice precisa ser criado por migration manual. Por isso Drizzle ficou a escolha default.
+
+### Gotchas que aprendi do jeito difícil
+
+- **Crie o índice HNSW DEPOIS de carregar os dados em ingestões grandes**. Construir o índice é caro; carregar com índice já existente é muito mais lento.
+- **Use `halfvec` se latência/memória apertar** — pgvector 0.7 introduziu vetores de half-precision (16 bits) que cortam memória de índice pela metade com perda de recall desprezível pra a maioria dos casos.
+- **Não embaralhe modelos de embedding**. Vetores de modelos diferentes não são comparáveis. Se trocar de modelo, **reindexe tudo**.
+- **Cuidado com chunks gigantes**. Embeddings perdem fidelidade acima de ~500 tokens. Use chunking com overlap (~50 tokens) e mantenha chunks coesos semanticamente.
+- **Para escala alta**, mova o índice para um Aurora replica e direcione queries de similaridade pra lá. Sua write workload no primário não sente.
+
+### Fechando
+
+A decisão de stack pra embeddings não é técnica pura — é sobre **quantos sistemas você quer operar**.
+
+Cada serviço a mais é mais um SDK, mais um SLA, mais uma fatura, mais um modelo mental, mais um vetor de falha. Postgres com pgvector compacta isso num lugar só, com performance suficiente pra esmagadora maioria dos produtos agentic atuais.
+
+A regra que eu sigo:
+
+> **Comece com pgvector. Saia dele só quando tiver evidência concreta de que não cabe mais.**
+
+Na prática, esse momento demora muito mais a chegar do que o hype dos vector DBs dedicados sugere.
