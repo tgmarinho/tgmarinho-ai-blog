@@ -11,6 +11,16 @@
 
 set -euo pipefail
 
+# Load nvm so `node` is on PATH when invoked by launchd/cron (non-interactive
+# shells don't read ~/.zshrc, where the user's nvm setup lives).
+if [ -z "${NVM_DIR:-}" ]; then
+  export NVM_DIR="$HOME/.nvm"
+fi
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  \. "$NVM_DIR/nvm.sh"
+fi
+
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
