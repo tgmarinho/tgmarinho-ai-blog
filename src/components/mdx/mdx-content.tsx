@@ -55,6 +55,30 @@ interface MdxContentProps {
   code: string;
 }
 
+type MdxComponent = React.ComponentType<{ components: typeof components }>;
+
+const compiledMdxCache = new Map<string, MdxComponent | null>();
+
+function getCompiledMdxComponent(content: string): MdxComponent | null {
+  if (compiledMdxCache.has(content)) {
+    return compiledMdxCache.get(content) ?? null;
+  }
+
+  let Component: MdxComponent | null = null;
+  try {
+    const fn = new Function("React", "runtime", content);
+    const result = fn(React, { ...runtime });
+    Component = (result?.default || result) as MdxComponent | null;
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("MDX render error:", error);
+    }
+  }
+
+  compiledMdxCache.set(content, Component);
+  return Component;
+}
+
 export function MdxContent({ code }: MdxContentProps) {
   if (!code) {
     return <div className="prose max-w-none">No content available</div>;
@@ -69,24 +93,16 @@ export function MdxContent({ code }: MdxContentProps) {
   const isHTML = content.startsWith("<");
 
   if (isCompiledMDX) {
-    try {
-      const fn = new Function("React", "runtime", content);
-      const result = fn(React, { ...runtime });
-      const Component = result?.default || result;
-      if (!Component) {
-        return <div className="prose max-w-none" />;
-      }
-      return (
-        <div className="prose max-w-none">
-          <Component components={components} />
-        </div>
-      );
-    } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("MDX render error:", error);
-      }
+    const Component = getCompiledMdxComponent(content);
+    if (!Component) {
       return <div className="prose max-w-none" />;
     }
+    return (
+      <div className="prose max-w-none">
+        {/* eslint-disable-next-line react-hooks/static-components -- Compiled MDX posts are dynamic components by design. */}
+        <Component components={components} />
+      </div>
+    );
   }
 
   if (isHTML) {
