@@ -1,0 +1,159 @@
+---
+title: "How to build a GenAI platform: a 7-layer tutorial"
+description: "A practical walk-through to evolve a generative AI app — from a single model call to a full platform with RAG, guardrails, gateway, cache, agents, observability, and orchestration. Based on Chip Huyen's essay."
+date: "2026-05-16"
+published: true
+slug: "how-to-build-a-genai-platform-step-by-step-en"
+language: "en"
+translationKey: "building-genai-platform-tutorial"
+categories: ["ai", "software-engineering", "tutorial", "en"]
+image: "/images/blog/agentic-futurism-stack-7-layers.jpg"
+---
+
+Most generative AI applications in production start simple: one call to an LLM, a prompt, a response. A few weeks later, that naive design hits the wall — hallucinations, cost, latency, leaking sensitive data, prompt injection, no visibility into what is breaking.
+
+Chip Huyen wrote one of the best guides on how to evolve from that starting point into a robust GenAI platform. This post is a tutorial inspired by the [original essay](https://huyenchip.com/2024/07/25/genai-platform.html), with practical adaptations and a focus on engineering decisions.
+
+The core idea is simple: **add complexity only when the problem demands it**. Every layer below solves a specific pain. Skipping steps costs as much as adopting all of them at once.
+
+### The starting point
+
+The most basic version of a GenAI app is a pure function:
+
+```ts
+user query → model → response
+```
+
+No retrieval, no cache, no router. Just the API call.
+
+This shape is enough to validate an idea. But three limits show up fast:
+
+- the model only knows what was in its training set;
+- there is no control over what goes in or out;
+- there is no visibility on what fails in production.
+
+The journey that follows addresses these three fronts.
+
+### Layer 1 — Enhance the context (RAG)
+
+The first evolution is feeding the model information it does not have. This is **context construction** — the equivalent of feature engineering in classical ML.
+
+There are three flavors:
+
+**Traditional RAG** combines term-based search (BM25, Elasticsearch) with embedding-based search (FAISS, ScaNN, hnswlib). The hybrid version almost always beats either one alone. A cheap reranker upfront, an expensive one after — that is the canonical pattern.
+
+**RAG with tabular data** uses text-to-SQL: the model writes the query, you execute it against your database, return the result, and the model formats the final answer.
+
+**Agentic RAG** combines retrieval, SQL, and web search inside a loop. The agent decides which action to take based on the question. Careful: you are no longer in read-only territory — you are letting the model chain actions.
+
+A fourth, often overlooked piece: **query rewriting**. In multi-turn chats, the user asks "what about Emily?" and the model has to rewrite it to "when was Emily Doe's last purchase?". Without it, retrieval collapses.
+
+### Layer 2 — Put in guardrails
+
+The second layer protects your system, your users, and your company. Guardrails have two sides.
+
+**On input**, you want to detect and mask PII (phone numbers, IDs, bank accounts), block jailbreak attempts, and filter restricted topics. A useful pattern: replace sensitive data with reversible placeholders before sending to the model, then remap them in the response.
+
+**On output**, you want to detect:
+
+- empty or malformatted responses (validate JSON against a schema, run generated Python inside a sandbox);
+- toxicity;
+- hallucinations (SelfCheckGPT, SAFE);
+- leakage of sensitive information;
+- responses that hurt the brand.
+
+Failure policy matters as much as detection: retry with limits, redundant parallel calls to avoid latency bloat, human escalation for high-stakes cases.
+
+The obvious tradeoff: every guardrail adds latency. Streaming makes it worse because you have to evaluate partial tokens. The right question is "what is the cost of a failure?" — if it is high, pay the latency.
+
+### Layer 3 — Model router and gateway
+
+From here on, your app rarely uses a single model. You have cheap questions that run on Haiku, complex questions that need Opus, image queries, multilingual queries.
+
+The **router** is an intent classifier that decides which pipeline to run. It avoids burning expensive tokens on out-of-scope queries and adjusts context for each model's window.
+
+The **gateway** is the abstraction layer that centralizes model access. In one sentence: you do not call OpenAI or Anthropic directly — you call your gateway. That gives you:
+
+- fine-grained access and cost control;
+- fallback policies (rate limits, provider outages);
+- centralized logging and analytics;
+- load balancing across providers.
+
+You do not need to build it from scratch. Portkey, MLflow AI Gateway, TrueFoundry, Kong, and Cloudflare all offer mature solutions. For greenfield projects on Vercel, the natural choice is the [AI Gateway](https://vercel.com/docs/ai-gateway) — you use strings like `"anthropic/claude-opus-4-7"` through the AI SDK and get fallback, observability, and caching for free.
+
+### Layer 4 — Reduce latency with cache
+
+Cache in GenAI has three flavors. Each one solves a different problem.
+
+**Prompt cache** stores text segments shared across calls — system prompts, long documents. The provider processes once and reuses. Anthropic, OpenAI, and Google offer this natively, with a typical 75% discount on cached tokens. Storage cost: ~$1 per million tokens per hour.
+
+**Exact cache** stores full query→response pairs. If the same question shows up, you return it directly — no model call, no retrieval, no SQL. Implementation: Redis or Postgres with an eviction policy (LRU, LFU).
+
+**Semantic cache** goes further — it reuses responses for *similar*, not identical, questions. It requires a vector DB, a calibrated similarity threshold, and reliable embeddings. It works, but this is where teams trip the most: a bad threshold and you serve someone else's answer.
+
+My take: start with prompt cache (it is free), add exact cache when traffic repeats, and only consider semantic cache when the first two are not enough.
+
+### Layer 5 — Complex logic and write actions
+
+This is where your app stops being a Q&A and becomes a system.
+
+**Complex logic** means iterative chaining of model calls with conditional branching. One call's output is the next call's input. An agent planning a Paris trip does this all day: search flights, decide dates, refine hotels, adjust the itinerary.
+
+**Write actions** are the next leap: letting the model *change the world*. Send an email, place an order, update a database record. This is where the platform's biggest risk lives — prompt injection stops being a UX glitch and becomes a security failure.
+
+Rule of thumb: for every write action, you need:
+
+1. a clear permission layer (can the model trigger this action for this user?);
+2. a specific guardrail that validates the payload;
+3. full logging for audit;
+4. a reversal path (transactions, soft delete, undo).
+
+If you do not trust those four guarantees, keep the system read-only.
+
+### Layer 6 — Observability
+
+Without observability, you do not have a platform — you have a black box with luck.
+
+Three classic pillars, adapted to GenAI:
+
+**Metrics that matter:**
+
+- model: accuracy, toxicity, hallucination rate, timeout, empty response;
+- retrieval: context relevance and precision;
+- latency: TTFT (time to first token), TBT (time between tokens), TPS, TPOT, total latency;
+- cost: query volume, input and output tokens;
+- shape: query, context, and response lengths (sudden changes signal regression).
+
+Break every metric down by user, release, prompt version, and time window.
+
+**Logs**: "log everything" is the right default. Call config, original query, rewritten query, retrieved context, final prompt, raw response, filtered response, guardrail decisions. A habit that separates real production teams from the rest: spend 30 minutes a day *manually* inspecting samples of production data.
+
+**Traces**: the full path from query to response, with timing and cost per step. Langsmith is the canonical example. When something fails in production, the trace shows you *where*.
+
+### Layer 7 — Orchestration
+
+The last piece ties everything together. Orchestration frameworks (LangChain, LlamaIndex, Haystack, Flowise, Langflow) offer two kinds of help:
+
+1. **Component definition**: registering models, databases, tools, gateway integrations, and evaluation hooks.
+2. **Pipelining**: chaining execution end to end, with parallelism where possible.
+
+A counter-intuitive piece of advice: **do not start with an orchestrator**. These frameworks abstract things you need to feel in your bones first. Once your pipeline has 4–5 steps with branching and retries, adoption starts to pay off.
+
+### How to use this tutorial
+
+The order matters. Resist the urge to skip steps because "it looks easy". Each layer solves a specific class of problem:
+
+1. start with the basic call;
+2. add RAG when the model does not know;
+3. wire up guardrails before opening to external users;
+4. add router/gateway once you have more than one model;
+5. cache when latency or cost become a problem;
+6. complex logic and write actions when the product demands them;
+7. observability from day one (not a retrofit);
+8. orchestration only after real complexity justifies it.
+
+Evaluation is the one thing that cuts across every layer. Without evals, every change is a guess. That, by the way, deserves a post of its own.
+
+### Reference
+
+Chip Huyen's original essay, which is the spine of this tutorial: [Building A Generative AI Platform](https://huyenchip.com/2024/07/25/genai-platform.html). Worth reading before her book [AI Engineering](https://www.oreilly.com/library/view/ai-engineering/9781098166298/), where the topics left out of the post (evals, fine-tuning, chunking, annotation) are covered in depth.
