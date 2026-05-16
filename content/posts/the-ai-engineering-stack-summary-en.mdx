@@ -64,6 +64,8 @@ You start from a product hypothesis, use a good-enough model, measure, and only 
 
 A nice side effect: **full-stack engineers got a real edge**. People who can touch UI, backend, prompt, eval, and ship a product change in a single week outpace teams stuck in classical ML silos.
 
+An empirical anecdote of this effect comes from the Pragmatic Engineer follow-up ([AI Engineering in the Real World](https://newsletter.pragmaticengineer.com/p/ai-engineering-in-the-real-world)): at DSI, Ryan Cogswell shipped in ~2 months, solo, what an external agency had quoted at 6 to 9 months with SageMaker, Lambdas, and two databases. Not an isolated case — it's the pattern that emerges as the stack converges.
+
 ### Where the complexity actually lives
 
 If pre-trained models handle the heavy part, what's left? In decreasing order of time spent:
@@ -73,6 +75,8 @@ If pre-trained models handle the heavy part, what's left? In decreasing order of
 - **AI interface.** Chat is the obvious interface, rarely the best one. Picking between chat, form, background agent, browser extension, or pure API shifts perceived quality dramatically.
 - **Proprietary data.** Data quality is becoming a stronger competitive moat than model choice.
 - **Inference.** Latency, per-request cost, caching, batching, streaming.
+
+Ross McNairn, Wordsmith's CTO, sums this part up nicely in the follow-up: *"getting comfortable with evaluations and iterating on non-deterministic outputs is the biggest challenge"*. Same thesis as Huyen, but voiced by someone running it in production.
 
 Classical ML is still useful, but for most application use cases it became *nice-to-have*.
 
@@ -92,7 +96,7 @@ If you are positioning yourself as an AI engineer today, I would invest in:
 
 1. **Owning evaluation.** Reliable offline evals plus solid online signal instrumentation is rare and expensive.
 2. **Context construction.** RAG, memory, tool use, agents — this is the engineering with the highest leverage.
-3. **Cost and latency in production.** Inference optimization, caching, streaming, and cross-model fallback are real differentiators.
+3. **Cost and latency in production.** Inference optimization, caching, streaming, and cross-model fallback are real differentiators. Multi-cloud by model is becoming the default — Wordsmith runs on AWS (Anthropic) + Azure (OpenAI) + GCP (Gemini) because no single provider hosts all the best models.
 4. **Product.** Knowing which interface to pick — and when *not* to use AI — is half the delivery.
 5. **Proprietary data.** Whoever owns the data and the curation loop wins long-term.
 
@@ -135,6 +139,7 @@ Putting the three pieces together: the **stack** gives you the map, **Huyen/Agen
 ### References
 
 - [The AI Engineering Stack — Gergely Orosz & Chip Huyen, The Pragmatic Engineer](https://newsletter.pragmaticengineer.com/p/the-ai-engineering-stack)
+- [AI Engineering in the Real World — The Pragmatic Engineer](https://newsletter.pragmaticengineer.com/p/ai-engineering-in-the-real-world)
 - [Agents — Chip Huyen](https://huyenchip.com/2025/01/07/agents.html)
 - [Building Effective Agents — Anthropic Engineering](https://www.anthropic.com/engineering/building-effective-agents)
 - [AI Engineering — Chip Huyen, O'Reilly](https://www.oreilly.com/library/view/ai-engineering/9781098166298/)
