@@ -28,7 +28,7 @@ flowchart TD
     OUT_PT["content/journal/pt-BR/&lt;DATE&gt;.md"]
     OUT_EN["content/journal/en/&lt;DATE&gt;.md"]
     CLAUDE["claude CLI<br/><i>uses your Claude Code session,<br/>no API key needed</i>"]
-    LAUNCHD["launchd @ 23:00<br/>(catch-up on wake)"]
+    LAUNCHD["launchd @ 00:30 next day<br/>(catch-up on wake)"]
   end
 
   subgraph REMOTE["☁️  GitHub"]
@@ -119,8 +119,11 @@ flowchart LR
 
 `scripts/journal-cron.sh` orchestrates three steps:
 
-1. `scripts/daily-journal.mjs` reads `~/.claude/projects/*/*.jsonl` + git log
-   and writes raw bullets to `tmp/journal-<DATE>.md`.
+1. `scripts/daily-journal.mjs` reads sessions from three coding-agent harnesses
+   plus git log, and writes raw bullets to `tmp/journal-<DATE>.md`:
+   - **Claude Code** — `~/.claude/projects/<encoded-path>/*.jsonl`
+   - **Pi** (`pi.dev`) — `~/.pi/agent/sessions/<encoded-path>--/*.jsonl`
+   - **Codex CLI** — `~/.codex/sessions/<YYYY>/<MM>/<DD>/rollout-*.jsonl`
 2. If the raw file has fewer than 5 bullet lines, the run exits silently.
 3. `scripts/journal-narrate.mjs` runs the local `claude` CLI (no API key
    needed) to produce `content/journal/<DATE>.md` with a single `## Diário`
@@ -148,7 +151,7 @@ Actions can't see them.
 ## Manual run
 
 ```bash
-# today (America/Campo_Grande) — designed to be run at 23:00
+# yesterday (America/Campo_Grande) — designed to be run at 00:30 the next day
 bash scripts/journal-cron.sh
 
 # specific day
@@ -178,8 +181,8 @@ Save as `~/Library/LaunchAgents/com.tgmarinho.journal.daily.plist`:
   </array>
   <key>StartCalendarInterval</key>
   <dict>
-    <key>Hour</key>    <integer>23</integer>
-    <key>Minute</key>  <integer>0</integer>
+    <key>Hour</key>    <integer>0</integer>
+    <key>Minute</key>  <integer>30</integer>
   </dict>
   <key>StandardOutPath</key>  <string>/tmp/journal-cron.log</string>
   <key>StandardErrorPath</key><string>/tmp/journal-cron.log</string>
@@ -196,16 +199,17 @@ launchctl list | grep tgmarinho.journal      # confirm it's registered
 tail -f /tmp/journal-cron.log                # watch output
 ```
 
-`launchd` fires at 23:00 local time daily, covering work done since 00:00 of
-the current day. If the Mac is asleep at 23:00, the job runs as soon as the
-machine wakes up.
+`launchd` fires at 00:30 local time daily, generating yesterday's journal — by
+then all sessions from the previous day are flushed to disk, so there's no race
+with sessions still being modified at 23:59. If the Mac is asleep at 00:30, the
+job runs as soon as the machine wakes up.
 
 ## Alternative: crontab
 
 ```bash
 crontab -e
 # add:
-0 23 * * * cd /Users/tgmarinho/Developer/tgmarinho-ai-website && /bin/bash scripts/journal-cron.sh >> /tmp/journal-cron.log 2>&1
+30 0 * * * cd /Users/tgmarinho/Developer/tgmarinho-ai-website && /bin/bash scripts/journal-cron.sh >> /tmp/journal-cron.log 2>&1
 ```
 
 ## Uninstall
