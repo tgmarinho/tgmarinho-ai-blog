@@ -2,22 +2,29 @@
 /**
  * Daily work journal generator.
  *
- * Reads Claude Code sessions (~/.claude/projects/<repo>/*.jsonl) and git log
- * across all repos touched on a given day, then emits a markdown digest you
- * can edit and publish as proof-of-work.
+ * Reads coding-agent sessions across multiple harnesses (Claude Code, Pi, Codex)
+ * plus git log across all repos touched on a given day, then emits a markdown
+ * digest you can edit and publish as proof-of-work.
+ *
+ * Sources:
+ *   - ~/.claude/projects/<encoded-path>/*.jsonl              (Claude Code)
+ *   - ~/.pi/agent/sessions/<encoded-path>--/*.jsonl          (Pi — pi.dev)
+ *   - ~/.codex/sessions/<YYYY>/<MM>/<DD>/rollout-*.jsonl     (OpenAI Codex CLI)
  *
  * Usage:
  *   node scripts/daily-journal.mjs                     # today
  *   node scripts/daily-journal.mjs --date 2026-05-12   # specific day
  *   node scripts/daily-journal.mjs --date 2026-05-12 --out tmp/journal.md
  */
-import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve, join, dirname } from "node:path";
 import { execSync } from "node:child_process";
 
 const HOME = homedir();
-const PROJECTS_DIR = join(HOME, ".claude", "projects");
+const CLAUDE_PROJECTS_DIR = join(HOME, ".claude", "projects");
+const PI_SESSIONS_DIR = join(HOME, ".pi", "agent", "sessions");
+const CODEX_SESSIONS_DIR = join(HOME, ".codex", "sessions");
 
 const args = process.argv.slice(2);
 function flag(name) {
@@ -89,7 +96,7 @@ function sanitize(text) {
     .replace(/(?:[A-Za-z0-9+/]{40,}={0,2})/g, (m) => (m.length > 60 ? "[REDACTED_BLOB]" : m));
 }
 
-function extractUserText(msg) {
+function extractClaudeUserText(msg) {
   const c = msg?.message?.content;
   if (typeof c === "string") return c;
   if (Array.isArray(c)) {
@@ -101,64 +108,210 @@ function extractUserText(msg) {
   return "";
 }
 
-const sessions = [];
-for (const projDir of readdirSync(PROJECTS_DIR)) {
-  const full = join(PROJECTS_DIR, projDir);
-  let entries;
-  try {
-    entries = readdirSync(full);
-  } catch {
-    continue;
+// Codex + Conductor inject system blocks (<system_instruction>, <environment_context>,
+// <INSTRUCTIONS>, <user-prompt-submit-hook>, etc.) into the same user message as the
+// real prompt. Strip those wrappers so the noise filter sees the actual text.
+function stripSystemWrappers(text) {
+  if (!text) return text;
+  let s = text;
+  for (let i = 0; i < 6; i++) {
+    const before = s;
+    s = s.replace(/<([a-zA-Z][\w-]*)\b[^>]*>[\s\S]*?<\/\1>\s*/g, "").trim();
+    if (s === before) break;
   }
-  for (const f of entries) {
-    if (!f.endsWith(".jsonl")) continue;
-    const p = join(full, f);
-    let st;
+  return s;
+}
+
+function isNoisePrompt(text) {
+  const t = (text || "").trim();
+  return (
+    !t ||
+    t.length < 6 ||
+    t.length > 600 ||
+    t.startsWith("<") || // <task-notification>, <environment_context>, <system_instruction>, command-name, bash-input, etc.
+    t.startsWith("# AGENTS.md") || // codex preamble
+    t.includes("<INSTRUCTIONS>") ||
+    t.includes('"tool_use_id"') ||
+    t.includes("[REDACTED_BLOB]") ||
+    /^\[Request interrupted/.test(t) ||
+    /^\s*\$ /.test(t) ||
+    /^You are an expert /i.test(t) ||
+    /Screenshot \d{4}-\d{2}-\d{2}/.test(t)
+  );
+}
+
+function inDayWindow(ts) {
+  return ts && ts >= dayStart && ts <= dayEnd;
+}
+
+function scanClaude() {
+  const out = [];
+  if (!existsSync(CLAUDE_PROJECTS_DIR)) return out;
+  for (const projDir of readdirSync(CLAUDE_PROJECTS_DIR)) {
+    const full = join(CLAUDE_PROJECTS_DIR, projDir);
+    let entries;
     try {
-      st = statSync(p);
+      entries = readdirSync(full);
     } catch {
       continue;
     }
-    if (st.mtime < dayStart || st.mtime > new Date(dayEnd.getTime() + 24 * 3600 * 1000))
+    for (const f of entries) {
+      if (!f.endsWith(".jsonl")) continue;
+      const p = join(full, f);
+      let st;
+      try {
+        st = statSync(p);
+      } catch {
+        continue;
+      }
+      if (st.mtime < dayStart || st.mtime > new Date(dayEnd.getTime() + 24 * 3600 * 1000)) continue;
+
+      const prompts = [];
+      let firstTs = null;
+      let lastTs = null;
+      let cwd = null;
+      for (const entry of readJsonl(p)) {
+        if (!cwd && typeof entry?.cwd === "string") cwd = entry.cwd;
+        const ts = entry?.timestamp ? new Date(entry.timestamp) : null;
+        if (!inDayWindow(ts)) continue;
+        if (!firstTs || ts < firstTs) firstTs = ts;
+        if (!lastTs || ts > lastTs) lastTs = ts;
+        if (entry?.type === "user") {
+          const t = stripSystemWrappers(extractClaudeUserText(entry).trim());
+          if (!isNoisePrompt(t)) prompts.push(t);
+        }
+      }
+      if (prompts.length === 0) continue;
+      out.push({
+        agent: "claude",
+        projectDir: projDir,
+        repoPath: cwd ?? decodeProjectDir(projDir),
+        file: f,
+        firstTs,
+        lastTs,
+        prompts: prompts.slice(0, 5),
+      });
+    }
+  }
+  return out;
+}
+
+function scanPi() {
+  const out = [];
+  if (!existsSync(PI_SESSIONS_DIR)) return out;
+  for (const projDir of readdirSync(PI_SESSIONS_DIR)) {
+    const full = join(PI_SESSIONS_DIR, projDir);
+    let entries;
+    try {
+      entries = readdirSync(full);
+    } catch {
       continue;
+    }
+    for (const f of entries) {
+      if (!f.endsWith(".jsonl")) continue;
+      const p = join(full, f);
+      let st;
+      try {
+        st = statSync(p);
+      } catch {
+        continue;
+      }
+      if (st.mtime < dayStart || st.mtime > new Date(dayEnd.getTime() + 24 * 3600 * 1000)) continue;
+
+      const prompts = [];
+      let firstTs = null;
+      let lastTs = null;
+      let cwd = null;
+      for (const entry of readJsonl(p)) {
+        if (entry?.type === "session" && entry.cwd) cwd = entry.cwd;
+        const ts = entry?.timestamp ? new Date(entry.timestamp) : null;
+        if (!inDayWindow(ts)) continue;
+        if (!firstTs || ts < firstTs) firstTs = ts;
+        if (!lastTs || ts > lastTs) lastTs = ts;
+        if (entry?.type === "message" && entry?.message?.role === "user") {
+          const c = entry.message.content;
+          const text = Array.isArray(c)
+            ? c
+                .filter((p) => p?.type === "text" && typeof p?.text === "string")
+                .map((p) => p.text)
+                .join(" ")
+            : typeof c === "string"
+              ? c
+              : "";
+          const t = stripSystemWrappers(text.trim());
+          if (!isNoisePrompt(t)) prompts.push(t);
+        }
+      }
+      if (prompts.length === 0) continue;
+      out.push({
+        agent: "pi",
+        projectDir: projDir,
+        repoPath: cwd,
+        file: f,
+        firstTs,
+        lastTs,
+        prompts: prompts.slice(0, 5),
+      });
+    }
+  }
+  return out;
+}
+
+function scanCodex() {
+  const out = [];
+  const dayDir = join(CODEX_SESSIONS_DIR, DATE.slice(0, 4), DATE.slice(5, 7), DATE.slice(8, 10));
+  if (!existsSync(dayDir)) return out;
+  for (const f of readdirSync(dayDir)) {
+    if (!f.endsWith(".jsonl")) continue;
+    const p = join(dayDir, f);
 
     const prompts = [];
     let firstTs = null;
     let lastTs = null;
+    let cwd = null;
     for (const entry of readJsonl(p)) {
+      if (entry?.type === "session_meta" && entry?.payload?.cwd) cwd = entry.payload.cwd;
       const ts = entry?.timestamp ? new Date(entry.timestamp) : null;
-      if (ts && ts >= dayStart && ts <= dayEnd) {
-        if (!firstTs || ts < firstTs) firstTs = ts;
-        if (!lastTs || ts > lastTs) lastTs = ts;
-        if (entry?.type === "user") {
-          const text = extractUserText(entry);
-          const trimmed = text.trim();
-          const isNoise =
-            !trimmed ||
-            trimmed.length < 6 ||
-            trimmed.length > 600 ||
-            trimmed.startsWith("<") || // task-notification, command-name, bash-input, local-command-caveat, etc.
-            trimmed.includes('"tool_use_id"') ||
-            trimmed.includes("[REDACTED_BLOB]") ||
-            /^\[Request interrupted/.test(trimmed) ||
-            /^\s*\$ /.test(trimmed) ||
-            /^You are an expert /i.test(trimmed) ||
-            /Screenshot \d{4}-\d{2}-\d{2}/.test(trimmed);
-          if (!isNoise) prompts.push(trimmed);
+      if (!inDayWindow(ts)) continue;
+      if (!firstTs || ts < firstTs) firstTs = ts;
+      if (!lastTs || ts > lastTs) lastTs = ts;
+      if (
+        entry?.type === "response_item" &&
+        entry?.payload?.type === "message" &&
+        entry?.payload?.role === "user"
+      ) {
+        const c = entry.payload.content;
+        // Codex prepends AGENTS.md, <environment_context>, <system_instruction> as
+        // separate input_text items. The real user prompt is whichever item the
+        // noise filter accepts.
+        const items = Array.isArray(c)
+          ? c
+              .filter((p) => typeof p?.text === "string" || typeof p?.input_text === "string")
+              .map((p) => stripSystemWrappers((p.text ?? p.input_text ?? "").trim()))
+          : [];
+        for (const t of items) {
+          if (!isNoisePrompt(t)) {
+            prompts.push(t);
+            break; // one real prompt per user message
+          }
         }
       }
     }
     if (prompts.length === 0) continue;
-    sessions.push({
-      projectDir: projDir,
-      repoPath: decodeProjectDir(projDir),
+    out.push({
+      agent: "codex",
+      projectDir: cwd ?? f,
+      repoPath: cwd,
       file: f,
       firstTs,
       lastTs,
       prompts: prompts.slice(0, 5),
     });
   }
+  return out;
 }
+
+const sessions = [...scanClaude(), ...scanPi(), ...scanCodex()];
 
 // Group by repo
 const byRepo = new Map();
@@ -218,9 +371,12 @@ for (const [repo, list] of repos) {
   totalCommits += commits.length;
   totalSessions += list.length;
 
+  const agents = [...new Set(list.map((s) => s.agent))].sort();
   lines.push(`## ${repoName}`);
   lines.push("");
-  lines.push(`*${list.length} sessão(ões), ${commits.length} commit(s) — \`${sanitize(repo)}\`*`);
+  lines.push(
+    `*${list.length} sessão(ões) [${agents.join(", ")}], ${commits.length} commit(s) — \`${sanitize(repo)}\`*`,
+  );
   lines.push("");
 
   if (list.length) {
