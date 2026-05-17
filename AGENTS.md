@@ -17,18 +17,23 @@ Aesthetic: "Agentic Futurism" — dark canvas, cyan/magenta accents, editorial t
 
 ## 2. Canonical commands
 
+**This project uses [Bun](https://bun.sh) as the package manager and script runner. Do NOT use `npm`, `pnpm`, or `yarn`.** Lockfile is `bun.lock`; a `package-lock.json` showing up means someone ran `npm install` by mistake — delete it and run `bun install`.
+
 ```bash
-npm run dev               # velite + next dev (always run velite before next)
-npm run velite            # regenerates .velite/ from content/posts/*.mdx
-npm run build             # velite --clean && generate llms.txt && next build
-npm run lint              # eslint
-npm run start             # serve production build
-npm run llms              # regenerate public/llms.txt + public/llms-full.txt
-npm run audit:refs        # scan posts/pages for broken internal references
-npm run audit:i18n-seo    # validate hreflang, translationKey pairs, canonical
+bun install               # install dependencies (uses bun.lock)
+bun add <pkg>             # add a dependency
+bun remove <pkg>          # remove a dependency
+bun dev                   # velite + next dev (always run velite before next)
+bun velite                # regenerates .velite/ from content/posts/*.mdx
+bun run build             # velite --clean && generate llms.txt && next build
+bun lint                  # eslint
+bun start                 # serve production build
+bun llms                  # regenerate public/llms.txt + public/llms-full.txt
+bun audit:refs            # scan posts/pages for broken internal references
+bun audit:i18n-seo        # validate hreflang, translationKey pairs, canonical
 ```
 
-**Whenever you touch `content/posts/**` or `velite.config.ts`** → run `npm run velite` before `next dev` or the build will use stale data.
+**Whenever you touch `content/posts/**` or `velite.config.ts`** → run `bun velite` before `bun dev` or the build will use stale data.
 
 ---
 
@@ -60,12 +65,12 @@ velite.config.ts       # post schema + rehype pipeline (hardened in Phase 2.2)
 
 ## 4. Golden rules (do not violate)
 
-1. **Never edit `.velite/` by hand.** It's Velite output. To change post data, edit `content/posts/*.mdx` and run `npm run velite`.
+1. **Never edit `.velite/` by hand.** It's Velite output. To change post data, edit `content/posts/*.mdx` and run `bun velite`.
 2. **Never commit secrets.** `.env.local` is gitignored. Sensitive vars: `BUTTONDOWN_API_KEY`, `UPSTASH_REDIS_REST_*`.
 3. **Server Components by default.** Add `"use client"` **only** if you need `useState`/`useEffect`/browser events. Today's clients: `BlogSearch`, `CVViewer`, `ShareButton`, forms (`feedback`, `newsletter`), FX components with mouse listeners.
 4. **Do not introduce a CMS.** Content lives in MDX in Git, by design.
 5. **Do not swap the stack without asking.** No Pages Router, no replacing Velite with contentlayer/next-mdx-remote, no Tailwind→CSS-in-JS, no Redux. Stack changes need explicit human confirmation.
-6. **Do not run `npm run build` "just to test"** without reason — it's expensive and regenerates `.velite/`. Prefer `npm run lint` + reading the diff. Full builds only when explicitly requested or when type/config changes require it.
+6. **Do not run `bun run build` "just to test"** without reason — it's expensive and regenerates `.velite/`. Prefer `bun lint` + reading the diff. Full builds only when explicitly requested or when type/config changes require it.
 7. **`docs/redesign-2026-agentic-futurist.md`** is the visual changelog. Any non-trivial design change (tokens, fonts, hero layout, prose) must be reflected there.
 8. **Communication language with the human:** the user's rule is to **reply in Portuguese**. Code, comments, and identifiers stay in English.
 
@@ -126,7 +131,7 @@ slug: "custom-slug"        # optional — derived from title if omitted
 Rules:
 - `body` is **markdown** (not MDX-with-JSX) — `velite.config.ts` uses `s.markdown()` deliberately. Don't add JSX inside posts.
 - For external images on new domains, add the host in `next.config.ts`.
-- After editing, run `npm run velite` to validate the schema.
+- After editing, run `bun velite` to validate the schema.
 - Categories are free-form strings — follow existing ones when possible (`rg` against `content/posts/*.mdx` to see what's used).
 
 ### Required project skills for blog authoring
@@ -155,14 +160,14 @@ When migrating to Upstash Redis, follow the `Redis.fromEnv()` pattern documented
 
 ### Build-time generators
 
-- `scripts/generate-llms-txt.mjs` runs inside `npm run build` and writes `public/llms.txt` + `public/llms-full.txt` from the Velite output. Re-run manually via `npm run llms` after large content changes.
+- `scripts/generate-llms-txt.mjs` runs inside `bun run build` and writes `public/llms.txt` + `public/llms-full.txt` from the Velite output. Re-run manually via `bun llms` after large content changes.
 
 ---
 
 ## 8. Before finishing a task
 
-1. ✅ Edited files pass **`npm run lint`**.
-2. ✅ If you edited `content/posts/**` or `velite.config.ts`, you ran **`npm run velite`** and it finished without errors.
+1. ✅ Edited files pass **`bun lint`**.
+2. ✅ If you edited `content/posts/**` or `velite.config.ts`, you ran **`bun velite`** and it finished without errors.
 3. ✅ If you introduced a new client component, it has `"use client"` at the top.
 4. ✅ If you introduced a new route, it's consistent with `sitemap.ts` (update if it's a new static page).
 5. ✅ If you changed design tokens / aesthetic, you updated `docs/redesign-2026-agentic-futurist.md`.
@@ -184,7 +189,7 @@ When migrating to Upstash Redis, follow the `Redis.fromEnv()` pattern documented
 ## 10. Vercel-specific
 
 - **Default deploy target is Vercel.** Don't optimize for other platforms unless asked.
-- Vercel CLI is likely **not installed globally** — alert the user to `npm i -g vercel` if you need `vercel env pull` / `vercel deploy`.
+- Vercel CLI is likely **not installed globally** — alert the user to `bun add -g vercel` if you need `vercel env pull` / `vercel deploy`.
 - Production env vars: Vercel dashboard or `vercel env`. **Never** commit `.env.production`.
 - Functions run on Node 24 LTS (Fluid Compute) — feel free to use native Node APIs in route handlers.
 - For AI features, prefer **Vercel AI Gateway** with `"provider/model"` strings — don't hardcode `@ai-sdk/anthropic` directly without a reason.
@@ -208,18 +213,19 @@ Pi is a **deliberately minimal** harness — only `read`, `write`, `edit`, `bash
   rg --files src/components | rg fx   # search filenames
   ```
 - **No sub-agents for parallelism.** Do searches yourself, sequentially. Keep context tight — read only what you need, not the whole repo.
-- **Use `bash` responsibly.** Mutating commands (`git commit`, `npm install`, `rm`) only with explicit human approval.
+- **Use `bash` responsibly.** Mutating commands (`git commit`, `bun add`, `bun remove`, `rm`) only with explicit human approval.
 - **Pi extensions / skills** can be used if the user has them installed, but don't invent capability calls that don't exist in the harness.
 - **Safe commands recommended in this repo:**
-  - `npm run lint` — always OK
-  - `npm run velite` — always OK (regenerates `.velite/`)
+  - `bun lint` — always OK
+  - `bun velite` — always OK (regenerates `.velite/`)
   - `rg <pattern> <path>` — search
   - `cat`, `ls`, `head`, `tail` — read
 - **Avoid without explicit approval:**
-  - `npm run build` (expensive, regenerates `.velite/`)
+  - `bun run build` (expensive, regenerates `.velite/`)
   - `git push`, `git commit`, `git checkout -b` (mutate repo state)
-  - `npm install <pkg>` (touches deps)
+  - `bun add <pkg>` / `bun remove <pkg>` (touches deps + `bun.lock`)
   - `rm`, `mv` on tracked files
+- **Never use `npm`, `pnpm`, or `yarn` here.** They'd create a competing lockfile and break parity with the team setup.
 
 ### Codex / Copilot / others
 - Apply everything in `AGENTS.md` literally.
