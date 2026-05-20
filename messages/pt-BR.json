@@ -93,7 +93,24 @@
       "archived": "arquivado"
     },
     "source": "código",
-    "live": "ao vivo"
+    "live": "ao vivo",
+    "items": {
+      "itop": {
+        "description": "SaaS multi-tenant em produção para gestão de grandes eventos dos Legendários — inscrições, pagamentos (PIX/cartão com reconciliação por webhook), check-in via QR Code, geração de contratos com assinatura digital biométrica, plano de embarque e dashboards em tempo real. Processa dinheiro real, eventos reais e centenas de participantes em produção. Antecessor do inscricoestop.com.br antes do pivot."
+      },
+      "unicrow": {
+        "description": "Plataforma Web3 de escrow na Ethereum. Contribuí no SDK, indexador blockchain e integrações com smart contracts. SDK em TypeScript pronto para produção que transformou semanas de onboarding em um setup no mesmo dia."
+      },
+      "meetapp": {
+        "description": "Organizador de meetups full-stack (Backend + Web + Mobile). Desafio final do Bootcamp da Rocketseat. React, React Native, Node, Redux."
+      },
+      "be-the-hero": {
+        "description": "App full-stack conectando ONGs a doadores — construído durante a OmniStack week da Rocketseat. Ajuda pequenas organizações a captar recursos para suas causas."
+      },
+      "members": {
+        "description": "Toolkit open-source para gestão de membros e comunidades — uma stack enxuta e opinativa para iniciar produtos comunitários."
+      }
+    }
   },
   "about": {
     "metaTitle": "Sobre",

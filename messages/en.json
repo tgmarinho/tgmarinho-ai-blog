@@ -93,7 +93,24 @@
       "archived": "archived"
     },
     "source": "source",
-    "live": "live"
+    "live": "live",
+    "items": {
+      "itop": {
+        "description": "Multi-tenant SaaS in production for managing large Legendários events — registrations, payments (PIX/card with webhook reconciliation), QR Code check-in, contract generation with biometric digital signature, boarding plan, and real-time dashboards. Processes real money, real events, and hundreds of participants in production. Predecessor of inscricoestop.com.br before the pivot."
+      },
+      "unicrow": {
+        "description": "Web3 escrow platform on Ethereum. Contributed to the SDK, blockchain indexer, and smart-contract integrations. Production-grade TypeScript SDK that turned a multi-week onboarding into a same-day setup."
+      },
+      "meetapp": {
+        "description": "Full-stack meetup organizer (Backend + Web + Mobile). Final challenge from the Rocketseat Bootcamp. React, React Native, Node, Redux."
+      },
+      "be-the-hero": {
+        "description": "Full-stack app connecting NGOs with donors — built during Rocketseat OmniStack week. Helps small organizations raise funds for their causes."
+      },
+      "members": {
+        "description": "Open-source toolkit for managing members and communities — a small but opinionated stack to bootstrap community products."
+      }
+    }
   },
   "about": {
     "metaTitle": "About",
