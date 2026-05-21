@@ -77,7 +77,8 @@
       "translationMissingTitle": "English version unavailable",
       "translationMissingDescription": "This post hasn't been translated to English yet. Showing the original version.",
       "related": "related reading",
-      "readingTime": "{minutes} min read"
+      "readingTime": "{minutes} min read",
+      "onThisPage": "on this page"
     }
   },
   "projects": {

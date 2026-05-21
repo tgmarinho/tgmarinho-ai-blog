@@ -77,7 +77,8 @@
       "translationMissingTitle": "Versão em português indisponível",
       "translationMissingDescription": "Este post ainda não tem tradução em português. Mostrando a versão original.",
       "related": "leituras relacionadas",
-      "readingTime": "{minutes} min de leitura"
+      "readingTime": "{minutes} min de leitura",
+      "onThisPage": "nesta página"
     }
   },
   "projects": {
