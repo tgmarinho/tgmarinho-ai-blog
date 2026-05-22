@@ -1,5 +1,5 @@
 ---
-title: "Why Markdown is the lingua franca of LLMs (and what it changes for your RAG)"
+title: "Why Markdown is the lingua franca of LLMs and what it changes for your RAG"
 description: "Markdown is not just a human-friendly format — it's the syntax LLMs were trained on at scale. Why it improves table understanding, chunking, and RAG quality — and where the claim deserves nuance."
 date: "2026-05-21"
 published: true
@@ -114,7 +114,7 @@ This is not a ranking — it's a starting point. Run all three on *your* corpus 
 
 ### Academic endorsement
 
-For readers who want more than "Twitter hand-waving," recent literature backs the core points of this post:
+Beyond the community's practical experience, recent literature also backs the core points of this post:
 
 - **["Exploring the Impact of Table-to-Text Methods on Augmenting LLM-based Question Answering with Domain Hybrid Data"](https://arxiv.org/abs/2402.12869)** (2024) — tests table-conversion strategies for QA in RAG and observes that **Markdown shows surprising effectiveness** as a simple representation, competing with more elaborate LLM-based methods.
 - **["HtmlRAG: HTML is Better Than Plain Text for Modeling Retrieved Knowledge in RAG Systems"](https://arxiv.org/abs/2411.02959)** (WWW 2025) — argues that **plain text destroys critical structure** (headings, tables, hierarchy) present in the original HTML, and that preserving markup improves retrieval and generation. Reinforces this post's point: the win is **preserved structure**, not Markdown as a magic token.
