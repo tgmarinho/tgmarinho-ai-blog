@@ -81,6 +81,18 @@ export default defineConfig({
     clean: true,
   },
   collections: { posts, journal },
+  markdown: {
+    rehypePlugins: [
+      rehypeSlug,
+      [
+        rehypePrettyCode,
+        {
+          theme: "github-dark",
+          defaultLang: "plaintext",
+        },
+      ],
+    ],
+  },
   mdx: {
     // Disable strict validation to allow posts with invalid JSX/JS
     jsx: true,
