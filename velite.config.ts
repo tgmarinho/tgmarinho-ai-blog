@@ -88,7 +88,7 @@ export default defineConfig({
         rehypePrettyCode,
         {
           theme: "github-dark",
-          defaultLang: "plaintext",
+          defaultLang: { block: "plaintext" },
         },
       ],
     ],
@@ -102,7 +102,7 @@ export default defineConfig({
         rehypePrettyCode,
         {
           theme: "github-dark",
-          defaultLang: "plaintext",
+          defaultLang: { block: "plaintext" },
         },
       ],
       [
