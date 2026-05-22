@@ -12,7 +12,30 @@ interface TableOfContentsProps {
 
 export function TableOfContents({ items, label }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string | null>(items[0]?.id ?? null);
+  const [visible, setVisible] = useState(false);
   const lenis = useLenis();
+
+  useEffect(() => {
+    const article = document.querySelector<HTMLElement>(".prose");
+    if (!article) return;
+
+    const update = () => {
+      const rect = article.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+      // Visible while any part of the article body overlaps the upper 60% of the viewport.
+      // This hides the TOC while the cover image is on screen and after the body ends.
+      const inRange = rect.top < viewportH * 0.6 && rect.bottom > viewportH * 0.2;
+      setVisible(inRange);
+    };
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   useEffect(() => {
     if (items.length === 0) return;
@@ -23,22 +46,22 @@ export function TableOfContents({ items, label }: TableOfContentsProps) {
 
     if (headings.length === 0) return;
 
-    const visible = new Map<string, number>();
+    const visibleHeadings = new Map<string, number>();
 
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            visible.set(entry.target.id, entry.intersectionRatio);
+            visibleHeadings.set(entry.target.id, entry.intersectionRatio);
           } else {
-            visible.delete(entry.target.id);
+            visibleHeadings.delete(entry.target.id);
           }
         }
 
-        if (visible.size > 0) {
+        if (visibleHeadings.size > 0) {
           let bestId: string | null = null;
           let bestIndex = Infinity;
-          for (const id of visible.keys()) {
+          for (const id of visibleHeadings.keys()) {
             const idx = items.findIndex((it) => it.id === id);
             if (idx !== -1 && idx < bestIndex) {
               bestIndex = idx;
@@ -74,7 +97,14 @@ export function TableOfContents({ items, label }: TableOfContentsProps) {
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label={label} className="relative">
+    <nav
+      aria-label={label}
+      aria-hidden={!visible}
+      className={cn(
+        "relative transition-opacity duration-300",
+        visible ? "opacity-100" : "pointer-events-none opacity-0"
+      )}
+    >
       <p className="mb-6 font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground/80">
         {label}
       </p>
