@@ -1,6 +1,6 @@
 ---
 title: "RAG end to end: Input, Retriever, and Generator explained"
-description: "A dense overview of RAG (Retrieval-Augmented Generation): why the architecture exists, the offline ingestion pipeline, the online query flow, embeddings, cosine similarity, HNSW, chunking, and why this reduces hallucination."
+description: "A dense overview of RAG (Retrieval-Augmented Generation): what it is, why it matters, what Retrieval, Augmented, and Generation mean, the offline ingestion pipeline, the online query flow, embeddings, cosine similarity, HNSW, and chunking."
 date: "2026-05-22"
 published: true
 slug: "rag-overview-input-retriever-generator-en"
@@ -19,13 +19,21 @@ LLMs write fluently. But ask them about your internal PDF, your store refund pol
 
 **RAG (Retrieval-Augmented Generation)** exists to fix this. It doesn't replace the LLM, it **complements** it: it adds a retrieval step before generation so the model answers by **consulting real evidence** instead of just "remembering" from training.
 
-This post is a dense end-to-end overview of RAG — the motivation, the minimal architecture, the offline ingestion pipeline, the online query flow, and the concepts that hold it all together (embeddings, cosine, HNSW, chunking).
+This post is a dense end-to-end overview of RAG — what it is, why it matters, what each letter means, the minimal architecture, the offline ingestion pipeline, the online query flow, and the concepts that hold it all together (embeddings, cosine similarity, HNSW, chunking).
 
 ### The one-line definition
 
 > **RAG = retrieve relevant chunks from a corpus + hand them to the LLM as context so it can write the answer.**
 
 Everything below is technical detail on top of that one sentence.
+
+### What R, A, and G mean
+
+The name is literal: each letter maps to a responsibility in the flow.
+
+<RagLettersDiagram language="en" />
+
+Without **R**, the model answers only from training or from the prompt. Without **A**, retrieval does not become useful context for the LLM. Without **G**, you have relevant documents, but not yet a synthesized answer.
 
 ### Why RAG exists — what each half can't solve alone
 
@@ -71,9 +79,11 @@ From here on, each step in detail.
 
 ---
 
-## Part 1 — Ingestion (offline)
+## RAG flow step by step
 
-### 1. Text Loader · "everything becomes text"
+### Ingestion (offline · done once)
+
+#### 1. Text Loader · loads the documents
 
 Each source becomes **plain text** before anything else. The right loader depends on the format:
 
@@ -91,7 +101,7 @@ Each source becomes **plain text** before anything else. The right loader depend
 
 Sibling post: [Markdown as the lingua franca of LLMs](/en/blog/markdown-lingua-franca-of-llms-en) explains why exporting to well-formed Markdown has measurable effects on comprehension and retrieval.
 
-### 2. Splitter · break the text into chunks
+#### 2. Splitter · break the text into chunks
 
 A whole document is useless for search for two reasons:
 
@@ -100,7 +110,7 @@ A whole document is useless for search for two reasons:
 
 The **splitter** divides the text into smaller pieces — **chunks** — and attaches **metadata** (title, page, author, chapter, date).
 
-#### Three main strategies
+##### Three main strategies
 
 | Strategy                    | How it works                                                                                          | When to use                                       |
 | --------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
@@ -113,20 +123,20 @@ Chunking quality shows up at the edges:
 - **Clean cut:** ends at sentence or section boundary. The chunk is a coherent semantic unit.
 - **Bad cut:** splits a sentence mid-thought, separates header from body, slices a table. Embedding becomes incoherent, search returns garbage.
 
-#### Overlap
+##### Overlap
 
 Chunks are usually built with **overlap** (e.g., 50 tokens shared between neighbors). This avoids losing context when an idea crosses a boundary: if a concept starts at the end of chunk A and ends at the start of B, with overlap both carry the bridge information.
 
 - **Input:** long text.
 - **Output:** list of chunks (~300–1000 tokens each) + per-chunk metadata.
 
-### 3. Embedding Model · each chunk becomes a vector
+#### 3. Embedding Model · turns each chunk into a vector
 
 Each chunk passes through an **embedding model**. The model tokenizes the text, processes it, and returns a **vector** — a fixed-length list of numbers — that captures the chunk's **semantic meaning**.
 
 <RagEmbeddingDiagram language="en" />
 
-#### Common models
+##### Common models
 
 | Model                            | Dimensions | Notes                                |
 | -------------------------------- | ---------- | ------------------------------------ |
@@ -135,7 +145,7 @@ Each chunk passes through an **embedding model**. The model tokenizes the text, 
 | `all-MiniLM-L6-v2` (open-source) | 384        | Runs local, light, surprisingly good.|
 | `BAAI/bge-m3`                    | 1024       | Strong for multilingual / non-English.|
 
-#### The core intuition
+##### The core intuition
 
 Embedding turns text into a **point in a mathematical space**. Texts with **similar meaning land close together**, even without sharing any letters:
 
@@ -145,11 +155,11 @@ Embedding turns text into a **point in a mathematical space**. Texts with **simi
 
 This is what enables **semantic search** (find by meaning) instead of just **keyword search** (match exact words).
 
-#### Critical gotcha
+##### Critical gotcha
 
 **Different models live in different vector spaces.** An embedding from OpenAI's `text-embedding-3-small` is **not comparable** to one from MiniLM. If you swap the embedding model, you **must reindex the entire corpus**. No shortcut.
 
-### 4. Vector Database · index the vectors
+#### 4. Vector Database · index the vectors
 
 The vectors land in a **collection** in a vector database — Qdrant, Pinecone, Weaviate, pgvector, Milvus — alongside the original text and metadata:
 
@@ -162,13 +172,13 @@ The vectors land in a **collection** in a vector database — Qdrant, Pinecone, 
 }
 ```
 
-#### The problem vector DBs solve
+##### The problem vector DBs solve
 
 Comparing one query against **1 million vectors** with a linear `for` loop takes seconds per search. Unworkable.
 
 The solution is **approximate search** (ANN — *Approximate Nearest Neighbors*). The most-used algorithm is **HNSW** (*Hierarchical Navigable Small World*).
 
-#### HNSW in one sentence
+##### HNSW in one sentence
 
 > HNSW replicates the vector space across **multiple layers**: the top has few nodes (long jumps), the bottom has all of them. You descend layer by layer with *greedy descent* until you land on the nearest neighbor.
 
@@ -195,17 +205,17 @@ Why it's fast: the sparse layer covers long distances in a few hops. Only the de
 
 ---
 
-## Part 2 — Query (online)
+### Query (online · on every question)
 
 Seven steps per question.
 
-### A. The user asks a question
+#### A. The user asks a question
 
 Entry point. Can come from chat, API, form, voice transcribed by Whisper. Doesn't matter: everything that follows is oriented to answering it.
 
-### B. Query normalization
+#### B. The question becomes text
 
-The system turns the user's input into a stable textual query: it removes interface noise, preserves intent, and makes explicit what will be embedded.
+Literal query string — exactly what the user wrote, after interface noise is removed. No semantic transformation has happened yet.
 
 ```text
 "Who is Thiago Marinho?"
@@ -213,7 +223,7 @@ The system turns the user's input into a stable textual query: it removes interf
 
 In minimal RAG, this query goes almost literally into the embedding model. In more advanced systems, this step may apply *query rewriting*, **HyDE** (generate a hypothetical answer before embedding), or **multi-query** (generate question variations and search with all of them).
 
-### C. Embedding the question
+#### C. Embedding the question
 
 The query passes through the **same embedding model used during ingestion**. This is critical:
 
@@ -224,11 +234,11 @@ The query passes through the **same embedding model used during ingestion**. Thi
                             (same as ingestion)     1536-dim vector
 ```
 
-### D. Similarity Search in the Vector DB
+#### D. Similarity Search in the Vector DB
 
 The vector DB compares the query vector against indexed vectors using **cosine similarity** (or inner product, or Euclidean distance) and returns the **top-K** chunks with the highest score.
 
-#### Cosine — formula and intuition
+##### Cosine — formula and intuition
 
 ```text
                 A · B
@@ -261,13 +271,13 @@ origin
 cos(θ) ≈ 0.97   →   very similar
 ```
 
-#### Top-K — how many chunks to pull
+##### Top-K — how many chunks to pull
 
 - **Typical top-K:** 3 to 10.
 - **K too high:** pollutes context, "lost in the middle," high token cost.
 - **K too low:** can miss critical evidence.
 
-#### Important variations
+##### Important variations
 
 | Technique         | What it does                                                                  |
 | ----------------- | ----------------------------------------------------------------------------- |
@@ -277,7 +287,7 @@ cos(θ) ≈ 0.97   →   very similar
 
 > Top-K is the ceiling of the answer. **Bad recall here = bad answer, and the LLM can't compensate.** If the right chunk didn't come, the model has no way to invent the truth.
 
-### E. Prompt built
+#### E. Prompt built
 
 The final prompt joins three things:
 
@@ -295,24 +305,24 @@ Context:
   [Chunk 3] ...writes about AI agents, RAG, and product engineering...
 ```
 
-#### Three decisions that matter
+##### Three decisions that matter
 
 1. **The "use only the context" instruction** — forces grounding in the chunks, reduces hallucination. Without it, the LLM mixes training memory with retrieved context and you lose control over the source.
 2. **Chunk order** — LLMs pay more attention to the **beginning and end** of context (the *lost in the middle* effect). Put the highest-scoring chunk at one of those extremes.
 3. **Ask for citation** — `[Chunk 1]`, `[Chunk 2]`. A cited answer is an auditable answer.
 
-### F. The LLM generates the answer
+#### F. The LLM generates the answer
 
 The generation model (GPT-4, Claude, Llama 3, Mistral, …) receives the complete prompt and produces the answer — now grounded in real chunks, not in implicit memory.
 
-#### Common configuration
+##### Common configuration
 
 - **`temperature = 0`** — almost always in RAG. Deterministic answer, faithful to the context. High temperature is "creativity," which is the opposite of what you want in a factual Q&A system.
 - **`max_tokens`** — generous enough for a complete answer, low enough not to inflate the bill.
 
 The gain here isn't the LLM becoming "smarter" — it's the LLM having **concrete evidence in hand**. Instead of answering from memory, it answers by consulting the book.
 
-### G. Answer delivered to the user
+#### G. Answer delivered to the user
 
 The LLM output returns to the interface — ideally with **citations of the chunks** used. This lets the user:
 
@@ -390,7 +400,7 @@ F. LLM           prompt                 → generated answer
 G. Delivery      answer + citations     → user
 ```
 
-This is **minimum viable** RAG. Everything discussed under advanced RAG — semantic chunking, multi-query, HyDE, reranking, agents — is refinement of one of these eight steps, not replacement of the skeleton.
+This is **minimum viable** RAG. Everything discussed under advanced RAG — semantic chunking, multi-query, HyDE, reranking, agents — is refinement of one of these eleven steps, not replacement of the skeleton.
 
 ### What comes next
 

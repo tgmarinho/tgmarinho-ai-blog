@@ -34,6 +34,17 @@ const copy = {
       grounded: "menos resposta inventada",
       precise: "mais precisão",
     },
+    letters: {
+      retrievalTitle: "Retrieval",
+      retrievalSub: "recuperação",
+      retrievalText: "Busca trechos relevantes em uma base externa: documentos, páginas, tickets, PDFs, base interna.",
+      augmentedTitle: "Augmented",
+      augmentedSub: "aumentado por contexto",
+      augmentedText: "Anexa esses trechos ao prompt para que o modelo tenha evidência antes de responder.",
+      generationTitle: "Generation",
+      generationSub: "geração",
+      generationText: "O LLM escreve a resposta final usando a pergunta do usuário e o contexto recuperado.",
+    },
     architecture: {
       input: "Input Query",
       inputSub: "pergunta do usuário",
@@ -86,6 +97,17 @@ const copy = {
       source: "traceable source",
       grounded: "less invented output",
       precise: "more precision",
+    },
+    letters: {
+      retrievalTitle: "Retrieval",
+      retrievalSub: "find",
+      retrievalText: "Find relevant chunks in an external knowledge base: docs, pages, tickets, PDFs, internal data.",
+      augmentedTitle: "Augmented",
+      augmentedSub: "add context",
+      augmentedText: "Attach those chunks to the prompt so the model has evidence before it answers.",
+      generationTitle: "Generation",
+      generationSub: "write",
+      generationText: "The LLM writes the final answer using the user question and the retrieved context.",
     },
     architecture: {
       input: "Input Query",
@@ -168,6 +190,63 @@ function Node({
       </div>
       <div className="mt-2 text-sm leading-snug text-foreground">{subtitle}</div>
     </div>
+  );
+}
+
+export function RagLettersDiagram({ language = "pt-BR" }: RagVisualProps) {
+  const t = copy[language].letters;
+  const letters = [
+    {
+      letter: "R",
+      title: t.retrievalTitle,
+      subtitle: t.retrievalSub,
+      text: t.retrievalText,
+      tone: "border-cyan-300/30 bg-cyan-300/10 text-cyan-200",
+    },
+    {
+      letter: "A",
+      title: t.augmentedTitle,
+      subtitle: t.augmentedSub,
+      text: t.augmentedText,
+      tone: "border-fuchsia-300/30 bg-fuchsia-300/10 text-fuchsia-200",
+    },
+    {
+      letter: "G",
+      title: t.generationTitle,
+      subtitle: t.generationSub,
+      text: t.generationText,
+      tone: "border-emerald-300/30 bg-emerald-300/10 text-emerald-200",
+    },
+  ];
+
+  return (
+    <Surface>
+      <div className="grid gap-4 md:grid-cols-3">
+        {letters.map((item) => (
+          <div
+            key={item.letter}
+            className={`min-w-0 rounded-xl border p-4 ${item.tone}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-mono text-xs uppercase tracking-[0.16em] text-current/75">
+                  {item.title}
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  {item.subtitle}
+                </div>
+              </div>
+              <div className="font-mono text-5xl leading-none text-current/90">
+                {item.letter}
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-foreground">
+              {item.text}
+            </p>
+          </div>
+        ))}
+      </div>
+    </Surface>
   );
 }
 

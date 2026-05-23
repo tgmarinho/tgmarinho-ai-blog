@@ -9,6 +9,7 @@ import {
   RagArchitectureDiagram,
   RagBridgeDiagram,
   RagEmbeddingDiagram,
+  RagLettersDiagram,
   RagPipelinesDiagram,
 } from "./rag-visuals";
 
@@ -28,6 +29,7 @@ const components = {
   RagBridgeDiagram,
   RagArchitectureDiagram,
   RagEmbeddingDiagram,
+  RagLettersDiagram,
   RagPipelinesDiagram,
   // React Native components stubs (to avoid MDX validation errors)
   ActivityIndicator: StubComponent,

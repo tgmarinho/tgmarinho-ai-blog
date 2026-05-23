@@ -303,6 +303,7 @@ ENOENT: no such file or directory, open 'content/posts/assets/img/duke256.png' b
 O post interativo de RAG substitui blocos ASCII por diagramas React registrados no renderer MDX:
 
 - `RagBridgeDiagram` — compara LLM puro, busca pura e RAG.
+- `RagLettersDiagram` — explica as responsabilidades de Retrieval, Augmented e Generation.
 - `RagArchitectureDiagram` — mostra `Input Query → Retriever → Generator → Answer`.
 - `RagPipelinesDiagram` — separa ingestão offline e consulta online.
 - `RagEmbeddingDiagram` — mostra chunk → embedding model → vetor numérico.
