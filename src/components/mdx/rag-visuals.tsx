@@ -193,6 +193,39 @@ function Node({
   );
 }
 
+function PipelineNode({
+  icon: Icon,
+  title,
+  subtitle,
+  tone = "cyan",
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  subtitle: string;
+  tone?: "cyan" | "magenta" | "amber" | "green";
+}) {
+  const tones = {
+    cyan: "border-cyan-300/35 bg-cyan-300/10 text-cyan-200",
+    magenta: "border-fuchsia-300/35 bg-fuchsia-300/10 text-fuchsia-200",
+    amber: "border-amber-300/35 bg-amber-300/10 text-amber-200",
+    green: "border-emerald-300/35 bg-emerald-300/10 text-emerald-200",
+  };
+
+  return (
+    <div
+      className={`min-h-40 min-w-[9.75rem] rounded-2xl border px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${tones[tone]}`}
+    >
+      <Icon className="mb-5 size-5 shrink-0" />
+      <div className="font-mono text-[11px] uppercase leading-relaxed tracking-[0.16em] text-current/80">
+        {title}
+      </div>
+      <div className="mt-4 text-[1.05rem] leading-snug text-foreground">
+        {subtitle}
+      </div>
+    </div>
+  );
+}
+
 export function RagLettersDiagram({ language = "pt-BR" }: RagVisualProps) {
   const t = copy[language].letters;
   const letters = [
@@ -408,7 +441,7 @@ export function RagPipelinesDiagram({ language = "pt-BR" }: RagVisualProps) {
           { title: t.ingestion, subtitle: t.ingestionSub, nodes: ingestion },
           { title: t.query, subtitle: t.querySub, nodes: query },
         ].map((row) => (
-          <div key={row.title} className="rounded-xl border border-white/10 bg-background/25 p-4">
+          <div key={row.title} className="rounded-2xl border border-white/10 bg-background/25 p-4 sm:p-5">
             <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
               <div className="font-mono text-xs uppercase tracking-[0.18em] text-cyan-200">
                 {row.title}
@@ -417,13 +450,19 @@ export function RagPipelinesDiagram({ language = "pt-BR" }: RagVisualProps) {
                 {row.subtitle}
               </div>
             </div>
-            <div className="grid gap-3 md:grid-cols-[repeat(11,minmax(0,auto))]">
-              {row.nodes.map((node, index) => (
-                <React.Fragment key={`${row.title}-${node.title}-${index}`}>
-                  <Node {...node} />
-                  {index < row.nodes.length - 1 && <Arrow />}
-                </React.Fragment>
-              ))}
+            <div className="overflow-x-auto pb-2 [scrollbar-width:thin] [scrollbar-color:rgba(34,211,238,0.35)_transparent]">
+              <div className="mx-auto grid min-w-max grid-flow-col auto-cols-max items-center gap-5">
+                {row.nodes.map((node, index) => (
+                  <React.Fragment key={`${row.title}-${node.title}-${index}`}>
+                    <PipelineNode {...node} />
+                    {index < row.nodes.length - 1 && (
+                      <div className="w-5 text-muted-foreground/70">
+                        <ArrowRight className="size-5" />
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
         ))}
