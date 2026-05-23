@@ -23,7 +23,7 @@ This post is a dense end-to-end overview of RAG — what it is, why it matters, 
 
 ### The one-line definition
 
-> **RAG = retrieve relevant chunks from a corpus + hand them to the LLM as context so it can write the answer.**
+> **RAG = retrieve relevant evidence chunks from a corpus + hand them to the LLM as context so it can write the answer.**
 
 Everything below is technical detail on top of that one sentence.
 
@@ -57,7 +57,7 @@ In its simplest form RAG has three parts:
 <RagArchitectureDiagram language="en" />
 
 1. **Input Query** — the user's question.
-2. **Retriever** — the mechanism that finds the most relevant chunks for the question.
+2. **Retriever** — the mechanism that finds the most relevant evidence chunks for the question.
 3. **Generator** — the LLM that receives question + retrieved chunks and writes the final answer.
 
 This mental model fits on a sticky note. The rest of the article is zoom into each piece.
