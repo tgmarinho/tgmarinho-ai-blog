@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import readingTime from "reading-time";
-import { posts, type Post } from "#site/content";
+import { allPosts as posts, type AnyPost as Post } from "@/lib/all-posts";
 import { Link, redirect } from "@/i18n/navigation";
 import { MdxContent } from "@/components/mdx/mdx-content";
 import { ShareButton } from "@/components/mdx/share-button";

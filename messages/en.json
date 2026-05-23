@@ -301,5 +301,121 @@
     "code": "404",
     "description": "The page you're looking for doesn't exist or has been moved.",
     "back": "Back home"
+  },
+  "ragLab": {
+    "metaTitle": "Lab · RAG end to end — interactive visualizations",
+    "metaDescription": "Four Canvas animations to 'see' the RAG pipeline: full flow, cosine similarity, HNSW, and chunking strategies.",
+    "eyebrow": "lab · interactive companion",
+    "title": "RAG end to end — interactive visualizations",
+    "intro": "Four Canvas scenes to actually see the RAG pipeline: how documents become vectors, how similarity search finds the right chunks, how HNSW skips through layers, and how chunking decides everything before embedding even happens.",
+    "readArticle": "Read the full article",
+    "tabs": {
+      "flow": "RAG flow",
+      "cosine": "Cosine 2D",
+      "hnsw": "HNSW · layers",
+      "chunking": "Chunking"
+    },
+    "flow": {
+      "title": "Full RAG flow — ingestion (offline) + query (online)",
+      "subtitle": "Top (magenta) is the offline pipeline that prepares Qdrant. Bottom (cyan) is the online pipeline that runs on every question. Qdrant in the middle is shared.",
+      "offline": "Offline · ingestion (once)",
+      "online": "Online · query (every question)",
+      "question": "Question:",
+      "parallel": "the original question travels in parallel to the LLM",
+      "chunks": "indexed chunks",
+      "fire": "Fire question",
+      "reingest": "Re-ingest docs",
+      "autoplay": "Autoplay",
+      "speed": "Speed",
+      "points": "points",
+      "answer": "Yes, take an umbrella — 65% at your time.",
+      "nodes": {
+        "docs": "Docs",
+        "docling": "Docling",
+        "chunker": "Chunker",
+        "meta": "Metadata",
+        "embOff": "FastEmbed",
+        "qdrant": "Qdrant",
+        "user": "User",
+        "embOn": "Embed query",
+        "search": "Search",
+        "ctx": "Context",
+        "llm": "LLM",
+        "answer": "Answer"
+      },
+      "descs": {
+        "docs": "PDF, HTML…",
+        "docling": "extracts → Markdown",
+        "chunker": "Hybrid ≤ 300 tok",
+        "meta": "title, page…",
+        "embOff": "384 dim",
+        "qdrant": "Vector DB · HNSW",
+        "user": "question",
+        "embOn": "same model",
+        "search": "cosine · top-k",
+        "ctx": "chunks + meta",
+        "llm": "temp = 0",
+        "answer": "grounded"
+      }
+    },
+    "cosine": {
+      "title": "Vector space (simplified 2D)",
+      "subtitle": "Real embeddings have 384+ dimensions — the principle is the same. cos(θ) = (A · B) / (|A| · |B|)",
+      "rotate": "Rotate B",
+      "length": "Length of |B|",
+      "nextPreset": "Next preset",
+      "calculation": "Calculation",
+      "interp": {
+        "verySimilar": "very similar",
+        "similar": "similar",
+        "weakSimilar": "weakly similar",
+        "unrelated": "unrelated",
+        "weakOpposite": "weakly opposite",
+        "opposite": "opposite"
+      },
+      "expected": "Expected for this preset:",
+      "presets": {
+        "p1A": "\"cat\"",
+        "p1B": "\"feline\"",
+        "p1Exp": "≈ 0.97 (very similar)",
+        "p2A": "\"cat\"",
+        "p2B": "\"car\"",
+        "p2Exp": "≈ 0.1 (unrelated)",
+        "p3A": "\"happy\"",
+        "p3B": "\"sad\"",
+        "p3Exp": "≈ -0.5 (antonyms)",
+        "p4A": "\"house\"",
+        "p4B": "\"house\"",
+        "p4Exp": "= 1.0 (same text)"
+      }
+    },
+    "hnsw": {
+      "title": "HNSW — hierarchical layered search",
+      "subtitle": "Top layer is sparse (long jumps). Base is dense (contains all). Greedy descent — walks down to the nearest neighbor of the query.",
+      "search": "Search random query",
+      "regenerate": "Regenerate dataset",
+      "currentLayer": "Layer:",
+      "comparisons": "Comparisons:",
+      "layerLabel": "Layer",
+      "top": "top · sparse",
+      "base": "base · dense, contains all",
+      "nearest": "nearest neighbor"
+    },
+    "chunking": {
+      "title": "Chunking — how the document becomes pieces for the vector DB",
+      "subtitle": "Move the slider and switch the strategy. Red borders mark cuts that destroy semantics (mid-word or isolated heading).",
+      "strategy": "Strategy",
+      "fixed": "Fixed-size",
+      "recursive": "Recursive",
+      "hybrid": "Hybrid (Docling)",
+      "chunkSize": "Size (chars)",
+      "overlap": "Overlap (chars)",
+      "docLabel": "📄 Document (Markdown)",
+      "chunksLabel": "📦 Generated chunks",
+      "chars": "chars",
+      "cleanCut": "clean cut",
+      "badCut": "bad cut",
+      "document": "# Store support policy\n\n## Refunds\nCustomers can request a refund up to 7 days after purchase. The product must be unused and still in the original packaging.\n\n## Product exchanges\nExchanges are accepted for manufacturing defects or incorrect size. The customer must send the order number and a product photo.\n\n## Delivery time\nOrders to capital cities arrive within 5 business days. For smaller cities, delivery can take up to 10 business days."
+    }
   }
 }
