@@ -12,7 +12,15 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".velite/**",
   ]),
+  {
+    settings: {
+      react: {
+        version: "19.2.6",
+      },
+    },
+  },
 ]);
 
 export default eslintConfig;

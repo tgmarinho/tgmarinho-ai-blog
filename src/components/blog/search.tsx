@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import type FuseType from "fuse.js";
 import { Search as SearchIcon, X } from "lucide-react";
 import { PostCard } from "./post-card";
@@ -32,8 +32,7 @@ export function BlogSearch({
 }: BlogSearchProps) {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const fuseRef = useRef<FuseType<SearchIndexItem> | null>(null);
-  const [fuseReady, setFuseReady] = useState(false);
+  const [fuse, setFuse] = useState<FuseType<SearchIndexItem> | null>(null);
 
   const index = useMemo<SearchIndexItem[]>(
     () =>
@@ -47,9 +46,9 @@ export function BlogSearch({
   );
 
   const ensureFuse = useCallback(async () => {
-    if (fuseRef.current) return;
+    if (fuse) return;
     const { default: Fuse } = await import("fuse.js");
-    fuseRef.current = new Fuse(index, {
+    setFuse(new Fuse(index, {
       keys: [
         { name: "title", weight: 3 },
         { name: "description", weight: 2 },
@@ -57,15 +56,14 @@ export function BlogSearch({
       ],
       threshold: 0.3,
       includeScore: true,
-    });
-    setFuseReady(true);
-  }, [index]);
+    }));
+  }, [fuse, index]);
 
   const filteredPosts = useMemo(() => {
     let results = posts;
 
-    if (query.trim() && fuseReady && fuseRef.current) {
-      const hits = fuseRef.current.search(query);
+    if (query.trim() && fuse) {
+      const hits = fuse.search(query);
       const order = new Map(hits.map((h, i) => [h.item.slug, i]));
       results = posts
         .filter((p) => order.has(p.slug))
@@ -83,7 +81,7 @@ export function BlogSearch({
     }
 
     return results;
-  }, [query, selectedCategory, posts, fuseReady]);
+  }, [query, selectedCategory, posts, fuse]);
 
   const [feature, ...rest] = filteredPosts;
 
