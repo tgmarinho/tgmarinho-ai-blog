@@ -117,6 +117,7 @@ export function RagOverviewLabAuto() {
       chars: t("chunking.chars"),
       cleanCut: t("chunking.cleanCut"),
       badCut: t("chunking.badCut"),
+      document: t("chunking.document"),
     },
   };
 

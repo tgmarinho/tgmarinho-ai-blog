@@ -304,14 +304,14 @@
   },
   "ragLab": {
     "metaTitle": "Lab · RAG do começo ao fim — visualizações interativas",
-    "metaDescription": "Quatro animações em Canvas para 'ver' o pipeline do RAG: fluxo completo, similaridade do cosseno, HNSW e estratégias de chunking.",
+    "metaDescription": "Quatro animações em Canvas para 'ver' o pipeline do RAG: fluxo completo, similaridade por cosseno, HNSW e estratégias de chunking.",
     "eyebrow": "lab · interactive companion",
     "title": "RAG do começo ao fim — visualizações interativas",
     "intro": "Quatro cenas em Canvas para você 'ver' o pipeline do RAG: como dados viram vetores, como a busca por similaridade encontra os chunks certos, como o HNSW pula camadas e como o chunking decide tudo antes mesmo do embedding.",
     "readArticle": "Ler o artigo completo",
     "tabs": {
       "flow": "Fluxo RAG",
-      "cosine": "Cosine 2D",
+      "cosine": "Similaridade 2D",
       "hnsw": "HNSW · camadas",
       "chunking": "Chunking"
     },
@@ -352,7 +352,7 @@
         "qdrant": "Vector DB · HNSW",
         "user": "pergunta",
         "embOn": "mesmo modelo",
-        "search": "cosseno · top-k",
+        "search": "similaridade · top-k",
         "ctx": "chunks + meta",
         "llm": "temp = 0",
         "answer": "fundamentada"
@@ -403,18 +403,19 @@
     },
     "chunking": {
       "title": "Chunking — como o documento vira pedaços pro vector DB",
-      "subtitle": "Mova o slider e troque a estratégia. Bordas vermelhas indicam cortes que destroem semântica (meio de palavra ou título isolado).",
+      "subtitle": "Mova o slider e troque a estratégia. Bordas vermelhas indicam cortes que quebram a semântica, como palavra partida ou título isolado.",
       "strategy": "Estratégia",
-      "fixed": "Fixed-size",
-      "recursive": "Recursive",
-      "hybrid": "Hybrid (Docling)",
+      "fixed": "Tamanho fixo",
+      "recursive": "Recursivo",
+      "hybrid": "Híbrido (Docling)",
       "chunkSize": "Tamanho (chars)",
-      "overlap": "Overlap (chars)",
+      "overlap": "Sobreposição (chars)",
       "docLabel": "📄 Documento (Markdown)",
       "chunksLabel": "📦 Chunks gerados",
       "chars": "chars",
       "cleanCut": "corte limpo",
-      "badCut": "corte ruim"
+      "badCut": "corte ruim",
+      "document": "# Política de suporte da loja\n\n## Reembolso\nClientes podem pedir reembolso em até 7 dias após a compra. O produto precisa estar sem uso e com a embalagem original.\n\n## Troca de produto\nTrocas são aceitas por defeito de fabricação ou tamanho incorreto. O cliente deve enviar o número do pedido e uma foto do produto.\n\n## Prazo de entrega\nPedidos para capitais chegam em até 5 dias úteis. Para cidades do interior, o prazo pode chegar a 10 dias úteis."
     }
   }
 }

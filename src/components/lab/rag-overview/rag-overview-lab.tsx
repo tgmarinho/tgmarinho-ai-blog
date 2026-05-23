@@ -7,7 +7,7 @@ import { SceneCosine, type CosineMessages } from "./scene-cosine";
 import { SceneHnsw, type HnswMessages } from "./scene-hnsw";
 import { SceneChunking, type ChunkingMessages } from "./scene-chunking";
 
-type TabKey = "flow" | "cosine" | "hnsw" | "chunking";
+type TabKey = "flow" | "chunking" | "cosine" | "hnsw";
 
 export interface RagLabMessages {
   tabs: Record<TabKey, string>;
@@ -22,9 +22,9 @@ export function RagOverviewLab({ messages }: { messages: RagLabMessages }) {
 
   const tabs: { key: TabKey; icon: React.ComponentType<{ className?: string }> }[] = [
     { key: "flow", icon: Workflow },
+    { key: "chunking", icon: Scissors },
     { key: "cosine", icon: Sigma },
     { key: "hnsw", icon: Network },
-    { key: "chunking", icon: Scissors },
   ];
 
   return (
@@ -53,9 +53,9 @@ export function RagOverviewLab({ messages }: { messages: RagLabMessages }) {
 
       <div className="mt-6">
         {tab === "flow" && <SceneRagFlow messages={messages.flow} />}
+        {tab === "chunking" && <SceneChunking messages={messages.chunking} />}
         {tab === "cosine" && <SceneCosine messages={messages.cosine} />}
         {tab === "hnsw" && <SceneHnsw messages={messages.hnsw} />}
-        {tab === "chunking" && <SceneChunking messages={messages.chunking} />}
       </div>
     </div>
   );

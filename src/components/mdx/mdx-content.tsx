@@ -5,6 +5,12 @@ import { CopyButton } from "./copy-button";
 import { YouTubeEmbed } from "./video";
 import { ShareButton } from "./share-button";
 import { RagOverviewLabAuto } from "../lab/rag-overview/rag-overview-lab-auto";
+import {
+  RagArchitectureDiagram,
+  RagBridgeDiagram,
+  RagEmbeddingDiagram,
+  RagPipelinesDiagram,
+} from "./rag-visuals";
 
 // Stub components for React Native and other components that appear in blog posts
 const StubComponent = ({
@@ -19,6 +25,10 @@ const components = {
   YouTubeEmbed,
   ShareButton,
   RagOverviewLab: RagOverviewLabAuto,
+  RagBridgeDiagram,
+  RagArchitectureDiagram,
+  RagEmbeddingDiagram,
+  RagPipelinesDiagram,
   // React Native components stubs (to avoid MDX validation errors)
   ActivityIndicator: StubComponent,
   Text: StubComponent,

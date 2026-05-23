@@ -298,6 +298,19 @@ ENOENT: no such file or directory, open 'content/posts/assets/img/duke256.png' b
 
 ---
 
+## 9.1 Diagramas MDX para posts interativos
+
+O post interativo de RAG substitui blocos ASCII por diagramas React registrados no renderer MDX:
+
+- `RagBridgeDiagram` — compara LLM puro, busca pura e RAG.
+- `RagArchitectureDiagram` — mostra `Input Query → Retriever → Generator → Answer`.
+- `RagPipelinesDiagram` — separa ingestão offline e consulta online.
+- `RagEmbeddingDiagram` — mostra chunk → embedding model → vetor numérico.
+
+Direção visual: superfícies `not-prose`, canvas escuro, bordas ciano/magenta, cards compactos com lucide icons e badges mono. O objetivo é manter a estética agentic futurist sem scroll horizontal de blocos `pre`.
+
+---
+
 ## 10. Pointer pra skill reutilizável
 
 Toda a base de design empacotada como skill pessoal:

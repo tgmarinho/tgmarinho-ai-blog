@@ -17,20 +17,11 @@ export interface ChunkingMessages {
   chars: string;
   cleanCut: string;
   badCut: string;
+  document: string;
 }
 
 const W = 1280;
 const H = 620;
-const DOCUMENT = `# Relatório de Vendas Q3 2024
-
-## Resumo Executivo
-O terceiro trimestre apresentou crescimento de 23% em receita comparado a Q2 2024. Os principais drivers foram lançamento do produto X e expansão do mercado Sul.
-
-## Performance por Região
-A região Sudeste manteve liderança com 45% do total. Sul cresceu 38%, puxado por SP e RS. Nordeste cresceu 12%, abaixo da meta de 20%.
-
-## Próximos Passos
-Para Q4, focaremos em três frentes: retenção de clientes enterprise, ampliação do time de SDR no Nordeste, e relançamento do produto Y com nova precificação.`;
 
 type Strategy = "fixed" | "recursive" | "hybrid";
 
@@ -112,10 +103,10 @@ export function SceneChunking({ messages }: { messages: ChunkingMessages }) {
   const [overlap, setOverlap] = useState(10);
   const [highlight, setHighlight] = useState<number>(-1);
   const chunks = useMemo(() => {
-    if (strategy === "fixed") return chunkFixed(DOCUMENT, chunkSize, overlap);
-    if (strategy === "recursive") return chunkRecursive(DOCUMENT, chunkSize);
-    return chunkHybrid(DOCUMENT);
-  }, [strategy, chunkSize, overlap]);
+    if (strategy === "fixed") return chunkFixed(messages.document, chunkSize, overlap);
+    if (strategy === "recursive") return chunkRecursive(messages.document, chunkSize);
+    return chunkHybrid(messages.document);
+  }, [messages.document, strategy, chunkSize, overlap]);
 
   const stateRef = useRef({ strategy, chunkSize, overlap, highlight, chunks });
   useEffect(() => {
@@ -157,6 +148,28 @@ export function SceneChunking({ messages }: { messages: ChunkingMessages }) {
     }
     if (line) lines.push(line);
     return lines;
+  }
+
+  function wrapDocumentLine(ctx: CanvasRenderingContext2D, line: string, maxW: number) {
+    if (line.length === 0) return [{ text: "", start: 0 }];
+
+    const segments: { text: string; start: number }[] = [];
+    let start = 0;
+
+    while (start < line.length) {
+      let end = line.length;
+      while (end > start + 1 && ctx.measureText(line.slice(start, end)).width > maxW) {
+        end--;
+      }
+
+      const space = line.lastIndexOf(" ", end);
+      const canBreakAtSpace = space > start && end < line.length;
+      const segmentEnd = canBreakAtSpace ? space : end;
+      segments.push({ text: line.slice(start, segmentEnd), start });
+      start = canBreakAtSpace ? space + 1 : segmentEnd;
+    }
+
+    return segments;
   }
 
   function draw(ctx: CanvasRenderingContext2D) {
@@ -201,36 +214,41 @@ export function SceneChunking({ messages }: { messages: ChunkingMessages }) {
     const cx = docX + padding;
     let cy = docY + 50;
 
-    const charToChunk = new Array(DOCUMENT.length).fill(-1);
+    const documentText = messages.document;
+    const charToChunk = new Array(documentText.length).fill(-1);
     chunks.forEach((ch, i) => {
-      for (let k = ch.start; k < ch.end && k < DOCUMENT.length; k++) {
+      for (let k = ch.start; k < ch.end && k < documentText.length; k++) {
         if (charToChunk[k] === -1) charToChunk[k] = i;
         else if (s.overlap > 0) charToChunk[k] = -2;
       }
     });
 
-    const lines = DOCUMENT.split("\n");
+    const maxDocTextW = docW - padding * 2;
+    const lines = documentText.split("\n");
     let charPos = 0;
     lines.forEach((line) => {
-      if (cy > docY + docH - 20) return;
-      let lx = cx;
-      for (let k = 0; k < line.length; k++) {
-        const ci = charToChunk[charPos + k];
-        const charW = ctx.measureText(line[k]).width;
-        if (ci >= 0) {
-          const baseColor = CHUNK_COLORS[ci % CHUNK_COLORS.length];
-          const alpha = ci === s.highlight ? "0.55)" : "0.22)";
-          ctx.fillStyle = baseColor + alpha;
-          ctx.fillRect(lx, cy - 13, charW + 0.5, lineHeight - 2);
-        } else if (ci === -2) {
-          ctx.fillStyle = "rgba(245,158,11,0.4)";
-          ctx.fillRect(lx, cy - 13, charW + 0.5, lineHeight - 2);
+      const visualLines = wrapDocumentLine(ctx, line, maxDocTextW);
+      visualLines.forEach((visual) => {
+        if (cy > docY + docH - 20) return;
+        let lx = cx;
+        for (let k = 0; k < visual.text.length; k++) {
+          const ci = charToChunk[charPos + visual.start + k];
+          const charW = ctx.measureText(visual.text[k]).width;
+          if (ci >= 0) {
+            const baseColor = CHUNK_COLORS[ci % CHUNK_COLORS.length];
+            const alpha = ci === s.highlight ? "0.55)" : "0.22)";
+            ctx.fillStyle = baseColor + alpha;
+            ctx.fillRect(lx, cy - 13, charW + 0.5, lineHeight - 2);
+          } else if (ci === -2) {
+            ctx.fillStyle = "rgba(245,158,11,0.4)";
+            ctx.fillRect(lx, cy - 13, charW + 0.5, lineHeight - 2);
+          }
+          lx += charW;
         }
-        lx += charW;
-      }
-      ctx.fillStyle = PALETTE.text;
-      ctx.fillText(line, cx, cy);
-      cy += lineHeight;
+        ctx.fillStyle = PALETTE.text;
+        ctx.fillText(visual.text, cx, cy);
+        cy += lineHeight;
+      });
       charPos += line.length + 1;
     });
 
@@ -253,7 +271,7 @@ export function SceneChunking({ messages }: { messages: ChunkingMessages }) {
       ctx.lineWidth = isHover ? 2 : 1;
       ctx.stroke();
 
-      const fullTxt = `#${i + 1}: ${DOCUMENT.slice(ch.start, ch.end).replace(/\n/g, " ")}`;
+      const fullTxt = `#${i + 1}: ${documentText.slice(ch.start, ch.end).replace(/\n/g, " ")}`;
       const lineH = 14;
       const padX = 12;
       const maxLines = Math.max(1, Math.floor((box.h - 22) / lineH));

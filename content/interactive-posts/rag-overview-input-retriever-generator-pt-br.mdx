@@ -1,6 +1,6 @@
 ---
 title: "RAG do começo ao fim: Input, Retriever e Generator explicados"
-description: "Um overview denso sobre RAG (Retrieval-Augmented Generation): o porquê da arquitetura existir, o pipeline de ingestão offline, o fluxo de consulta online, embeddings, similaridade do cosseno, HNSW, chunking e por que tudo isso reduz alucinação."
+description: "Um overview denso sobre RAG (Retrieval-Augmented Generation): o porquê da arquitetura existir, o pipeline de ingestão offline, o fluxo de consulta online, embeddings, similaridade por cosseno, HNSW, chunking e por que tudo isso reduz alucinação."
 date: "2026-05-22"
 published: true
 slug: "rag-overview-input-retriever-generator-pt-br"
@@ -10,16 +10,16 @@ categories: ["ai", "rag", "software-engineering", "pt-br"]
 image: "/images/blog/rag-overview-cover.jpg"
 ---
 
-> 🧪 **Versão interativa:** este post tem **animações em Canvas** embutidas — RAG flow, cosseno, HNSW e chunking. Brinca com elas no meio do texto. Ou abra o [lab em tela cheia](/lab/rag-overview).
+> 🧪 **Versão interativa:** este post tem **animações em Canvas** embutidas — fluxo RAG, chunking, similaridade por cosseno e HNSW. Brinca com elas no meio do texto. Ou abra o [lab em tela cheia](/lab/rag-overview).
 
-LLMs escrevem bem. Mas quando você pergunta sobre o seu PDF interno, o relatório de Q3 da sua empresa ou algo que aconteceu depois do treinamento, eles fazem uma de duas coisas:
+LLMs escrevem bem. Mas quando você pergunta sobre o seu PDF interno, a política de reembolso da sua loja ou algo que aconteceu depois do período em que o modelo foi treinado, eles fazem uma de duas coisas:
 
 1. dizem que não sabem;
 2. inventam uma resposta convincente, com cara de verdade — **alucinação**.
 
 O **RAG (Retrieval-Augmented Generation)** existe pra resolver isso. Não substitui o LLM, **complementa**: adiciona uma etapa de busca antes da geração, pra que o modelo responda **consultando evidência real** em vez de só "lembrar" do treino.
 
-Esse post é um overview denso do RAG do começo ao fim — a motivação, a arquitetura mínima, o pipeline de ingestão offline, o fluxo de consulta online, e os conceitos que sustentam tudo (embeddings, cosseno, HNSW, chunking).
+Esse post é um overview denso do RAG do começo ao fim — a motivação, a arquitetura mínima, o pipeline de ingestão offline, o fluxo de consulta online, e os conceitos que sustentam tudo (embeddings, similaridade por cosseno, HNSW, chunking).
 
 ### A frase de uma linha
 
@@ -31,8 +31,8 @@ Tudo o que vem a seguir é detalhe técnico em cima dessa frase.
 
 LLM puro tem dois limites duros:
 
-- **Sabe só o que viu no treino.** Não tem acesso a documentos privados, dados recentes, base interna da sua empresa. O cutoff é uma parede.
-- **Alucina quando perguntado fora do treino.** Em vez de dizer "não sei", completa com algo plausível — porque o modelo é otimizado pra continuar texto, não pra reconhecer ignorância.
+- **Sabe só o que viu no treino.** Não tem acesso a documentos privados, dados recentes ou base interna da sua empresa. O que veio depois do treinamento fica fora da memória do modelo.
+- **Preenche lacunas quando falta contexto.** Se a resposta depende de uma informação que não está no prompt nem foi vista no treino, o modelo ainda tenta produzir uma resposta coerente. O problema é que coerente não significa verdadeiro.
 
 Sistema de retrieval puro (tipo busca clássica) tem o limite **oposto**:
 
@@ -40,34 +40,13 @@ Sistema de retrieval puro (tipo busca clássica) tem o limite **oposto**:
 
 RAG junta os dois:
 
-```text
-       ┌─────────────────┐                ┌─────────────────┐
-       │   LLM puro      │                │  Retrieval puro │
-       ├─────────────────┤                ├─────────────────┤
-       │ + texto fluido  │                │ + acha conteúdo │
-       │ − alucinação    │                │ − sem síntese   │
-       │ − sem dado novo │                │ − resposta crua │
-       └────────┬────────┘                └────────┬────────┘
-                │                                  │
-                └───────────────┬──────────────────┘
-                                ▼
-                          ┌─────────┐
-                          │   RAG   │
-                          └────┬────┘
-                               ▼
-              respostas precisas + contextualizadas
-              + fonte rastreável + menos alucinação
-```
+<RagBridgeDiagram language="pt-BR" />
 
 ### A arquitetura mínima: 3 componentes
 
 Em sua forma mais simples, RAG tem três peças:
 
-```text
-Input Query ──▶ Retriever ──▶ Generator ──▶ Resposta
-   (pergunta)   (busca no    (LLM com
-                 corpus)      contexto)
-```
+<RagArchitectureDiagram language="pt-BR" />
 
 1. **Input Query** — a pergunta do usuário.
 2. **Retriever** — o mecanismo que busca os chunks mais relevantes pra essa pergunta.
@@ -80,39 +59,11 @@ Esse modelo mental cabe num post-it. O resto do artigo é zoom em cada peça.
 Na prática RAG não é um pipeline só, são **dois**:
 
 - **Ingestão (offline)** — roda **uma vez** (ou sempre que a base de conhecimento muda). Transforma documentos brutos em vetores indexados.
-- **Consulta (online)** — roda a **cada pergunta**. Pega a query, busca no índice, monta o prompt, chama o LLM.
+- **Consulta (online)** — roda **a cada pergunta**. Pega a query, busca no índice, monta o prompt, chama o LLM.
 
-```text
-╔══════════════════════════════════════════════════════════════════╗
-║  INGESTÃO · offline · roda 1× (ou quando o corpus muda)          ║
-╠══════════════════════════════════════════════════════════════════╣
-║                                                                  ║
-║  Fontes   →  Text     →  Splitter  →  Embedding  →  Vector DB    ║
-║  (PDF,       Loader      (chunks       Model         (HNSW)      ║
-║   HTML,      (→ texto)   + meta)       (→ vetor)                 ║
-║   DOCX,                                                          ║
-║   vídeo,                                                         ║
-║   imagem)                                                        ║
-║                                                                  ║
-╚══════════════════════════════════════════════════════════════════╝
+<RagPipelinesDiagram language="pt-BR" />
 
-╔══════════════════════════════════════════════════════════════════╗
-║  CONSULTA · online · roda a cada pergunta                        ║
-╠══════════════════════════════════════════════════════════════════╣
-║                                                                  ║
-║  Usuário → query → Embedding → Similarity → top-K → Prompt → LLM ║
-║                    da query    Search        chunks    montado   ║
-║                                (cosseno)               (system +  ║
-║                                                         query +   ║
-║                                                         contexto) ║
-║                                                                  ║
-║                                       ↓                          ║
-║                                   Resposta                       ║
-║                                                                  ║
-╚══════════════════════════════════════════════════════════════════╝
-```
-
-Antes de mergulhar nas etapas em detalhe, brinca com o pipeline ao vivo: clica em **Disparar pergunta** e segue as partículas. As outras abas — **Cosine 2D**, **HNSW** e **Chunking** — aprofundam conceitos que retomamos em texto adiante.
+Antes de mergulhar nas etapas em detalhe, brinca com o pipeline ao vivo: clica em **Disparar pergunta** e segue as partículas. Depois avance pelas abas na ordem do fluxo: **Chunking** mostra a preparação do texto; **Similaridade 2D** mostra como a busca mede proximidade; **HNSW** mostra como o vector DB encontra vizinhos rápido.
 
 <RagOverviewLab />
 
@@ -173,21 +124,7 @@ Chunks costumam ser criados com **overlap** (ex.: 50 tokens compartilhados entre
 
 Cada chunk passa por um **modelo de embeddings**. O modelo tokeniza o texto, processa, e devolve um **vetor** — uma lista fixa de números — que captura o **significado semântico** do chunk.
 
-```text
-chunk: "Daniel Romero é o fundador da Dev Eficiente."
-                          │
-                          ▼
-                ┌──────────────────┐
-                │ Embedding Model  │
-                │ ex.: text-       │
-                │ embedding-3-small│
-                └────────┬─────────┘
-                         ▼
-            [ 0.12, -0.34, 0.87, ..., 0.05 ]
-            └─────────────┬─────────────────┘
-                          │
-                  vetor de 1536 dims
-```
+<RagEmbeddingDiagram language="pt-BR" />
 
 #### Modelos comuns
 
@@ -220,7 +157,7 @@ Os vetores entram numa **collection** de um vector database — Qdrant, Pinecone
 {
   id: "chunk_42",
   vetor: [0.12, -0.34, ..., 0.05],   // 1536 dims
-  texto_original: "Daniel Romero é ...",
+  texto_original: "Thiago Marinho é ...",
   metadados: { titulo, página, autor, data }
 }
 ```
@@ -266,15 +203,15 @@ A cada pergunta, sete passos.
 
 Ponto de entrada. Pode vir de chat, API, formulário, voz transcrita por Whisper. Não importa: tudo a seguir é orientado a respondê-la.
 
-### B. A pergunta vira string
+### B. Normalização da query
 
-Texto literal da query — exatamente o que o usuário escreveu, sem transformação semântica:
+O sistema transforma a entrada do usuário numa query textual estável: remove ruído de interface, preserva a intenção e deixa claro o que será embeddado.
 
 ```text
-"Quem é Daniel Romero?"
+"Quem é Thiago Marinho?"
 ```
 
-(Existem variações avançadas fora do RAG mínimo: *query rewriting*, **HyDE** (gerar uma resposta hipotética antes de embeddar), **multi-query** (gerar variações da pergunta e buscar com todas). Aqui é só passar adiante.)
+No RAG mínimo, essa query segue quase literal para o embedding. Em sistemas mais avançados, essa etapa pode aplicar *query rewriting*, **HyDE** (gerar uma resposta hipotética antes de embeddar) ou **multi-query** (gerar variações da pergunta e buscar com todas).
 
 ### C. Embedding da pergunta
 
@@ -283,15 +220,15 @@ A query passa pelo **mesmo modelo de embeddings usado na ingestão**. Isso é cr
 > **Regra de ouro:** query e chunks precisam viver no mesmo espaço vetorial pra serem comparáveis. Mesmo modelo na ingestão e na consulta. Sem exceção.
 
 ```text
-"Quem é Daniel Romero?" ──▶ Embedding Model ──▶ [0.27, -0.06, 0.27, ...]
+"Quem é Thiago Marinho?" ──▶ Embedding Model ──▶ [0.27, -0.06, 0.27, ...]
                             (mesmo da ingestão)     vetor de 1536 dims
 ```
 
 ### D. Similarity Search no Vector DB
 
-O vector DB compara o vetor da query com os vetores indexados via **similaridade do cosseno** (ou produto interno, ou distância euclidiana) e devolve os **top-K** chunks com maior score.
+O vector DB compara o vetor da query com os vetores indexados via **similaridade por cosseno** (ou produto interno, ou distância euclidiana) e devolve os **top-K** chunks com maior score.
 
-#### Cosseno — a fórmula e a intuição
+#### Similaridade por cosseno — fórmula e intuição
 
 ```text
                 A · B
@@ -334,9 +271,9 @@ cos(θ) ≈ 0.97   →   muito similar
 
 | Técnica         | O que faz                                                                      |
 | --------------- | ------------------------------------------------------------------------------ |
-| **Busca híbrida** | Combina cosseno (semântico) com BM25 (keyword). Cobre os pontos cegos de cada um. |
-| **Filtros por metadados** | `WHERE autor = "Romero" AND ano >= 2024`. Reduz o espaço de busca antes do cosseno. |
-| **Reranking**   | Recupera top-50 com cosseno (barato), passa por um cross-encoder (caro, mais preciso), fica com top-3. |
+| **Busca híbrida** | Combina similaridade vetorial (semântica) com BM25 (keyword). Cobre os pontos cegos de cada um. |
+| **Filtros por metadados** | `WHERE autor = "Thiago" AND ano >= 2024`. Reduz o espaço de busca antes da busca por similaridade. |
+| **Reranking**   | Recupera top-50 por similaridade (barato), passa por um cross-encoder (caro, mais preciso), fica com top-3. |
 
 > O top-K é o teto da resposta. **Recall ruim aqui = resposta ruim, e o LLM não compensa.** Se o chunk certo não veio, o modelo não tem como inventar a verdade.
 
@@ -350,12 +287,12 @@ System: Você é um chatbot. Responda à pergunta a seguir
         Se a resposta não estiver no contexto, diga que
         não sabe. Cite o chunk usado.
 
-Pergunta: Quem é Daniel Romero?
+Pergunta: Quem é Thiago Marinho?
 
 Contexto:
-  [Chunk 1] Daniel Romero é o fundador da Dev Eficiente...
-  [Chunk 2] ...trabalhou anos com Java e DDD antes de...
-  [Chunk 3] ...lançou o curso de Engenharia de IA em...
+  [Chunk 1] Thiago Marinho é Senior AI Engineer...
+  [Chunk 2] ...atua criando produtos e sistemas com IA...
+  [Chunk 3] ...escreve sobre agentes de IA, RAG e engenharia de produto...
 ```
 
 #### Três decisões que importam
@@ -447,7 +384,7 @@ CONSULTA (online · cada pergunta)
 A. Pergunta       chat/API/voz          → string
 B. Query texto    "Quem é X?"           → string literal
 C. Embedding      mesma modelo da ingestão → vetor query
-D. Similarity     cosseno no HNSW       → top-K chunks
+D. Similarity     similaridade no HNSW       → top-K chunks
 E. Prompt         system + query + chunks → prompt final
 F. LLM            prompt                 → resposta gerada
 G. Entrega        resposta + citações    → usuário

@@ -414,7 +414,8 @@
       "chunksLabel": "📦 Generated chunks",
       "chars": "chars",
       "cleanCut": "clean cut",
-      "badCut": "bad cut"
+      "badCut": "bad cut",
+      "document": "# Store support policy\n\n## Refunds\nCustomers can request a refund up to 7 days after purchase. The product must be unused and still in the original packaging.\n\n## Product exchanges\nExchanges are accepted for manufacturing defects or incorrect size. The customer must send the order number and a product photo.\n\n## Delivery time\nOrders to capital cities arrive within 5 business days. For smaller cities, delivery can take up to 10 business days."
     }
   }
 }
