@@ -7,7 +7,7 @@ slug: "mcp-vs-cli-quando-usar-cada-um-pt-br"
 language: "pt-BR"
 translationKey: "mcp-vs-cli-when-to-use-each"
 categories: ["ai", "agents", "mcp", "software-engineering", "pt-br"]
-image: "/images/blog/mcp-vs-cli-cover.jpg"
+image: "/images/blog/mcp-vs-cli-cover.svg"
 ---
 
 Tem uma confusão recorrente em conversas sobre agentes de IA: as pessoas tratam **MCP** como sinônimo de "agente que usa ferramentas", quando na verdade MCP é só **uma das formas** de entregar ferramentas a um modelo — e nem sempre a melhor.
@@ -40,13 +40,36 @@ MCP padroniza essa ponte.
 
 ### Arquitetura — quem fala com quem
 
-```text
-[Modelo / App de IA]  ←→  [MCP Client]  ←→  [MCP Server]  ←→  [Dados / Ferramenta]
-       (Host)                                                   (Postgres, GitHub,
-   Claude Desktop,                                                arquivos, Slack...)
-   Claude Code,
-   Cursor, ChatGPT
-```
+<div class="mcp-visual" role="img" aria-label="Arquitetura MCP mostrando host, client, server e ferramenta de dados">
+  <div>
+    <p class="mcp-kicker">Mapa de arquitetura</p>
+    <div class="mcp-architecture-grid">
+      <div class="mcp-node cyan">
+        <p class="mcp-label">Host</p>
+        <p class="mcp-title">Modelo / app de IA</p>
+        <p class="mcp-copy">Claude Desktop, Claude Code, Cursor, ChatGPT ou seu produto embutido.</p>
+      </div>
+      <div class="mcp-connector">--</div>
+      <div class="mcp-node blue">
+        <p class="mcp-label">Lado consumidor</p>
+        <p class="mcp-title">MCP client</p>
+        <p class="mcp-copy">Descobre tools, envia schemas ao modelo e roteia chamadas.</p>
+      </div>
+      <div class="mcp-connector">--</div>
+      <div class="mcp-node magenta">
+        <p class="mcp-label">Lado provedor</p>
+        <p class="mcp-title">MCP server</p>
+        <p class="mcp-copy">Expõe capacidades via JSON-RPC por stdio ou HTTP/SSE.</p>
+      </div>
+      <div class="mcp-connector">--</div>
+      <div class="mcp-node amber">
+        <p class="mcp-label">Sistema de apoio</p>
+        <p class="mcp-title">Dado / ferramenta</p>
+        <p class="mcp-copy">Postgres, GitHub, arquivos, Slack, APIs internas ou ações SaaS.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 - **Host / Client**: a aplicação de IA. É ela que fala MCP do lado do consumidor (Claude Desktop, Cursor, seu app embutido).
 - **MCP Server**: um programa que expõe capacidades de um sistema externo seguindo o protocolo. Existe um oficial para GitHub, Postgres, Google Drive, sistema de arquivos, Playwright. E você pode escrever o seu.
@@ -69,47 +92,53 @@ Tools são o que mais aparece na prática.
 
 Vale visualizar passo a passo o que acontece quando alguém faz uma pergunta para um agente conectado a um MCP server:
 
-```text
-1. Usuário digita pergunta
-   "quantas inscrições teve meu evento?"
-              │
-              ▼
-2. CLIENT (Claude/Cursor/etc) envia para o LLM
-   prompt + lista de tools disponíveis (vem do MCP server)
-   ┌───────────────────────────────────────────┐
-   │ tools = [ listar_inscricoes, criar_evento │
-   │           gerar_link, reembolsar, ... ]   │
-   └───────────────────────────────────────────┘
-              │  (gasta tokens de input)
-              ▼
-3. LLM decide qual tool chamar
-   → "chame listar_inscricoes(eventoId='abc')"
-              │  (gasta tokens de output)
-              ▼
-4. CLIENT envia chamada JSON-RPC ao MCP SERVER
-   ┌──────────────────────────────────────────┐
-   │ {"method":"tools/call",                  │
-   │  "params":{"name":"listar_inscricoes",   │
-   │             "arguments":{"eventoId":...}}│
-   └──────────────────────────────────────────┘
-              │  (0 tokens — é só JSON pela rede)
-              ▼
-5. MCP SERVER executa a função
-   → traduz para chamada normal: tRPC / SQL / API interna
-   → autentica + autoriza (OAuth, RBAC)
-   → retorna { total: 22 }
-              │  (0 tokens — é só JSON)
-              ▼
-6. CLIENT manda o resultado de volta pro LLM
-   "tool result: { total: 22 }"
-              │  (gasta tokens de input — sim, o retorno volta como input!)
-              ▼
-7. LLM redige a resposta final
-   "Seu evento teve 22 inscrições pagas até agora 🎉"
-              │  (gasta tokens de output)
-              ▼
-8. Resposta entregue ao usuário
-```
+<div class="mcp-visual" role="img" aria-label="Fluxo MCP em oito etapas desde a pergunta do usuário até a resposta final">
+  <div>
+    <p class="mcp-kicker">Fluxo em runtime</p>
+    <div class="mcp-flow">
+      <div class="mcp-step">
+        <span class="mcp-num">1</span>
+        <div><h4>Usuário faz uma pergunta de negócio</h4><p>"quantas inscrições teve meu evento?"</p></div>
+        <span class="mcp-badge">input humano</span>
+      </div>
+      <div class="mcp-step">
+        <span class="mcp-num">2</span>
+        <div><h4>Client envia prompt + tools disponíveis</h4><p><code>tools = [listar_inscricoes, criar_evento, gerar_link, reembolsar]</code></p></div>
+        <span class="mcp-badge">tokens input</span>
+      </div>
+      <div class="mcp-step">
+        <span class="mcp-num">3</span>
+        <div><h4>LLM escolhe qual tool chamar</h4><p><code>listar_inscricoes(eventoId: "abc")</code></p></div>
+        <span class="mcp-badge">tokens output</span>
+      </div>
+      <div class="mcp-step">
+        <span class="mcp-num">4</span>
+        <div><h4>Client chama o MCP server</h4><p><code>{"method":"tools/call","params":{"name":"listar_inscricoes"}}</code></p></div>
+        <span class="mcp-badge good">0 tokens</span>
+      </div>
+      <div class="mcp-step">
+        <span class="mcp-num">5</span>
+        <div><h4>MCP server executa backend normal</h4><p>tRPC, SQL, API interna, OAuth, RBAC, depois <code>{ total: 22 }</code></p></div>
+        <span class="mcp-badge good">0 tokens</span>
+      </div>
+      <div class="mcp-step">
+        <span class="mcp-num">6</span>
+        <div><h4>Client devolve o resultado ao LLM</h4><p><code>tool result: { total: 22 }</code></p></div>
+        <span class="mcp-badge">tokens input</span>
+      </div>
+      <div class="mcp-step">
+        <span class="mcp-num">7</span>
+        <div><h4>LLM escreve a resposta final</h4><p>"Seu evento teve 22 inscrições pagas até agora."</p></div>
+        <span class="mcp-badge">tokens output</span>
+      </div>
+      <div class="mcp-step">
+        <span class="mcp-num">8</span>
+        <div><h4>Resposta é entregue</h4><p>O server não pensa; quem paga inferência é o client.</p></div>
+        <span class="mcp-badge">fim</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 Dois detalhes que pouco se diz em voz alta:
 
@@ -246,20 +275,26 @@ A Anthropic inclusive escreveu sobre isso (artigos sobre *code execution with MC
 
 ### A regra de bolso
 
-```text
-A ferramenta já é famosa, com CLI estável (git, gh, docker, kubectl, psql, aws)?
-        │
-        ├── SIM → use CLI. O modelo já sabe a sintaxe.
-        │         Sem overhead de schema.
-        │
-        └── NÃO → é ferramenta sua / proprietária?
-                  │
-                  ├── E você controla o client?
-                  │   → SDK + function calling direto.
-                  │
-                  └── E o client é de terceiros (Claude, ChatGPT)?
-                      → MCP server. É o único jeito de aparecer pra eles.
-```
+<div class="mcp-visual" role="img" aria-label="Regra de decisão para escolher CLI, SDK com function calling ou MCP server">
+  <div>
+    <p class="mcp-kicker">Regra de bolso</p>
+    <div class="mcp-rule-grid">
+      <div class="mcp-question">A ferramenta é famosa e tem uma CLI estável?</div>
+      <div class="mcp-branches">
+        <div class="mcp-answer cli">
+          <p class="mcp-label">Sim</p>
+          <h4>Use CLI</h4>
+          <p>O modelo já conhece <code>git</code>, <code>gh</code>, <code>docker</code>, <code>kubectl</code>, <code>psql</code> e ferramentas parecidas. Sem overhead de schema.</p>
+        </div>
+        <div class="mcp-answer mcp">
+          <p class="mcp-label">Não</p>
+          <h4>Cheque propriedade</h4>
+          <p>Se você controla o client, use SDK + function calling. Se o client é de terceiros, exponha um MCP server para que eles consigam te descobrir.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 ---
 
@@ -312,38 +347,34 @@ A regra mental:
 
 ## Resumo — o mapa de uma página
 
-```text
-                  ┌──────────────────────────┐
-                  │  Você precisa de IA      │
-                  │  chamando ferramentas?   │
-                  └──────────┬───────────────┘
-                             │
-                  ┌──────────┴───────────────┐
-                  │                          │
-                 SIM                        NÃO → REST/tRPC normal
-                  │
-       ┌──────────┴──────────┐
-       │                     │
-   Você controla       Client é de
-   client E server?    terceiros?
-       │                     │
-       │                     ▼
-       ▼              ┌─────────────┐
- SDK + function       │ MCP server  │ ← OAuth, escopo,
- calling direto       │ + auth +    │   tools enxutas
- (zero overhead)      │ tools mín.  │
-                      └─────────────┘
-                            │
-              ┌─────────────┴───────────────┐
-              │                             │
-     Ferramenta famosa             Ferramenta sua /
-     (git, gh, kubectl, psql)?     proprietária?
-              │                             │
-              ▼                             ▼
-        Use CLI também                Expor via MCP
-        (modelo já sabe;              é o caminho
-         sem overhead de schema)
-```
+<div class="mcp-visual" role="img" aria-label="Mapa de uma página resumindo quando escolher REST, SDK com function calling, CLI ou MCP">
+  <div>
+    <p class="mcp-kicker">Mapa de uma página</p>
+    <div class="mcp-recap-grid">
+      <div class="mcp-question">Você precisa de IA chamando ferramentas?</div>
+      <div class="mcp-answer rest">
+        <p class="mcp-label">Não</p>
+        <h4>Use REST/tRPC</h4>
+        <p>Sem orquestração por modelo, MCP vira só uma RPC mais pesada.</p>
+      </div>
+      <div class="mcp-answer sdk">
+        <p class="mcp-label">Você controla os dois lados</p>
+        <h4>SDK + function calling</h4>
+        <p>Defina tools no código, chame seu backend direto e evite a camada de protocolo.</p>
+      </div>
+      <div class="mcp-answer cli">
+        <p class="mcp-label">Ferramenta conhecida</p>
+        <h4>Use CLI também</h4>
+        <p>Para ferramentas famosas, a sintaxe já está nos pesos do modelo. Filtre bem os outputs.</p>
+      </div>
+      <div class="mcp-answer mcp">
+        <p class="mcp-label">Client de terceiros</p>
+        <h4>Exponha MCP</h4>
+        <p>OAuth, escopo, tools mínimas, JSON enxuto. É aqui que o protocolo se paga.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 ---
 
