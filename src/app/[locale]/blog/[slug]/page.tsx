@@ -323,7 +323,7 @@ export default async function PostPage({ params }: PostPageProps) {
       {toc.length > 1 && (
         <aside
           aria-label={tocLabel}
-          className="pointer-events-none fixed right-8 top-32 z-10 hidden w-[240px] xl:block 2xl:right-[max(2rem,calc((100vw-680px)/2-280px))]"
+          className="pointer-events-none fixed top-32 z-10 hidden w-[240px] xl:right-[max(1rem,calc((100vw-920px)/2-280px))] xl:block"
         >
           <div className="pointer-events-auto max-h-[calc(100vh-10rem)] overflow-y-auto pr-2">
             <TableOfContents items={toc} label={tocLabel} />
