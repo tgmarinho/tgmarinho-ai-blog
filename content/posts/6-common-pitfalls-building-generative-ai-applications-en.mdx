@@ -1,0 +1,71 @@
+---
+title: "6 common pitfalls when building generative AI applications"
+description: "Notes and commentary on Chip Huyen's essay — the predictable mistakes teams make when moving from LLM prototype to production."
+date: "2026-05-15"
+published: false
+slug: "6-common-pitfalls-building-generative-ai-applications"
+language: "en"
+translationKey: "common-pitfalls-building-generative-ai-applications"
+categories: ["ai", "software-engineering", "en"]
+image: "/images/blog/photo-1603860785202-70ee34aa7b68.jpg"
+---
+
+[Chip Huyen](https://huyenchip.com/) published an essay called *[Common pitfalls when building generative AI applications](https://huyenchip.com/2025/01/16/ai-engineering-pitfalls.html)*, and it captures with precision the mistakes I see repeating in almost every team trying to move from an LLM prototype into something real in production.
+
+I'm using this post as a set of notes — part summary, part commentary — for my future self. The original is worth reading; what's here is my read.
+
+### 1. Using generative AI where it isn't needed
+
+The right question is not *"how do I use an LLM for this?"* — it's *"what is the problem and what's the simplest way to solve it?"*.
+
+Her example is great: a team wanted to use an LLM to schedule household energy use by analyzing activities and electricity prices. The potential gain was 30%. Turns out a trivial rule — *"run laundry and charge the car after 10pm"* — captures most of the benefit with linear programming at a fraction of the cost.
+
+*"We solved the problem"* and *"we used generative AI"* are not the same accomplishment. Confusing the two is what happens when you fall in love with a new hammer.
+
+### 2. Conflating product failure with AI failure
+
+Many teams blame the model when users reject the product, but the barrier is almost always UX, not the technology.
+
+Three cases she mentions:
+
+- A meeting transcript summarization team kept arguing whether the summary should be 3 or 5 sentences. Users actually wanted role-specific action items — not a generic summary.
+- A LinkedIn skill assessment chatbot failed because it would say things like *"you're a terrible fit for this role"*. Users wanted helpful guidance, not blunt verdicts.
+- Intuit's tax chatbot got a tepid reception until they added suggested questions. The problem was the blank text box, not the model.
+
+Models are commoditized. The differentiator is the product.
+
+### 3. Starting with too much complexity
+
+The temptation to start with agent frameworks, vector databases, fine-tuning and semantic caching is huge. Almost always it's too early.
+
+Premature abstraction hides exactly what you need to see to debug, and exposes you to bugs from changes in those tools — including typos in default prompts inside well-known frameworks and silent model updates that change your application's behavior.
+
+AI engineering is still young. Best practices are still forming. Waiting before adopting heavy abstractions is, today, a rational decision — not a sign of being behind.
+
+### 4. Treating early success as the finish line
+
+The first 80% comes fast. The last 20% is where the pain lives.
+
+LinkedIn took one month to reach 80% of the desired quality — and four more months to get past 95%. Hallucination was the main blocker. An AI sales assistant startup reported the same effort going from 0→80% and from 80→90%.
+
+And it's not just about the model. There's API reliability, compliance, copyright, privacy, safety against adversarial misuse, offensive output. Plan milestones with *cautious optimism*: optimistic, but with slack for the road ahead.
+
+### 5. Dropping human evaluation too early
+
+LLM-as-a-judge is useful but non-deterministic. Judge quality depends on the underlying model, the prompt and the context. A poorly calibrated judge gives misleading signals — and you make decisions on the wrong number.
+
+The best teams keep a daily human evaluation loop of 30 to 1,000 examples even with automated evals running. It does three things: it calibrates the automated judge, it tells you what users actually do, and it catches behavior shifts the automation misses.
+
+As she puts it, *"staring at data for 15 minutes usually gives more insight than hours of headaches later"*. It's the highest value-to-prestige ratio task in machine learning, and almost nobody wants to do it.
+
+### 6. Crowdsourcing use cases with no strategy
+
+When a company opens the floor with *"send us your AI ideas"*, what comes back is a pile of Slack bots, code plugins and text-to-SQL tools — each solving the immediate pain of whoever sent it, and almost none moving the business needle.
+
+The outcome is budget scattered across N tiny projects of low impact, and the wrong conclusion that *"generative AI has no ROI"*. Strategy has to come before ideation. Decide where the return is big and concentrate the resources there.
+
+### Wrapping up
+
+If I had to summarize what Chip describes in one line: the pitfalls aren't about the model — they're about product and engineering discipline. Teams that treat generative AI as just another piece of the stack — with a well-defined problem, careful UX, the right level of complexity, honest evaluation and clear strategy — get much further than teams treating it as a silver bullet.
+
+Read the original: [huyenchip.com/2025/01/16/ai-engineering-pitfalls.html](https://huyenchip.com/2025/01/16/ai-engineering-pitfalls.html).
