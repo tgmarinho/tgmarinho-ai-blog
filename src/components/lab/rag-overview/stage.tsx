@@ -19,6 +19,12 @@ interface StageProps {
   animate?: boolean;
   redrawKey?: string | number;
   className?: string;
+  /**
+   * Minimum CSS width the canvas should keep before the parent starts to scroll
+   * horizontally. Prevents the diagram from shrinking into an unreadable thumbnail
+   * on narrow viewports.
+   */
+  minWidth?: number;
   onPointerMove?: (x: number, y: number, ctx: CanvasRenderingContext2D) => void;
   onPointerLeave?: () => void;
 }
@@ -32,6 +38,7 @@ export const Stage = forwardRef<HTMLCanvasElement, StageProps>(function Stage(
     animate = true,
     redrawKey = 0,
     className,
+    minWidth,
     onPointerMove,
     onPointerLeave,
   },
@@ -112,25 +119,31 @@ export const Stage = forwardRef<HTMLCanvasElement, StageProps>(function Stage(
     };
   }, [animate, redrawKey]);
 
+  const effectiveMinWidth = minWidth ?? Math.min(width, 960);
+
   return (
-    <canvas
-      ref={internalRef}
-      className={[
-        "block w-full rounded-xl border border-border bg-[color:var(--card)]/60 backdrop-blur-sm",
-        className ?? "",
-      ].join(" ")}
-      onMouseMove={(e) => {
-        if (!onPointerMove) return;
-        const canvas = internalRef.current;
-        const ctx = canvas?.getContext("2d");
-        if (!canvas || !ctx) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * width;
-        const y = ((e.clientY - rect.top) / rect.height) * height;
-        onPointerMove(x, y, ctx);
-      }}
-      onMouseLeave={onPointerLeave}
-    />
+    <div className="overflow-x-auto">
+      <div style={{ minWidth: `${effectiveMinWidth}px` }}>
+        <canvas
+          ref={internalRef}
+          className={[
+            "block w-full rounded-xl border border-border bg-[color:var(--card)]/60 backdrop-blur-sm",
+            className ?? "",
+          ].join(" ")}
+          onMouseMove={(e) => {
+            if (!onPointerMove) return;
+            const canvas = internalRef.current;
+            const ctx = canvas?.getContext("2d");
+            if (!canvas || !ctx) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * width;
+            const y = ((e.clientY - rect.top) / rect.height) * height;
+            onPointerMove(x, y, ctx);
+          }}
+          onMouseLeave={onPointerLeave}
+        />
+      </div>
+    </div>
   );
 });
 

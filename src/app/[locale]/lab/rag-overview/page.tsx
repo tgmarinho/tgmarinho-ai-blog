@@ -42,7 +42,7 @@ export default async function RagOverviewPage({
       : "/blog/rag-overview-input-retriever-generator-pt-br";
 
   return (
-    <main className="relative mx-auto w-full max-w-7xl px-4 pb-24 pt-10 sm:px-6 lg:pt-16">
+    <main className="relative mx-auto w-full max-w-[1440px] px-4 pb-24 pt-10 sm:px-6 lg:pt-16">
       <div className="mb-6 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--primary)] shadow-[0_0_8px_var(--cyan-glow)]" />
         {t("eyebrow")}
