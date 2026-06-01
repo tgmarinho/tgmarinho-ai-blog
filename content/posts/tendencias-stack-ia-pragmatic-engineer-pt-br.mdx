@@ -1,0 +1,92 @@
+---
+title: "Tendências de stack de IA em 7 empresas: o que o Pragmatic Engineer revela"
+description: "AWS Bedrock, Postgres com pgvector, LangChain e a descida ao metal: a leitura mais útil do levantamento não é a lista de ferramentas, é a curva que elas desenham."
+date: "2026-05-15"
+published: false
+slug: "tendencias-stack-ia-pragmatic-engineer-pt-br"
+language: "pt-BR"
+translationKey: "ai-stack-trends-pragmatic-engineer"
+categories: ["ai", "software-engineering", "pt-br"]
+image: "/images/blog/ai-stack-trends-pragmatic-engineer-cover.jpg"
+---
+
+O [Pragmatic Engineer](https://newsletter.pragmaticengineer.com/i/159841910/tech-stack-trends-across-companies) publicou um recorte do stack de IA de sete empresas. Negócios diferentes, perfis diferentes — mas três padrões muito parecidos:
+
+- **AWS Bedrock** como caminho preferido para rodar modelos da Anthropic.
+- **Postgres com pgvector** como banco padrão para embeddings e busca vetorial. A Wordsmith é a única exceção, usando Pinecone.
+- **LangChain** aparecendo como camada de integração com LLMs em vários times.
+
+E uma observação que me chamou mais atenção que o resto:
+
+> Quanto maior a escala, mais perto você fica do "metal". O Augment Code rodando em GPUs NVIDIA com CUDA é o exemplo claro.
+
+A leitura óbvia é "anota essas ferramentas". A leitura útil é outra: **essas escolhas desenham uma curva**, e saber onde seu time está nessa curva resolve a maior parte das decisões de stack antes mesmo de você abrir uma comparação.
+
+### Bedrock como default: managed vence cedo
+
+Faz sentido a maioria começar com Bedrock para servir Claude.
+
+Você herda IAM, VPC, observabilidade, billing consolidado e um caminho previsível de compliance. Para um time que está validando se um agente resolve um problema de negócio, essas garantias valem mais do que economizar alguns centavos por milhão de tokens.
+
+A escolha por Bedrock raramente é sobre o modelo. É sobre **não criar superfície operacional nova** num momento em que o resto do sistema já está mudando rápido.
+
+### pgvector ganha a fase inicial — e isso não é preguiça
+
+Pinecone, Weaviate, Qdrant, Milvus, todos têm méritos reais. Mesmo assim, seis das sete empresas escolheram pgvector.
+
+O motivo é menos sobre performance e mais sobre **superfície cognitiva**:
+
+- já existe um Postgres na empresa;
+- já existe runbook, backup, replicação, métricas;
+- embeddings ficam ao lado dos dados que descrevem;
+- joins entre vetor e metadados são triviais.
+
+Trocar isso por um banco vetorial dedicado só compensa quando você bate em limite de latência ou de tamanho de índice que pgvector + `hnsw` não dão conta. Antes disso, é otimização prematura disfarçada de escolha de arquitetura.
+
+A Wordsmith ter ido para Pinecone não invalida o padrão — provavelmente é exatamente isso: bateram num limite e migraram. A regra continua "comece em pgvector, migre quando doer".
+
+### LangChain: a camada que ninguém ama, mas todo mundo usa
+
+LangChain virou meme em alguns nichos, mas continua aparecendo nesses stacks. Por quê?
+
+Porque o problema que ele resolve é real: encadear prompts, ferramentas, retrievers, memória e fallback de provider sem reinventar o mesmo glue toda semana. Se você está sozinho num side project, dá pra escrever isso na mão. Numa empresa com cinco engenheiros tocando features de IA, alguém vai precisar do abstrato — e LangChain está lá.
+
+O que mudou no último ano:
+
+- o uso ficou mais cirúrgico (orquestração, não tudo);
+- muita gente mantém wrappers próprios em volta para isolar churn de API;
+- alternativas (LlamaIndex, AI SDK da Vercel, frameworks específicos de agente) dividiram o terreno.
+
+Continua sendo o ponto de partida razoável. Só não trate como contrato eterno.
+
+### A inflexão: quando você desce ao metal
+
+Augment Code é o caso interessante do levantamento. Eles não estão usando Bedrock — estão **alugando GPUs NVIDIA e escrevendo CUDA**.
+
+Isso não é exibicionismo de engenharia. É uma resposta direta a duas pressões:
+
+1. **Fine-tuning constante**: você precisa de controle sobre o pipeline de treino, não só inferência.
+2. **Volume de inferência**: na escala deles, a margem entre "tokens via API" e "tokens via GPU própria" vira o produto.
+
+Quando essas duas pressões aparecem juntas, managed deixa de ser barato. Mas se uma das duas não está na sua mesa, descer ao metal só adiciona um ano de problemas que você não precisava ter.
+
+### A curva, em uma frase
+
+O recorte do Pragmatic Engineer descreve uma trajetória que se repete:
+
+> **Managed enquanto possível, dedicado quando o custo de não fazer fica maior que o custo de fazer.**
+
+Traduzindo para decisões concretas:
+
+- Comece em **Bedrock** (ou equivalente) com **pgvector** e algum framework de orquestração.
+- Coloque um wrapper fino entre seu domínio e qualquer provider — você vai trocar de modelo mais vezes do que imagina.
+- Só pense em vector DB dedicado depois que `EXPLAIN ANALYZE` virar problema, não antes.
+- Só pense em GPU própria quando fine-tuning e volume de inferência forem, de fato, vantagem competitiva.
+
+A pergunta certa não é "qual stack eu escolho?". É **"onde eu estou na curva agora, e qual é o próximo trigger que me move?"**.
+
+Quando você responde isso com honestidade, a maioria das decisões de ferramenta resolve sozinha.
+
+---
+
+Fonte do recorte: [Pragmatic Engineer — Tech stack trends across companies](https://newsletter.pragmaticengineer.com/i/159841910/tech-stack-trends-across-companies).
