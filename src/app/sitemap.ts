@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { posts } from "#site/content";
+import { allPosts as posts } from "@/lib/all-posts";
 import { routing } from "@/i18n/routing";
 import { getPostLanguage, getTranslationPair } from "@/lib/posts-i18n";
 import { buildAlternates, localizedUrl } from "@/lib/seo";

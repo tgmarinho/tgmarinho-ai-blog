@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./[locale]/blog/posts.css";
 
 export default function RootLayout({
   children,

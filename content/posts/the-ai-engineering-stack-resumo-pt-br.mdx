@@ -1,0 +1,145 @@
+---
+title: "The AI Engineering Stack: resumo aplicado"
+description: "O que muda quando engenharia de IA deixa de ser engenharia de ML: as três camadas da stack, o porquê do produto vir antes do modelo e onde a complexidade real foi parar."
+date: "2026-05-15"
+published: true
+slug: "the-ai-engineering-stack-resumo-pt-br"
+language: "pt-BR"
+translationKey: "the-ai-engineering-stack-summary"
+categories: ["ai", "software-engineering", "pt-br"]
+image: "/images/blog/photo-1658204238967-3a81a063d162.jpg"
+---
+
+Saiu no Pragmatic Engineer um texto longo do Gergely Orosz com a Chip Huyen (autora do livro AI Engineering, O'Reilly) sobre como é a stack de quem hoje constrói produtos com modelos de fundação. Vale ler inteiro, mas vou resumir aqui a ideia principal e o que mais me chamou atenção.
+
+A tese central é simples:
+
+**engenharia de IA não é engenharia de ML.**
+
+Ela herda muita coisa de ML, mas o eixo do trabalho mudou. Em vez de treinar modelo do zero, você adapta modelos pré-treinados e gasta a maior parte do tempo em torno deles: prompt, avaliação, interface, contexto, segurança e custo.
+
+Uma frase do artigo resume bem:
+
+> "AI engineering is just software engineering with AI models thrown in the stack."
+
+### As três camadas da stack
+
+Chip Huyen propõe pensar a stack em três camadas, de cima para baixo:
+
+1. **Desenvolvimento de aplicação**
+   prompt engineering, avaliação, construção de contexto, interfaces (web, chatbot, extensão, API).
+
+2. **Desenvolvimento de modelo**
+   modelagem, treinamento, fine-tuning, engenharia de dataset, otimização de inferência.
+
+3. **Infraestrutura**
+   serving do modelo, gestão de dados/compute, monitoramento.
+
+O ponto interessante é onde o trabalho do engenheiro de IA pesa hoje: quase tudo gira ao redor da camada 1, com algumas incursões na camada 2 (principalmente fine-tuning e inferência).
+
+### Três diferenças entre AI engineering e ML engineering
+
+O artigo destaca três:
+
+1. **Modelo pré-treinado, não treinado do zero.**
+   Você raramente toca em pesos. Adapta via prompt, RAG, tool use e, quando necessário, fine-tuning.
+
+2. **Modelos maiores, compute mais caro, latência relevante.**
+   Otimização de inferência deixa de ser detalhe e vira competência central — autoregressive token generation cobra seu preço.
+
+3. **Saídas abertas, avaliação difícil.**
+   Não tem mais "accuracy 0.87". Tem texto, código, plano, ação. Avaliar virou o problema mais espinhoso da disciplina.
+
+### A inversão do fluxo: produto antes do modelo
+
+Em ML clássico o caminho era:
+
+`dados -> modelo -> produto`
+
+Em AI engineering, com modelos de fundação prontos, o caminho se inverte:
+
+`produto -> modelo refinado`
+
+Você começa pela hipótese de produto, usa um modelo bom o suficiente, mede, e só refina (com fine-tuning, dados próprios ou troca de modelo) quando o gargalo justificar. Isso encurta o ciclo de iteração de forma dramática.
+
+Efeito colateral interessante: **engenheiro full-stack ganhou vantagem**. Quem consegue tocar UI, backend, prompt, eval e medir produto em uma semana entrega mais do que time dividido em silos clássicos de ML.
+
+Anedota empírica desse efeito vem do follow-up do Pragmatic Engineer ([AI Engineering in the Real World](https://newsletter.pragmaticengineer.com/p/ai-engineering-in-the-real-world)): na DSI, Ryan Cogswell entregou em ~2 meses, sozinho, o que uma agência externa havia cotado em 6 a 9 meses com SageMaker, Lambdas e dois bancos. Não é caso isolado — é o padrão que aparece quando a stack converge.
+
+### Onde mora a complexidade
+
+Se modelo pré-treinado resolve o pesado, sobra o quê? Em ordem decrescente de tempo gasto:
+
+- **Avaliação.** Sem eval bom, você não sabe se melhorou. Eval offline + sinais online (usuário voltou, refez, abandonou).
+- **Prompt e contexto.** Construção de contexto (RAG, memória, ferramentas) virou parte do produto.
+- **Interface de IA.** Chat é a interface óbvia, mas raramente a melhor. Decidir entre chat, formulário, agente em background, browser extension ou API muda a percepção de qualidade.
+- **Dados próprios.** Qualidade de dados está virando o diferencial competitivo, mais do que escolha de modelo.
+- **Inferência.** Latência, custo por requisição, cache, batching, streaming.
+
+Ross McNairn, CTO da Wordsmith, resume bem essa parte no follow-up: *"getting comfortable with evaluations and iterating on non-deterministic outputs is the biggest challenge"*. É a mesma tese da Huyen, mas dita por quem está em produção.
+
+ML "clássico" continua útil, mas virou *nice-to-have* para a maioria dos casos de uso de aplicação.
+
+### Ferramentas mencionadas
+
+O texto cita várias coisas que você já provavelmente conhece, mas vale o mapa:
+
+- **Treino/serving baixo nível:** TensorFlow, PyTorch, Hugging Face Transformers.
+- **Orquestração no front/back:** LangChain.js, Transformers.js, OpenAI Node library, Vercel AI SDK.
+- **Interfaces rápidas para protótipo:** Streamlit, Gradio, Plotly Dash.
+
+Repara que a lista é dominada por bibliotecas de aplicação, não de pesquisa. Isso reforça a tese: a maior parte do trabalho está na camada de produto.
+
+### O que eu tirei de prático
+
+Se você está se posicionando como engenheiro de IA hoje, eu apostaria em:
+
+1. **Dominar avaliação.** Saber montar eval offline confiável e instrumentar sinais online é raro e caro.
+2. **Construção de contexto.** RAG, memória, tool use, agentes — essa é a engenharia que mais multiplica resultado.
+3. **Custo e latência em produção.** Otimizar inferência, cache, streaming e fallback entre modelos vira diferencial. Multi-cloud por modelo está virando default — Wordsmith roda em AWS (Anthropic) + Azure (OpenAI) + GCP (Gemini) porque nenhum provedor tem todos os modelos bons.
+4. **Produto.** Saber decidir interface e quando *não* usar IA é metade da entrega.
+5. **Dados próprios.** Quem tem dado proprietário e processo de curadoria sai na frente.
+
+ML profundo continua valioso, mas não é mais a porta de entrada obrigatória. A porta de entrada hoje é engenharia de software bem feita, com modelos plugados no lugar certo.
+
+### Complemento: dois textos que andam junto com este
+
+O artigo da stack é o mapa de cima. Dois outros textos descem em camadas diferentes da mesma paisagem.
+
+**Chip Huyen — Agents (huyenchip.com, 2025)**
+
+Quatro pontos que eu destacaria:
+
+- **A matemática dos erros compostos.** Com 95% de acurácia por passo, uma tarefa de 10 passos cai para ~60%; em 100 passos, 0,6%. Esse número, sozinho, justifica empiricamente por que avaliação e validação consomem tanto tempo na stack.
+- **Plan/execute desacoplados.** Validar o plano antes de executar (com heurística ou LLM-as-judge) evita chamada cara e ação destrutiva.
+- **Três modos de falha de agente para eval:** planning (ferramenta inválida, parâmetro errado, objetivo desalinhado), tool (saída incorreta), efficiency (passos demais, custo alto). Taxonomia muito mais útil do que "agente errou".
+- **Reflexão não é opcional na prática.** Sem ciclo de revisão, erros compostos derrubam qualquer tarefa longa.
+
+**Anthropic — Building Effective Agents**
+
+Quatro pontos que mudam decisão de arquitetura:
+
+- **Workflow vs Agent — quem dirige o fluxo.** *Workflow* é LLM dentro de caminho de código pré-definido. *Agent* é LLM dirigindo o próprio fluxo dinamicamente. A maior parte dos sistemas "agênticos" em produção é, de fato, workflow — e isso é uma escolha boa, não uma limitação.
+- **Tools > Prompts.** No trabalho em SWE-bench eles gastaram mais tempo otimizando ferramentas do que o prompt geral. Inverte a intuição comum de que prompt é a alavanca principal.
+- **Poka-yoke na ACI** (Agent-Computer Interface). Exemplo: trocar caminho relativo por absoluto eliminou uma classe inteira de erros. Design de ferramenta como *prevenção*, não correção.
+- **Ceticismo saudável de framework.** Recomendação contraintuitiva: comece com a API do LLM direto; só adote framework quando justificar. Vale como contrapeso à lista de bibliotecas citada acima.
+
+Eles ainda catalogam cinco padrões de orquestração que vale ter na cabeça:
+
+| Padrão | Quando usar |
+|---|---|
+| Prompt chaining | Tarefa decomponível em passos fixos |
+| Routing | Entradas heterogêneas, handlers especializados |
+| Parallelization | Subtarefas independentes ou votação |
+| Orchestrator-workers | Subtarefas imprevisíveis, delegação dinâmica |
+| Evaluator-optimizer | Refinamento iterativo com loop de crítica |
+
+Combinando os três textos: o **stack** te dá o mapa, **Huyen/Agents** te dá a matemática e a taxonomia, e **Anthropic** te dá padrões concretos de quando *não* aumentar a complexidade.
+
+### Referências
+
+- [The AI Engineering Stack — Gergely Orosz & Chip Huyen, The Pragmatic Engineer](https://newsletter.pragmaticengineer.com/p/the-ai-engineering-stack)
+- [AI Engineering in the Real World — The Pragmatic Engineer](https://newsletter.pragmaticengineer.com/p/ai-engineering-in-the-real-world)
+- [Agents — Chip Huyen](https://huyenchip.com/2025/01/07/agents.html)
+- [Building Effective Agents — Anthropic Engineering](https://www.anthropic.com/engineering/building-effective-agents)
+- [AI Engineering — Chip Huyen, O'Reilly](https://www.oreilly.com/library/view/ai-engineering/9781098166298/)

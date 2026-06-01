@@ -24,12 +24,28 @@ If your training conflicts with these files, **the files win**.
 
 ---
 
+## Package manager: Bun (mandatory)
+
+**This repo uses [Bun](https://bun.sh) — never `npm`, `pnpm`, or `yarn`.** Lockfile is `bun.lock`. If a `package-lock.json` appears in the working tree, it means an `npm install` slipped in by mistake: delete it and re-run `bun install`.
+
+| Goal             | Command                                                   |
+|------------------|-----------------------------------------------------------|
+| Install deps     | `bun install`                                             |
+| Add a dep        | `bun add <pkg>`                                           |
+| Remove a dep     | `bun remove <pkg>`                                        |
+| Run a script     | `bun <script>` (e.g. `bun dev`, `bun lint`, `bun velite`) |
+| Run build        | `bun run build`                                           |
+
+Don't reach for `npm` out of muscle memory — even read-only `npm view`, `npm ls`, etc. should be `bun pm view` / `bun pm ls`.
+
+---
+
 ## Pre-approved commands (`.claude/settings.local.json`)
 
 Permissions already granted — run without asking:
 
 - `find:*`, `grep:*`
-- `npm run build:*`, `npx velite:*`
+- `bun:*`, `npx velite:*`
 - `pkill:*`, `node -e:*`
 - `git checkout:*`, `git add:*`, `git commit:*`, `git push:*`
 - `gh auth:*`, `gh pr create` (template already registered)
@@ -47,9 +63,9 @@ Permissions already granted — run without asking:
 1. **Before editing:** `Read` the file. `Grep`/`SemanticSearch` for similar existing patterns.
 2. **Editing existing files** > creating new ones. Only create new files if there's nowhere to fit it.
 3. **After editing TSX/TS:** run `ReadLints` on the touched files.
-4. **After editing `content/posts/**` or `velite.config.ts`:** run `npm run velite` to validate the schema.
-5. **After bilingual changes (i18n routing, frontmatter `language`/`translationKey`, messages):** run `npm run audit:i18n-seo` and `npm run audit:refs`.
-6. **Before declaring done:** `npm run lint`. If you touched something build-sensitive (config, paths, types), `npm run build`.
+4. **After editing `content/posts/**` or `velite.config.ts`:** run `bun velite` to validate the schema.
+5. **After bilingual changes (i18n routing, frontmatter `language`/`translationKey`, messages):** run `bun audit:i18n-seo` and `bun audit:refs`.
+6. **Before declaring done:** `bun lint`. If you touched something build-sensitive (config, paths, types), `bun run build`.
 
 ---
 
@@ -76,7 +92,7 @@ For any request like "criar post", "novo artigo", "post em inglês/PT", or "vers
 1. Use the project skill (`blog-post-bilingual`) as the default and mandatory workflow.
 2. Follow repository MDX/frontmatter conventions.
 3. **Always request/create a contextual cover image** and set `image` in frontmatter.
-4. Run `npm run velite` after writing/editing posts.
+4. Run `bun velite` after writing/editing posts.
 
 ### Daily journal policy (security — non-negotiable)
 
@@ -111,4 +127,4 @@ If the user asks to "go back to the old design", confirm first — they probably
 
 ---
 
-**Last updated:** 2026-05-12 (i18n bilíngue + llms.txt build pipeline).
+**Last updated:** 2026-05-17 (Bun adopted as mandatory package manager).

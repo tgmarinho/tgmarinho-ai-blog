@@ -77,7 +77,8 @@
       "translationMissingTitle": "Versão em português indisponível",
       "translationMissingDescription": "Este post ainda não tem tradução em português. Mostrando a versão original.",
       "related": "leituras relacionadas",
-      "readingTime": "{minutes} min de leitura"
+      "readingTime": "{minutes} min de leitura",
+      "onThisPage": "nesta página"
     }
   },
   "projects": {
@@ -93,7 +94,24 @@
       "archived": "arquivado"
     },
     "source": "código",
-    "live": "ao vivo"
+    "live": "ao vivo",
+    "items": {
+      "itop": {
+        "description": "SaaS multi-tenant em produção para gestão de grandes eventos dos Legendários — inscrições, pagamentos (PIX/cartão com reconciliação por webhook), check-in via QR Code, geração de contratos com assinatura digital biométrica, plano de embarque e dashboards em tempo real. Processa dinheiro real, eventos reais e centenas de participantes em produção. Antecessor do inscricoestop.com.br antes do pivot."
+      },
+      "unicrow": {
+        "description": "Plataforma Web3 de escrow na Ethereum. Contribuí no SDK, indexador blockchain e integrações com smart contracts. SDK em TypeScript pronto para produção que transformou semanas de onboarding em um setup no mesmo dia."
+      },
+      "meetapp": {
+        "description": "Organizador de meetups full-stack (Backend + Web + Mobile). Desafio final do Bootcamp da Rocketseat. React, React Native, Node, Redux."
+      },
+      "be-the-hero": {
+        "description": "App full-stack conectando ONGs a doadores — construído durante a OmniStack week da Rocketseat. Ajuda pequenas organizações a captar recursos para suas causas."
+      },
+      "members": {
+        "description": "Toolkit open-source para gestão de membros e comunidades — uma stack enxuta e opinativa para iniciar produtos comunitários."
+      }
+    }
   },
   "about": {
     "metaTitle": "Sobre",
@@ -283,5 +301,121 @@
     "code": "404",
     "description": "A página que você está procurando não existe ou foi movida.",
     "back": "Voltar para o início"
+  },
+  "ragLab": {
+    "metaTitle": "Lab · RAG do começo ao fim — visualizações interativas",
+    "metaDescription": "Quatro animações em Canvas para 'ver' o pipeline do RAG: fluxo completo, similaridade por cosseno, HNSW e estratégias de chunking.",
+    "eyebrow": "lab · interactive companion",
+    "title": "RAG do começo ao fim — visualizações interativas",
+    "intro": "Quatro cenas em Canvas para você 'ver' o pipeline do RAG: como dados viram vetores, como a busca por similaridade encontra os chunks certos, como o HNSW pula camadas e como o chunking decide tudo antes mesmo do embedding.",
+    "readArticle": "Ler o artigo completo",
+    "tabs": {
+      "flow": "Fluxo RAG",
+      "cosine": "Similaridade 2D",
+      "hnsw": "HNSW · camadas",
+      "chunking": "Chunking"
+    },
+    "flow": {
+      "title": "Fluxo completo do RAG — ingestão (offline) + consulta (online)",
+      "subtitle": "Em cima (magenta) o pipeline offline que prepara o Qdrant. Embaixo (ciano) o pipeline online que roda a cada pergunta. O Qdrant no meio é compartilhado.",
+      "offline": "Offline · ingestão (uma vez)",
+      "online": "Online · consulta (a cada pergunta)",
+      "question": "Pergunta:",
+      "parallel": "a pergunta original viaja em paralelo até o LLM",
+      "chunks": "chunks indexados",
+      "fire": "Disparar pergunta",
+      "reingest": "Re-ingerir docs",
+      "autoplay": "Autoplay",
+      "speed": "Velocidade",
+      "points": "points",
+      "answer": "Sim, leva guarda-chuva — 65% na sua hora.",
+      "nodes": {
+        "docs": "Docs",
+        "docling": "Docling",
+        "chunker": "Chunker",
+        "meta": "Metadados",
+        "embOff": "FastEmbed",
+        "qdrant": "Qdrant",
+        "user": "Usuário",
+        "embOn": "Embed query",
+        "search": "Search",
+        "ctx": "Contexto",
+        "llm": "LLM",
+        "answer": "Resposta"
+      },
+      "descs": {
+        "docs": "PDF, HTML…",
+        "docling": "extrai → Markdown",
+        "chunker": "Hybrid ≤ 300 tok",
+        "meta": "título, página…",
+        "embOff": "384 dim",
+        "qdrant": "Vector DB · HNSW",
+        "user": "pergunta",
+        "embOn": "mesmo modelo",
+        "search": "similaridade · top-k",
+        "ctx": "chunks + meta",
+        "llm": "temp = 0",
+        "answer": "fundamentada"
+      }
+    },
+    "cosine": {
+      "title": "Espaço vetorial (2D simplificado)",
+      "subtitle": "Em embeddings reais são 384+ dimensões — o princípio é o mesmo. cos(θ) = (A · B) / (|A| · |B|)",
+      "rotate": "Rotacionar B",
+      "length": "Comprimento de |B|",
+      "nextPreset": "Próximo preset",
+      "calculation": "Cálculo",
+      "interp": {
+        "verySimilar": "muito similar",
+        "similar": "similar",
+        "weakSimilar": "pouco similar",
+        "unrelated": "sem relação",
+        "weakOpposite": "pouco opostos",
+        "opposite": "opostos"
+      },
+      "expected": "Esperado pra este preset:",
+      "presets": {
+        "p1A": "\"gato\"",
+        "p1B": "\"felino\"",
+        "p1Exp": "≈ 0.97 (muito similar)",
+        "p2A": "\"gato\"",
+        "p2B": "\"carro\"",
+        "p2Exp": "≈ 0.1 (sem relação)",
+        "p3A": "\"feliz\"",
+        "p3B": "\"triste\"",
+        "p3Exp": "≈ -0.5 (antônimos)",
+        "p4A": "\"casa\"",
+        "p4B": "\"casa\"",
+        "p4Exp": "= 1.0 (mesmo texto)"
+      }
+    },
+    "hnsw": {
+      "title": "HNSW — busca em camadas hierárquicas",
+      "subtitle": "A camada do topo é esparsa (saltos longos). A base é densa (contém todos). Greedy descent — desce até o vizinho mais próximo da query.",
+      "search": "Buscar query aleatória",
+      "regenerate": "Regenerar dataset",
+      "currentLayer": "Camada:",
+      "comparisons": "Comparações:",
+      "layerLabel": "Layer",
+      "top": "topo · esparsa",
+      "base": "base · densa, contém todos",
+      "nearest": "nearest neighbor"
+    },
+    "chunking": {
+      "title": "Chunking — como o documento vira pedaços pro vector DB",
+      "subtitle": "Mova o slider e troque a estratégia. Bordas vermelhas indicam cortes que quebram a semântica, como palavra partida ou título isolado.",
+      "strategy": "Estratégia",
+      "fixed": "Tamanho fixo",
+      "recursive": "Recursivo",
+      "hybrid": "Híbrido (Docling)",
+      "chunkSize": "Tamanho (chars)",
+      "overlap": "Sobreposição (chars)",
+      "docLabel": "📄 Documento (Markdown)",
+      "chunksLabel": "📦 Chunks gerados",
+      "chars": "chars",
+      "cleanCut": "corte limpo",
+      "badCut": "corte ruim",
+      "document": "# Política de suporte da loja\n\n## Reembolso\nClientes podem pedir reembolso em até 7 dias após a compra. O produto precisa estar sem uso e com a embalagem original.\n\n## Troca de produto\nTrocas são aceitas por defeito de fabricação ou tamanho incorreto. O cliente deve enviar o número do pedido e uma foto do produto.\n\n## Prazo de entrega\nPedidos para capitais chegam em até 5 dias úteis. Para cidades do interior, o prazo pode chegar a 10 dias úteis."
+    }
   }
 }
