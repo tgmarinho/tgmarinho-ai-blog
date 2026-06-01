@@ -1,0 +1,78 @@
+---
+title: "Back to the fundamentals: I'm taking Andrew Ng's Machine Learning Specialization"
+description: "Why, after spending every day building with LLMs and agents, I decided to go back to classic ML basics — and what each of the three courses in Andrew Ng's specialization actually covers."
+date: "2026-06-01"
+published: false
+slug: "machine-learning-specialization-andrew-ng-en"
+language: "en"
+translationKey: "ml-specialization-andrew-ng"
+categories: ["ai", "machine-learning", "career", "en"]
+image: "/images/blog/ml-specialization-andrew-ng-cover.jpg"
+---
+
+I spend my days building products with LLMs and agents. And yet I decided to go back to the very beginning: linear regression, gradient descent, bias and variance.
+
+Andrew Ng's **Machine Learning Specialization** (Stanford + DeepLearning.AI, on Coursera) is the course I'm taking now. This post is less a review and more a statement of intent — plus a map of what lives inside each course, for anyone thinking about taking it too.
+
+### Why a "classic" course in the age of agents
+
+It's tempting to assume that, with ready-made models behind an API, understanding what happens underneath has become optional. I disagree.
+
+Working well with AI today requires intuition about *how models learn*: why a model memorizes instead of generalizing, what a high training error versus a high validation error means, when more data helps and when it doesn't. That's the basic vocabulary — and it didn't come from LLMs, it came from classic ML.
+
+I want to stop treating these ideas as a black box. Gradient descent, regularization, the difference between bias and variance: they all show up, wearing different clothes, in everything I already do with agents.
+
+### What the specialization is
+
+It's **three courses**, designed for people who can code but don't necessarily have an ML background. The focus is intuition first, the right amount of math, and hands-on practice in Python with NumPy, scikit-learn and TensorFlow.
+
+Andrew Ng's real edge is pedagogical: he builds intuition before the formula. You understand *why* before you see the *how*.
+
+### Course 1 — Supervised Machine Learning: Regression and Classification
+
+The foundation. This is where the "hello world" of ML lives:
+
+- **Linear regression** — predicting a continuous number, the cost function, and gradient descent as the engine that tunes the model.
+- **Multiple regression** — many features, feature scaling, feature engineering and polynomial regression.
+- **Classification with logistic regression** — decision boundary, and your first serious encounter with **overfitting** and **regularization**.
+
+If you only take this one, you'll already understand the full cycle of training a supervised model.
+
+### Course 2 — Advanced Learning Algorithms
+
+This is where it gets interesting:
+
+- **Neural networks** — inference and training, activation functions, and why they unlocked so much.
+- **Multiclass classification** — softmax and the practical details.
+- **ML best practices** — for me the most valuable part: bias/variance in practice, train/validation/test splits, error analysis, and how to iterate on an ML project without spinning your wheels.
+- **Decision trees** — trees, random forests and XGBoost, which still beat neural nets on a lot of tabular data.
+
+The "how to debug a model that isn't good enough" section alone justifies the course.
+
+### Course 3 — Unsupervised Learning, Recommenders, Reinforcement Learning
+
+The closer, covering the rest of the map:
+
+- **Unsupervised learning** — clustering with K-means and anomaly detection.
+- **Recommender systems** — collaborative filtering and a content-based approach with deep learning.
+- **Reinforcement learning** — a practical introduction, with state-action value and a Deep Q-Network.
+
+It's the course that talks most directly to product: recommendation and anomaly detection show up constantly in the real world.
+
+### How I'm going to study
+
+My plan is simple:
+
+1. Follow along with the [YouTube playlist](https://www.youtube.com/playlist?list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) of the lectures.
+2. Do the labs and exercises by hand before looking at any solution.
+3. Use [this repository of solutions](https://github.com/greyhatguy007/Machine-Learning-Specialization-Coursera) only as a **check, not a shortcut**. The difference between learning and copying lives exactly there.
+
+The rule I'll follow: if I can't explain a concept out loud, I haven't really understood it.
+
+### What I expect to take from this
+
+I'm not doing this to switch fields. I'm doing it to become a better AI engineer — the kind who understands what's happening beneath the abstraction.
+
+When I tune a RAG system, evaluate an agent, or stare at an eval metric, I want the foundation that turns intuition into decisions. Going back to the fundamentals isn't a step backward. It's building the groundwork that was missing.
+
+As I progress, I'll write about whatever surprises me along the way. If you're thinking about taking it too — let's do it together.
