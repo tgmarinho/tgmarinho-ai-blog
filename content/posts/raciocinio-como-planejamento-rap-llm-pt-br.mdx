@@ -1,0 +1,136 @@
+---
+title: "Raciocínio é Planejamento: o que o RAP muda na forma como LLMs pensam"
+description: "Como o framework RAP (Reasoning via Planning) transforma um LLM em agente e world model ao mesmo tempo, e usa Monte Carlo Tree Search para destravar planejamento deliberado — superando GPT-4 com CoT em Blocksworld usando apenas LLaMA-33B."
+date: "2026-05-16"
+published: true
+slug: "raciocinio-como-planejamento-rap-llm-pt-br"
+language: "pt-BR"
+translationKey: "reasoning-as-planning-rap-llm"
+categories: ["ai", "research", "agents", "pt-br"]
+image: "/images/blog/rap-mcts-agentic-futurism.svg"
+---
+
+Tem um paper de 2023 que envelheceu muito bem: **"Reasoning with Language Model is Planning with World Model"** (Hao et al., EMNLP 2023, [arXiv:2305.14992](https://arxiv.org/abs/2305.14992)).
+
+É um daqueles trabalhos cuja ideia central virou senso comum sem que muita gente lembre da fonte. Hoje, quando você ouve falar em "tree-of-thoughts", "agentes com search", "LLM-as-world-model" ou MCTS aplicado a raciocínio — boa parte do alicerce conceitual está aqui.
+
+Vou destrinchar o que o paper propõe, por que funciona, e o que isso importa para quem constrói com LLM hoje.
+
+### O problema: Chain-of-Thought é intuição, não deliberação
+
+LLMs grandes ficaram muito bons em raciocínio "Sistema 1" — aquele rápido e associativo. Chain-of-Thought (CoT) é o exemplo canônico: você pede para o modelo "pensar passo a passo" e ele desenrola uma sequência de tokens que, com sorte, leva à resposta.
+
+O problema é que CoT é fundamentalmente **autorregressivo e gananciosos**. O modelo:
+
+- não mantém um estado interno explícito do mundo;
+- não antecipa as consequências de uma ação;
+- não revisita escolhas ruins;
+- não compara trajetórias alternativas.
+
+Isso quebra em tarefas que exigem planejamento deliberado: Blocksworld, matemática em múltiplos passos, inferência lógica encadeada. Tarefas onde a resposta certa exige **olhar à frente** antes de comprometer-se com um passo.
+
+Em humanos, isso é o "Sistema 2" — o cérebro deliberativo que simula mentalmente cenários ("se eu fizer X, o mundo fica Y") antes de agir. E para fazer isso, precisamos de duas coisas: **um modelo interno do mundo** + **um mecanismo de busca** sobre futuros possíveis.
+
+### A virada: o LLM já é um world model
+
+A sacada do RAP é elegantemente simples:
+
+> O LLM já tem, implicitamente, um modelo do mundo. Basta promptar ele para esse papel.
+
+Em vez de usar o LLM apenas como gerador de próxima ação (o agente), o RAP **reaproveita o mesmo LLM em dois papéis simultâneos**:
+
+1. **Agente de raciocínio** — propõe a próxima ação dado o estado atual.
+2. **World model** — prevê o próximo estado dado um estado e uma ação.
+
+Formalmente, isso vira um **MDP (Markov Decision Process)**: estados, ações, transições, recompensas. Tudo pilotado pelo mesmo modelo, com prompts diferentes.
+
+Os autores mostram que "estado" e "ação" se materializam de formas naturais por tarefa:
+
+| Tarefa | Estado | Ação |
+|---|---|---|
+| Blocksworld | configuração das pilhas de blocos | "pick up the orange block" |
+| Matemática (GSM8K) | sub-perguntas + respostas intermediárias | próxima sub-pergunta |
+| Inferência lógica (PrOntoQA) | conjunto de fatos derivados | próxima regra a aplicar |
+
+### O motor: Monte Carlo Tree Search no espaço de raciocínio
+
+Tendo um world model, o RAP aplica **MCTS** — o mesmo algoritmo que destravou Go com AlphaGo — sobre a árvore de pensamentos.
+
+Cada nó da árvore é um estado de raciocínio. Cada aresta é uma ação proposta pelo LLM. MCTS roda em quatro fases por iteração:
+
+1. **Selection.** A partir da raiz, desce pela árvore usando UCT (Upper Confidence bound for Trees), balanceando exploração (caminhos pouco visitados) e exploração (caminhos com alto Q-value).
+2. **Expansion.** No nó-folha, o LLM-como-agente amostra `d` ações candidatas. Para cada ação, o LLM-como-world-model prevê o próximo estado.
+3. **Simulation.** Faz um rollout até um terminal (ou profundidade máxima), escolhendo ações de forma "leve" — políticas baratas para estimar recompensa futura.
+4. **Backpropagation.** A recompensa observada volta pela árvore, atualizando o Q-value de cada par (estado, ação) no caminho.
+
+Depois de `N` iterações, o caminho com maior recompensa acumulada é a resposta final.
+
+### O ingrediente sutil: como projetar recompensa sem ground truth
+
+Esse é o ponto que faz o RAP funcionar na prática — e o que é fácil ignorar em uma leitura rápida.
+
+Você **não tem** acesso ao oráculo da tarefa em tempo de inferência. Então a recompensa precisa ser construída a partir do próprio LLM. Os autores combinam, conforme a tarefa:
+
+- **Likelihood da ação.** Log-prob do LLM ao gerar a ação dado o estado — confiança "in-context".
+- **Confiança do estado.** O LLM pode votar várias vezes em qual é o próximo estado; a fração que concorda vira sinal.
+- **Self-evaluation.** Pergunta direta ao LLM: "este passo está correto? Sim/Não" — usando a probabilidade do "Sim".
+- **Heurísticas específicas da tarefa.** Em Blocksworld, número de submetas atingidas; em GSM8K, utilidade da sub-pergunta.
+
+A recompensa é uma agregação ponderada dessas fontes. Não é perfeita — mas é boa o bastante para guiar MCTS na direção certa.
+
+### Os resultados: pequeno modelo + busca > modelo gigante + greedy
+
+Aqui mora a parte que mais chama atenção.
+
+**Blocksworld (planejamento, LLaMA-33B vs GPT-4):**
+
+| Método | 2-step | 4-step | 6-step |
+|---|---|---|---|
+| CoT (LLaMA-33B) | 0.17 | 0.02 | 0.00 |
+| CoT (GPT-4) | 0.50 | 0.63 | 0.40 |
+| **RAP (LLaMA-33B)** | **1.00** | **0.86** | **0.42** |
+
+LLaMA-33B com RAP supera GPT-4 com CoT em **33% relativo**. Em 4-step, a diferença é gritante: 86% vs 63%.
+
+**GSM8K (matemática):** RAP com LLaMA-33B atinge ~48,8%, contra ~46,8% do CoT + Self-Consistency mais caro. Ganho consistente reduzindo o número de amostras.
+
+**PrOntoQA (lógica):** RAP atinge 94,2% de precisão completa (proof + answer), contra 89,5% do CoT + SC. Em casos difíceis, a margem cresce.
+
+### Por que isso importa em 2026
+
+Quando o paper saiu em maio/2023, parecia "ideia bonita, mas cara". Três anos depois, três coisas ficaram claras:
+
+1. **A linhagem é gigante.** Tree-of-Thoughts, Graph-of-Thoughts, agentes com planning, OpenAI o1/o3, Deepseek-R1 — todo o paradigma de "test-time compute" descende dessa mesma intuição: **gastar mais inferência em busca rende mais que escalar o modelo**.
+2. **O LLM-as-world-model é subutilizado.** A maioria dos sistemas de agente hoje ainda trata o LLM só como gerador de próxima ação. O RAP lembra que ele também sabe simular consequências — basta promptar.
+3. **MCTS sobrevive porque é robusto.** Frameworks novos (RLHF de longa cadeia, process reward models) eventualmente caem em estruturas parecidas: explorar, simular, avaliar, atualizar.
+
+### O que eu levo para o trabalho do dia a dia
+
+Construindo com agentes, três princípios do RAP entraram na minha caixa de ferramentas:
+
+- **Separe os dois papéis no prompt.** Quando o agente também precisa antecipar consequências, divida explicitamente: um prompt para propor ação, outro para simular o estado resultante. A precisão sobe.
+- **Trate confiança como sinal de busca.** Log-probs, votação majoritária, self-evaluation. Use esses sinais como heurística — não como verdade — para decidir onde gastar mais compute.
+- **Lookahead barato vence greedy caro.** Simular 3 passos à frente com modelo pequeno geralmente bate 1 passo greedy com modelo top. Em agentes de código, isso se traduz em "antes de aplicar o diff, simule mentalmente o que o teste vai dizer".
+
+### Limitações honestas
+
+O paper não esconde os custos:
+
+- MCTS exige múltiplas chamadas ao LLM por nó — caro em latência e em tokens.
+- A qualidade do world model é o teto: se o LLM erra a simulação, MCTS confia em alucinação.
+- O reward design é artesanal por tarefa — não há recompensa universal.
+
+Para tarefas onde o custo de errar é alto (planejamento, raciocínio matemático rigoroso, multi-step agents), o trade-off compensa. Para chatbots conversacionais, não.
+
+### Fechando
+
+Se você está construindo qualquer coisa com agentes em 2026, vale ler o paper original com olhos novos. Não pela arquitetura específica — você provavelmente não vai implementar MCTS na mão — mas pela **mudança de mentalidade**:
+
+> Raciocínio não é gerar tokens. Raciocínio é simular futuros e escolher o melhor.
+
+E o LLM já sabe fazer as duas coisas. Só precisa de um prompt que peça.
+
+---
+
+**Paper:** [Reasoning with Language Model is Planning with World Model](https://arxiv.org/abs/2305.14992) — Shibo Hao, Yi Gu, Haodi Ma, Joshua J. Hong, Zhen Wang, Daisy Z. Wang, Zhiting Hu. EMNLP 2023.
+**Código:** [github.com/Ber666/llm-reasoners](https://github.com/Ber666/llm-reasoners)

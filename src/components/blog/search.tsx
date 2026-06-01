@@ -32,7 +32,10 @@ export function BlogSearch({
 }: BlogSearchProps) {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [fuse, setFuse] = useState<FuseType<SearchIndexItem> | null>(null);
+  const [fuseState, setFuseState] = useState<{
+    index: SearchIndexItem[];
+    fuse: FuseType<SearchIndexItem>;
+  } | null>(null);
 
   const index = useMemo<SearchIndexItem[]>(
     () =>
@@ -45,18 +48,23 @@ export function BlogSearch({
     [posts]
   );
 
+  const fuse = fuseState?.index === index ? fuseState.fuse : null;
+
   const ensureFuse = useCallback(async () => {
     if (fuse) return;
     const { default: Fuse } = await import("fuse.js");
-    setFuse(new Fuse(index, {
-      keys: [
-        { name: "title", weight: 3 },
-        { name: "description", weight: 2 },
-        { name: "categories", weight: 1.5 },
-      ],
-      threshold: 0.3,
-      includeScore: true,
-    }));
+    setFuseState({
+      index,
+      fuse: new Fuse(index, {
+        keys: [
+          { name: "title", weight: 3 },
+          { name: "description", weight: 2 },
+          { name: "categories", weight: 1.5 },
+        ],
+        threshold: 0.3,
+        includeScore: true,
+      }),
+    });
   }, [fuse, index]);
 
   const filteredPosts = useMemo(() => {

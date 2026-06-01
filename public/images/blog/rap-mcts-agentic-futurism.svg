@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">RAP MCTS reasoning tree</title>
+  <desc id="desc">Agentic Futurism cover showing Monte Carlo Tree Search over reasoning states, with the winning path illuminated in cyan.</desc>
+  <defs>
+    <radialGradient id="cyan-halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(260 170) rotate(42) scale(520 360)">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.34"/>
+      <stop offset="0.45" stop-color="#22d3ee" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="magenta-halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 250) rotate(135) scale(500 330)">
+      <stop offset="0" stop-color="#d946ef" stop-opacity="0.28"/>
+      <stop offset="0.48" stop-color="#d946ef" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#d946ef" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bottom-halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(640 760) scale(620 210)">
+      <stop offset="0" stop-color="#2563eb" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#2563eb" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dot-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#ffffff" opacity="0.16"/>
+    </pattern>
+    <filter id="cyan-glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.133 0 0 0 0 0.827 0 0 0 0 0.933 0 0 0 0.95 0" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="soft-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="panel-line" x1="80" y1="0" x2="1120" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+      <stop offset="0.24" stop-color="#22d3ee" stop-opacity="0.42"/>
+      <stop offset="0.76" stop-color="#d946ef" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#d946ef" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="#05060a"/>
+  <rect width="1200" height="800" fill="url(#cyan-halo)"/>
+  <rect width="1200" height="800" fill="url(#magenta-halo)"/>
+  <rect width="1200" height="800" fill="url(#bottom-halo)"/>
+  <rect width="1200" height="800" fill="url(#dot-grid)" opacity="0.66"/>
+  <rect x="68" y="64" width="1064" height="672" rx="30" fill="#ffffff" opacity="0.018" stroke="#ffffff" stroke-opacity="0.08"/>
+  <path d="M84 150H1116" stroke="url(#panel-line)" stroke-width="1.5"/>
+  <path d="M84 650H1116" stroke="url(#panel-line)" stroke-width="1.5" opacity="0.65"/>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" text-transform="uppercase">
+    <text x="96" y="104" fill="#22d3ee" font-size="16" letter-spacing="5">RAP / REASONING AS PLANNING</text>
+    <text x="96" y="130" fill="#ffffff" fill-opacity="0.48" font-size="11" letter-spacing="3.5">LLM AS AGENT + WORLD MODEL / MONTE CARLO TREE SEARCH</text>
+    <text x="945" y="104" fill="#ffffff" fill-opacity="0.55" font-size="11" letter-spacing="3.5">Q-VALUE</text>
+    <text x="1032" y="104" fill="#22d3ee" font-size="11" letter-spacing="3.5">WIN PATH</text>
+  </g>
+
+  <g opacity="0.24" stroke="#ffffff" stroke-width="1">
+    <path d="M160 224H1040"/>
+    <path d="M160 344H1040"/>
+    <path d="M160 464H1040"/>
+    <path d="M160 584H1040"/>
+    <path d="M260 184V620"/>
+    <path d="M500 184V620"/>
+    <path d="M740 184V620"/>
+    <path d="M980 184V620"/>
+  </g>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#ffffff" stroke-opacity="0.2" stroke-width="2">
+      <path d="M600 206C500 252 396 290 292 336"/>
+      <path d="M600 206C585 264 563 302 536 350"/>
+      <path d="M600 206C704 256 792 292 878 336"/>
+      <path d="M292 336C240 394 214 438 198 500"/>
+      <path d="M292 336C348 392 382 436 416 500"/>
+      <path d="M536 350C510 410 486 448 466 500"/>
+      <path d="M536 350C590 404 640 444 692 500"/>
+      <path d="M878 336C810 392 768 438 744 500"/>
+      <path d="M878 336C944 400 990 444 1040 500"/>
+      <path d="M692 500C648 560 618 596 580 640"/>
+      <path d="M692 500C752 560 798 596 846 640"/>
+      <path d="M1040 500C1010 562 982 598 948 640"/>
+    </g>
+    <g stroke="#22d3ee" stroke-width="5" filter="url(#cyan-glow)">
+      <path d="M600 206C704 256 792 292 878 336"/>
+      <path d="M878 336C810 392 768 438 744 500"/>
+      <path d="M744 500C694 560 638 600 580 640"/>
+    </g>
+    <g stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="6 10" opacity="0.8">
+      <path d="M580 640C520 622 478 600 448 574"/>
+      <path d="M580 640C646 620 690 594 718 562"/>
+    </g>
+  </g>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace">
+    <g filter="url(#soft-glow)">
+      <circle cx="600" cy="206" r="33" fill="#05060a" stroke="#22d3ee" stroke-width="2.5"/>
+      <circle cx="878" cy="336" r="29" fill="#061015" stroke="#22d3ee" stroke-width="2.2"/>
+      <circle cx="744" cy="500" r="27" fill="#061015" stroke="#22d3ee" stroke-width="2.2"/>
+      <circle cx="580" cy="640" r="30" fill="#061015" stroke="#22d3ee" stroke-width="2.6"/>
+    </g>
+
+    <g fill="#05060a" stroke="#ffffff" stroke-opacity="0.28" stroke-width="1.4">
+      <circle cx="292" cy="336" r="25"/>
+      <circle cx="536" cy="350" r="25"/>
+      <circle cx="198" cy="500" r="22"/>
+      <circle cx="416" cy="500" r="22"/>
+      <circle cx="466" cy="500" r="22"/>
+      <circle cx="692" cy="500" r="22"/>
+      <circle cx="1040" cy="500" r="23"/>
+      <circle cx="846" cy="640" r="21"/>
+      <circle cx="948" cy="640" r="21"/>
+    </g>
+
+    <g fill="#22d3ee" font-size="11" letter-spacing="2.4" text-anchor="middle">
+      <text x="600" y="210">ROOT</text>
+      <text x="878" y="340">SELECT</text>
+      <text x="744" y="504">SIM</text>
+      <text x="580" y="644">ANSWER</text>
+    </g>
+
+    <g fill="#ffffff" fill-opacity="0.42" font-size="10" letter-spacing="2" text-anchor="middle">
+      <text x="292" y="340">A1</text>
+      <text x="536" y="354">A2</text>
+      <text x="198" y="504">R-.2</text>
+      <text x="416" y="504">R.1</text>
+      <text x="466" y="504">R.3</text>
+      <text x="692" y="504">R.5</text>
+      <text x="1040" y="504">R.4</text>
+      <text x="846" y="644">CUT</text>
+      <text x="948" y="644">CUT</text>
+    </g>
+  </g>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" text-transform="uppercase">
+    <g fill="#ffffff" fill-opacity="0.72" font-size="12" letter-spacing="3">
+      <text x="176" y="206">STATE S0</text>
+      <text x="786" y="286">UCT SELECTS HIGH-Q BRANCH</text>
+      <text x="774" y="456">WORLD MODEL ROLLOUT</text>
+      <text x="430" y="694">BACKPROPAGATE REWARD</text>
+    </g>
+    <g fill="#22d3ee" font-size="13" letter-spacing="3.6">
+      <text x="786" y="316">WINNING TRAJECTORY</text>
+      <text x="434" y="666">FINAL PLAN</text>
+    </g>
+  </g>
+
+  <g transform="translate(92 676)">
+    <rect x="0" y="0" width="268" height="32" rx="16" fill="#22d3ee" fill-opacity="0.08" stroke="#22d3ee" stroke-opacity="0.3"/>
+    <circle cx="18" cy="16" r="4" fill="#22d3ee" filter="url(#cyan-glow)"/>
+    <text x="34" y="20" fill="#22d3ee" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="10" letter-spacing="2.8">SELECTION / EXPANSION / SIMULATION / BACKPROP</text>
+  </g>
+
+  <g transform="translate(812 676)">
+    <rect x="0" y="0" width="296" height="32" rx="16" fill="#ffffff" fill-opacity="0.035" stroke="#ffffff" stroke-opacity="0.1"/>
+    <text x="18" y="20" fill="#ffffff" fill-opacity="0.54" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="10" letter-spacing="2.8">LLM PROPOSES ACTIONS / LLM PREDICTS STATES</text>
+  </g>
+</svg>
