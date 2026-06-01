@@ -144,6 +144,16 @@ In banking and financial apps, the priority is non-negotiable: **strong consiste
 
 Notice what's **not** on that list by default: **Postgres**. Not because it's bad — the opposite of what this post argues. It's an excellent single node; it just lacks native partition tolerance and automatic sharding to back a distributed, global banking core without expensive manual work. For a small-to-mid fintech, a monolith, or a regional bank, Postgres is still great. For a planet-scale transactional core, pick a tool built for it.
 
+### First of all: no requirements, no architecture
+
+Notice that every decision above — consolidated Postgres, distributed, banking core — comes not from fashion or the hype of the database du jour. It comes from **requirements**.
+
+> Without requirements, there's no architecture.
+
+It's the one rule that precedes all the others. "CA or AP?" isn't an aesthetic preference — it answers "do I need to tolerate network partitions?". "Postgres or CockroachDB?" answers "do I have global multi-region writes?". "One database or seven?" answers "what problem do I actually have today?".
+
+Choosing a database before gathering requirements is guessing — and expensive guessing, because architecture errs upward (complexity you carry forever) or downward (a wall that takes you down in production). The most common sin, and the one this post fights, is **architecting for an imaginary future requirement**.
+
 ### The practical rule
 
 > Start with **one database**. Add complexity only when you've **earned** the need for it.

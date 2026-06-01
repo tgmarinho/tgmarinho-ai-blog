@@ -144,6 +144,16 @@ Em aplicação bancária e financeira, a prioridade não é negociável: **consi
 
 Note o que **não** está nessa lista por padrão: **Postgres**. Não por ser ruim — pelo oposto do que defende este post. É um single node excelente; só não tem tolerância a partição nativa nem sharding automático pra sustentar um core bancário distribuído e global sem trabalho manual caro. Pra fintech de pequeno/médio porte, monolito ou banco regional, Postgres segue ótimo. Pra core transacional planetário, escolha uma ferramenta que nasceu pra isso.
 
+### Antes de tudo: sem requisito não tem arquitetura
+
+Repare que cada decisão acima — Postgres consolidado, distribuído, core bancário — não vem da moda nem do _hype_ do banco da vez. Vem de **requisito**.
+
+> Sem requisitos, não tem arquitetura.
+
+É a única regra que precede todas as outras. "CA ou AP?" não é uma preferência estética — é uma resposta a "eu preciso tolerar partição de rede?". "Postgres ou CockroachDB?" responde a "eu tenho escrita global multi-região?". "Um banco ou sete?" responde a "qual problema eu realmente tenho hoje?".
+
+Quem escolhe banco antes de levantar requisito está chutando — e chute caro, porque arquitetura erra pra cima (complexidade que você carrega pra sempre) ou pra baixo (parede que te derruba em produção). O pecado mais comum, e o que este post combate, é **arquitetar para um requisito imaginário do futuro**.
+
 ### A regra prática
 
 > Comece com **um banco**. Adicione complexidade só quando você **provou** que precisa dela.
