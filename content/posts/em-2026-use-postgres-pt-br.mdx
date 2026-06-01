@@ -100,6 +100,18 @@ Mesmo que um banco especializado vença em um benchmark específico, você paga 
 
 **Custo real.** Plexigrid consolidou de quatro bancos para um e ganhou **350x** em performance de query. Flogistix cortou 66% do custo. Latitude economizou US$ 12 mil/mês só de compressão.
 
+### Onde o Postgres brilha de verdade
+
+Antes de falar dos limites, vale fixar onde ele é a escolha **obviamente certa** — algo bem destilado neste [vídeo sobre os limites do Postgres em sistemas distribuídos](https://www.youtube.com/watch?v=bhw4-Kq_RPs):
+
+- **Monolitos e apps de pequeno/médio porte** — o clássico "sisteminha de padaria, farmácia ou mercadinho". Um ambiente, um banco, zero complexidade de múltiplos nós. É a esmagadora maioria dos sistemas reais.
+- **Nó único (single node)** — quando app e banco vivem no mesmo servidor (ou poucos), e não há necessidade de sharding, Postgres voa.
+- **Consistência + dados estruturados (CA)** — no CAP, ser CA é uma _vantagem_ quando você não precisa de tolerância a partição. Você ganha relacionamentos sólidos, transações ACID e consistência forte sem pagar o imposto do distribuído.
+- **Mais leitura que escrita** — a evolução natural via **read replicas** (master pra escrita + réplicas pra leitura) resolve gargalo inicial de forma simples, com ORMs comuns, sem reescrever a arquitetura.
+- **Projetos iniciais e familiaridade** — é o relacional default que quase todo dev conhece. Simples de subir, atende a maioria das necessidades de quem está começando a escalar.
+
+Em uma frase: **Postgres brilha quando escala global e partição de rede não são o seu problema** — que é a realidade de quase todo produto antes de virar um Uber ou um Nubank.
+
 ### O outro lado: onde Postgres encosta na parede
 
 Consolidar em Postgres é a aposta certa pra **a maioria** dos sistemas — monolitos e apps de pequeno/médio porte. Mas seria desonesto parar aqui sem falar do limite real: **Postgres nasceu como banco de nó único (single node)**, e isso aparece quando o sistema precisa ser genuinamente distribuído em larga escala.
@@ -120,6 +132,17 @@ Consolidar em Postgres é a aposta certa pra **a maioria** dos sistemas — mono
 Bancos como **Cassandra** (quórum) ou **MongoDB** (Raft pra eleição/replicação) trazem esses mecanismos no núcleo. Postgres não — e adaptá-lo cobra um preço técnico e financeiro desproporcional **quando você realmente está nesse regime**.
 
 A questão é honesta: **você está mesmo nesse regime?** A maioria não está. "Larga escala distribuída" costuma ser uma profecia de arquitetura que nunca se cumpre — e o custo de prepará-la cedo demais é exatamente a fragmentação que este post critica. Mas se você opera escrita global, multi-região com partição garantida, ou consistência sob falha de rede como requisito _hard_ — aí o single node do Postgres é uma parede de verdade, não marketing.
+
+### E quando é banco/fintech? O que usar
+
+Em aplicação bancária e financeira, a prioridade não é negociável: **consistência forte**. Todo nó precisa ver o dado mais atual. Consistência eventual aqui é defeito, não trade-off — basta imaginar transferências repetidas disparadas sobre um saldo desatualizado. Quando o regime é distribuído e crítico, estes são os candidatos:
+
+- **CockroachDB** — relacional distribuído, fala o protocolo do Postgres e usa **Raft** internamente pra garantir consistência forte em escala. É o substituto natural pra quem ama Postgres mas precisa de distribuição real.
+- **Google Spanner** — o "monstro" da categoria: relógios atômicos + **TrueTime** entregam consistência externa em escala global, resolvendo concorrência no nível do microssegundo. Caro e acoplado ao GCP, mas sem rival quando o requisito é esse.
+- **MongoDB** — frequentemente lembrado só por performance, mas no **PACELC** ele é **PC/EC** (prioriza consistência tanto em partição quanto em operação normal) e oferece **transações ACID**. Viável pra dado financeiro quando bem configurado.
+- **Cassandra com quórum** — por essência é **AP/EL** (disponibilidade e baixa latência), mas é versátil: definindo o nível de consistência como `QUORUM` ou `ALL` em tempo de query, você força a maioria/todos os nós a confirmarem antes de responder — o suficiente pra cenários críticos.
+
+Note o que **não** está nessa lista por padrão: **Postgres**. Não por ser ruim — pelo oposto do que defende este post. É um single node excelente; só não tem tolerância a partição nativa nem sharding automático pra sustentar um core bancário distribuído e global sem trabalho manual caro. Pra fintech de pequeno/médio porte, monolito ou banco regional, Postgres segue ótimo. Pra core transacional planetário, escolha uma ferramenta que nasceu pra isso.
 
 ### A regra prática
 
