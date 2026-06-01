@@ -4,7 +4,7 @@
 // bundles small.
 
 import readingTime from "reading-time";
-import { posts, type Post } from "#site/content";
+import { allPosts as posts, type AnyPost as Post } from "@/lib/all-posts";
 import type { Locale } from "@/i18n/routing";
 import { getPostLanguage } from "@/lib/posts-i18n";
 

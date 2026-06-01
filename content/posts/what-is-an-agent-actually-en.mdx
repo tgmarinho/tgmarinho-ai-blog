@@ -1,0 +1,167 @@
+---
+title: "What is an agent, actually?"
+description: "An honest definition of AI agents, distilled from Chip Huyen, Anthropic, and Cedric Chee: perception plus action in an environment, with tools, memory, and a decision loop."
+date: "2026-05-15"
+published: true
+slug: "what-is-an-agent-actually-en"
+language: "en"
+translationKey: "what-is-an-agent"
+categories: ["ai", "software-engineering", "en"]
+image: "/images/blog/what-is-an-agent-cover.jpg"
+---
+
+"Agent" became the "blockchain" of 2026.
+
+Every startup has one. Every SaaS shipped theirs. Every chatbot with two tools is now an "AI agent". And when you ask what an agent actually is, nobody agrees.
+
+Before falling further into that definitional vacuum, it's worth pausing and answering honestly:
+
+**What is an agent, actually?**
+
+This article is a pragmatic synthesis of the three best pieces I know on the topic:
+
+- [Chip Huyen — *Agents*](https://huyenchip.com/2025/01/07/agents.html)
+- [Anthropic — *Building effective agents*](https://www.anthropic.com/engineering/building-effective-agents)
+- [Cedric Chee — *The DNA of AI Agents*](https://cedricchee.com/blog/the-dna-of-ai-agents/)
+
+The three arrive, through different paths, at very similar conclusions. That convergence is what makes the definition trustworthy.
+
+### The minimum definition
+
+Chip Huyen brings back the classic Russell & Norvig definition:
+
+> "Anything that can be viewed as perceiving its environment through sensors and acting upon that environment through actuators."
+
+In plain English: **an agent perceives an environment and acts on it.**
+
+That's the floor. Without perception, it's just a script. Without action, it's just a classifier. Without an environment, it's just a one-shot chat.
+
+When you replace "sensors" with "text input, tools, and file reads" and "actuators" with "tool calls that touch real systems", you get the modern version: an LLM with eyes and hands.
+
+### An agent is not the model
+
+This is the most common mistake.
+
+The model (GPT-5, Claude Opus 4.7, Gemini) is just the brain. On its own, it answers text and stops.
+
+An agent is:
+
+`agent = model + environment + tools + decision loop (+ memory)`
+
+Cedric Chee calls this the **"augmented LLM"**: the base model plus retrieval, tools, and memory. It's the foundational brick — and Anthropic frames it as the core building block of any serious agentic system.
+
+### Agent vs. workflow (Anthropic's distinction)
+
+This is the part that clears most of the confusion.
+
+Anthropic separates two worlds:
+
+- **Workflow:** LLMs and tools are orchestrated through **predefined code paths**.
+- **Agent:** the LLM **dynamically decides** the next step and how to use the tools.
+
+Translation:
+
+- If your *code* decides "now call tool X, then Y, then return", it's a **workflow**.
+- If the *model* decides the next step, observing the previous result and replanning, it's an **agent**.
+
+That's why "agent" is a spectrum, not a switch. You can have:
+
+1. **Plain LLM** — one response, no tools.
+2. **Augmented LLM** — tools, retrieval, memory, but a fixed sequence.
+3. **Workflows** — multiple LLMs orchestrated by code (chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer).
+4. **Agents** — the model controls its own loop.
+
+Anthropic lists five workflow patterns that cover most production cases:
+
+- **Prompt chaining** — output of one becomes input to the next.
+- **Routing** — classify the input and dispatch to a specialized handler.
+- **Parallelization** — concurrent tasks (sectioning or voting).
+- **Orchestrator-workers** — a central LLM delegates to workers.
+- **Evaluator-optimizer** — one LLM evaluates and refines another's output.
+
+Most of what's in production today is **workflow**, not agent. And that's fine — workflows are more predictable and cheaper.
+
+### The DNA: four pieces that show up in every definition
+
+Cross-referencing Huyen, Anthropic, and Chee, four components always come up:
+
+**1. Environment.** What the agent can observe and modify. A coding agent lives in filesystem + terminal + Git. A support agent lives in CRM + knowledge base. No environment, no agency.
+
+**2. Tools.** The hands. Huyen sorts them into three families:
+
+- **Knowledge augmentation:** retrievers, APIs, web search.
+- **Capability extension:** calculators, code interpreters, translators.
+- **Write actions:** updating a database, sending email, executing a payment.
+
+The last family is the scary one — and the one that multiplies value the most.
+
+**3. Planning.** Decompose the task into steps, validate, execute, reflect, correct. Cedric Chee makes the case for explicit role separation: **Planner**, **Evaluator**, **Executor**. Only validated plans get executed.
+
+**4. Memory.** Whatever survives across steps and sessions. Short-term (context), mid (scratchpad, working memory), and long-term (vector store, files, database). Without memory, every step restarts from scratch.
+
+### Why errors compound (the math everyone ignores)
+
+Huyen drops a brutal number:
+
+> A model with 95% per-step accuracy collapses to ~60% over 10 steps.
+
+`0.95^10 ≈ 0.598`
+
+That's why "just plug in one more tool" rarely fixes anything. Long agent runs compound errors exponentially. The three known defenses are:
+
+- **Short loops** — fewer steps, less cascade risk.
+- **Verification** — check output before continuing (evaluators, types, tests, lints, human-in-the-loop).
+- **Idempotency and undo** — cheap undo beats getting it right the first time.
+
+This connects to another piece I wrote on [Agent Harness Engineering in practice](/blog/agent-harness-engineering-in-practice): the harness — environment, rules, tools, verification loops — usually matters more than the model itself.
+
+### When to use an agent, when to use a workflow
+
+Anthropic's rule is uncomfortably simple:
+
+> Start simple. Only add complexity when the measured gain justifies it.
+
+Translation:
+
+- **Workflow** for well-defined tasks, predictable steps, high volume, low cost of compounded error.
+- **Agent** for open-ended problems where steps cannot be pre-decided, and where flexibility justifies the extra cost and risk.
+
+In practice:
+
+- "Extract fields from a PDF and write to DB" → workflow.
+- "Resolve this random support ticket spanning four systems" → maybe agent.
+- "Refactor this repo following this convention" → agent, with a strong harness.
+
+Almost nobody needs an agent where a workflow does the job. And almost everyone is paying agent costs to solve workflow problems.
+
+### The convergence
+
+The most interesting point in Cedric Chee's piece is meta: he shows that Anthropic and Huyen, coming from different places, land on the same building blocks — augmented LLM, tools, memory, planning, evaluation loops. This is no longer "lab X's theory" — it's established practice.
+
+Which means, practically:
+
+- If you're designing an agentic system today, **you can stop inventing vocabulary** and adopt what already converged.
+- The trade-offs are the same: autonomy × predictability, flexibility × cost, openness × safety.
+- The question is not "should I use an agent?" but "where on the autonomy spectrum does this problem live?"
+
+### In one sentence
+
+**An agent is an LLM that perceives an environment, dynamically decides its next step, acts through tools, and closes the loop with memory and verification.**
+
+Anything below that is a workflow. Anything above that doesn't really exist yet.
+
+Next time someone tells you they have an "agent", ask three things:
+
+1. Who decides the next step — your code or the model?
+2. What tools does it have, and what do they write to the real world?
+3. How does the system verify a step succeeded before continuing?
+
+If the answers are vague, it's probably a chatbot with better marketing.
+
+---
+
+Source reading:
+
+- Chip Huyen — [*Agents*](https://huyenchip.com/2025/01/07/agents.html)
+- Anthropic — [*Building effective agents*](https://www.anthropic.com/engineering/building-effective-agents)
+- Cedric Chee — [*The DNA of AI Agents*](https://cedricchee.com/blog/the-dna-of-ai-agents/)

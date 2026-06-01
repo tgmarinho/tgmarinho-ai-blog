@@ -1,0 +1,145 @@
+---
+title: "The AI Engineering Stack: an applied summary"
+description: "What changes when AI engineering stops being ML engineering: the three layers of the stack, why product now comes before model, and where the real complexity moved."
+date: "2026-05-15"
+published: true
+slug: "the-ai-engineering-stack-summary-en"
+language: "en"
+translationKey: "the-ai-engineering-stack-summary"
+categories: ["ai", "software-engineering", "en"]
+image: "/images/blog/photo-1658204238967-3a81a063d162.jpg"
+---
+
+The Pragmatic Engineer published a long piece by Gergely Orosz with Chip Huyen (author of *AI Engineering*, O'Reilly) on what the stack looks like for people building products with foundation models today. The full read is worth it; this is my applied summary.
+
+The central thesis is simple:
+
+**AI engineering is not ML engineering.**
+
+It inherits a lot from ML, but the center of gravity moved. Instead of training a model from scratch, you adapt pre-trained ones and spend most of your time around them: prompting, evaluation, interface, context, safety, and cost.
+
+One quote captures it well:
+
+> "AI engineering is just software engineering with AI models thrown in the stack."
+
+### The three layers of the stack
+
+Chip Huyen frames the stack in three layers, top down:
+
+1. **Application development**
+   prompt engineering, evaluation, context construction, interfaces (web, chatbot, extension, API).
+
+2. **Model development**
+   modeling, training, fine-tuning, dataset engineering, inference optimization.
+
+3. **Infrastructure**
+   model serving, data/compute management, monitoring.
+
+The interesting part is where an AI engineer's hours actually go today: almost everything sits on layer 1, with occasional dips into layer 2 (mostly fine-tuning and inference).
+
+### Three differences between AI engineering and ML engineering
+
+The article highlights three:
+
+1. **Pre-trained models, not trained from scratch.**
+   You rarely touch weights. You adapt via prompting, RAG, tool use, and — only when justified — fine-tuning.
+
+2. **Bigger models, costlier compute, real latency.**
+   Inference optimization stops being a detail and becomes a core competency — autoregressive token generation has a real price.
+
+3. **Open-ended outputs, hard evaluation.**
+   There is no more "accuracy 0.87". There is text, code, plans, actions. Evaluation became the thorniest problem in the field.
+
+### The flow inversion: product before model
+
+In classical ML the flow was:
+
+`data -> model -> product`
+
+In AI engineering, with foundation models already available, it inverts:
+
+`product -> refined model`
+
+You start from a product hypothesis, use a good-enough model, measure, and only refine (via fine-tuning, proprietary data, or model swap) when the bottleneck justifies it. The iteration cycle shrinks dramatically.
+
+A nice side effect: **full-stack engineers got a real edge**. People who can touch UI, backend, prompt, eval, and ship a product change in a single week outpace teams stuck in classical ML silos.
+
+An empirical anecdote of this effect comes from the Pragmatic Engineer follow-up ([AI Engineering in the Real World](https://newsletter.pragmaticengineer.com/p/ai-engineering-in-the-real-world)): at DSI, Ryan Cogswell shipped in ~2 months, solo, what an external agency had quoted at 6 to 9 months with SageMaker, Lambdas, and two databases. Not an isolated case — it's the pattern that emerges as the stack converges.
+
+### Where the complexity actually lives
+
+If pre-trained models handle the heavy part, what's left? In decreasing order of time spent:
+
+- **Evaluation.** Without solid eval, you cannot tell if you improved. Offline eval + online signals (did the user retry, follow up, abandon?).
+- **Prompting and context.** Context construction (RAG, memory, tools) is now part of the product.
+- **AI interface.** Chat is the obvious interface, rarely the best one. Picking between chat, form, background agent, browser extension, or pure API shifts perceived quality dramatically.
+- **Proprietary data.** Data quality is becoming a stronger competitive moat than model choice.
+- **Inference.** Latency, per-request cost, caching, batching, streaming.
+
+Ross McNairn, Wordsmith's CTO, sums this part up nicely in the follow-up: *"getting comfortable with evaluations and iterating on non-deterministic outputs is the biggest challenge"*. Same thesis as Huyen, but voiced by someone running it in production.
+
+Classical ML is still useful, but for most application use cases it became *nice-to-have*.
+
+### Tools mentioned
+
+The piece namechecks a familiar list, but the shape is informative:
+
+- **Low-level training/serving:** TensorFlow, PyTorch, Hugging Face Transformers.
+- **Front/back orchestration:** LangChain.js, Transformers.js, OpenAI Node library, Vercel AI SDK.
+- **Fast prototype UIs:** Streamlit, Gradio, Plotly Dash.
+
+Notice how application libraries dominate, not research ones. That reinforces the thesis: most of the work lives on the product layer.
+
+### What I took away practically
+
+If you are positioning yourself as an AI engineer today, I would invest in:
+
+1. **Owning evaluation.** Reliable offline evals plus solid online signal instrumentation is rare and expensive.
+2. **Context construction.** RAG, memory, tool use, agents — this is the engineering with the highest leverage.
+3. **Cost and latency in production.** Inference optimization, caching, streaming, and cross-model fallback are real differentiators. Multi-cloud by model is becoming the default — Wordsmith runs on AWS (Anthropic) + Azure (OpenAI) + GCP (Gemini) because no single provider hosts all the best models.
+4. **Product.** Knowing which interface to pick — and when *not* to use AI — is half the delivery.
+5. **Proprietary data.** Whoever owns the data and the curation loop wins long-term.
+
+Deep ML still matters, but it is no longer the required entry door. The entry door today is solid software engineering, with models plugged into the right place.
+
+### Companion reads: two pieces that pair well with this one
+
+The stack article is the top-down map. Two other pieces descend into different layers of the same landscape.
+
+**Chip Huyen — Agents (huyenchip.com, 2025)**
+
+Four points worth pulling out:
+
+- **The math of compounding errors.** At 95% per-step accuracy, a 10-step task drops to ~60% overall; at 100 steps, 0.6%. That number alone empirically justifies why evaluation and validation eat so much of the stack.
+- **Decouple planning from execution.** Validating the plan before executing (via heuristics or LLM-as-judge) avoids expensive calls and destructive actions.
+- **Three agent failure modes for evaluation:** planning (invalid tool, wrong parameter, misaligned goal), tool (incorrect output), efficiency (too many steps, high cost). A far more useful taxonomy than "the agent failed".
+- **Reflection isn't optional in practice.** Without a revision loop, compounding errors collapse any long-running task.
+
+**Anthropic — Building Effective Agents**
+
+Four points that change architecture decisions:
+
+- **Workflow vs Agent — who drives the flow.** A *workflow* is an LLM inside a predefined code path. An *agent* is an LLM directing its own flow dynamically. Most "agentic" systems in production are actually workflows — and that is a good choice, not a limitation.
+- **Tools > Prompts.** Working on SWE-bench, they spent more time optimizing tools than the overall prompt. Counter to the common intuition that prompt is the main lever.
+- **Poka-yoke for the ACI** (Agent-Computer Interface). Example: switching from relative to absolute paths killed an entire class of errors. Tool design as *prevention*, not correction.
+- **Healthy framework skepticism.** Counterintuitive guidance: start with the LLM API directly; only adopt a framework when it pulls its weight. A useful counterweight to the library list above.
+
+They also catalog five orchestration patterns worth memorizing:
+
+| Pattern | When to use |
+|---|---|
+| Prompt chaining | Tasks decomposable into fixed steps |
+| Routing | Heterogeneous inputs, specialized handlers |
+| Parallelization | Independent subtasks or voting |
+| Orchestrator-workers | Unpredictable subtasks, dynamic delegation |
+| Evaluator-optimizer | Iterative refinement with a critique loop |
+
+Putting the three pieces together: the **stack** gives you the map, **Huyen/Agents** gives you the math and the taxonomy, and **Anthropic** gives you concrete patterns for when *not* to add complexity.
+
+### References
+
+- [The AI Engineering Stack — Gergely Orosz & Chip Huyen, The Pragmatic Engineer](https://newsletter.pragmaticengineer.com/p/the-ai-engineering-stack)
+- [AI Engineering in the Real World — The Pragmatic Engineer](https://newsletter.pragmaticengineer.com/p/ai-engineering-in-the-real-world)
+- [Agents — Chip Huyen](https://huyenchip.com/2025/01/07/agents.html)
+- [Building Effective Agents — Anthropic Engineering](https://www.anthropic.com/engineering/building-effective-agents)
+- [AI Engineering — Chip Huyen, O'Reilly](https://www.oreilly.com/library/view/ai-engineering/9781098166298/)

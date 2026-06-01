@@ -4,13 +4,15 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import readingTime from "reading-time";
-import { posts, type Post } from "#site/content";
+import { allPosts as posts, type AnyPost as Post } from "@/lib/all-posts";
 import { Link, redirect } from "@/i18n/navigation";
 import { MdxContent } from "@/components/mdx/mdx-content";
 import { ShareButton } from "@/components/mdx/share-button";
+import { TableOfContents } from "@/components/blog/table-of-contents";
 import { siteConfig } from "@/lib/constants";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { getPostLanguage, getTranslationPair } from "@/lib/posts-i18n";
+import { extractToc } from "@/lib/toc";
 import { routing, type Locale } from "@/i18n/routing";
 
 export const revalidate = 3600;
@@ -162,6 +164,8 @@ export default async function PostPage({ params }: PostPageProps) {
   const related = getRelatedPosts(post);
   const translationInOtherLocale = pair[locale === "pt-BR" ? "en" : "pt-BR"];
   const showMissingBanner = postLocale !== locale && !pair[locale];
+  const toc = extractToc(post.body || "");
+  const tocLabel = t("onThisPage");
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -314,6 +318,17 @@ export default async function PostPage({ params }: PostPageProps) {
             />
           </div>
         </figure>
+      )}
+
+      {toc.length > 1 && (
+        <aside
+          aria-label={tocLabel}
+          className="pointer-events-none fixed top-32 z-10 hidden w-[240px] xl:right-[max(1rem,calc((100vw-920px)/2-280px))] xl:block"
+        >
+          <div className="pointer-events-auto max-h-[calc(100vh-10rem)] overflow-y-auto pr-2">
+            <TableOfContents items={toc} label={tocLabel} />
+          </div>
+        </aside>
       )}
 
       <div className="prose mx-auto mt-14 max-w-[680px]">

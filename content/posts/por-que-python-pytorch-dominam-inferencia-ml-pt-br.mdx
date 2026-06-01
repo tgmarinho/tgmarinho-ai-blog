@@ -1,0 +1,89 @@
+---
+title: "Por que Python e PyTorch dominam a inferência de ML"
+description: "Python é a linguagem cola, PyTorch venceu pelo eager mode, e em produção quase ninguém serve PyTorch puro. O racional por trás do stack padrão de ML hoje."
+date: "2026-05-15"
+published: true
+slug: "por-que-python-pytorch-dominam-inferencia-ml-pt-br"
+language: "pt-BR"
+translationKey: "why-python-pytorch-dominate-ml-inference"
+categories: ["ai", "machine-learning", "software-engineering", "pt-br"]
+image: "/images/blog/python-pytorch-ml-inference-cover.jpg"
+---
+
+A pergunta apareceu numa conversa: por que praticamente todo modelo de ML aberto sai em Python e PyTorch?
+
+Parece óbvio depois de uma década dentro do ecossistema. Mas o "óbvio" aqui é uma sequência de escolhas técnicas e culturais que vale a pena destrinchar — porque elas explicam também quando *não* faz sentido continuar nesse stack.
+
+### Python: cola, não motor
+
+Existe uma confusão clássica: "Python é lento, então usar Python para ML não faz sentido".
+
+Está errado.
+
+Python em ML é uma **linguagem de orquestração**. As partes pesadas — multiplicação de matrizes, convoluções, atenção — rodam em C++/CUDA por baixo. NumPy, PyTorch e JAX expõem APIs Python que delegam o trabalho real para BLAS, cuDNN e kernels customizados.
+
+Você paga overhead de Python só na cola entre operações. Em modelos grandes, esse custo desaparece no meio do tempo gasto na GPU.
+
+O que Python entrega de fato:
+
+- **Ecossistema maduro**: NumPy, Pandas, SciPy, scikit-learn, Hugging Face, transformers, tokenizers. Praticamente todo modelo aberto sai primeiro em Python.
+- **Iteração rápida**: tipagem dinâmica, REPL, notebooks. Pesquisador testa hipótese em minutos.
+- **Padrão de fato**: pesos, papers, tutoriais, SDKs de OpenAI e Anthropic — tudo em Python primeiro. Sair disso é atrito.
+
+### PyTorch: por que ele e não TensorFlow
+
+Até ~2019, TensorFlow dominava. Hoje a maioria dos papers sai em PyTorch. O que aconteceu?
+
+**Define-by-run** aconteceu.
+
+TensorFlow 1.x era *define-then-run*: você construía um grafo computacional simbólico, compilava, depois executava. Debug com `print` não funcionava direito. Mensagens de erro apontavam para o grafo, não para o seu código.
+
+PyTorch trouxe o **eager mode**: o grafo é construído enquanto o código roda. Debug com `pdb` e `print` funciona normalmente. Tensores se comportam como NumPy arrays.
+
+Para quem está pesquisando, isso virou o jogo. E como pesquisa vira produto, produto também acabou em PyTorch.
+
+Outros pontos que ajudaram:
+
+- **Autograd automático**, sem precisar declarar grafo.
+- **CUDA, ROCm e MPS (Apple Silicon)** atrás da mesma API: `.to(device)`.
+- **`torch.compile`** (PyTorch 2.x) trouxe boa parte do ganho de grafo compilado de volta, sem perder a ergonomia eager.
+- **Comunidade**: Hugging Face, Stability, Meta, OpenAI — todo mundo publica em PyTorch.
+
+### Mas em produção raramente é "PyTorch puro"
+
+Esse é o detalhe que muita gente ignora.
+
+Quando você precisa servir um LLM com baixa latência e alto throughput, rodar `model.generate()` direto em PyTorch é caro:
+
+- KV cache mal gerenciado.
+- Batches estáticos quando o ideal é continuous batching.
+- Kernels genéricos quando dá pra usar específicos (FlashAttention, PagedAttention).
+
+Por isso o stack real de produção quase sempre sobe uma camada:
+
+- **vLLM** — continuous batching + PagedAttention. Padrão para servir LLMs open source.
+- **TensorRT-LLM** — compilação NVIDIA-specific para latência mínima.
+- **Text Generation Inference (HF TGI)** — servidor pronto da Hugging Face.
+- **ONNX Runtime / OpenVINO** — para CPU, edge ou quando você quer linguagem-agnóstico.
+- **llama.cpp / MLX** — quantização agressiva para rodar local (laptop, mobile, Apple Silicon).
+
+A grande sacada: **todos eles consomem pesos PyTorch**. Você treina e exporta em PyTorch, e serve no runtime certo para o seu caso.
+
+PyTorch virou o formato de origem. A execução final é outro problema.
+
+### Quando esse stack pode mudar
+
+Algumas tendências valem a pena olhar:
+
+- **Mojo** quer ser "Python mais rápido que C", colado a hardware moderno.
+- **JAX** ainda é o stack favorito de pesquisa de optimization e modelos enormes na Google.
+- **Rust** (candle, burn) começa a aparecer em runtimes de inferência.
+- **MLX** está virando o default em Apple Silicon.
+
+Mas para a maior parte do trabalho real hoje — treinar, ajustar, exportar, servir — a resposta segue a mesma: **Python para escrever, PyTorch para o modelo, runtime especializado para servir**.
+
+### TL;DR
+
+Python ganhou por **ecossistema e velocidade de iteração**. PyTorch ganhou por **eager mode + adoção acadêmica + GPU sem dor**. E em produção, você raramente serve PyTorch direto — você serve algo derivado dele, compilado e otimizado para o seu caso.
+
+A escolha não é "Python ou X". É "Python + PyTorch como ponto de partida, e o que faz sentido a partir daí".
