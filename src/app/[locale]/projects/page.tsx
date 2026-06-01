@@ -9,10 +9,10 @@ import type { Locale } from "@/i18n/routing";
 type ProjectStatus = "shipped" | "open-source" | "archived";
 
 type Project = {
+  key: string;
   title: string;
   status: ProjectStatus;
   year: string;
-  description: string;
   tags: string[];
   github?: string;
   live?: string;
@@ -21,12 +21,11 @@ type Project = {
 
 const projects: Project[] = [
   {
+    key: "itop",
     title: "iTOP — Inscrições TOP",
     status: "shipped",
     year: "2024",
     highlight: true,
-    description:
-      "Production SaaS multi-tenant para gestão de grandes eventos dos Legendários — inscrições, pagamentos (PIX/cartão com reconciliação por webhook), check-in via QR Code, geração de contratos com assinatura digital biométrica, plano de embarque e dashboards em tempo real. Processa dinheiro real, eventos reais e centenas de participantes em produção. Antecessor do inscricoestop.com.br antes do pivot.",
     tags: [
       "Next.js 14",
       "TypeScript",
@@ -43,40 +42,36 @@ const projects: Project[] = [
     live: "https://itop-lgnd-inscricoestop.vercel.app/demo",
   },
   {
+    key: "unicrow",
     title: "Unicrow",
     status: "shipped",
     year: "2023",
     highlight: true,
-    description:
-      "Web3 escrow platform on Ethereum. Contributed to the SDK, blockchain indexer, and smart-contract integrations. Production-grade TypeScript SDK that turned a multi-week onboarding into a same-day setup.",
     tags: ["TypeScript", "Ethereum", "Smart Contracts", "GraphQL", "Node.js"],
     github: "https://github.com/unicrowio",
     live: "https://unicrow.io",
   },
   {
+    key: "meetapp",
     title: "Meetapp",
     status: "open-source",
     year: "2020",
-    description:
-      "Full-stack meetup organizer (Backend + Web + Mobile). Final challenge from the Rocketseat Bootcamp. React, React Native, Node, Redux.",
     tags: ["React", "React Native", "Node.js", "Redux"],
     github: "https://github.com/tgmarinho/meetapp",
   },
   {
+    key: "be-the-hero",
     title: "Be the Hero",
     status: "open-source",
     year: "2020",
-    description:
-      "Full-stack app connecting NGOs with donors — built during Rocketseat OmniStack week. Helps small organizations raise funds for their causes.",
     tags: ["React", "React Native", "Node.js"],
     github: "https://github.com/tgmarinho/be-the-hero",
   },
   {
+    key: "members",
     title: "Members",
     status: "open-source",
     year: "2021",
-    description:
-      "Open-source toolkit for managing members and communities — a small but opinionated stack to bootstrap community products.",
     tags: ["TypeScript", "React", "Open Source"],
     github: "https://github.com/tgmarinho/members",
   },
@@ -148,8 +143,9 @@ export default async function ProjectsPage() {
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:[grid-auto-flow:dense]">
           {projects.map((p) => (
             <ProjectCard
-              key={p.title}
+              key={p.key}
               project={p}
+              description={t(`items.${p.key}.description`)}
               statusLabel={statusLabel[p.status]}
               statusColor={statusColor[p.status]}
               sourceLabel={t("source")}
@@ -164,12 +160,14 @@ export default async function ProjectsPage() {
 
 function ProjectCard({
   project,
+  description,
   statusLabel,
   statusColor,
   sourceLabel,
   liveLabel,
 }: {
   project: Project;
+  description: string;
   statusLabel: string;
   statusColor: "emerald" | "cyan" | "neutral";
   sourceLabel: string;
@@ -211,7 +209,7 @@ function ProjectCard({
           project.highlight ? "text-[15px]" : "text-[13.5px]"
         }`}
       >
-        {project.description}
+        {description}
       </p>
 
       <div className="mt-6 flex flex-wrap gap-1.5">

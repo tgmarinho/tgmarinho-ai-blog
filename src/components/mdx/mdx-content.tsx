@@ -1,9 +1,17 @@
 import * as runtime from "react/jsx-runtime";
-import React from "react";
+import React, { useMemo } from "react";
 import { Callout } from "./callout";
 import { CopyButton } from "./copy-button";
 import { YouTubeEmbed } from "./video";
 import { ShareButton } from "./share-button";
+import { RagOverviewLabAuto } from "../lab/rag-overview/rag-overview-lab-auto";
+import {
+  RagArchitectureDiagram,
+  RagBridgeDiagram,
+  RagEmbeddingDiagram,
+  RagLettersDiagram,
+  RagPipelinesDiagram,
+} from "./rag-visuals";
 
 // Stub components for React Native and other components that appear in blog posts
 const StubComponent = ({
@@ -17,6 +25,12 @@ const components = {
   Callout,
   YouTubeEmbed,
   ShareButton,
+  RagOverviewLab: RagOverviewLabAuto,
+  RagBridgeDiagram,
+  RagArchitectureDiagram,
+  RagEmbeddingDiagram,
+  RagLettersDiagram,
+  RagPipelinesDiagram,
   // React Native components stubs (to avoid MDX validation errors)
   ActivityIndicator: StubComponent,
   Text: StubComponent,
@@ -51,57 +65,74 @@ const components = {
   },
 };
 
-interface MdxContentProps {
-  code: string;
-}
+type CompiledMDXComponent = React.ComponentType<{
+  components?: Record<string, unknown>;
+}>;
 
-type MdxComponent = React.ComponentType<{ components: typeof components }>;
+// Per-process cache for compiled MDX components. Compiling 40+ KB of JS via
+// `new Function(...)` on every render is expensive (~1s of CPU); since the
+// compiled body is deterministic per post content, memoize by content string.
+// The cache survives across requests on the same Node worker.
+const compiledByStringCache = new Map<string, CompiledMDXComponent>();
 
-const compiledMdxCache = new Map<string, MdxComponent | null>();
+function compileMDX(content: string): CompiledMDXComponent | null {
+  const cached = compiledByStringCache.get(content);
+  if (cached) return cached;
 
-function getCompiledMdxComponent(content: string): MdxComponent | null {
-  if (compiledMdxCache.has(content)) {
-    return compiledMdxCache.get(content) ?? null;
-  }
-
-  let Component: MdxComponent | null = null;
   try {
-    const fn = new Function("React", "runtime", content);
-    const result = fn(React, { ...runtime });
-    Component = (result?.default || result) as MdxComponent | null;
+    const fn = new Function(content);
+    let result:
+      | { default?: CompiledMDXComponent }
+      | undefined;
+    try {
+      result = fn({ ...runtime });
+    } catch {
+      result = new Function("React", "runtime", content)(React, {
+        ...runtime,
+      });
+    }
+    const Component = result?.default;
+    if (!Component) return null;
+    compiledByStringCache.set(content, Component);
+    return Component;
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
       console.error("MDX render error:", error);
     }
+    return null;
   }
+}
 
-  compiledMdxCache.set(content, Component);
-  return Component;
+interface MdxContentProps {
+  code: string;
 }
 
 export function MdxContent({ code }: MdxContentProps) {
+  const content = code.trim();
+
+  // Check if code is compiled MDX. Velite's `s.mdx()` output is a function-body
+  // string that begins with destructuring of jsx-runtime (`const{Fragment...}`)
+  // or with `function`/`export` depending on bundler. Distinguish from plain
+  // HTML (which begins with a `<` tag).
+  const isHTML = content.startsWith("<");
+  const isCompiledMDX = !isHTML;
+  const Component = useMemo(
+    () => (isCompiledMDX ? compileMDX(content) : null),
+    [content, isCompiledMDX],
+  );
+
   if (!code) {
     return <div className="prose max-w-none">No content available</div>;
   }
 
-  const content = code.trim();
-
-  // Check if code is compiled MDX (starts with function/export)
-  const isCompiledMDX = content.startsWith("function") || content.startsWith("export");
-
-  // Check if code is already HTML (from Velite s.markdown())
-  const isHTML = content.startsWith("<");
-
   if (isCompiledMDX) {
-    const Component = getCompiledMdxComponent(content);
     if (!Component) {
       return <div className="prose max-w-none" />;
     }
-    return (
-      <div className="prose max-w-none">
-        {/* eslint-disable-next-line react-hooks/static-components -- Compiled MDX posts are dynamic components by design. */}
-        <Component components={components} />
-      </div>
+    return React.createElement(
+      "div",
+      { className: "prose max-w-none" },
+      React.createElement(Component, { components }),
     );
   }
 

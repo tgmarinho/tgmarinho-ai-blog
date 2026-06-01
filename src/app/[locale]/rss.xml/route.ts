@@ -1,4 +1,4 @@
-import { posts } from "#site/content";
+import { allPosts as posts } from "@/lib/all-posts";
 import { sortPostsByDate } from "@/lib/velite";
 import { siteConfig } from "@/lib/constants";
 import { getPostsForLocale } from "@/lib/posts-i18n";

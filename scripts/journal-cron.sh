@@ -2,7 +2,8 @@
 # journal-cron.sh — orchestrates the daily-work journal pipeline locally.
 #
 # Steps:
-#   1. Resolve target date (default: today in America/Campo_Grande — run at 23:00).
+#   1. Resolve target date (default: YESTERDAY in America/Campo_Grande — run at 00:30 the next day
+#      so the entire previous day is on disk before we read sessions).
 #   2. Run daily-journal.mjs to produce raw markdown under tmp/.
 #   3. Bail out early if there's no meaningful activity.
 #   4. Narrate via Claude API into content/journal/<DATE>.md.
@@ -30,8 +31,10 @@ log() { printf '[journal-cron] %s\n' "$*"; }
 if [ "${1:-}" != "" ]; then
   DATE="$1"
 else
-  # BSD date (macOS): today in America/Campo_Grande (cron fires 23:00 local).
-  DATE="$(TZ=America/Campo_Grande date +%Y-%m-%d)"
+  # BSD date (macOS): yesterday in America/Campo_Grande. Cron fires at 00:30
+  # of the *following* day so the target day's sessions are fully written before
+  # we scan them. Avoids a race with sessions still being modified near midnight.
+  DATE="$(TZ=America/Campo_Grande date -v-1d +%Y-%m-%d)"
 fi
 
 if ! printf '%s' "$DATE" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then

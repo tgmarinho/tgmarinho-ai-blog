@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { posts } from "#site/content";
+import { allPosts as posts } from "@/lib/all-posts";
 import { siteConfig } from "@/lib/constants";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { getPostLanguage } from "@/lib/posts-i18n";
