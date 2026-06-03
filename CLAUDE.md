@@ -24,6 +24,16 @@ If your training conflicts with these files, **the files win**.
 
 ---
 
+## Writing style (blog posts & prose)
+
+> Applies to all authored content: posts, descriptions, titles, body copy. Not to code.
+
+- **No em dashes (`—`) or en dashes (`–`) in prose.** Rewrite the sentence with a comma, colon, parentheses, or a period instead. Don't just swap `—` for a hyphen; restructure so it reads naturally.
+- **English content must use plain English.** Short sentences, common words, active voice. Avoid fancy vocabulary and long subordinate clauses. Translate meaning, not sentence shape (the pt-BR can be a touch more expressive; the EN stays simple).
+- These rules are non-negotiable in the `blog-post-bilingual` workflow.
+
+---
+
 ## Package manager: Bun (mandatory)
 
 **This repo uses [Bun](https://bun.sh) — never `npm`, `pnpm`, or `yarn`.** Lockfile is `bun.lock`. If a `package-lock.json` appears in the working tree, it means an `npm install` slipped in by mistake: delete it and re-run `bun install`.
