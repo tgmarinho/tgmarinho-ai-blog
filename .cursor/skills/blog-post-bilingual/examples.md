@@ -3,10 +3,10 @@
 ## Example 1: visual identity post
 
 PT file:
-- `content/posts/nova-identidade-visual-website-blog-pt-br.mdx`
+- `content/posts/2026-05-07-nova-identidade-visual-website-blog-pt-br.mdx`
 
 EN file:
-- `content/posts/new-website-visual-identity-agentic-futurism-en.mdx`
+- `content/posts/2026-05-07-new-website-visual-identity-agentic-futurism-en.mdx`
 
 Shared:
 - `translationKey: "new-website-visual-identity-agentic-futurism"`

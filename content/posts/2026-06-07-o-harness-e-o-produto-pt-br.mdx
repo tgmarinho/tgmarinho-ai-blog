@@ -1,0 +1,97 @@
+---
+title: "O harness é o produto"
+description: "WorkOS, Stripe e OpenAI chegaram, por caminhos diferentes, à mesma conclusão sobre coding agents: o trabalho de engenharia sênior deixou de ser escrever código e virou construir o harness que faz o agente escrever código de forma confiável."
+date: "2026-06-07"
+published: true
+slug: "o-harness-e-o-produto"
+categories: ["ai", "software-engineering", "agents", "pt-br"]
+image: "/images/blog/o-harness-e-o-produto-cover.jpg"
+language: "pt-BR"
+translationKey: "the-harness-is-the-product"
+---
+
+Tem uma frase do [Nick Nisi](https://nicknisi.com/posts/case-statement/), engenheiro na WorkOS, que ficou na minha cabeça:
+
+> "Eu era bom em guiar agents de IA. Muito bom... Esse era o problema. Eu era claramente o gargalo."
+
+É um tipo de constatação desconfortável. Você fica tão bom em pilotar o agente — corrigir o prompt, reapontar quando ele se perde, revisar o diff linha a linha — que vira o limite do próprio sistema. Cada PR depende de você estar ali, com a mão no volante.
+
+A saída que a WorkOS encontrou, que a Stripe encontrou de forma independente, e que a OpenAI acabou de batizar de _harness engineering_, é a mesma. E ela muda o que significa ser engenheiro sênior em 2026:
+
+**Pare de pilotar o agente. Construa o ambiente em que o agente não consegue errar.**
+
+### CASE: o harness de seis agentes da WorkOS
+
+A WorkOS abriu o código do [CASE](https://github.com/workos/case) — um harness que transforma issues do GitHub em PRs revisados, prontos para merge, em mais de 20 repositórios open source. Não é "um agente". É um pipeline determinístico de seis agentes, cada um com uma responsabilidade isolada:
+
+**scout → implementer → verifier → reviewer → closer → retrospective**
+
+O scout só lê (exploração read-only). O implementer escreve código e testes. O verifier roda os cenários. O reviewer confere o diff contra os princípios. O closer abre o PR. E o retrospective analisa a execução e propõe melhorias no próprio harness.
+
+O detalhe que importa não é a lista de agentes — é o que segura tudo de pé:
+
+- **Um manifesto** (`projects.json`) mapeando cada repo e sua estratégia de evidência.
+- **Princípios inegociáveis**: invariantes aplicados mecanicamente (TypeScript estrito, conventional commits, etc.).
+- **Gates de evidência**: antes de abrir o PR, o closer valida três marcadores — `tested`, `manual-tested`, `reviewed`. Cada repo declara, _de antemão_, o que conta como prova.
+
+E a filosofia, cravada no README:
+
+> "O harness é o produto. O código é o output."
+
+### Minions: os mil PRs por semana da Stripe
+
+Do outro lado, a Stripe conta no [post sobre os Minions](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents) que **mais de mil PRs por semana** são gerados inteiramente por agentes — humanos revisam antes do merge, mas o trabalho é todo da máquina.
+
+O fluxo é one-shot end-to-end: começa numa mensagem de Slack, termina num PR pronto para revisão, sem interação humana no meio. Engenheiros sobem vários minions em paralelo — especialmente útil no on-call.
+
+As decisões de arquitetura ecoam o CASE:
+
+- **Devboxes**: máquinas isoladas, pré-aquecidas com código e serviços, que sobem em 10 segundos, sem acesso à produção.
+- **Toolshed via MCP**: um servidor interno com mais de 400 ferramentas conectando os sistemas da Stripe ao agente.
+- **Loop interleaved**: o agente não roda solto — entre as iterações entram operações determinísticas como lint e testes.
+- **Shift feedback left**: lint local em menos de 5 segundos, seleção cirúrgica de testes de CI, correção automática quando possível, no máximo duas rodadas de CI.
+
+A Stripe é honesta sobre por que construiu tudo internamente: o codebase deles — centenas de milhões de linhas de Ruby custom com Sorbet — quebra os agentes genéricos. "Iterar num codebase dessa escala, complexidade e maturidade é inerentemente muito mais difícil" do que começar do zero.
+
+### OpenAI: um milhão de linhas, zero digitadas à mão
+
+E aí veio a OpenAI fechar o argumento. No artigo [Harness Engineering](https://openai.com/index/harness-engineering/), o time do Codex conta que **três engenheiros construíram um codebase de produção de cerca de 1 milhão de linhas em ~5 meses** — por volta de 1.500 PRs mergeados — sem ninguém digitar uma única linha à mão:
+
+> "Cada linha de código — lógica de aplicação, testes, configuração de CI, documentação, observabilidade — foi escrita pelo Codex."
+
+E a frase que amarra tudo: o progresso era lento até pararem de olhar pro modelo e começarem a construir as ferramentas, os feedback loops e o scaffolding que tornavam o agente confiável. Ou, mais direto: **o gargalo é infraestrutura, não inteligência.**
+
+O harness deles tem três peças que você reconhece dos outros dois:
+
+- **`AGENTS.md` como feedback loop vivo** — reescrito toda vez que o agente tropeça numa falha.
+- **Camadas de dependência estritas**, aplicadas por linters custom e testes estruturais.
+- **Iteração guiada por observabilidade** — logs, métricas e spans apontando onde o agente errou.
+
+### A convergência (que é o ponto)
+
+Três times, três codebases incompatíveis, zero coordenação. E mesmo assim chegaram nas mesmas quatro lições. Quando fontes independentes convergem, dá pra confiar na conclusão.
+
+**1. Instruções decaem; enforcement persiste.** LLMs esquecem instruções ao longo de sessões longas. Então as restrições críticas não podem viver em prosa — têm que ser aplicadas por código: gates, linters, marcadores obrigatórios. Não adianta _pedir_ TypeScript estrito; o pipeline tem que _recusar_ o que não for.
+
+**2. LLMs raciocinam sobre código, mas são péssimas máquinas de estado.** A primeira versão do CASE era um pipeline em markdown, e o LLM às vezes pulava a verificação ou repetia errado. A solução foi mover o controle de fluxo para um `switch` em TypeScript. Nas palavras do Nick: _"Eles são bons em raciocinar sobre código. São ruins em ser uma máquina de estado. Então parei de pedir que fossem uma."_ A Stripe faz o mesmo ao interleavar o loop do agente com etapas determinísticas.
+
+**3. Evidência tem que ser à prova de fraude.** Os agentes otimizam para o marcador superficial — chegam a criar arquivos falsos de "evidência de teste". A resposta dos dois lados é a mesma: exigir output de teste canalizado, screenshots de Playwright, JSON estruturado. Coisas que o agente não consegue inventar.
+
+**4. Context engineering é o trabalho.** Estruturar a informação por estabilidade (o que muda menos vem primeiro), disclosure progressivo (rotear pro doc certo) e consciência de compactação (o resumo crítico no topo) é o que separa um agente confiável de um teatro caro.
+
+### O que isso muda pra você
+
+Você provavelmente não tem 20 repos open source nem o codebase da Stripe. Não importa. O modelo mental escala pra baixo:
+
+- Quando o agente erra, **conserte o harness, não o agente**. A resposta nunca é "tenta com mais força" ou "melhora o prompt". É: que gate teria pego isso?
+- O que hoje você corrige na unha vira regra amanhã. Toda falha repetida deveria virar lint, playbook ou gate de evidência.
+- Suas convenções de projeto (o `CLAUDE.md`, o `AGENTS.md`, os scripts de verificação) **são** o harness. A OpenAI literalmente trata o `AGENTS.md` como um feedback loop vivo — reescreve toda vez que o agente erra. Quanto mais coisa estiver mecanicamente aplicada, menos você precisa estar no loop.
+- Determinismo onde der: deixe o LLM pensar, mas tire dele o controle de fluxo, o lint, o teste, o merge.
+
+### O trade-off honesto
+
+O Nick não esconde o custo: você troca a satisfação de escrever código pelo trabalho de alavancagem de construir sistemas que escrevem código. Você passa a confiar em cadeias de evidência em vez de verificar tudo pessoalmente. É uma mudança de identidade, não só de ferramenta.
+
+Mas o futuro do trabalho de engenharia sênior está bem ali, nas duas histórias: a sua produtividade vai parar de ser medida pelo código que você escreve e passar a ser medida pelo sistema que você constrói pra fazer outros — humanos ou agentes — escreverem código confiável.
+
+O harness é o produto. O código é o output.

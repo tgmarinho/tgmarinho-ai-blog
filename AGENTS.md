@@ -129,6 +129,8 @@ slug: "custom-slug"        # optional — derived from title if omitted
 ```
 
 Rules:
+- **File name = `YYYY-MM-DD-<slug>-<lang>.mdx`** (the `date` as prefix, then slug, then `-pt-br`/`-en`). The prefix keeps `content/posts/` sorted by date; it does **not** affect the URL (the slug comes from frontmatter). Both files of a bilingual pair share the same date prefix.
+- **One article per calendar day** (a bilingual pair counts as one). Drafts reserve their day too. Pick a free date: `grep -rhoE '^date: "[0-9-]+"' content/posts | sort | uniq -d` must print nothing.
 - `body` is **markdown** (not MDX-with-JSX) — `velite.config.ts` uses `s.markdown()` deliberately. Don't add JSX inside posts.
 - For external images on new domains, add the host in `next.config.ts`.
 - After editing, run `bun velite` to validate the schema.

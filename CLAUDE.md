@@ -103,7 +103,9 @@ For any request like "criar post", "novo artigo", "post em inglês/PT", or "vers
 2. Follow repository MDX/frontmatter conventions.
 3. **Always request/create a contextual cover image** and set `image` in frontmatter.
 4. **Use English for any text embedded inside blog images**, including covers, diagrams, OG images, and social previews, even for pt-BR posts. Article copy and alt text remain localized unless the human explicitly asks for image text in another language.
-5. Run `bun velite` after writing/editing posts.
+5. **File naming:** every post file is `YYYY-MM-DD-<slug>-<lang>.mdx` (the `date` as prefix, then slug, then `-pt-br`/`-en`). The prefix only sorts `content/posts/` by date; it does **not** change the URL (slug comes from frontmatter). Both files of a pair share the same date prefix.
+6. **One article per calendar day** (a bilingual pair counts as one; drafts reserve their day too). Before setting `date`, pick a day no other post uses: `grep -rhoE '^date: "[0-9-]+"' content/posts | sort | uniq -d` must print nothing.
+7. Run `bun velite` after writing/editing posts.
 
 ### Daily journal policy (security — non-negotiable)
 
@@ -138,4 +140,4 @@ If the user asks to "go back to the old design", confirm first — they probably
 
 ---
 
-**Last updated:** 2026-05-17 (Bun adopted as mandatory package manager).
+**Last updated:** 2026-06-07 (post files prefixed with `YYYY-MM-DD`; one article per calendar day).

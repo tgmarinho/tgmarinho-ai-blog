@@ -1,0 +1,68 @@
+---
+title: "The MacBook and the minimalist distro: why 2026 is the year to test AI tools"
+description: "A reply to Akita about oh-my-pi and OpenCode. The Linux analogy works — but maybe Claude Code is the MacBook, and Pi is the minimalist distro you admire but can't keep maintaining."
+date: "2026-06-08"
+published: false
+slug: "2026-the-year-of-testing-ai-tools-en"
+language: "en"
+translationKey: "2026-the-year-of-testing-ai-tools"
+categories: ["ai", "software-engineering", "tools", "en"]
+image: "/images/blog/2026-testar-ferramentas-ia-cover-en.jpg"
+---
+
+Last week I read [Akita's post about his first impressions with oh-my-pi and OpenCode](https://akitaonrails.com/2026/05/25/primeiras-impressoes-usando-oh-my-pi-e-opencode/) and felt that itch to respond. Not because I disagree — quite the opposite. He put into words something I'd already been chewing on in practice ever since I wrote about [my journey with AI from 2023 to 2026](https://tgmarinhopro.com/blog/minha-jornada-com-ia-de-2023-a-2026-pt-br).
+
+If that post was the backstory, this one is the next chapter: what I actually do, today, in the middle of this hurricane of tools.
+
+There's a passage from Akita that captures the spirit of it well:
+
+> "The Linux analogy helps. I don't use Linux because it's 'free'. I use it because, for me, it's the best tool for the job. The alternatives don't come close in my workflow. But that doesn't mean every beginner should drop Windows or macOS tomorrow and build Arch from scratch."
+
+### I'd already landed on this analogy — just from the opposite side
+
+The funny thing is that, before reading Akita, I'd already thought of this comparison with Linux. Except my ending was different.
+
+For me, **Claude Code and Codex are today's MacBook**. They're the expensive, polished tool that simply works — and that's exactly why we code on them, the same way we code on a MacBook instead of building the machine by hand. **Pi, on the other hand, is the minimalist distro**: beautiful in philosophy, lean, with real value for anyone who wants to understand and shape every layer. But it's costly to maintain when what you need is speed.
+
+And that's where the analogy flips inside out. Akita uses Linux because, in his workflow, it's the best tool for the job. I use a MacBook to code for the exact opposite reason: because I don't want to spend my time maintaining the environment. I want to open it and work. Both positions are right — they just depend on where your bottleneck is.
+
+### I really did try to adopt Pi
+
+This isn't theory from someone watching from afar. I tested [pi.dev](https://pi.dev) and found the philosophy really compelling. I even wanted to dive in and make it my main tool, building my own harness on top of it. The idea of having a minimalist, transparent agent, made my way, is genuinely seductive — especially for someone who, like me, basically became a tech lead of agents over the past year.
+
+But I ran into the reality of day-to-day work: I need the job **done today**, and with a pile of new technology and AI tools to explore at the same time. Building and maintaining my own harness is a separate project — and one that competes directly with the actual work. After a while testing it, I let go. Not because Pi is bad, but because the opportunity-cost math didn't add up for me, at that moment.
+
+And that's precisely the part Akita nails: the right tool is the one that fits **your** workflow, not the one that wins the benchmark or the one that's blowing up on Twitter.
+
+### What's actually in my setup today
+
+Since we're being concrete — and Akita rightly complains about the lack of concreteness in the recommendations out there — let me lay out my current setup:
+
+- **Claude Code** — goes without saying. It's the foundation. It's the MacBook.
+- **Cursor** — I really enjoyed using it and got good results. On my personal blog, the Achilles' heel is still image generation, and there Cursor gave me better results. **GPT-5.5** also helps me a lot with that kind of task.
+- **Conductor as an "IDE"** — today I run Opus 4.7~4.8 and GPT-5.5 inside it, using **git worktree** to push several fronts in parallel. Conductor is absurdly good for "no code" things: blog posts, study material in Markdown, and a career folder where I dump loose text and HTML. The productivity for that kind of work is on another level.
+- **Zed** — I'm testing it as a code editor for when I need something more direct and lightweight.
+
+Notice that it's not "one tool". It's a set, each one pulling part of the workflow. And that set changes month to month — which for me has stopped being a symptom of indecision and become a method.
+
+### The small detail that makes a big difference: notifications
+
+One thing I recommend trying is **cmux**. The reason sounds silly, but it changed my workflow: it **notifies you with sound and a notification** when an agent finishes its work. When you have several agents running in parallel, knowing *when* one finished without babysitting the terminal is what separates real multitasking from frantically switching windows. The other terminals running Claude Code weren't doing that for me.
+
+The other classic friction is Claude Code stopping to ask permission at every step. For that I have a `clauded` alias that runs without constantly asking for confirmation. You lose a bit of the safety net, you gain a lot in fluidity — as long as you trust what you're asking for.
+
+### The thesis: 2026 is the year to test tools
+
+Akita argues that there's no universally superior tool, and that the choice depends on the concrete use case. I'm all in — and I'll go one step further:
+
+**2026 is the year to test tools to find out which one fits your workflow best.**
+
+It's not the year to lock in the definitive stack. It's the year to experiment with Pi, OpenCode, Cursor, Claude Code, Conductor, Zed, cmux — and find out, in practice, where *your* bottleneck is. For one person, it's control and transparency, and Pi shines. For another, it's speed and "job done today", and the MacBook of tools wins.
+
+The Linux analogy really does help. It just doesn't end at "use Linux" or "use macOS". It ends like this: **figure out which is the best tool for *your* work — and have the humility to accept that the answer for the person next to you will be different, and that's okay.**
+
+I won't romanticize it: testing tools all the time is exhausting. But, for now, surfing this wave is still worth more than pretending the sea has gone still.
+
+---
+
+*Written by AI and reviewed by Thiago Marinho.*

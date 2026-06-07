@@ -1,0 +1,71 @@
+---
+title: "6 armadilhas comuns ao construir aplicações com IA generativa"
+description: "Notas e comentários sobre o ensaio da Chip Huyen — os erros previsíveis que times cometem ao sair do protótipo e ir para produção com LLMs."
+date: "2026-05-17"
+published: false
+slug: "6-armadilhas-comuns-construindo-com-ia-generativa"
+language: "pt-BR"
+translationKey: "common-pitfalls-building-generative-ai-applications"
+categories: ["ai", "software-engineering", "pt-br"]
+image: "/images/blog/photo-1603860785202-70ee34aa7b68.jpg"
+---
+
+A [Chip Huyen](https://huyenchip.com/) publicou um ensaio chamado *[Common pitfalls when building generative AI applications](https://huyenchip.com/2025/01/16/ai-engineering-pitfalls.html)* e ele descreve com precisão os erros que vejo se repetindo em quase todo time que está saindo do protótipo com LLM para algo de verdade em produção.
+
+Resolvi escrever este post como um conjunto de notas — meio resumo, meio comentário — para deixar registrado e voltar quando precisar. Recomendo ler o original; o que está aqui é minha leitura.
+
+### 1. Usar IA generativa onde ela não é necessária
+
+A pergunta correta não é *"como uso um LLM para resolver isso?"*, é *"qual é o problema e qual a forma mais simples de resolver?"*.
+
+O exemplo da Chip é ótimo: um time queria usar LLM para programar o consumo de energia da casa analisando atividades e preço da eletricidade. O ganho potencial era 30%. Acontece que uma regra trivial — *"lavar roupa e carregar o carro depois das 22h"* — captura quase o mesmo benefício, com programação linear, a uma fração do custo.
+
+*"Resolvemos o problema"* e *"usamos IA generativa"* não são a mesma conquista. Confundir as duas coisas é como ter um martelo novo e procurar pregos.
+
+### 2. Confundir falha de produto com falha de IA
+
+Muito time joga a culpa no modelo quando o usuário rejeita o produto, mas a barreira quase sempre está na UX, não na tecnologia.
+
+Três casos que ela cita:
+
+- Um time de resumo de transcrição de reunião ficou debatendo se o resumo devia ter 3 ou 5 frases. O usuário queria *action items* específicos do papel dele — não um resumo genérico.
+- Um chatbot de avaliação de skills no LinkedIn falhava porque dizia coisas tipo *"você é um candidato ruim para essa vaga"*. Os usuários queriam respostas úteis, não verdades secas.
+- A Intuit teve recepção morna no chatbot de imposto até adicionar perguntas sugeridas. O problema era o campo de texto em branco, não o modelo.
+
+Modelos viraram commodity. O diferencial está no produto.
+
+### 3. Começar com complexidade demais
+
+A tentação de já chegar com framework de agentes, vector database, fine-tuning e cache semântico é gigante. Quase sempre é cedo demais.
+
+Abstração prematura esconde justamente o que você precisa enxergar para debugar, e ainda te expõe a bugs vindos de mudanças nessas ferramentas — incluindo prompts default com typo dentro de frameworks famosos e updates silenciosos de modelo que mudam o comportamento da sua aplicação.
+
+A engenharia de IA ainda é jovem. As *best practices* estão se formando. Esperar um pouco para adotar abstrações é, hoje, uma decisão racional, não um sinal de atraso.
+
+### 4. Achar que o sucesso inicial é o final
+
+Os primeiros 80% saem rápido. Os últimos 20% são onde mora a dor.
+
+O LinkedIn levou um mês para chegar nos 80% de qualidade desejada — e mais quatro meses para passar dos 95%. Alucinação foi o principal gargalo. Uma startup de *AI sales assistant* relatou esforço equivalente para ir de 0 a 80% e de 80 a 90%.
+
+E o problema não está só no modelo. Tem confiabilidade de API, compliance, copyright, privacidade, segurança contra uso adversarial, output ofensivo. Planeje milestones com *cautious optimism*: otimismo, mas com gordura para o caminho.
+
+### 5. Abandonar avaliação humana cedo demais
+
+LLM-as-a-judge é útil, mas não é determinístico. A qualidade do juiz depende do modelo, do prompt e do contexto. Juízes mal calibrados te dão sinais enganosos — e você toma decisão em cima de número errado.
+
+Os melhores times mantêm avaliação humana diária de 30 a 1000 exemplos, mesmo com avaliação automática rodando. Ela serve para três coisas: calibrar o juiz automático, entender o que o usuário realmente faz, e capturar mudanças de comportamento que o automatizado deixa passar.
+
+Como ela diz, *"olhar dados por 15 minutos costuma dar mais insight do que horas de dor de cabeça"*. É a tarefa de maior *value-to-prestige ratio* em machine learning, e quase ninguém quer fazer.
+
+### 6. Pedir casos de uso para todo mundo, sem estratégia
+
+Quando a empresa abre *"manda aí suas ideias de IA"*, o que vem de volta é uma pilha de chatbots de Slack, plugins de código e text-to-SQL — todos resolvendo a dor imediata de quem mandou a sugestão, e quase nenhum movendo o ponteiro do negócio.
+
+O resultado é orçamento espalhado em N projetinhos de baixo impacto e a conclusão errada de que *"IA generativa não dá ROI"*. Estratégia precisa vir antes de ideação. Decida onde o retorno é grande e concentre recurso ali.
+
+### Fechando
+
+Resumindo o que a Chip descreve em uma frase: as armadilhas não são sobre o modelo, são sobre disciplina de produto e engenharia. Quem trata IA generativa como mais uma peça do *stack* — com problema bem definido, UX cuidada, complexidade na medida, evaluation honesto e estratégia clara — chega bem mais longe do que quem trata como bala de prata.
+
+Leia o original: [huyenchip.com/2025/01/16/ai-engineering-pitfalls.html](https://huyenchip.com/2025/01/16/ai-engineering-pitfalls.html).

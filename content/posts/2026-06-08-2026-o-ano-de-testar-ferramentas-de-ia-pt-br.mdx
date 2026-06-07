@@ -1,0 +1,68 @@
+---
+title: "O MacBook e a distro minimalista: por que 2026 é o ano de testar ferramentas de IA"
+description: "Uma resposta ao Akita sobre oh-my-pi e OpenCode. A analogia com Linux funciona — mas talvez Claude Code seja o MacBook, e o Pi a distro minimalista que você admira mas não consegue manter."
+date: "2026-06-08"
+published: false
+slug: "2026-o-ano-de-testar-ferramentas-de-ia-pt-br"
+language: "pt-BR"
+translationKey: "2026-the-year-of-testing-ai-tools"
+categories: ["ai", "software-engineering", "tools", "pt-br"]
+image: "/images/blog/2026-testar-ferramentas-ia-cover-pt.jpg"
+---
+
+Semana passada li o [post do Akita sobre primeiras impressões com oh-my-pi e OpenCode](https://akitaonrails.com/2026/05/25/primeiras-impressoes-usando-oh-my-pi-e-opencode/) e bateu aquela coceira de responder. Não por discordar — pelo contrário. Ele colocou em palavras uma coisa que eu já vinha remoendo na prática desde que escrevi sobre a [minha jornada com IA de 2023 a 2026](https://tgmarinhopro.com/blog/minha-jornada-com-ia-de-2023-a-2026-pt-br).
+
+Se aquele post era a história, este aqui é o capítulo seguinte: o que eu faço, hoje, no meio do furacão de ferramentas.
+
+Tem um trecho do Akita que resume bem o espírito da coisa:
+
+> "A analogia com Linux ajuda. Eu não uso Linux porque é 'grátis'. Uso porque, pra mim, é a melhor ferramenta pro trabalho. As alternativas não chegam perto no meu fluxo. Mas isso não quer dizer que todo iniciante deveria largar Windows ou macOS amanhã e montar Arch na unha."
+
+### Eu já tinha chegado nessa analogia — só que pelo lado oposto
+
+O engraçado é que, antes de ler o Akita, eu já tinha pensado nessa comparação com Linux. Só que o meu final era diferente.
+
+Pra mim, **Claude Code e o Codex são o MacBook de hoje**. São a ferramenta cara, polida, que simplesmente funciona — e é por isso que a gente programa nelas, do mesmo jeito que a gente programa em MacBook em vez de montar a máquina na unha. Já o **Pi é a distro minimalista**: linda na filosofia, enxuta, com um valor real pra quem quer entender e moldar cada camada. Mas é cara de manter quando o que você precisa é velocidade.
+
+E é aí que a analogia vira do avesso. O Akita usa Linux porque, no fluxo dele, é a melhor ferramenta pro trabalho. Eu uso MacBook pra programar pela razão exatamente oposta: porque não quero gastar meu tempo mantendo o ambiente. Quero abrir e trabalhar. As duas posições estão certas — elas só dependem de onde está o seu gargalo.
+
+### Eu tentei adotar o Pi de verdade
+
+Isso não é teoria de quem viu de longe. Testei o [pi.dev](https://pi.dev) e achei a filosofia muito boa. Cheguei a querer me aventurar e deixar ele como ferramenta principal, montando meu próprio harness em cima dele. A ideia de ter um agente minimalista, transparente, feito do meu jeito, é genuinamente sedutora — ainda mais pra quem, como eu, virou meio que tech lead de agentes no último ano.
+
+Mas esbarrei na realidade do dia a dia: eu preciso do trampo **pronto hoje**, e com um monte de tecnologia e ferramenta de IA nova pra explorar ao mesmo tempo. Montar e manter meu próprio harness é um projeto à parte — e um projeto que compete diretamente com o trabalho de verdade. Depois de um tempo testando, larguei mão. Não porque o Pi seja ruim, mas porque a conta do custo de oportunidade não fechava pra mim, naquele momento.
+
+E essa é justamente a parte que o Akita acerta em cheio: a ferramenta certa é a que encaixa no **seu** fluxo, não a que ganha no benchmark nem a que está bombando no Twitter.
+
+### O que está, de fato, no meu setup hoje
+
+Já que é pra ser concreto — e o Akita reclama, com razão, da falta de concretude nas recomendações por aí —, vou abrir o jogo do meu setup atual:
+
+- **Claude Code** — nem se fala. É a base. É o MacBook.
+- **Cursor** — gostei bastante de usar e tive bons resultados. No meu blog pessoal, o calcanhar de Aquiles continua sendo geração de imagem, e ali o Cursor me rendeu resultados melhores. O **GPT-5.5** também me ajuda bastante nesse tipo de tarefa.
+- **Conductor como "IDE"** — hoje rodo Opus 4.7~4.8 e GPT-5.5 dentro dele, usando **git worktree** pra tocar várias frentes em paralelo. O Conductor é absurdamente bom pra coisas "no code": blog post, material de estudo em Markdown, e uma pasta de carreira onde vou jogando texto e HTML solto. A produtividade nesse tipo de trabalho é de outro nível.
+- **Zed** — estou testando como editor de código pra quando preciso de algo mais direto e leve.
+
+Repare que não é "uma ferramenta". É um conjunto, cada uma puxando uma parte do fluxo. E esse conjunto muda mês a mês — o que pra mim já deixou de ser sintoma de indecisão e virou método.
+
+### O detalhe pequeno que faz diferença grande: notificação
+
+Uma coisa que recomendo experimentar é o **cmux**. O motivo parece bobo, mas mudou meu fluxo: ele **notifica com som e com notificação** quando um agente termina o trabalho. Quando você tem vários agentes rodando em paralelo, saber *quando* um terminou sem ficar de babá no terminal é o que separa multitarefa de verdade de ficar trocando de janela feito louco. Os outros terminais rodando Claude Code não faziam isso pra mim.
+
+O outro atrito clássico é o Claude Code parando pra pedir permissão a cada passo. Pra isso eu tenho um alias `clauded` que roda sem ficar pedindo confirmação. Perde-se um pouco de rede de segurança, ganha-se muito em fluidez — desde que você confie no que está pedindo.
+
+### A tese: 2026 é o ano de testar ferramentas
+
+O Akita defende que não existe ferramenta universalmente superior, e que a escolha depende do caso de uso concreto. Eu assino embaixo — e vou um passo além:
+
+**2026 é o ano de testar ferramentas pra descobrir qual encaixa melhor no seu fluxo de trabalho.**
+
+Não é o ano de cravar a stack definitiva. É o ano de experimentar Pi, OpenCode, Cursor, Claude Code, Conductor, Zed, cmux — e descobrir, na prática, onde está o *seu* gargalo. Pra um, é controle e transparência, e o Pi brilha. Pra outro, é velocidade e "trampo pronto hoje", e o MacBook das ferramentas ganha.
+
+A analogia com Linux ajuda mesmo. Só que ela não termina em "use Linux" nem em "use macOS". Ela termina assim: **descubra qual é a melhor ferramenta pro *seu* trabalho — e tenha a humildade de aceitar que a resposta do colega ao lado vai ser diferente, e que tudo bem.**
+
+Não vou romantizar: testar ferramenta o tempo todo cansa. Mas, por enquanto, surfar essa maré ainda está valendo mais a pena do que fingir que o mar parou.
+
+---
+
+*Escrito por IA e revisado por Thiago Marinho.*

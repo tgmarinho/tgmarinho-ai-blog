@@ -1,0 +1,87 @@
+---
+title: "LLM Wiki: Karpathy's Idea for Real Memory in AI Agents"
+description: "Karpathy proposed swapping RAG for a persistent wiki that the LLM maintains on its own. Why it reframes the agent memory debate, and what Fabio Akita adds about the practical side."
+date: "2026-06-10"
+published: false
+slug: "llm-wiki-karpathy-agent-memory-en"
+language: "en"
+translationKey: "llm-wiki-karpathy-agent-memory"
+categories: ["ai", "agents", "knowledge-management", "en"]
+image: "/images/blog/llm-wiki-karpathy-cover.jpg"
+tweetUrl: "https://x.com/karpathy/status/2039805659525644595"
+---
+
+Andrej Karpathy posted a short gist with an idea that stuck with me: stop treating documents as something the LLM reads from scratch every time, and start treating knowledge as something it **builds and maintains** over time.
+
+He calls it the **LLM Wiki**. I translated his full text to Portuguese and linked it at the end. Here I summarize the idea and connect it to a hot topic: agent memory.
+
+### The problem with everyday RAG
+
+Most of us use LLMs with documents the same way: upload a pile of files, the LLM retrieves the relevant chunks at query time, and answers. It works. But it has a quiet flaw: **the LLM rediscovers everything from scratch on every question.**
+
+Nothing accumulates. Ask a question that needs five documents and it hunts for and reassembles the same fragments every time. NotebookLM, ChatGPT file uploads, most RAG systems all work this way. The synthesis effort is thrown away at the end of each chat.
+
+### The idea: a wiki the LLM maintains on its own
+
+Karpathy flips this. Instead of just retrieving from raw documents, the LLM incrementally builds a **persistent wiki**: structured, interlinked markdown files that sit between you and the sources.
+
+When you add a new source, the LLM does not just index it. It reads it, pulls out what matters, and folds it into what already exists. It updates entity pages, revises summaries, flags where the new data contradicts an old claim, and strengthens or challenges the running synthesis. Knowledge is compiled **once** and kept current, not re-derived on every query.
+
+The core point: the wiki is an artifact that **compounds**. The cross-references are already there. The contradictions are already flagged. The synthesis already reflects everything you read. And you almost never write any of it, the LLM does all the grunt work. Your job is to curate sources, explore, and ask good questions.
+
+### Three layers
+
+The design is simple:
+
+1. **Raw sources:** your curated source collection (articles, papers, data). Immutable. The LLM reads, never modifies. This is the source of truth.
+2. **The wiki:** the markdown files the LLM generates (summaries, concept pages, comparisons, a synthesis). The LLM fully owns this layer.
+3. **The schema:** a document (`CLAUDE.md`, `AGENTS.md`) that tells the LLM how the wiki is structured and which workflows to follow. It is what turns the LLM into a disciplined maintainer instead of a generic chatbot.
+
+Three operations run on top: **ingest** (a new source comes in, the LLM spreads the update across 10 to 15 pages), **query** (it answers with citations, and good answers go back into the wiki as new pages), and **lint** (a periodic health check that hunts for contradictions, orphan pages, and stale claims).
+
+### Why it works
+
+The boring part of maintaining a knowledge base was never the reading or the thinking. It is the **bookkeeping**: updating cross-references, keeping summaries current, recording when new data overrides old, keeping dozens of pages consistent.
+
+Humans abandon wikis because that cost grows faster than the value. The LLM does not get bored, does not forget to update a link, and can touch 15 files in one pass. Maintenance drops to near zero, so the wiki survives. It is Vannevar Bush's Memex (1945) with the missing piece solved: who does the upkeep.
+
+### The bridge to agent memory
+
+This is where the idea connects to something I have been seeing. **Fabio Akita** wrote a piece tying Karpathy's LLM Wiki straight to the problem of **agent memory**.
+
+The logic from Akita's first article is simple: coding agents such as Codex CLI, opencode, and Claude Code eventually hit the context limit and rely on *compaction*, that is, they compress the conversation into a summary when the buffer fills up. It works inside a session, but anything not written somewhere durable dies with the session. And a compressed summary is **fragile**: without reindexing and active management, it degrades fast.
+
+Karpathy's wiki is an answer to that. It is not just compressing, it is **systematically managing** what stays.
+
+The sequence matters. Karpathy gives the pattern: compile knowledge into a maintained wiki. Akita's first article maps that pattern onto agent memory and `agentmemory`. His follow-up on `ai-memory` then shows where that stack breaks or survives when coding agents use it every day.
+
+Akita did not stop at theory. He had recommended `agentmemory` (a popular open source project, mostly in TypeScript, that captures agent activity through hooks, runs hybrid BM25 + vector + graph search, and exposes memory over MCP), hit real limits in daily use (slow BM25 reindexing on restart, persistence timeouts, and hook/config edge cases), and ended up writing his own system: `ai-memory`, a successor in **Rust**, built on Karpathy's LLM Wiki. The design is the interesting part, because it implements the idea almost literally:
+
+- **A git-versioned markdown wiki as the single source of truth.** At the end of each session, the system compiles its observations into markdown pages. It is Karpathy's LLM Wiki turned into code: a `wiki/` directory (the synthesis), a `raw/` one (the immutable log), and a `db/` one (the index).
+- **Multi-layer retrieval:** FTS5 (full-text, in SQLite) plus graph neighborhood plus vector reranking, fused with RRF (Reciprocal Rank Fusion).
+- **Native MCP and agent handoff:** you can leave Claude Code mid-task and pick up in Codex hours later, in the same directory, without losing context.
+- **It even works with no LLM:** FTS5 search and rule-based synthesis run without any embedding provider; the providers (OpenAI, Voyage, Gemini) come in only as optional reranking.
+- **Automatic capture is the key product detail:** hooks and lifecycle integrations collect session events without forcing the human or the agent to remember to save notes manually.
+- **The wiki stays inspectable:** the read-only web UI and plain markdown files make the memory auditable, not a hidden vector store you have to trust blindly.
+
+The lesson: Karpathy's architecture is elegant, but the implementation is what decides whether it survives real use. The wiki solves "what to keep"; a system like `ai-memory` solves "how to keep it so it does not degrade", and it also shows the wiki does not have to be just study notes, it can be the living memory of a coding agent.
+
+### How I plan to test it
+
+The barrier to entry is low by design: the wiki is just a git repo of markdown. You can start with a `CLAUDE.md` defining the conventions, a sources folder, and an `index.md`. Obsidian on one side as the viewer, the agent on the other as the programmer editing the files.
+
+I will run this first on a domain of my own (study notes and reading) and then test the agent-memory version in a real coding workspace. `ai-memory` is the obvious candidate for that second test because it keeps the wiki readable while still giving agents automatic capture, MCP lookup, handoff, and cleanup. When I have results, I will write the follow-up.
+
+---
+
+**Full translation of Karpathy's text (pt-BR):** [LLM Wiki, translated](/content/llm-wiki-karpathy-traducao-pt-br.md)
+
+**Sources:**
+
+- Andrej Karpathy, original tweet announcing the "LLM Knowledge Base" (Apr/2026): https://x.com/karpathy/status/2039805659525644595
+- Andrej Karpathy, "LLM Wiki" (original gist): https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
+- VentureBeat, "Karpathy shares 'LLM Knowledge Base' architecture that bypasses RAG": https://venturebeat.com/data/karpathy-shares-llm-knowledge-base-architecture-that-bypasses-rag-with-an
+- Fabio Akita, "Memória de Agentes, Karpathy LLM Wiki e AgentMemory": https://akitaonrails.com/2026/05/18/memoria-agentes-karpathy-llm-wiki-agentmemory/
+- Fabio Akita, "Criei um sistema de memória para agentes de código: ai-memory": https://akitaonrails.com/2026/05/23/criei-sistema-memoria-agentes-codigo-ai-memory/
+- `agentmemory` (rohitg00), open source agent memory project: https://github.com/rohitg00/agentmemory
+- `ai-memory` (akitaonrails), the Rust successor: https://github.com/akitaonrails/ai-memory
