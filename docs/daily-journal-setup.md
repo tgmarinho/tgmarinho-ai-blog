@@ -176,13 +176,20 @@ Save as `~/Library/LaunchAgents/com.tgmarinho.journal.daily.plist`:
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>-lc</string>
+    <string>-c</string>
     <string>cd /Users/tgmarinho/Developer/tgmarinho-ai-website &amp;&amp; bash scripts/journal-cron.sh</string>
   </array>
+  <!-- launchd starts with a minimal PATH and does NOT read ~/.zshrc, where the
+       user's real PATH lives. Set it here so claude / node / bun / gh resolve. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/Users/tgmarinho/.local/bin:/Users/tgmarinho/.bun/bin:/Users/tgmarinho/.nvm/versions/node/v22.17.1/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
   <key>StartCalendarInterval</key>
   <dict>
-    <key>Hour</key>    <integer>0</integer>
-    <key>Minute</key>  <integer>30</integer>
+    <key>Hour</key>    <integer>23</integer>
+    <key>Minute</key>  <integer>0</integer>
   </dict>
   <key>StandardOutPath</key>  <string>/tmp/journal-cron.log</string>
   <key>StandardErrorPath</key><string>/tmp/journal-cron.log</string>
@@ -190,6 +197,17 @@ Save as `~/Library/LaunchAgents/com.tgmarinho.journal.daily.plist`:
 </dict>
 </plist>
 ```
+
+> **Why these two extras matter (they are easy to miss):**
+> 1. **PATH.** launchd does not load `~/.zshrc`, so the user's PATH is absent and
+>    `claude` (narration), `bun`, and `gh` fail with `ENOENT`. The
+>    `EnvironmentVariables` PATH above fixes it. `scripts/journal-cron.sh` also
+>    prepends these dirs as a fallback for plain `cron`.
+> 2. **Keychain auth.** The `claude` CLI stores its login in the macOS login
+>    Keychain, which needs `USER`/`LOGNAME` set (launchd provides them; a bare
+>    cron line may not, so the script exports them). If the run still reports
+>    `Not logged in`, run `claude` once interactively to refresh the session,
+>    and make sure the Mac is unlocked when the job fires.
 
 Then:
 
@@ -199,17 +217,34 @@ launchctl list | grep tgmarinho.journal      # confirm it's registered
 tail -f /tmp/journal-cron.log                # watch output
 ```
 
-`launchd` fires at 00:30 local time daily, generating yesterday's journal — by
-then all sessions from the previous day are flushed to disk, so there's no race
-with sessions still being modified at 23:59. If the Mac is asleep at 00:30, the
-job runs as soon as the machine wakes up.
+`launchd` fires at 23:00 local time daily, generating **yesterday's** journal.
+By 23:00 the previous day is fully flushed to disk, so there's no race with
+sessions still being modified. If the Mac is asleep at 23:00, the job runs as
+soon as the machine wakes up (the Mac must be unlocked for Keychain auth).
+
+To reload after editing the plist:
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.tgmarinho.journal.daily.plist
+launchctl load   ~/Library/LaunchAgents/com.tgmarinho.journal.daily.plist
+launchctl list | grep tgmarinho.journal     # 2nd column 0 = last run OK
+```
+
+To trigger a run right now (instead of waiting for 23:00):
+
+```bash
+launchctl kickstart -k gui/$(id -u)/com.tgmarinho.journal.daily
+tail -f /tmp/journal-cron.log
+```
 
 ## Alternative: crontab
 
 ```bash
 crontab -e
-# add:
-30 0 * * * cd /Users/tgmarinho/Developer/tgmarinho-ai-website && /bin/bash scripts/journal-cron.sh >> /tmp/journal-cron.log 2>&1
+# add (23:00 daily). The script self-heals PATH/USER, but cron's env is even
+# barer than launchd's, so Keychain auth may fail under cron — launchd is
+# preferred on macOS.
+0 23 * * * cd /Users/tgmarinho/Developer/tgmarinho-ai-website && /bin/bash scripts/journal-cron.sh >> /tmp/journal-cron.log 2>&1
 ```
 
 ## Uninstall

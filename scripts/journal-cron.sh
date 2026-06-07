@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # journal-cron.sh — orchestrates the daily-work journal pipeline locally.
 #
+# Schedule: launchd fires this daily at 23:00 (see the .plist in
+# docs/daily-journal-setup.md). It targets YESTERDAY, which is fully written by
+# then, so there's no race with sessions still being modified.
+#
 # Steps:
-#   1. Resolve target date (default: YESTERDAY in America/Campo_Grande — run at 00:30 the next day
-#      so the entire previous day is on disk before we read sessions).
+#   1. Resolve target date (default: YESTERDAY in America/Campo_Grande).
 #   2. Run daily-journal.mjs to produce raw markdown under tmp/.
 #   3. Bail out early if there's no meaningful activity.
 #   4. Narrate via Claude API into content/journal/<DATE>.md.
@@ -12,8 +15,13 @@
 
 set -euo pipefail
 
-# Load nvm so `node` is on PATH when invoked by launchd/cron (non-interactive
-# shells don't read ~/.zshrc, where the user's nvm setup lives).
+# launchd/cron run with a minimal PATH and do NOT read ~/.zshrc, where the
+# user's real PATH lives. Without this, `claude` (narration) and `bun`/`gh`
+# are not found and the run fails with ENOENT. Prepend the install dirs so the
+# whole pipeline resolves even outside an interactive zsh shell.
+export PATH="$HOME/.local/bin:$HOME/.bun/bin:/opt/homebrew/bin:$PATH"
+
+# Load nvm too, in case `node` lives there instead of ~/.local/bin.
 if [ -z "${NVM_DIR:-}" ]; then
   export NVM_DIR="$HOME/.nvm"
 fi
@@ -21,6 +29,11 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
   # shellcheck disable=SC1091
   \. "$NVM_DIR/nvm.sh"
 fi
+
+# claude CLI auth lives in the macOS login Keychain, which needs USER/LOGNAME
+# set to resolve the session. launchd sets them; a bare cron line may not.
+export USER="${USER:-$(id -un)}"
+export LOGNAME="${LOGNAME:-$USER}"
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"

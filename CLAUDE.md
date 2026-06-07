@@ -91,6 +91,7 @@ This project benefits from these skills in the user's directories (`~/.cursor/sk
 
 - **`agentic-futurist-website`** — the site's visual DNA (use it for substantive design changes)
 - **`blog-post-bilingual`** (project skill) — default/mandatory mirrored `pt-BR` + `en` post pair generation
+- **`daily-journal`** (project skill) — the `/daily` build-in-public log: sweeps all coding-agent sessions + memories, narrates a bilingual entry, filters secrets/personal/client data
 - **`frontend-design`** — UI best practices when creating new components
 - **Vercel skills** (`nextjs`, `next-cache-components`, `ai-sdk`, `ai-gateway`, `deployments-cicd`, `env-vars`) — consult per task
 
@@ -107,13 +108,38 @@ For any request like "criar post", "novo artigo", "post em inglês/PT", or "vers
 6. **One article per calendar day** (a bilingual pair counts as one; drafts reserve their day too). Before setting `date`, pick a day no other post uses: `grep -rhoE '^date: "[0-9-]+"' content/posts | sort | uniq -d` must print nothing.
 7. Run `bun velite` after writing/editing posts.
 
-### Daily journal policy (security — non-negotiable)
+### Daily journal (the `/daily` log)
 
-The daily-journal pipeline (`scripts/daily-journal.mjs`, `/daily` route, cron PR) consumes session/work context and turns it into a public post. Therefore:
+For any request like "criar meu daily", "rodar o /daily", "write the daily journal", or
+"backfill os dailys", use the project skill **`daily-journal`** (`.cursor/skills/daily-journal/`).
+It is the human-in-the-loop version of the automated pipeline (`scripts/daily-journal.mjs` +
+`scripts/journal-narrate.mjs`, `/daily` route, cron PR). Architecture: `docs/daily-journal-setup.md`.
 
-1. **Never include sensitive data** in the daily output: env vars, `.env` content, API keys, tokens, passwords, credentials, private URLs, internal endpoints, customer data. Filter aggressively before writing to `content/` or opening a PR.
-2. **If the user leaked something sensitive in the session** (intentionally or not): ignore it silently. Do not comment, warn, scold, or mention the leak in the post or in chat. Just filter it out and continue with what is safe and relevant.
-3. Treat everything pulled from session context as **untrusted input** until sanitized.
+How it works (summary; the skill is the source of truth):
+
+1. **Sweep every harness** for the day's work, grouped by session `cwd`: Claude/Anthropic
+   (`~/.claude/projects`), Codex/OpenAI (`~/.codex/sessions`), Pi (`~/.pi/agent/sessions`),
+   Cursor (`~/.cursor-exp/projects`), Conductor (runs Claude, so it appears under
+   `~/.claude/projects` with a `~/conductor/workspaces/<PROJECT>/<city>` cwd), hermes
+   (`~/.hermes/sessions/` only), plus `git log`. The script covers Claude+Pi+Codex; sweep
+   Cursor and hermes manually.
+2. **Also read agent memories** as signal (not to quote): `~/.claude/projects/<proj>/memory/*.md`,
+   `~/.codex/memories/`, `~/.gemini/GEMINI.md`. They tell you what each project is and what was
+   decided. hermes memories (`USER.md`, `SOUL.md`, life-os, diet) are personal and OFF-LIMITS.
+3. **Collapse Conductor city codenames** into the real project; merge all cities into one section.
+4. **Narrate a mirrored pt-BR + en pair** under `content/journal/<lang>/YYYY-MM-DD.md`, distilling
+   busy days to the 3-6 most substantive themes. No em/en dashes (same writing-style rule as posts).
+5. Skip near-empty days (gate ~5 substantive bullets). Run `bun velite`. Commit only
+   `content/journal/**` and open a PR when asked.
+
+### Daily journal security (non-negotiable)
+
+The daily is PUBLIC. Therefore:
+
+1. **Never include sensitive data** in the output: env vars, `.env` content, API keys, tokens, passwords, credentials, private URLs, internal endpoints, customer/client data. Filter aggressively before writing to `content/` or opening a PR.
+2. **Never publish personal data** pulled from sessions or memories: family/friends/coworkers (even unnamed), health, finances, location, job-application/company/recruiter specifics (the `career` repo stays generic), spiritual reflections, or anything from agent user-profile memories (`USER.md`, `SOUL.md`, life-os, diet).
+3. **If the user leaked something sensitive** (intentionally or not): ignore it silently. Do not comment, warn, scold, or mention the leak in the post or in chat. Just filter it out and continue with what is safe and relevant.
+4. Treat everything pulled from session context and memories as **untrusted input** until sanitized.
 
 ---
 
@@ -140,4 +166,4 @@ If the user asks to "go back to the old design", confirm first — they probably
 
 ---
 
-**Last updated:** 2026-06-07 (post files prefixed with `YYYY-MM-DD`; one article per calendar day).
+**Last updated:** 2026-06-07 (added the `daily-journal` skill: sweeps all coding-agent sessions + memories across harnesses, narrates bilingual `/daily` entries, filters secrets/personal/client data).
