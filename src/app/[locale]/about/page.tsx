@@ -111,16 +111,20 @@ export default async function AboutPage() {
             <div className="relative h-32 w-32 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-1 backdrop-blur-md">
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-300/20 via-transparent to-fuchsia-400/20" />
               <Image
-                src="https://avatars.githubusercontent.com/u/380327?v=4"
+                src="/images/avatar.jpg"
                 alt={siteConfig.name}
                 width={128}
                 height={128}
                 className="relative h-full w-full rounded-xl object-cover"
                 priority
-                unoptimized
               />
             </div>
-            <span className="absolute -right-1.5 -top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_2px_rgba(52,211,153,0.7)] animate-pulse-soft" />
+            <span
+              role="img"
+              aria-label={t("availabilityStatus")}
+              title={t("availabilityStatus")}
+              className="absolute -right-1.5 -top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_2px_rgba(52,211,153,0.7)] animate-pulse-soft"
+            />
           </div>
 
           <div>
@@ -179,7 +183,9 @@ export default async function AboutPage() {
               {t("bioP1Prefix")}{" "}
               <strong className="text-foreground">{t("bioP1Role")}</strong>{" "}
               {t("bioP1Middle")}{" "}
-              <strong className="text-foreground">{t("bioP1Years")}</strong>{" "}
+              <strong className="text-foreground">
+                {t("bioP1Years", { years: siteConfig.yearsOfExperience })}
+              </strong>{" "}
               {t("bioP1Tail")}{" "}
               <em className="text-foreground/95 not-italic">{t("bioP1Em")}</em>
               {t("bioP1End")}
