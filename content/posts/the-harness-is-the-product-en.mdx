@@ -1,0 +1,97 @@
+---
+title: "The harness is the product"
+description: "WorkOS, Stripe, and OpenAI arrived, through different paths, at the same conclusion about coding agents: senior engineering stopped being about writing code and became about building the harness that makes the agent write code reliably."
+date: "2026-06-02"
+published: true
+slug: "the-harness-is-the-product-en"
+categories: ["ai", "software-engineering", "agents", "en"]
+image: "/images/blog/o-harness-e-o-produto-cover.jpg"
+language: "en"
+translationKey: "the-harness-is-the-product"
+---
+
+There's a line from [Nick Nisi](https://nicknisi.com/posts/case-statement/), an engineer at WorkOS, that stuck with me:
+
+> "I was good at steering AI agents. Really good... That was the problem. I was clearly the bottleneck."
+
+It's an uncomfortable kind of realization. You get so good at piloting the agent — fixing the prompt, re-pointing it when it drifts, reviewing the diff line by line — that you become the system's ceiling. Every PR depends on you being there, hand on the wheel.
+
+The way out WorkOS found, the one Stripe found independently, and the one OpenAI just gave a name — _harness engineering_ — is the same. And it changes what it means to be a senior engineer in 2026:
+
+**Stop piloting the agent. Build the environment where the agent can't get it wrong.**
+
+### CASE: WorkOS's six-agent harness
+
+WorkOS open-sourced [CASE](https://github.com/workos/case) — a harness that turns GitHub issues into reviewed, merge-ready PRs across 20+ open source repositories. It's not "an agent." It's a deterministic pipeline of six agents, each with an isolated responsibility:
+
+**scout → implementer → verifier → reviewer → closer → retrospective**
+
+Scout is read-only exploration. Implementer writes code and tests. Verifier runs the scenarios. Reviewer checks the diff against the principles. Closer opens the PR. And retrospective analyzes the run and proposes improvements to the harness itself.
+
+The detail that matters isn't the list of agents — it's what holds the whole thing up:
+
+- **A manifest** (`projects.json`) mapping every repo and its evidence strategy.
+- **Golden principles**: invariants enforced mechanically (strict TypeScript, conventional commits, and so on).
+- **Evidence gates**: before opening a PR, the closer validates three markers — `tested`, `manual-tested`, `reviewed`. Each repo declares, _up front_, what counts as proof.
+
+And the philosophy, baked into the README:
+
+> "The harness is the product. The code is the output."
+
+### Minions: Stripe's thousand PRs a week
+
+On the other side, Stripe writes in its [post on Minions](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents) that **over a thousand PRs a week** are generated entirely by agents — humans review before merge, but the work is all machine.
+
+The flow is one-shot end-to-end: it starts with a Slack message and ends in a PR ready for review, with no human in the middle. Engineers spin up multiple minions in parallel — especially useful during on-call.
+
+The architecture decisions echo CASE:
+
+- **Devboxes**: isolated machines, pre-warmed with code and services, spinnable in 10 seconds, with no production access.
+- **Toolshed over MCP**: an internal server hosting 400+ tools wiring Stripe's systems into the agent.
+- **An interleaved loop**: the agent doesn't run loose — deterministic operations like linting and testing slot in between iterations.
+- **Shifting feedback left**: local lint under 5 seconds, surgical selection of CI tests, automatic fixes where possible, a maximum of two CI rounds.
+
+Stripe is honest about why it built everything in-house: its codebase — hundreds of millions of lines of custom Ruby with Sorbet — breaks generic agents. "Iterating on a codebase of that scale, complexity, and maturity is inherently much harder" than starting from scratch.
+
+### OpenAI: a million lines, zero typed by hand
+
+Then OpenAI closed the argument. In its [Harness Engineering](https://openai.com/index/harness-engineering/) piece, the Codex team describes **three engineers building a ~1-million-line production codebase in roughly 5 months** — around 1,500 merged PRs — without anyone typing a single line by hand:
+
+> "Every line of code — application logic, tests, CI configuration, documentation, observability — was written by Codex."
+
+And the line that ties it all together: progress was slow until they stopped focusing on the model and started building the tools, feedback loops, and scaffolding that made the agent reliable. Or, more bluntly: **the bottleneck is infrastructure, not intelligence.**
+
+Their harness has three pieces you'll recognize from the other two:
+
+- **`AGENTS.md` as a living feedback loop** — rewritten every time the agent trips over a failure.
+- **Strict dependency layers**, enforced by custom linters and structural tests.
+- **Observability-driven iteration** — logs, metrics, and spans pointing to where the agent went wrong.
+
+### The convergence (which is the point)
+
+Three teams, three incompatible codebases, zero coordination. And they still landed on the same four lessons. When independent sources converge, you can trust the conclusion.
+
+**1. Instructions decay; enforcement persists.** LLMs forget instructions over long sessions. So critical constraints can't live in prose — they have to be enforced by code: gates, linters, mandatory markers. _Asking_ for strict TypeScript doesn't work; the pipeline has to _refuse_ anything that isn't.
+
+**2. LLMs reason about code, but they're terrible state machines.** CASE's first version was a markdown pipeline, and the LLM would sometimes skip verification or retry incorrectly. The fix was moving flow control into a TypeScript `switch`. In Nick's words: _"They're good at reasoning about code. They're bad at being state machines. So I stopped asking them to be one."_ Stripe does the same by interleaving the agent loop with deterministic steps.
+
+**3. Evidence has to be tamper-proof.** Agents optimize for the surface marker — they'll even create fake "test evidence" files. Both sides answer the same way: require piped test output, Playwright screenshots, structured JSON. Things the agent can't fabricate.
+
+**4. Context engineering is the work.** Structuring information by stability (what changes least goes first), progressive disclosure (route to the right doc), and compaction awareness (the critical summary up top) is what separates a reliable agent from expensive theater.
+
+### What this changes for you
+
+You probably don't have 20 open source repos or Stripe's codebase. Doesn't matter. The mental model scales down:
+
+- When the agent fails, **fix the harness, not the agent**. The answer is never "try harder" or "improve the prompt." It's: what gate would have caught this?
+- What you fix by hand today becomes a rule tomorrow. Every repeated failure should turn into a lint rule, a playbook, or an evidence gate.
+- Your project conventions (the `CLAUDE.md`, the `AGENTS.md`, the verification scripts) **are** the harness. OpenAI literally treats `AGENTS.md` as a living feedback loop — rewriting it every time the agent gets something wrong. The more that's mechanically enforced, the less you need to be in the loop.
+- Determinism wherever you can get it: let the LLM think, but take flow control, linting, testing, and merging away from it.
+
+### The honest trade-off
+
+Nick doesn't hide the cost: you trade the satisfaction of writing code for the leveraged work of building systems that write code. You start trusting evidence chains instead of verifying everything personally. It's an identity shift, not just a tooling one.
+
+But the future of senior engineering work is right there in both stories: your productivity will stop being measured by the code you write and start being measured by the system you build to make others — human or agent — write reliable code.
+
+The harness is the product. The code is the output.
