@@ -7,6 +7,7 @@ import readingTime from "reading-time";
 import { allPosts as posts, type AnyPost as Post } from "@/lib/all-posts";
 import type { Locale } from "@/i18n/routing";
 import { getPostLanguage } from "@/lib/posts-i18n";
+import { categoryLabel, normalizeCategories } from "@/lib/categories";
 
 export function sortPostsByDate<T extends { date: string; published: boolean }>(
   posts: T[]
@@ -16,8 +17,12 @@ export function sortPostsByDate<T extends { date: string; published: boolean }>(
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
+// Expects already-normalized categories (see `toMeta`). When a locale is
+// passed, the list is ordered by the localized display label so the filter
+// reads naturally; otherwise it falls back to a stable key sort.
 export function getAllCategories(
-  posts: Array<{ categories: string[]; published: boolean }>
+  posts: Array<{ categories: string[]; published: boolean }>,
+  locale?: Locale
 ): string[] {
   const categories = new Set<string>();
   posts
@@ -25,7 +30,13 @@ export function getAllCategories(
     .forEach((post) =>
       post.categories.forEach((cat) => categories.add(cat))
     );
-  return Array.from(categories).sort();
+  const list = Array.from(categories);
+  if (locale) {
+    return list.sort((a, b) =>
+      categoryLabel(a, locale).localeCompare(categoryLabel(b, locale), locale)
+    );
+  }
+  return list.sort();
 }
 
 // Slim shape — intentionally excludes `body`/`code`/`plainBody` so route
@@ -55,7 +66,7 @@ function toMeta(post: Post): PostMeta {
     language: post.language,
     translationKey: post.translationKey,
     image: post.image,
-    categories: post.categories,
+    categories: normalizeCategories(post.categories),
     published: post.published,
     readingTimeMinutes: Math.ceil(stats.minutes),
     readingTimeText: stats.text,

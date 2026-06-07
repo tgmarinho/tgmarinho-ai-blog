@@ -17,7 +17,7 @@ const COPY = {
     title: "Diário",
     titleAccent: "de trabalho.",
     subtitle:
-      "Registro diário do que eu construí, quebrei e aprendi — gerado a partir de commits, sessões de pair-programming com agentes e notas de campo.",
+      "Registro diário do que eu construí, quebrei e aprendi, gerado a partir de commits, sessões de pair-programming com agentes e notas de campo.",
     kicker: (n: number) =>
       `━ diário · ${n} ${n === 1 ? "entrada" : "entradas"}`,
     sessions: (n: number) => `${n} ${n === 1 ? "sessão" : "sessões"}`,
@@ -28,7 +28,7 @@ const COPY = {
     title: "Work",
     titleAccent: "journal.",
     subtitle:
-      "Daily log of what I built, broke, and learned — generated from commits, agent pair-programming sessions, and field notes.",
+      "Daily log of what I built, broke, and learned, generated from commits, agent pair-programming sessions, and field notes.",
     kicker: (n: number) =>
       `━ journal · ${n} ${n === 1 ? "entry" : "entries"}`,
     sessions: (n: number) => `${n} ${n === 1 ? "session" : "sessions"}`,

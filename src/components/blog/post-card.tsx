@@ -5,6 +5,8 @@ import { ArrowUpRight, Clock } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { GlowCard } from "@/components/fx/glow-card";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
+import { categoryLabel } from "@/lib/categories";
+import type { Locale } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 interface PostCardProps {
@@ -69,7 +71,7 @@ export function PostCard({
               key={cat}
               className="inline-flex items-center rounded-full border border-cyan-300/20 bg-cyan-300/[0.05] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/90"
             >
-              {cat}
+              {categoryLabel(cat, locale as Locale)}
             </span>
           ))}
         </div>

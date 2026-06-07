@@ -25,7 +25,7 @@ type Project = {
 const projects: Project[] = [
   {
     key: "itop",
-    title: "iTOP — Inscrições TOP",
+    title: "iTOP: Inscrições TOP",
     status: "shipped",
     group: "product",
     year: "2024",
@@ -58,7 +58,7 @@ const projects: Project[] = [
   },
   {
     key: "pi-tg",
-    title: "Pi — AI Agent Toolkit",
+    title: "Pi: AI Agent Toolkit",
     status: "open-source",
     group: "product",
     year: "2026",
@@ -87,7 +87,7 @@ const projects: Project[] = [
   },
   {
     key: "canetaco",
-    title: "Canetaço — e-signature SaaS",
+    title: "Canetaço: e-signature SaaS",
     status: "open-source",
     group: "product",
     year: "2026",
@@ -129,7 +129,7 @@ const projects: Project[] = [
   },
   {
     key: "agenda-editor",
-    title: "Agenda Editor — custom planner covers",
+    title: "Agenda Editor: custom planner covers",
     status: "open-source",
     group: "product",
     year: "2026",
@@ -148,7 +148,7 @@ const projects: Project[] = [
   },
   {
     key: "ai-blog",
-    title: "tgmarinhopro.com — this site",
+    title: "tgmarinhopro.com (this site)",
     status: "shipped",
     group: "product",
     year: "2026",
@@ -174,7 +174,7 @@ const projects: Project[] = [
   },
   {
     key: "fluent-five",
-    title: "Fluent5 — English 5x5x5",
+    title: "Fluent5: English 5x5x5",
     status: "open-source",
     group: "tool",
     year: "2026",

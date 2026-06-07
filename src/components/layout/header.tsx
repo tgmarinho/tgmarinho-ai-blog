@@ -32,7 +32,7 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 md:px-8">
         <Link
           href="/"
-          aria-label="Thiago Marinho — home"
+          aria-label="Thiago Marinho, home"
           className="group flex items-center gap-2.5"
         >
           <span className="relative grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/[0.03] backdrop-blur-md transition-colors group-hover:border-cyan-300/40">
