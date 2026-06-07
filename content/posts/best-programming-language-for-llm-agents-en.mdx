@@ -1,0 +1,131 @@
+---
+title: "What would the best programming language for AI agents be?"
+description: "Akita asked the uncomfortable question: what if the ideal language were built for LLMs to edit, not for humans to read? My bet is the answer is not a new exotic language, but gradual contracts on top of something models already write well."
+date: "2026-06-07"
+published: true
+slug: "best-programming-language-for-llm-agents-en"
+language: "en"
+translationKey: "best-programming-language-for-llm-agents"
+categories: ["ai", "software-engineering", "programming-languages", "en"]
+image: "/images/blog/best-language-for-llm-agents-cover.jpg"
+---
+
+I ran into an article by Fabio Akita that asked an uncomfortable question: what if the ideal programming language were optimized for LLMs to edit, not for humans to read? He starts from the idea that these two goals fight each other all the time, and most of the time we only optimize for the human side.
+
+It is a good provocation. But his conclusion left me thinking, and I disagree with the tone. Let me explain why, and at the end I show the hypothetical language I would bet on.
+
+### The real conflict
+
+Conventional languages like Python and Ruby favor human clarity. Lean syntax, little ceremony, lots of freedom. That is great when one person writes and another reads.
+
+The problem shows up when the writer is an agent. Freedom turns into ambiguity. Ten ways to do the same thing turn into ten chances for the model to pick the path that compiles but is wrong. What helps the human (brevity, implicit behavior, "magic") gets in the machine's way.
+
+### What formal languages get right
+
+Akita points out an uncomfortable pattern: the languages that are best for LLMs in theory are the ones with formal verification and rich type systems. Lean 4, F\*, Idris 2 at the top. Rust, Haskell, and Dafny get it partly right. Python and Ruby fall out.
+
+It makes sense. Explicit types shrink the model's search space. Compile time checks catch the error before it runs. Clear modularity lets the agent load only the relevant piece into context.
+
+The problem is the price. These are exactly the languages with the steepest learning curve for humans. Writing formal proofs all the time is expensive and nobody wants it. That is where Akita's conclusion turns skeptical: the ideal language would be AI first at the human's expense, and that is why it does not exist yet.
+
+### Where I disagree: the unlock is gradient, not technical
+
+I do not think the blocker is technical. I think it is about dosage.
+
+Nobody accepts writing formal proofs everywhere. But what if verification were **optional by gradient**? You pay the cost of the proof only where the risk earns it. UI code stays light. Payment code gets a contract. And the heavy work of generating the proof goes to the AI, not to you.
+
+The human reads the contract to trust it. The agent writes the implementation inside a fence it cannot break itself. Both audiences win without one paying for the other.
+
+### What this language would look like
+
+My bet is not a new exotic language from scratch. It is something close to **Rust plus Lean with the face of TypeScript**. The pillars:
+
+1. **Explicit types in the signature, local inference in the body.** The contract stays visible, the noise goes away.
+2. **Side effects in the type.** You know a function touches the network, the database, or state just by reading the signature. Gold for the agent to plan and for the human to trust.
+3. **First class contracts, optional.** `requires` and `ensures` in the Dafny style, used only where it hurts.
+4. **Immutable by default.** It shrinks the model's reasoning space and the subtle bugs that slip past review.
+5. **One canonical syntax, no dialects.** A single mandatory formatter, in the spirit of `gofmt`.
+6. **Compile errors built for the agent.** The compiler returns the fix in an applicable format, not text for a human to parse.
+
+I will call this hypothetical language **Duet**: two readers, the human and the agent. The example is the classic case where a contract earns its keep, a money transfer between accounts.
+
+```rust
+module banking/transfer
+  exposes { transfer }
+  depends { banking/account.{Account, AccountId} }
+
+# Invariant baked into the type: the contract lives in the type, not a comment.
+type Money = Int satisfies { value >= 0 }   # cents, never negative
+
+# The signature is the contract. Effects show up in the type: !{db, log}.
+# requires/ensures are optional; here we pay the cost because it is money.
+fn transfer(from: AccountId, to: AccountId, amount: Money) -> Result<Receipt, TransferError> !{db, log}
+  requires from != to
+  ensures  ok(r)  => r.debited == amount and r.credited == amount
+  ensures  err(_) => no_change(from) and no_change(to)   # failed: nothing changed
+{
+  let src = account.load(from)?          # `?` propagates TransferError
+  let dst = account.load(to)?
+
+  # `check` is a verified guard: if it fails, the ensures err(_) above
+  # is satisfied automatically (atomic rollback).
+  check src.balance >= amount else InsufficientFunds
+
+  let src' = src with { balance: src.balance - amount }   # new value, no mutation
+  let dst' = dst with { balance: dst.balance + amount }
+
+  account.commit([src', dst'])?          # atomic transaction; effect {db}
+  log.info("transfer ok", { from, to, amount })           # effect {log}
+
+  ok(Receipt { debited: amount, credited: amount, at: now() })
+}
+```
+
+Look at what each part says to the two readers. The `type Money` tells the human there is no negative money, and takes away the agent's chance to generate `amount = -1`. The `!{db, log}` shows at a glance that the function touches the database and the log. The `ensures` lets the human trust the code by reading only the contract, while the compiler proves the implementation meets it. The `with` builds new values instead of mutating, so nothing changes behind anyone's back.
+
+### The part that exists in no language today
+
+If the agent forgets to cover the insufficient balance case, the Duet compiler does not spit out text. It returns something directly applicable:
+
+```json
+{
+  "error": "contract_unsatisfied",
+  "where": "transfer:ensures[1]",
+  "message": "ensures err(_) => no_change(from) is not guaranteed: the branch returning InsufficientFunds runs AFTER account.commit",
+  "suggested_fix": {
+    "op": "move_before",
+    "node": "check src.balance >= amount",
+    "anchor": "account.commit"
+  },
+  "confidence": 0.91
+}
+```
+
+The agent reads `suggested_fix`, reorders, recompiles. The correction loop is part of the language, not a plugin bolted on top.
+
+### The gradient in action
+
+The same transfer, in the fast version with no contract, is also valid Duet:
+
+```rust
+fn transfer(from: AccountId, to: AccountId, amount: Money) -> Result<Receipt, TransferError> !{db, log} {
+  let src = account.load(from)?
+  let dst = account.load(to)?
+  check src.balance >= amount else InsufficientFunds
+  account.commit([
+    src with { balance: src.balance - amount },
+    dst with { balance: dst.balance + amount },
+  ])?
+  ok(Receipt { debited: amount, credited: amount, at: now() })
+}
+```
+
+Same language, same syntax. You pay the cost of the proof only where the risk earns it. That is the gradient: the AI writes both, the human reads the contract when it is there, and nobody is forced to write formal proofs all the time the way Lean demands.
+
+### Why this is born as an extension, not from scratch
+
+One detail decides everything: the ecosystem beats the language. An "ideal language for agents" without the equivalent of npm or cargo, and without millions of examples in the models' training, is dead on arrival. The agent is good at TypeScript and Python because it has seen billions of lines of them.
+
+So my real short term bet is not a new language. It is **TypeScript or Rust gaining a layer of verifiable contracts and effects in the type**, because they already have the critical mass of training and tooling. Akita described the destination. The path runs through extending what the AI already writes well, not through inventing a language nobody speaks.
+
+The ideal language for agents and humans is probably already here. It just needs the gradual contract layer on top.
