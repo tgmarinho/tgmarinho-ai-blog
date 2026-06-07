@@ -263,6 +263,17 @@ const projects: Project[] = [
     tags: ["React", "React Native", "Node.js"],
     github: "https://github.com/tgmarinho/be-the-hero",
   },
+  {
+    key: "bmi-calc",
+    title: "BMI Calculator (React Native)",
+    status: "open-source",
+    group: "oss",
+    year: "2019",
+    stars: 17,
+    tags: ["React Native", "Styled Components", "React Navigation", "i18n", "Hooks"],
+    github: "https://github.com/tgmarinho/BmiCalculatorRN",
+    live: "https://play.google.com/store/apps/details?id=com.tgmarinho.imc",
+  },
 ];
 
 const groupOrder: ProjectGroup[] = ["product", "tool", "oss"];

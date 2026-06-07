@@ -157,6 +157,9 @@
       "be-the-hero": {
         "description": "App full-stack conectando ONGs a doadores, construído durante a OmniStack week da Rocketseat. Ajuda pequenas organizações a captar recursos para suas causas."
       },
+      "bmi-calc": {
+        "description": "Calculadora de IMC para Android, feita em React Native e publicada na Google Play. App pequeno multi-tela com estilização caprichada, internacionalização (pt-BR e en) e UI limpa inspirada em um design do Dribbble."
+      },
       "members": {
         "description": "App CRUD para gestão de membros e pessoas, com dashboard, apoiado por uma API GraphQL no Hasura. Feito com Next.js, Apollo e Chakra UI."
       }

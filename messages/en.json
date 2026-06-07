@@ -157,6 +157,9 @@
       "be-the-hero": {
         "description": "Full-stack app connecting NGOs with donors, built during Rocketseat OmniStack week. It helps small organizations raise funds for their causes."
       },
+      "bmi-calc": {
+        "description": "A Body Mass Index calculator for Android, built in React Native and published on Google Play. A small multi-screen app with custom styling, internationalization (pt-BR and en), and a clean UI inspired by a Dribbble design."
+      },
       "members": {
         "description": "A CRUD app to manage members and people, with a dashboard, backed by a GraphQL API on Hasura. Built with Next.js, Apollo, and Chakra UI."
       }
