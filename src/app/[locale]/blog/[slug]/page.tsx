@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { FaXTwitter } from "react-icons/fa6";
 import readingTime from "reading-time";
 import { allPosts as posts, type AnyPost as Post } from "@/lib/all-posts";
 import { Link, redirect } from "@/i18n/navigation";
@@ -166,6 +167,11 @@ export default async function PostPage({ params }: PostPageProps) {
   const showMissingBanner = postLocale !== locale && !pair[locale];
   const toc = extractToc(post.body || "");
   const tocLabel = t("onThisPage");
+  const commentHref =
+    post.tweetUrl ??
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      post.title
+    )}&url=${encodeURIComponent(postUrl)}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -349,6 +355,9 @@ export default async function PostPage({ params }: PostPageProps) {
         <p className="mt-1.5 font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground/80">
           {getFormattedDate(post.date, postLocale)} · {siteConfig.location}
         </p>
+        <p className="mt-4 font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground/60">
+          {t("aiDisclaimer")}
+        </p>
       </div>
 
       <div className="mx-auto mt-12 flex max-w-[680px] flex-wrap items-center justify-between gap-4">
@@ -361,6 +370,38 @@ export default async function PostPage({ params }: PostPageProps) {
         </Link>
         <ShareButton title={post.title} url={postUrl} />
       </div>
+
+      <aside className="mx-auto mt-16 max-w-[680px]">
+        <div className="relative overflow-hidden rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.04] p-6 backdrop-blur-md md:p-8">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 opacity-60"
+            style={{
+              background:
+                "radial-gradient(420px 200px at 100% 0%, rgba(34,211,238,0.10), transparent 60%)",
+            }}
+          />
+          <p className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-300/80">
+            ━ {t("commentKicker")}
+          </p>
+          <h2 className="mt-3 font-[family-name:var(--font-fraunces)] text-[24px] font-semibold leading-[1.15] tracking-[-0.01em] text-foreground md:text-[28px]">
+            {t("commentTitle")}
+          </h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+            {t("commentBody")}
+          </p>
+          <a
+            href={commentHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group mt-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 font-mono text-[10.5px] uppercase tracking-[0.22em] text-cyan-100 transition-all hover:border-cyan-300/50 hover:bg-cyan-300/15"
+          >
+            <FaXTwitter className="h-3 w-3" />
+            {t("commentCta")}
+            <ArrowUpRight className="h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </a>
+        </div>
+      </aside>
 
       {related.length > 0 && (
         <aside className="mx-auto mt-20 max-w-[920px]">

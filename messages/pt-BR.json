@@ -78,7 +78,12 @@
       "translationMissingDescription": "Este post ainda não tem tradução em português. Mostrando a versão original.",
       "related": "leituras relacionadas",
       "readingTime": "{minutes} min de leitura",
-      "onThisPage": "nesta página"
+      "onThisPage": "nesta página",
+      "commentKicker": "comentários",
+      "commentTitle": "Curtiu? Vamos conversar no X",
+      "commentBody": "Tem uma opinião, discordância ou pergunta sobre o post? Comenta no X que eu respondo.",
+      "commentCta": "Comentar no X",
+      "aiDisclaimer": "Escrito por IA, revisado por Thiago Marinho"
     }
   },
   "projects": {

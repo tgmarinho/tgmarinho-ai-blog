@@ -93,6 +93,11 @@ above ~300 KB and fall back to the site favicon. To avoid that:
 3. Preserve technical terms when standard (`RAG`, `MCP`, `typecheck`, etc.).
 4. Adapt idioms and tone naturally for each language.
 
+## Writing style (non-negotiable)
+
+1. **Never use em dashes (`—`) or en dashes (`–`) for emphasis or asides**, in either language. Restructure with a comma, colon, parentheses, or a period. Don't just swap `—` for a hyphen; rewrite so it reads naturally. The em dash is a recognizable LLM tell, and in 2026 readers carry a bias against it because AI overuses it; avoiding it keeps the prose from reading as machine-written.
+2. **English content stays in plain English:** short sentences, common words, active voice. The pt-BR may be a touch more expressive; the EN stays simple.
+
 ## Workflow
 
 ```txt
