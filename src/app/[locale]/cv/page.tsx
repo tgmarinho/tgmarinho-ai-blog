@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { CVViewer } from "@/components/cv/cv-viewer";
 import { Recommendations } from "@/components/cv/recommendations";
 import { Download, Printer, Quote } from "lucide-react";
@@ -10,7 +10,10 @@ import { siteConfig } from "@/lib/constants";
 
 export default function CVPage() {
   const t = useTranslations("cv");
-  const [language, setLanguage] = useState<"en" | "pt">("en");
+  const locale = useLocale();
+  const [language, setLanguage] = useState<"en" | "pt">(
+    locale.startsWith("pt") ? "pt" : "en"
+  );
   const [cvContent, setCvContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 

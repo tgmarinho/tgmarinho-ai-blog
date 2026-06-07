@@ -17,7 +17,7 @@ export async function generateMetadata({
 }: BlogPageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "blog.list" });
-  const title = t("title").replace(",", "") + t("titleAccent");
+  const title = `${t("title")} ${t("titleAccent")}`;
   const description = t("subtitle");
   const url = localizedUrl(locale, "/blog");
   return {
@@ -42,7 +42,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
   setRequestLocale(locale);
 
   const localePosts = getPostsMeta(locale);
-  const categories = getAllCategories(localePosts);
+  const categories = getAllCategories(localePosts, locale);
   const t = await getTranslations("blog.list");
 
   const blogUrl = localizedUrl(locale, "/blog");
@@ -85,6 +85,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
       <BlogSearch
         posts={localePosts}
         categories={categories}
+        locale={locale}
         searchPlaceholder={t("searchPlaceholder")}
         emptyLabel={t("empty")}
         allLabel={t("categoriesAll")}

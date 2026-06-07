@@ -5,7 +5,7 @@ import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { getPostLanguage } from "@/lib/posts-i18n";
 import { type Locale } from "@/i18n/routing";
 
-export const alt = `${siteConfig.name} — blog post`;
+export const alt = `${siteConfig.name}, blog post`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

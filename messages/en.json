@@ -10,7 +10,7 @@
     "cv": "CV"
   },
   "footer": {
-    "tagline": "Designing the agentic layer of software — pragmatic AI engineering for products that ship.",
+    "tagline": "Designing the agentic layer of software: pragmatic AI engineering for products that ship.",
     "systemOperational": "system · operational",
     "exploreTitle": "Explore",
     "networkTitle": "Network",
@@ -35,7 +35,7 @@
       "headlineAccent": "agentic layer",
       "headlineLine3": "of software.",
       "subtitle": "Product engineering, AI agents, and the craft of shipping software that survives production.",
-      "intro": "I'm {firstName} — an AI Product Engineer designing autonomous agents, RAG pipelines and spec-driven products that ship fast and learn faster.",
+      "intro": "I'm {firstName}, an AI Product Engineer designing autonomous agents, RAG pipelines and spec-driven products that ship fast and learn faster.",
       "ctaPrimary": "Read the blog",
       "ctaSecondary": "About me",
       "stats": {
@@ -88,11 +88,11 @@
   },
   "projects": {
     "metaTitle": "Projects",
-    "metaDescription": "A selection of products, libraries and open-source work — shipped, indexed, in production.",
+    "metaDescription": "A selection of products, libraries and open-source work: shipped, indexed, in production.",
     "kicker": "━ projects · {count, plural, one {# entry} other {# entries}}",
     "title": "Things I've",
     "titleAccent": "shipped.",
-    "subtitle": "A selection of products, libraries, and open-source work — some in production, some still teaching me lessons.",
+    "subtitle": "A selection of products, libraries, and open-source work. Some in production, some still teaching me lessons.",
     "status": {
       "shipped": "shipped · prod",
       "openSource": "open · source",
@@ -170,9 +170,9 @@
   },
   "about": {
     "metaTitle": "About",
-    "metaDescription": "About {name} — {role}",
+    "metaDescription": "About {name}, {role}",
     "profileKicker": "━ profile · v.{year}",
-    "intro": "{role} from {location}. {years}+ years building scalable web, mobile, AI and Web3 systems — full-stack to production.",
+    "intro": "{role} from {location}. {years}+ years building scalable web, mobile, AI and Web3 systems, full-stack to production.",
     "fullCv": "full cv",
     "letsTalk": "let's talk",
     "bioKicker": "━ bio",
@@ -184,7 +184,7 @@
     "bioP1Years": "10+ years",
     "bioP1Tail": "building production systems across healthcare, fintech, Web3, and event platforms. My north star is shipping software that",
     "bioP1Em": "does the work",
-    "bioP1End": "— not software that demos well.",
+    "bioP1End": ", not software that demos well.",
     "bioP2Prefix": "These days I focus on",
     "bioP2Strong": "agentic systems",
     "bioP2Tail": ": LLM-powered workflows, RAG pipelines, AI Agents that orchestrate tools and humans, and the spec-driven engineering process that keeps them safe in production.",
@@ -219,7 +219,7 @@
         "period": "Sep 2021 — Feb 2023",
         "duration": "1y 6m",
         "location": "Zurich, Switzerland · Remote",
-        "h1": "Built TypeScript SDK for Web3 escrow payments — 60% faster onboarding",
+        "h1": "Built TypeScript SDK for Web3 escrow payments, 60% faster onboarding",
         "h2": "Created real-time blockchain indexer processing thousands of Ethereum txs",
         "h3": "Architected pipeline: Smart Contract → Indexer → PostgreSQL → GraphQL → FE"
       },
@@ -251,12 +251,12 @@
   },
   "contact": {
     "metaTitle": "Contact",
-    "metaDescription": "Get in touch — projects, agentic systems, or just say hi.",
+    "metaDescription": "Get in touch: projects, agentic systems, or just say hi.",
     "kicker": "━ contact · channel open",
     "title": "Let's",
     "titleAccent": "build",
     "titleTail": "something.",
-    "subtitle": "Project, podcast, or just a curious question — I read every message. The best path is email; the fastest one is X.",
+    "subtitle": "Project, podcast, or just a curious question. I read every message. The best path is email; the fastest one is X.",
     "inboxStatus": "inbox · open · usually answers within 24h",
     "channelsKicker": "━ channels",
     "channelsTitle": "Pick your medium.",
@@ -269,7 +269,7 @@
       "linkedin": {
         "label": "LinkedIn",
         "handle": "in/tgmarinho",
-        "note": "Professional network — DMs are open."
+        "note": "Professional network. DMs are open."
       },
       "twitter": {
         "label": "X / Twitter",
@@ -294,18 +294,18 @@
       },
       "chats": {
         "title": "Quick chats",
-        "text": "Curious about something I wrote? Drop a line — I read every email."
+        "text": "Curious about something I wrote? Drop a line. I read every email."
       }
     }
   },
   "community": {
     "metaTitle": "Community",
-    "metaDescription": "Join the developer community on Discord — networking, deep dives, and growth.",
+    "metaDescription": "Join the developer community on Discord: networking, deep dives, and growth.",
     "statusBadge": "community · live",
     "title": "Join the",
     "titleAccent": "signal",
     "titleTail": ".",
-    "subtitle": "A space for engineers shipping agentic software — networking, deep-dive threads, and the kind of conversation that moves your craft forward.",
+    "subtitle": "A space for engineers shipping agentic software: networking, deep-dive threads, and the kind of conversation that moves your craft forward.",
     "joinServer": "Join the server",
     "followX": "Follow on X",
     "stats": {
@@ -332,7 +332,7 @@
         "description": "Career advice, code reviews, and the tactical resources that move you to the next level."
       }
     },
-    "quote": "“Communities don't scale code — they scale taste.”",
+    "quote": "“Communities don't scale code, they scale taste.”",
     "imIn": "i'm in"
   },
   "cv": {
@@ -348,7 +348,7 @@
     "recommendations": {
       "kicker": "━ social proof · linkedin recommendations",
       "title": "What people say",
-      "subtitle": "Recommendations from teammates, managers, and collaborators — sourced from LinkedIn."
+      "subtitle": "Recommendations from teammates, managers, and collaborators, sourced from LinkedIn."
     }
   },
   "notFound": {
@@ -358,10 +358,10 @@
     "back": "Back home"
   },
   "ragLab": {
-    "metaTitle": "Lab · RAG end to end — interactive visualizations",
+    "metaTitle": "Lab · RAG end to end: interactive visualizations",
     "metaDescription": "Four Canvas animations to 'see' the RAG pipeline: full flow, cosine similarity, HNSW, and chunking strategies.",
     "eyebrow": "lab · interactive companion",
-    "title": "RAG end to end — interactive visualizations",
+    "title": "RAG end to end: interactive visualizations",
     "intro": "Four Canvas scenes to actually see the RAG pipeline: how documents become vectors, how similarity search finds the right chunks, how HNSW skips through layers, and how chunking decides everything before embedding even happens.",
     "readArticle": "Read the full article",
     "tabs": {
@@ -371,7 +371,7 @@
       "chunking": "Chunking"
     },
     "flow": {
-      "title": "Full RAG flow — ingestion (offline) + query (online)",
+      "title": "Full RAG flow: ingestion (offline) + query (online)",
       "subtitle": "Top (magenta) is the offline pipeline that prepares Qdrant. Bottom (cyan) is the online pipeline that runs on every question. Qdrant in the middle is shared.",
       "offline": "Offline · ingestion (once)",
       "online": "Online · query (every question)",
@@ -383,7 +383,7 @@
       "autoplay": "Autoplay",
       "speed": "Speed",
       "points": "points",
-      "answer": "Yes, take an umbrella — 65% at your time.",
+      "answer": "Yes, take an umbrella. 65% at your time.",
       "nodes": {
         "docs": "Docs",
         "docling": "Docling",
@@ -415,7 +415,7 @@
     },
     "cosine": {
       "title": "Vector space (simplified 2D)",
-      "subtitle": "Real embeddings have 384+ dimensions — the principle is the same. cos(θ) = (A · B) / (|A| · |B|)",
+      "subtitle": "Real embeddings have 384+ dimensions, but the principle is the same. cos(θ) = (A · B) / (|A| · |B|)",
       "rotate": "Rotate B",
       "length": "Length of |B|",
       "nextPreset": "Next preset",
@@ -445,8 +445,8 @@
       }
     },
     "hnsw": {
-      "title": "HNSW — hierarchical layered search",
-      "subtitle": "Top layer is sparse (long jumps). Base is dense (contains all). Greedy descent — walks down to the nearest neighbor of the query.",
+      "title": "HNSW: hierarchical layered search",
+      "subtitle": "Top layer is sparse (long jumps). Base is dense (contains all). Greedy descent walks down to the nearest neighbor of the query.",
       "search": "Search random query",
       "regenerate": "Regenerate dataset",
       "currentLayer": "Layer:",
@@ -457,7 +457,7 @@
       "nearest": "nearest neighbor"
     },
     "chunking": {
-      "title": "Chunking — how the document becomes pieces for the vector DB",
+      "title": "Chunking: how the document becomes pieces for the vector DB",
       "subtitle": "Move the slider and switch the strategy. Red borders mark cuts that destroy semantics (mid-word or isolated heading).",
       "strategy": "Strategy",
       "fixed": "Fixed-size",

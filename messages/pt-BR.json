@@ -10,7 +10,7 @@
     "cv": "Currículo"
   },
   "footer": {
-    "tagline": "Projetando a camada agêntica do software — engenharia de IA pragmática para produtos que vão pra produção.",
+    "tagline": "Projetando a camada agêntica do software: engenharia de IA pragmática para produtos que vão pra produção.",
     "systemOperational": "sistema · operacional",
     "exploreTitle": "Explorar",
     "networkTitle": "Network",
@@ -35,7 +35,7 @@
       "headlineAccent": "camada agêntica",
       "headlineLine3": "do software.",
       "subtitle": "Engenharia de produto, agentes de IA e a arte de entregar software que sobrevive em produção.",
-      "intro": "Eu sou {firstName} — um Engenheiro de Produto de IA projetando agentes autônomos, pipelines de RAG e produtos spec-driven que vão pra produção rápido e aprendem mais rápido ainda.",
+      "intro": "Eu sou {firstName}, um Engenheiro de Produto de IA projetando agentes autônomos, pipelines de RAG e produtos spec-driven que vão pra produção rápido e aprendem mais rápido ainda.",
       "ctaPrimary": "Ler o blog",
       "ctaSecondary": "Sobre mim",
       "stats": {
@@ -88,11 +88,11 @@
   },
   "projects": {
     "metaTitle": "Projetos",
-    "metaDescription": "Uma seleção de produtos, bibliotecas e trabalho open-source — entregues, indexados, em produção.",
+    "metaDescription": "Uma seleção de produtos, bibliotecas e trabalho open-source: entregues, indexados, em produção.",
     "kicker": "━ projetos · {count, plural, one {# entrada} other {# entradas}}",
     "title": "Coisas que eu",
     "titleAccent": "entreguei.",
-    "subtitle": "Uma seleção de produtos, bibliotecas e trabalho open-source — alguns em produção, outros ainda me ensinando lições.",
+    "subtitle": "Uma seleção de produtos, bibliotecas e trabalho open-source. Alguns em produção, outros ainda me ensinando lições.",
     "status": {
       "shipped": "entregue · prod",
       "openSource": "open · source",
@@ -170,9 +170,9 @@
   },
   "about": {
     "metaTitle": "Sobre",
-    "metaDescription": "Sobre {name} — {role}",
+    "metaDescription": "Sobre {name}, {role}",
     "profileKicker": "━ perfil · v.{year}",
-    "intro": "{role} de {location}. {years}+ anos construindo sistemas web, mobile, IA e Web3 escaláveis — full-stack até produção.",
+    "intro": "{role} de {location}. {years}+ anos construindo sistemas web, mobile, IA e Web3 escaláveis, full-stack até produção.",
     "fullCv": "currículo completo",
     "letsTalk": "vamos conversar",
     "bioKicker": "━ bio",
@@ -184,7 +184,7 @@
     "bioP1Years": "10+ anos",
     "bioP1Tail": "construindo sistemas em produção nas áreas de saúde, fintech, Web3 e plataformas de eventos. Meu norte é entregar software que",
     "bioP1Em": "faz o trabalho",
-    "bioP1End": "— não software que demo bem.",
+    "bioP1End": ", não software que demo bem.",
     "bioP2Prefix": "Hoje meu foco é em",
     "bioP2Strong": "sistemas agênticos",
     "bioP2Tail": ": fluxos com LLMs, pipelines RAG, agentes de IA que orquestram ferramentas e humanos, e o processo de engenharia spec-driven que os mantém seguros em produção.",
@@ -219,7 +219,7 @@
         "period": "Set 2021 — Fev 2023",
         "duration": "1a 6m",
         "location": "Zurique, Suíça · Remoto",
-        "h1": "Construí um SDK em TypeScript para pagamentos em escrow Web3 — onboarding 60% mais rápido",
+        "h1": "Construí um SDK em TypeScript para pagamentos em escrow Web3, onboarding 60% mais rápido",
         "h2": "Criei um indexer de blockchain em tempo real processando milhares de txs Ethereum",
         "h3": "Arquitetei o pipeline: Smart Contract → Indexer → PostgreSQL → GraphQL → FE"
       },
@@ -251,12 +251,12 @@
   },
   "contact": {
     "metaTitle": "Contato",
-    "metaDescription": "Entre em contato — projetos, sistemas agênticos, ou só pra dar um oi.",
+    "metaDescription": "Entre em contato: projetos, sistemas agênticos, ou só pra dar um oi.",
     "kicker": "━ contato · canal aberto",
     "title": "Vamos",
     "titleAccent": "construir",
     "titleTail": "algo.",
-    "subtitle": "Projeto, podcast, ou só uma pergunta curiosa — eu leio toda mensagem. O melhor caminho é email; o mais rápido é o X.",
+    "subtitle": "Projeto, podcast, ou só uma pergunta curiosa. Eu leio toda mensagem. O melhor caminho é email; o mais rápido é o X.",
     "inboxStatus": "inbox · aberto · normalmente respondo em 24h",
     "channelsKicker": "━ canais",
     "channelsTitle": "Escolha seu meio.",
@@ -269,7 +269,7 @@
       "linkedin": {
         "label": "LinkedIn",
         "handle": "in/tgmarinho",
-        "note": "Rede profissional — DMs abertas."
+        "note": "Rede profissional. DMs abertas."
       },
       "twitter": {
         "label": "X / Twitter",
@@ -294,18 +294,18 @@
       },
       "chats": {
         "title": "Papos rápidos",
-        "text": "Curioso sobre algo que escrevi? Manda uma linha — eu leio todo email."
+        "text": "Curioso sobre algo que escrevi? Manda uma linha. Eu leio todo email."
       }
     }
   },
   "community": {
     "metaTitle": "Comunidade",
-    "metaDescription": "Junte-se à comunidade de devs no Discord — networking, deep dives e crescimento.",
+    "metaDescription": "Junte-se à comunidade de devs no Discord: networking, deep dives e crescimento.",
     "statusBadge": "comunidade · ao vivo",
     "title": "Entre no",
     "titleAccent": "sinal",
     "titleTail": ".",
-    "subtitle": "Um espaço para engenheiros entregando software agêntico — networking, threads de deep-dive, e o tipo de conversa que move sua craft pra frente.",
+    "subtitle": "Um espaço para engenheiros entregando software agêntico: networking, threads de deep-dive, e o tipo de conversa que move sua craft pra frente.",
     "joinServer": "Entrar no servidor",
     "followX": "Seguir no X",
     "stats": {
@@ -332,7 +332,7 @@
         "description": "Conselhos de carreira, code reviews e os recursos táticos que te levam para o próximo nível."
       }
     },
-    "quote": "“Comunidades não escalam código — elas escalam gosto.”",
+    "quote": "“Comunidades não escalam código, elas escalam gosto.”",
     "imIn": "estou dentro"
   },
   "cv": {
@@ -348,7 +348,7 @@
     "recommendations": {
       "kicker": "━ prova social · recomendações do linkedin",
       "title": "O que dizem sobre mim",
-      "subtitle": "Recomendações de colegas, líderes e parceiros de equipe — vindas do LinkedIn."
+      "subtitle": "Recomendações de colegas, líderes e parceiros de equipe, vindas do LinkedIn."
     }
   },
   "notFound": {
@@ -358,10 +358,10 @@
     "back": "Voltar para o início"
   },
   "ragLab": {
-    "metaTitle": "Lab · RAG do começo ao fim — visualizações interativas",
+    "metaTitle": "Lab · RAG do começo ao fim: visualizações interativas",
     "metaDescription": "Quatro animações em Canvas para 'ver' o pipeline do RAG: fluxo completo, similaridade por cosseno, HNSW e estratégias de chunking.",
     "eyebrow": "lab · interactive companion",
-    "title": "RAG do começo ao fim — visualizações interativas",
+    "title": "RAG do começo ao fim: visualizações interativas",
     "intro": "Quatro cenas em Canvas para você 'ver' o pipeline do RAG: como dados viram vetores, como a busca por similaridade encontra os chunks certos, como o HNSW pula camadas e como o chunking decide tudo antes mesmo do embedding.",
     "readArticle": "Ler o artigo completo",
     "tabs": {
@@ -371,7 +371,7 @@
       "chunking": "Chunking"
     },
     "flow": {
-      "title": "Fluxo completo do RAG — ingestão (offline) + consulta (online)",
+      "title": "Fluxo completo do RAG: ingestão (offline) + consulta (online)",
       "subtitle": "Em cima (magenta) o pipeline offline que prepara o Qdrant. Embaixo (ciano) o pipeline online que roda a cada pergunta. O Qdrant no meio é compartilhado.",
       "offline": "Offline · ingestão (uma vez)",
       "online": "Online · consulta (a cada pergunta)",
@@ -383,7 +383,7 @@
       "autoplay": "Autoplay",
       "speed": "Velocidade",
       "points": "points",
-      "answer": "Sim, leva guarda-chuva — 65% na sua hora.",
+      "answer": "Sim, leva guarda-chuva. 65% na sua hora.",
       "nodes": {
         "docs": "Docs",
         "docling": "Docling",
@@ -415,7 +415,7 @@
     },
     "cosine": {
       "title": "Espaço vetorial (2D simplificado)",
-      "subtitle": "Em embeddings reais são 384+ dimensões — o princípio é o mesmo. cos(θ) = (A · B) / (|A| · |B|)",
+      "subtitle": "Em embeddings reais são 384+ dimensões, mas o princípio é o mesmo. cos(θ) = (A · B) / (|A| · |B|)",
       "rotate": "Rotacionar B",
       "length": "Comprimento de |B|",
       "nextPreset": "Próximo preset",
@@ -445,8 +445,8 @@
       }
     },
     "hnsw": {
-      "title": "HNSW — busca em camadas hierárquicas",
-      "subtitle": "A camada do topo é esparsa (saltos longos). A base é densa (contém todos). Greedy descent — desce até o vizinho mais próximo da query.",
+      "title": "HNSW: busca em camadas hierárquicas",
+      "subtitle": "A camada do topo é esparsa (saltos longos). A base é densa (contém todos). Greedy descent desce até o vizinho mais próximo da query.",
       "search": "Buscar query aleatória",
       "regenerate": "Regenerar dataset",
       "currentLayer": "Camada:",
@@ -457,7 +457,7 @@
       "nearest": "nearest neighbor"
     },
     "chunking": {
-      "title": "Chunking — como o documento vira pedaços pro vector DB",
+      "title": "Chunking: como o documento vira pedaços pro vector DB",
       "subtitle": "Mova o slider e troque a estratégia. Bordas vermelhas indicam cortes que quebram a semântica, como palavra partida ou título isolado.",
       "strategy": "Estratégia",
       "fixed": "Tamanho fixo",
