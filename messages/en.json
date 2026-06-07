@@ -162,6 +162,9 @@
       },
       "members": {
         "description": "A CRUD app to manage members and people, with a dashboard, backed by a GraphQL API on Hasura. Built with Next.js, Apollo, and Chakra UI."
+      },
+      "legendarios": {
+        "description": "Website for a nonprofit community movement, built as volunteer work. It centralizes event info, registration links, photo galleries, and prep guides, improving communication between participants and leaders. Next.js, Tailwind, and Vercel."
       }
     }
   },
