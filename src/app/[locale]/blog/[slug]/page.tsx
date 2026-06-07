@@ -36,15 +36,11 @@ function getReadingTime(post: Post) {
 }
 
 function getFormattedDate(date: string, locale: Locale) {
-  return formatIsoDateForDisplay(
-    date,
-    locale === "pt-BR" ? "pt-BR" : "en-US",
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }
-  );
+  return formatIsoDateForDisplay(date, locale === "pt-BR" ? "pt-BR" : "en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function getRelatedPosts(post: Post) {
@@ -56,7 +52,7 @@ function getRelatedPosts(post: Post) {
         c.published &&
         c.slug !== post.slug &&
         getPostLanguage(c) === postLocale &&
-        c.categories?.some((cat) => post.categories.includes(cat))
+        c.categories?.some((cat) => post.categories.includes(cat)),
     )
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 3);
@@ -170,7 +166,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const commentHref =
     post.tweetUrl ??
     `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-      post.title
+      post.title,
     )}&url=${encodeURIComponent(postUrl)}`;
 
   const jsonLd = {
@@ -198,10 +194,7 @@ export default async function PostPage({ params }: PostPageProps) {
   };
 
   return (
-    <article
-      lang={postLocale}
-      className="relative mx-auto px-5 py-14 md:py-20"
-    >
+    <article lang={postLocale} className="relative mx-auto px-5 py-14 md:py-20">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -344,7 +337,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <div className="mx-auto mt-16 max-w-[680px]">
         <div className="mesh-divider" />
         <p className="mt-10 font-[family-name:var(--font-fraunces)] text-[15px] italic leading-relaxed text-muted-foreground">
-          —{" "}
+          — {t("aiDisclaimer")}
           <Link
             href="/about"
             className="text-foreground underline decoration-cyan-300/30 underline-offset-4 transition-colors hover:decoration-cyan-300"
@@ -354,9 +347,6 @@ export default async function PostPage({ params }: PostPageProps) {
         </p>
         <p className="mt-1.5 font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground/80">
           {getFormattedDate(post.date, postLocale)} · {siteConfig.location}
-        </p>
-        <p className="mt-4 font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground/60">
-          {t("aiDisclaimer")}
         </p>
       </div>
 
