@@ -100,12 +100,53 @@
     },
     "source": "código",
     "live": "ao vivo",
+    "groups": {
+      "product": "Produtos",
+      "tool": "Ferramentas & experimentos",
+      "oss": "Open source"
+    },
     "items": {
+      "pi-tg": {
+        "description": "Toolkit open-source para construir agentes de IA de código, mais um assistente funcional (pi) construído sobre ele. Uma API única para OpenAI, Anthropic e Google, um runtime de agente com streaming, ferramentas e estado, experiência de terminal e UI de chat reaproveitável para terminal e web. Monorepo TypeScript."
+      },
+      "canetaco": {
+        "description": "SaaS brasileiro de assinatura eletrônica com validade jurídica e entrega nativa por WhatsApp desde o dia 1. Construído em Next.js 16, Supabase, Drizzle e Inngest, com WhatsApp Cloud API, e-mail via AWS SES, cobrança no Stripe e carimbo do tempo apoiado na legislação brasileira (MP 2.200-2, Lei 14.063). Em desenvolvimento ativo."
+      },
+      "agenda-editor": {
+        "description": "Fluxo completo para criar e encomendar capas de agenda personalizadas. O cliente escolhe um template, personaliza com logo, nome, fontes e cores num editor Fabric.js, configura o miolo da agenda, visualiza em um flipbook 3D e finaliza com Pix via Asaas. Inclui acompanhamento de pedidos e área administrativa. Em desenvolvimento ativo."
+      },
+      "ai-blog": {
+        "description": "O próprio site que você está lendo. Plataforma pessoal bilíngue e blog técnico construído como uma interface de IA viva: conteúdo MDX via Velite, rotas com next-intl, RSS e llms.txt gerados no build e um pipeline de diário automático. Desenhado e entregue num fluxo agentic, AI-native."
+      },
+      "calc-rentabilidade": {
+        "description": "Calculadora para comparar investimentos de renda fixa lado a lado. Informe valor e prazo e ela mostra o rendimento líquido de cada opção (Tesouro Direto, CDB, LCI/LCA, Fundo DI, Poupança) já com impostos, com detalhamento completo."
+      },
+      "investidor-calc": {
+        "description": "Calculadora financeira escolar inspirada na Calculadora do Investidor da CVM. Aritmética básica, funções financeiras (PMT, valor presente e futuro, TIR, VPL), simulação de financiamento Price e SAC, orçamento doméstico e cálculos percentuais avançados."
+      },
+      "dale-carnegie": {
+        "description": "Coach de IA no estilo Dale Carnegie. Descreva uma situação e ele devolve um diagnóstico, quais dos 53 princípios aplicar e um plano de ação. Tem ainda modo role-play, diário de aplicação e uma biblioteca de princípios pesquisável. Feito com o Vercel AI SDK."
+      },
+      "english-study": {
+        "description": "App web para estudar inglês com textos, traduções e áudio lado a lado. O conteúdo fica em coleções de markdown e mp3, e um script de build gera o catálogo que o frontend React consome. Navegação mobile com drawer de conteúdos e barra inferior fixa."
+      },
+      "fluent-five": {
+        "description": "App de aprendizado de inglês baseado no método de repetição massiva 5x5x5: ler, ouvir, escrever e falar a mesma história ou frase cinco vezes por sessão, três vezes ao dia, por cinco dias. Une histórias por nível com text-to-speech do navegador, contas no Supabase e acompanhamento de progresso, num PWA com tema claro e escuro."
+      },
+      "dynamicforms": {
+        "description": "Construtor de formulários drag-and-drop no navegador, como um Google Forms enxuto. Adicione e configure campos de nove tipos, reordene, duplique e exclua, e veja o preview de um formulário funcional com validação. Feito com React, Vite e shadcn/ui."
+      },
+      "ecoleta": {
+        "description": "Três modelos de README que criei para o blog da Rocketseat, junto com o projeto Ecoleta (um marketplace que conecta pessoas a pontos de coleta de resíduos). Um dos meus repositórios open-source mais compartilhados, usado como ponto de partida por centenas de devs."
+      },
+      "gobarber": {
+        "description": "API backend de um app de agendamento de barbearia, projeto final do bootcamp GoStack 11 da Rocketseat. Construída em torno de princípios SOLID e camadas no estilo DDD, com autenticação JWT, agendamentos, prestadores, injeção de dependências (tsyringe) e testes."
+      },
       "print3d": {
         "description": "Sistema de gestão interno para um estúdio de impressão 3D sob demanda. Cadastro de clientes, controle de estoque de filamento por local com alertas de baixa quantidade, fila de produção com arrastar e soltar e acompanhamento de status, status de pagamento e um log de auditoria completo. Sincronização em tempo real entre dispositivos via Supabase, com interface mobile-first feita para o chão de fábrica."
       },
       "itop": {
-        "description": "SaaS multi-tenant em produção para gestão de grandes eventos dos Legendários — inscrições, pagamentos (PIX/cartão com reconciliação por webhook), check-in via QR Code, geração de contratos com assinatura digital biométrica, plano de embarque e dashboards em tempo real. Processa dinheiro real, eventos reais e centenas de participantes em produção. Antecessor do inscricoestop.com.br antes do pivot."
+        "description": "SaaS multi-tenant em produção para gestão de grandes eventos dos Legendários: inscrições, pagamentos (PIX/cartão com reconciliação por webhook), check-in via QR Code, geração de contratos com assinatura digital biométrica, plano de embarque e dashboards em tempo real. Processa dinheiro real, eventos reais e centenas de participantes em produção. Antecessor do inscricoestop.com.br antes do pivot."
       },
       "unicrow": {
         "description": "Plataforma Web3 de escrow na Ethereum. Contribuí no SDK, indexador blockchain e integrações com smart contracts. SDK em TypeScript pronto para produção que transformou semanas de onboarding em um setup no mesmo dia."
@@ -114,10 +155,13 @@
         "description": "Organizador de meetups full-stack (Backend + Web + Mobile). Desafio final do Bootcamp da Rocketseat. React, React Native, Node, Redux."
       },
       "be-the-hero": {
-        "description": "App full-stack conectando ONGs a doadores — construído durante a OmniStack week da Rocketseat. Ajuda pequenas organizações a captar recursos para suas causas."
+        "description": "App full-stack conectando ONGs a doadores, construído durante a OmniStack week da Rocketseat. Ajuda pequenas organizações a captar recursos para suas causas."
+      },
+      "bmi-calc": {
+        "description": "Calculadora de IMC para Android, feita em React Native e publicada na Google Play. App pequeno multi-tela com estilização caprichada, internacionalização (pt-BR e en) e UI limpa inspirada em um design do Dribbble."
       },
       "members": {
-        "description": "Toolkit open-source para gestão de membros e comunidades — uma stack enxuta e opinativa para iniciar produtos comunitários."
+        "description": "App CRUD para gestão de membros e pessoas, com dashboard, apoiado por uma API GraphQL no Hasura. Feito com Next.js, Apollo e Chakra UI."
       }
     }
   },

@@ -1,50 +1,33 @@
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Star } from "lucide-react";
 import { FaGithub as Github } from "react-icons/fa6";
 import { GlowCard } from "@/components/fx/glow-card";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import type { Locale } from "@/i18n/routing";
 
 type ProjectStatus = "shipped" | "open-source" | "archived";
+type ProjectGroup = "product" | "tool" | "oss";
 
 type Project = {
   key: string;
   title: string;
   status: ProjectStatus;
+  group: ProjectGroup;
   year: string;
   tags: string[];
   github?: string;
   live?: string;
   highlight?: boolean;
+  stars?: number;
 };
 
 const projects: Project[] = [
   {
-    key: "print3d",
-    title: "3D Print Management System",
-    status: "open-source",
-    year: "2026",
-    highlight: true,
-    tags: [
-      "Next.js 16",
-      "React 19",
-      "TypeScript",
-      "Supabase",
-      "Tailwind v4",
-      "shadcn/ui",
-      "dnd-kit",
-      "PostgreSQL",
-      "RLS",
-      "Realtime",
-      "Bun",
-    ],
-    github: "https://github.com/tgmarinho/3d-print-management-system",
-  },
-  {
     key: "itop",
     title: "iTOP — Inscrições TOP",
     status: "shipped",
+    group: "product",
     year: "2024",
     highlight: true,
     tags: [
@@ -66,6 +49,7 @@ const projects: Project[] = [
     key: "unicrow",
     title: "Unicrow",
     status: "shipped",
+    group: "product",
     year: "2023",
     highlight: true,
     tags: ["TypeScript", "Ethereum", "Smart Contracts", "GraphQL", "Node.js"],
@@ -73,30 +57,226 @@ const projects: Project[] = [
     live: "https://unicrow.io",
   },
   {
-    key: "meetapp",
-    title: "Meetapp",
+    key: "pi-tg",
+    title: "Pi — AI Agent Toolkit",
     status: "open-source",
-    year: "2020",
-    tags: ["React", "React Native", "Node.js", "Redux"],
-    github: "https://github.com/tgmarinho/meetapp",
+    group: "product",
+    year: "2026",
+    highlight: true,
+    tags: [
+      "TypeScript",
+      "Monorepo",
+      "AI Agents",
+      "OpenAI",
+      "Anthropic",
+      "Google",
+      "CLI",
+      "React",
+    ],
+    github: "https://github.com/tgmarinho/pi-tg",
   },
   {
-    key: "be-the-hero",
-    title: "Be the Hero",
+    key: "canetaco",
+    title: "Canetaço — e-signature SaaS",
     status: "open-source",
+    group: "product",
+    year: "2026",
+    highlight: true,
+    tags: [
+      "Next.js 16",
+      "TypeScript",
+      "Supabase",
+      "Drizzle",
+      "Inngest",
+      "WhatsApp API",
+      "AWS SES",
+      "Stripe",
+      "Sentry",
+    ],
+    github: "https://github.com/tgmarinho/canetaco",
+  },
+  {
+    key: "print3d",
+    title: "3D Print Management System",
+    status: "open-source",
+    group: "product",
+    year: "2026",
+    highlight: true,
+    tags: [
+      "Next.js 16",
+      "React 19",
+      "TypeScript",
+      "Supabase",
+      "Tailwind v4",
+      "shadcn/ui",
+      "dnd-kit",
+      "PostgreSQL",
+      "RLS",
+      "Realtime",
+      "Bun",
+    ],
+    github: "https://github.com/tgmarinho/3d-print-management-system",
+  },
+  {
+    key: "agenda-editor",
+    title: "Agenda Editor — custom planner covers",
+    status: "open-source",
+    group: "product",
+    year: "2026",
+    tags: [
+      "Next.js",
+      "React 19",
+      "TypeScript",
+      "tRPC",
+      "Prisma",
+      "PostgreSQL",
+      "Fabric.js",
+      "Asaas (Pix)",
+      "Tailwind",
+    ],
+    github: "https://github.com/tgmarinho/agenda-editor",
+  },
+  {
+    key: "ai-blog",
+    title: "tgmarinhopro.com — this site",
+    status: "shipped",
+    group: "product",
+    year: "2026",
+    tags: [
+      "Next.js 16",
+      "React 19",
+      "TypeScript",
+      "Velite",
+      "next-intl",
+      "Tailwind v4",
+    ],
+    github: "https://github.com/tgmarinho/tgmarinho-ai-blog",
+    live: "https://tgmarinhopro.com",
+  },
+  {
+    key: "dale-carnegie",
+    title: "Dale Carnegie AI Trainer",
+    status: "open-source",
+    group: "tool",
+    year: "2026",
+    tags: ["Next.js 16", "TypeScript", "Vercel AI SDK", "Tailwind v4", "shadcn/ui"],
+    github: "https://github.com/tgmarinho/dale-carnegie-principles",
+    live: "https://dale-carnegie-principles.vercel.app",
+  },
+  {
+    key: "fluent-five",
+    title: "Fluent5 — English 5x5x5",
+    status: "open-source",
+    group: "tool",
+    year: "2026",
+    tags: ["Next.js 16", "React 19", "TypeScript", "Tailwind v4", "Supabase", "PWA"],
+    github: "https://github.com/tgmarinho/fluent-five",
+  },
+  {
+    key: "english-study",
+    title: "English Study",
+    status: "open-source",
+    group: "tool",
+    year: "2026",
+    tags: ["React", "TypeScript", "Vite", "Bun"],
+    github: "https://github.com/tgmarinho/english-text-audio-learn",
+    live: "https://english-master-omega.vercel.app",
+  },
+  {
+    key: "calc-rentabilidade",
+    title: "Fixed Income Calculator",
+    status: "open-source",
+    group: "tool",
+    year: "2025",
+    tags: ["Next.js 15", "TypeScript", "Tailwind", "shadcn/ui", "React Query", "Zod"],
+    github: "https://github.com/tgmarinho/calc-rentabilidade",
+    live: "https://tgmarinho.github.io/calc-rentabilidade/",
+  },
+  {
+    key: "investidor-calc",
+    title: "Investor Calculator",
+    status: "open-source",
+    group: "tool",
+    year: "2025",
+    tags: ["Next.js 15", "TypeScript", "Tailwind", "shadcn/ui"],
+    github: "https://github.com/tgmarinho/investidor-calc",
+    live: "https://tgmarinho.github.io/investidor-calc/",
+  },
+  {
+    key: "dynamicforms",
+    title: "DynamicForms React",
+    status: "open-source",
+    group: "tool",
+    year: "2025",
+    tags: ["React", "TypeScript", "Vite", "shadcn/ui", "react-hook-form", "Zod"],
+    github: "https://github.com/tgmarinho/dynamicforms-react",
+  },
+  {
+    key: "ecoleta",
+    title: "README-ecoleta",
+    status: "open-source",
+    group: "oss",
     year: "2020",
-    tags: ["React", "React Native", "Node.js"],
-    github: "https://github.com/tgmarinho/be-the-hero",
+    highlight: true,
+    stars: 223,
+    tags: ["React", "Node.js", "React Native", "TypeScript", "README"],
+    github: "https://github.com/tgmarinho/README-ecoleta",
+  },
+  {
+    key: "gobarber",
+    title: "GoBarber API",
+    status: "open-source",
+    group: "oss",
+    year: "2021",
+    stars: 44,
+    tags: ["Node.js", "TypeScript", "Express", "TypeORM", "PostgreSQL", "Redis", "Jest", "SOLID"],
+    github: "https://github.com/tgmarinho/gobarber-api-gostack11",
   },
   {
     key: "members",
     title: "Members",
     status: "open-source",
+    group: "oss",
     year: "2021",
-    tags: ["TypeScript", "React", "Open Source"],
+    stars: 39,
+    tags: ["Next.js", "React", "Apollo", "GraphQL", "Hasura", "Chakra UI"],
     github: "https://github.com/tgmarinho/members",
+    live: "https://members-app.vercel.app/",
+  },
+  {
+    key: "meetapp",
+    title: "Meetapp",
+    status: "open-source",
+    group: "oss",
+    year: "2020",
+    stars: 25,
+    tags: ["React", "React Native", "Node.js", "Redux"],
+    github: "https://github.com/tgmarinho/meetapp",
+  },
+  {
+    key: "bmi-calc",
+    title: "BMI Calculator (React Native)",
+    status: "open-source",
+    group: "oss",
+    year: "2019",
+    stars: 17,
+    tags: ["React Native", "Styled Components", "React Navigation", "i18n", "Hooks"],
+    github: "https://github.com/tgmarinho/BmiCalculatorRN",
+    live: "https://play.google.com/store/apps/details?id=com.tgmarinho.imc",
+  },
+  {
+    key: "be-the-hero",
+    title: "Be the Hero",
+    status: "open-source",
+    group: "oss",
+    year: "2020",
+    stars: 14,
+    tags: ["React", "React Native", "Node.js"],
+    github: "https://github.com/tgmarinho/be-the-hero",
   },
 ];
+
+const groupOrder: ProjectGroup[] = ["product", "tool", "oss"];
 
 export async function generateMetadata({
   params,
@@ -160,20 +340,31 @@ export default async function ProjectsPage() {
           </p>
         </header>
 
-        {/* ── Grid ── */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:[grid-auto-flow:dense]">
-          {projects.map((p) => (
-            <ProjectCard
-              key={p.key}
-              project={p}
-              description={t(`items.${p.key}.description`)}
-              statusLabel={statusLabel[p.status]}
-              statusColor={statusColor[p.status]}
-              sourceLabel={t("source")}
-              liveLabel={t("live")}
-            />
-          ))}
-        </div>
+        {/* ── Groups ── */}
+        {groupOrder.map((group) => {
+          const items = projects.filter((p) => p.group === group);
+          if (items.length === 0) return null;
+          return (
+            <section key={group} className="mb-16 last:mb-0">
+              <h2 className="mb-6 font-mono text-[11px] uppercase tracking-[0.22em] text-cyan-300/70">
+                {t(`groups.${group}`)}
+              </h2>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:[grid-auto-flow:dense]">
+                {items.map((p) => (
+                  <ProjectCard
+                    key={p.key}
+                    project={p}
+                    description={t(`items.${p.key}.description`)}
+                    statusLabel={statusLabel[p.status]}
+                    statusColor={statusColor[p.status]}
+                    sourceLabel={t("source")}
+                    liveLabel={t("live")}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </div>
   );
@@ -213,6 +404,15 @@ function ProjectCard({
           {statusLabel}
           <span className="text-white/15">·</span>
           <span className="text-foreground/85">{project.year}</span>
+          {project.stars ? (
+            <>
+              <span className="text-white/15">·</span>
+              <span className="inline-flex items-center gap-0.5 text-foreground/85">
+                <Star className="h-3 w-3 fill-current text-amber-300/90" />
+                {project.stars}
+              </span>
+            </>
+          ) : null}
         </span>
         <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-cyan-300" />
       </div>
