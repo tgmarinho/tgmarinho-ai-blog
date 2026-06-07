@@ -65,8 +65,10 @@ The visual direction is **Minimalismo Futurista + IA Agentic**:
 ```txt
 tgmarinho-ai-website/
 ├── content/
-│   └── posts/                    # MDX sources (bilingual: language + translationKey)
+│   ├── posts/                    # MDX sources (bilingual: language + translationKey)
+│   └── journal/                  # the /daily build-in-public log (pt-BR/ + en/, one YYYY-MM-DD.md each)
 ├── docs/
+│   ├── daily-journal-setup.md    # how the /daily pipeline works (sources, privacy, cron)
 │   └── redesign-2026-agentic-futurist.md
 ├── messages/                     # next-intl: pt-BR.json, en.json
 ├── public/
@@ -75,7 +77,10 @@ tgmarinho-ai-website/
 ├── scripts/
 │   ├── generate-llms-txt.mjs     # runs in `npm run build`
 │   ├── audit-broken-refs.mjs     # `npm run audit:refs`
-│   └── validate-i18n-seo.mjs     # `npm run audit:i18n-seo`
+│   ├── validate-i18n-seo.mjs     # `npm run audit:i18n-seo`
+│   ├── daily-journal.mjs         # extracts the day's coding-agent sessions + git log
+│   ├── journal-narrate.mjs       # narrates the raw log into a bilingual /daily entry
+│   └── journal-cron.sh           # local orchestrator (runs the two above, opens a draft PR)
 ├── src/
 │   ├── app/
 │   │   ├── [locale]/             # bilingual routes (blog, about, projects, contact, community, cv)
@@ -169,6 +174,22 @@ Post content...
 ```
 
 Velite validates frontmatter and outputs typed content consumed from `#site/content`.
+
+## 📓 Daily Journal (`/daily`)
+
+A bilingual build-in-public log at `/daily` (pt-BR) and `/en/daily` (en). Each entry lives in
+`content/journal/{pt-BR,en}/YYYY-MM-DD.md` (Velite collection `JournalEntry`).
+
+Entries are generated from the day's coding-agent work, not written from memory. The pipeline
+sweeps sessions across every harness on the machine (Claude Code / Anthropic, Codex / OpenAI,
+Pi, Cursor, Conductor workspaces, hermes infra, and others), reads agent memories for context,
+adds the git log, groups everything by real project, and narrates a mirrored pt-BR + en entry.
+
+It runs locally because the session logs only exist on the author's machine. Everything is
+privacy-filtered before publishing: no secrets, env vars, credentials, client data, or personal
+data ever reaches a `content/journal/` file. Details and the local cron setup are in
+[`docs/daily-journal-setup.md`](docs/daily-journal-setup.md). Agents use the project skill
+`daily-journal` (`.cursor/skills/daily-journal/`).
 
 ## 🌐 Deploy
 

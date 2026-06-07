@@ -41,6 +41,7 @@ bun audit:i18n-seo        # validate hreflang, translationKey pairs, canonical
 
 ```
 content/posts/         # MDX — source of truth for the blog (bilingual)
+content/journal/       # the /daily build-in-public log (bilingual: pt-BR/ + en/, one YYYY-MM-DD.md each)
 messages/              # next-intl UI strings: pt-BR.json, en.json
 public/llms.txt        # GENERATED at build (SEO for LLMs)
 public/llms-full.txt   # GENERATED at build (full corpus)
@@ -148,6 +149,7 @@ Rules:
 When creating new posts, agents must use the project skill in `.cursor/skills/`:
 
 - `blog-post-bilingual` → mirrored post pair (`pt-BR` + `en`) (default and mandatory)
+- `daily-journal` → the `/daily` build-in-public log (see section 13)
 
 These skills are agent-agnostic and intended for Cursor, Claude Code, and Pi.dev.
 
@@ -249,6 +251,48 @@ Pi is a **deliberately minimal** harness — only `read`, `write`, `edit`, `bash
 2. Read `docs/redesign-2026-agentic-futurist.md` (visual decisions).
 3. Look for a similar pattern already in the repo (`rg` / `Grep` over `src/`) before inventing one.
 4. Ask the human instead of assuming — especially for stack changes, post schema changes, or visual identity changes.
+
+---
+
+## 13. Daily work journal (`/daily`)
+
+The `/daily` route is a public, bilingual build-in-public log under `content/journal/{pt-BR,en}/YYYY-MM-DD.md`
+(Velite collection `JournalEntry` in `velite.config.ts`). It is generated from the day's
+coding-agent activity, not hand-written from memory.
+
+Use the project skill **`daily-journal`** (`.cursor/skills/daily-journal/`) for any request like
+"criar meu daily", "rodar o /daily", or "backfill the journal". It encodes the full workflow;
+the points below are the essentials.
+
+**Sources — sweep every harness**, grouped by session `cwd`:
+
+- Claude / Anthropic → `~/.claude/projects/<encoded>/*.jsonl`
+- Codex / OpenAI → `~/.codex/sessions/<YYYY>/<MM>/<DD>/rollout-*.jsonl`
+- Pi → `~/.pi/agent/sessions/<encoded>--/*.jsonl`
+- Cursor → `~/.cursor-exp/projects/<encoded>/<uuid>.jsonl` (and `~/.cursor/projects`)
+- Conductor → runs Claude Code, so it appears under `~/.claude/projects` with a
+  `~/conductor/workspaces/<PROJECT>/<city>` cwd
+- hermes → `~/.hermes/sessions/` **only** (infra/dev work; the rest of `~/.hermes` is personal)
+- openclaw / others → if present, sweep the same way
+
+Plus `git log --author=<me>` per touched repo. The extractor `scripts/daily-journal.mjs` covers
+Claude+Pi+Codex; Cursor and hermes are swept manually.
+
+**Also read agent memories as signal** (never to quote): `~/.claude/projects/<proj>/memory/*.md`,
+`~/.codex/memories/`, `~/.gemini/GEMINI.md`. They explain what each project is and what was
+decided. hermes memories (`USER.md`, `SOUL.md`, life-os, diet) are personal and OFF-LIMITS.
+
+**Rules:**
+
+- Collapse Conductor city codenames into the real project; merge all cities into one `### project` section.
+- Mirror pt-BR + en (same facts, not literal translation). Distill busy days to the 3-6 top themes.
+- Skip near-empty days. Apply the prose writing style (no em/en dashes; plain English in `en`).
+- **Privacy is non-negotiable:** never publish secrets, env vars, credentials, private URLs,
+  client/customer data, or personal data (people, health, finances, location, job-application
+  /company/recruiter specifics, spiritual reflections, or anything from user-profile memories).
+  If a session or memory leaked something sensitive, filter it silently. See the security
+  subsection in `CLAUDE.md`.
+- Run `bun velite`. Commit only `content/journal/**` and open a PR when asked.
 
 ---
 
