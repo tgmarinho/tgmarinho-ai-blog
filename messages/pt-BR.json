@@ -100,7 +100,33 @@
     },
     "source": "código",
     "live": "ao vivo",
+    "groups": {
+      "product": "Produtos",
+      "tool": "Ferramentas & experimentos",
+      "oss": "Open source"
+    },
     "items": {
+      "pi-tg": {
+        "description": "Toolkit open-source para construir agentes de IA de código, mais um assistente funcional (pi) construído sobre ele. Uma API única para OpenAI, Anthropic e Google, um runtime de agente com streaming, ferramentas e estado, experiência de terminal e UI de chat reaproveitável para terminal e web. Monorepo TypeScript."
+      },
+      "ai-blog": {
+        "description": "O próprio site que você está lendo. Plataforma pessoal bilíngue e blog técnico construído como uma interface de IA viva: conteúdo MDX via Velite, rotas com next-intl, RSS e llms.txt gerados no build e um pipeline de diário automático. Desenhado e entregue num fluxo agentic, AI-native."
+      },
+      "calc-rentabilidade": {
+        "description": "Calculadora para comparar investimentos de renda fixa lado a lado. Informe valor e prazo e ela mostra o rendimento líquido de cada opção (Tesouro Direto, CDB, LCI/LCA, Fundo DI, Poupança) já com impostos, com detalhamento completo."
+      },
+      "investidor-calc": {
+        "description": "Calculadora financeira escolar inspirada na Calculadora do Investidor da CVM. Aritmética básica, funções financeiras (PMT, valor presente e futuro, TIR, VPL), simulação de financiamento Price e SAC, orçamento doméstico e cálculos percentuais avançados."
+      },
+      "dale-carnegie": {
+        "description": "Coach de IA no estilo Dale Carnegie. Descreva uma situação e ele devolve um diagnóstico, quais dos 53 princípios aplicar e um plano de ação. Tem ainda modo role-play, diário de aplicação e uma biblioteca de princípios pesquisável. Feito com o Vercel AI SDK."
+      },
+      "ecoleta": {
+        "description": "Três modelos de README que criei para o blog da Rocketseat, junto com o projeto Ecoleta (um marketplace que conecta pessoas a pontos de coleta de resíduos). Um dos meus repositórios open-source mais compartilhados, usado como ponto de partida por centenas de devs."
+      },
+      "gobarber": {
+        "description": "API backend de um app de agendamento de barbearia, projeto final do bootcamp GoStack 11 da Rocketseat. Construída em torno de princípios SOLID e camadas no estilo DDD, com autenticação JWT, agendamentos, prestadores, injeção de dependências (tsyringe) e testes."
+      },
       "print3d": {
         "description": "Sistema de gestão interno para um estúdio de impressão 3D sob demanda. Cadastro de clientes, controle de estoque de filamento por local com alertas de baixa quantidade, fila de produção com arrastar e soltar e acompanhamento de status, status de pagamento e um log de auditoria completo. Sincronização em tempo real entre dispositivos via Supabase, com interface mobile-first feita para o chão de fábrica."
       },
@@ -114,10 +140,10 @@
         "description": "Organizador de meetups full-stack (Backend + Web + Mobile). Desafio final do Bootcamp da Rocketseat. React, React Native, Node, Redux."
       },
       "be-the-hero": {
-        "description": "App full-stack conectando ONGs a doadores — construído durante a OmniStack week da Rocketseat. Ajuda pequenas organizações a captar recursos para suas causas."
+        "description": "App full-stack conectando ONGs a doadores, construído durante a OmniStack week da Rocketseat. Ajuda pequenas organizações a captar recursos para suas causas."
       },
       "members": {
-        "description": "Toolkit open-source para gestão de membros e comunidades — uma stack enxuta e opinativa para iniciar produtos comunitários."
+        "description": "App CRUD para gestão de membros e pessoas, com dashboard, apoiado por uma API GraphQL no Hasura. Feito com Next.js, Apollo e Chakra UI."
       }
     }
   },
