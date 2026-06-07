@@ -53,12 +53,16 @@ The logic: every agent (Codex CLI, opencode, Claude Code) hits the context limit
 
 Karpathy's wiki is an answer to that. It is not just compressing, it is **systematically managing** what stays.
 
+That is why Akita's follow-up on `ai-memory` is worth reading next. The first article explains the idea. The second one shows where the idea breaks or survives when you try to make coding agents use it every day.
+
 Akita did not stop at theory. He had recommended `agentmemory` (a mature open source project, in TypeScript, that captures every agent interaction through hooks, runs hybrid BM25 + vector + graph search, and exposes it all over MCP), hit real limits in daily use (slow BM25 reindexing on every restart, timeouts during persistence), and ended up writing his own system: `ai-memory`, a successor in **Rust**, built on Karpathy's LLM Wiki. The design is the interesting part, because it implements the idea almost literally:
 
 - **A git-versioned markdown wiki as the single source of truth.** At the end of each session, the system compiles its observations into markdown pages. It is Karpathy's LLM Wiki turned into code: a `wiki/` directory (the synthesis), a `raw/` one (the immutable log), and a `db/` one (the index).
 - **Multi-layer retrieval:** FTS5 (full-text, in SQLite) plus graph neighborhood plus vector reranking, fused with RRF (Reciprocal Rank Fusion).
 - **Native MCP and agent handoff:** you can leave Claude Code mid-task and pick up in Codex hours later, in the same directory, without losing context.
 - **It even works with no LLM:** FTS5 search and rule-based synthesis run without any embedding provider; the providers (OpenAI, Voyage, Gemini) come in only as optional reranking.
+- **Automatic capture is the key product detail:** hooks and lifecycle integrations collect session events without forcing the human or the agent to remember to save notes manually.
+- **The wiki stays inspectable:** the read-only web UI and plain markdown files make the memory auditable, not a hidden vector store you have to trust blindly.
 
 The lesson: Karpathy's architecture is elegant, but the implementation is what decides whether it survives real use. The wiki solves "what to keep"; a system like `ai-memory` solves "how to keep it so it does not degrade", and it also shows the wiki does not have to be just study notes, it can be the living memory of a coding agent.
 
@@ -66,7 +70,7 @@ The lesson: Karpathy's architecture is elegant, but the implementation is what d
 
 The barrier to entry is low by design: the wiki is just a git repo of markdown. You can start with a `CLAUDE.md` defining the conventions, a sources folder, and an `index.md`. Obsidian on one side as the viewer, the agent on the other as the programmer editing the files.
 
-I will run this first on a domain of my own (study notes and reading) and then decide whether real search on top is worth it. When I have results, I will write the follow-up.
+I will run this first on a domain of my own (study notes and reading) and then test the agent-memory version in a real coding workspace. `ai-memory` is the obvious candidate for that second test because it keeps the wiki readable while still giving agents automatic capture, MCP lookup, handoff, and cleanup. When I have results, I will write the follow-up.
 
 ---
 
