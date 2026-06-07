@@ -16,8 +16,9 @@
 
 ## 🎯 Goals/Roles
 
+- **AI-First / Automations**
 - **Agentic Software Engineer**
-- **AI-First Product Engineer / Builder**
+- **Product Engineer / Builder**
 - **Harness Engineer** (agents · specs · MCP · automations)
 - **Senior Full-Stack Engineer** (Next.js · TypeScript)
 - **AI Agent / RAG Developer**
@@ -35,7 +36,7 @@ Senior full-stack engineer and **AI-first builder** with **10+ years** shipping 
 
 I work **agentic by default**: instead of typing every line, I orchestrate coding agents (**Claude Code, Codex**) and build the **harness** around them (CLAUDE.md conventions, spec templates, MCP servers, custom skills, subagent loops), so features ship about **3x faster**, responsibly, from architecture to production. I lead with ownership and a strong focus on scalable outcomes.
 
-**Core Stack:** TypeScript, React, Next.js, Node.js, React Native, PostgreSQL, MongoDB, Firebase, GraphQL
+**Core Stack:** TypeScript, React, Next.js, Node.js, React Native, PostgreSQL, MongoDB, Firebase, GraphQL · Claude Code, Codex, OpenAI, Anthropic
 
 ---
 
@@ -45,9 +46,9 @@ I work **agentic by default**: instead of typing every line, I orchestrate codin
 **Jul 2024 - Present**  
 📍 Remote (Brazil) · Multi-tenant SaaS event-registration platform
 
-- **Situation/Task:** organizers ran registration on spreadsheets and 3 disconnected tools, leaking payments and manual hours. **Action:** built and shipped a multi-tenant SaaS end-to-end on **Next.js, TypeScript, tRPC, Prisma, MongoDB, Tailwind, shadcn/ui, Vercel, Inngest**, with a dynamic form builder, one-click WhatsApp messaging, native e-signature, and QR-code check-in. **Result:** 15K+ registrations and **R$5M+** in payments (PIX + credit card) processed in production.
-- **Situation/Task:** feature delivery took 1 to 2 weeks, capping how fast we could test product ideas. **Action:** went AI-first and built the **harness** around the agents (CLAUDE.md conventions, spec templates, MCP servers wired to real data, custom skills, subagent loops), orchestrating **Claude Code and Codex** daily instead of typing every line. **Result:** cut feature lead time **3x**, down to 2 to 3 days.
-- **Situation/Task:** organizers, staff, and attendees needed safe data access and money movement that never double-charges. **Action:** designed RBAC/ABAC, idempotent payment webhooks, async queues for messaging and signature flows, observability via Sentry, and rate-limited public endpoints. **Result:** reliable multi-tenant isolation and payments in production with real paying users.
+- Replaced spreadsheets and 3 disconnected tools by building and shipping a multi-tenant SaaS end-to-end on **Next.js, TypeScript, tRPC, Prisma, MongoDB, Tailwind, shadcn/ui, Vercel, Inngest**, with a dynamic form builder, one-click WhatsApp messaging, native e-signature, and QR-code check-in: **15K+ registrations** and **R$5M+** in payments (PIX + credit card) processed in production
+- Cut feature lead time **3x** (from 1 to 2 weeks down to 2 to 3 days) by going AI-first: built the **harness** around the agents (CLAUDE.md conventions, spec templates, MCP servers wired to real data, custom skills, subagent loops) and orchestrated **Claude Code and Codex** daily instead of typing every line
+- Designed RBAC/ABAC across organizers, staff, and attendees, idempotent payment webhooks, async queues for messaging and signature flows, observability via Sentry, and rate-limited public endpoints for reliable multi-tenant isolation and payments in production
 
 **Stack:** Next.js, TypeScript, tRPC, Prisma, MongoDB, Tailwind, shadcn/ui, Vercel, Inngest, Sentry, Asaas (PIX + credit card)
 
@@ -60,17 +61,17 @@ I work **agentic by default**: instead of typing every line, I orchestrate codin
 US software development agency. I owned engineering across multiple long-running client engagements in the US and Europe.
 
 **SwitchCare (Dallas, TX) — US healthcare staffing platform, 10,000+ active users**
-- **S/T:** a 10K-user platform paid nurses through a manual Excel payroll, slow and error-prone. **A:** replaced it with a one-click automated daily payout (Branch Payments + digital wallets auto-created at onboarding). **R:** thousands of automated transactions per day, no manual spreadsheet.
-- **S/T:** the codebase was fragmented across Node + Angular + Flutter, slowing every change. **A:** led the migration of the full stack to **TypeScript** (API + Next.js web + React Native mobile). **R:** one language end-to-end, plus real-time shifts and multi-tenant data isolation.
+- Replaced a slow, error-prone manual Excel payroll with a one-click automated daily payout (Branch Payments + digital wallets auto-created at onboarding), running thousands of automated transactions per day
+- Led the migration of a codebase fragmented across Node + Angular + Flutter to a unified **TypeScript** stack (API + Next.js web + React Native mobile), with real-time shifts and multi-tenant data isolation
 
 **Unicrow (Zurich, Switzerland) — open-source escrow protocol live on Arbitrum & Base**
-- **S/T:** the protocol needed a typed SDK and reliable on-chain data for its apps. **A:** built a 3-layer **TypeScript SDK** (unicrowio/sdk) and a production on-chain event indexer (unicrowio/indexer) feeding **PostgreSQL via Hasura with a GraphQL API**, plus the **Next.js** frontend. **R:** live protocol in production with 99.9% indexer accuracy.
+- Built a 3-layer **TypeScript SDK** (unicrowio/sdk) and a production on-chain event indexer (unicrowio/indexer) feeding **PostgreSQL via Hasura with a GraphQL API**, plus the **Next.js** frontend: live protocol in production with 99.9% indexer accuracy
 
 **OnGaia / Gaia NFT (Florida, USA) — NFT marketplace on Flow, $150M valuation post-launch**
-- **S/T:** the marketplace wanted real-time sales for digital products. **A:** built the live-streaming feature for real-time sales (Next.js, TypeScript, Cadence, Dapper Wallet, IPFS). **R:** real-time commerce shipped to production.
+- Built the live-streaming feature for real-time sales (Next.js, TypeScript, Cadence, Dapper Wallet, IPFS), shipping real-time commerce to production
 
 **WAX NFT (USA) — on-chain mint + real-time auction flows**
-- **S/T:** mint and auction flows needed consistent on-chain state and smooth UX. **A:** built complex forms with on-chain state consistency, operation-status modals, and media-rendering optimization. **R:** reliable mint and auction flows in production.
+- Built complex forms with on-chain state consistency, operation-status modals, and media-rendering optimization for reliable mint and auction flows in production
 
 Async-native remote with US teams for 5 years; comfortable in PST-overlapping schedules and distributed delivery.
 
@@ -121,7 +122,7 @@ Async-native remote with US teams for 5 years; comfortable in PST-overlapping sc
 
 ## 🏆 Key Achievements
 
-- 💳 **R$5M+ in payments processed** — 15K+ registrations on the iTOP multi-tenant SaaS
+- 💳 **R$5M+ in payments processed** — 15K+ registrations on the iTOP multi-tenant SaaS, with happy customers running their events on a best-in-class platform
 - ⚡ **3× faster feature lead time** — agentic, AI-first delivery with Claude Code and Codex on a custom harness (CLAUDE.md, spec templates, MCP servers, subagent loops)
 - 🏥 **10,000+ active users** — one-click automated daily payouts for a US healthcare platform
 - ⛓️ **$150M valuation post-launch** — live-streaming sales feature for an NFT marketplace on Flow

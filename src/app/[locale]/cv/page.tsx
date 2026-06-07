@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { CVViewer } from "@/components/cv/cv-viewer";
 import { Recommendations } from "@/components/cv/recommendations";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, Quote } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 
 export default function CVPage() {
@@ -190,6 +190,21 @@ export default function CVPage() {
         )}
 
         <Recommendations />
+
+        {/* ── Closing quote ── */}
+        <section className="no-print mt-20 flex flex-col items-center text-center">
+          <Quote
+            aria-hidden
+            className="mb-4 h-5 w-5 text-cyan-300/60"
+            strokeWidth={2.25}
+          />
+          <blockquote className="font-display text-[28px] font-bold leading-[1.12] tracking-[-0.025em] text-foreground md:text-[40px]">
+            <span className="text-gradient-cm">Stay Hungry, Stay Foolish.</span>
+          </blockquote>
+          <p className="mt-4 font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground">
+            Steve Jobs
+          </p>
+        </section>
       </div>
     </div>
   );

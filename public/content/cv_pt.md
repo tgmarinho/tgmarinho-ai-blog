@@ -16,8 +16,9 @@
 
 ## 🎯 Objetivos/Papéis
 
+- **AI-First - Automations**
 - **Agentic Software Engineer**
-- **AI-First Product Engineer / Builder**
+- **Product Engineer / Builder**
 - **Harness Engineer** (agentes · specs · MCP · automações)
 - **Senior Full-Stack Engineer** (Next.js · TypeScript)
 - **Desenvolvedor de Agentes de IA / RAG**
@@ -35,7 +36,7 @@ Engenheiro full-stack sênior e **builder AI-first** com **mais de 10 anos** ent
 
 Trabalho de forma **agêntica por padrão**: em vez de digitar cada linha, orquestro agentes de código (**Claude Code, Codex**) e construo o **harness** ao redor deles (convenções em CLAUDE.md, templates de spec, servidores MCP, skills customizadas, loops de subagentes), entregando features cerca de **3x mais rápido**, de forma responsável, da arquitetura à produção. Lidero com senso de dono e forte foco em resultados escaláveis.
 
-**Stack Principal:** TypeScript, React, Next.js, Node.js, React Native, PostgreSQL, MongoDB, Firebase, GraphQL
+**Stack Principal:** TypeScript, React, Next.js, Node.js, React Native, PostgreSQL, MongoDB, Firebase, GraphQL · Claude Code, Codex, OpenAI, Anthropic
 
 ---
 
@@ -45,9 +46,9 @@ Trabalho de forma **agêntica por padrão**: em vez de digitar cada linha, orque
 **Jul 2024 - Presente**  
 📍 Remoto (Brasil) · Plataforma SaaS multi-tenant de inscrições para eventos
 
-- **Situação/Tarefa:** organizadores rodavam as inscrições em planilhas e 3 ferramentas desconectadas, perdendo pagamentos e horas de trabalho manual. **Ação:** construí e entreguei um SaaS multi-tenant de ponta a ponta em **Next.js, TypeScript, tRPC, Prisma, MongoDB, Tailwind, shadcn/ui, Vercel, Inngest**, com construtor de formulários dinâmicos, disparo de WhatsApp com um clique, assinatura eletrônica nativa e check-in por QR-code. **Resultado:** mais de 15 mil inscrições e **R$5M+** em pagamentos (PIX + cartão) processados em produção.
-- **Situação/Tarefa:** entregar uma feature levava de 1 a 2 semanas, limitando a velocidade de testar ideias de produto. **Ação:** fui AI-first e construí o **harness** ao redor dos agentes (convenções em CLAUDE.md, templates de spec, servidores MCP ligados a dados reais, skills customizadas, loops de subagentes), orquestrando **Claude Code e Codex** todo dia em vez de digitar cada linha. **Resultado:** reduzi o lead time de features em **3x**, para 2 a 3 dias.
-- **Situação/Tarefa:** organizadores, equipe e participantes precisavam de acesso seguro a dados e de movimentação de dinheiro que nunca cobra em duplicidade. **Ação:** desenhei RBAC/ABAC, webhooks de pagamento idempotentes, filas assíncronas para mensageria e fluxos de assinatura, observabilidade via Sentry e endpoints públicos com rate limit. **Resultado:** isolamento multi-tenant e pagamentos confiáveis em produção, com usuários reais pagantes.
+- Substituí planilhas e 3 ferramentas desconectadas construindo e entregando um SaaS multi-tenant de ponta a ponta em **Next.js, TypeScript, tRPC, Prisma, MongoDB, Tailwind, shadcn/ui, Vercel, Inngest**, com construtor de formulários dinâmicos, disparo de WhatsApp com um clique, assinatura eletrônica nativa e check-in por QR-code: mais de **15 mil inscrições** e **R$5M+** em pagamentos (PIX + cartão) processados em produção
+- Reduzi o lead time de features em **3x** (de 1 a 2 semanas para 2 a 3 dias) indo AI-first: construí o **harness** ao redor dos agentes (convenções em CLAUDE.md, templates de spec, servidores MCP ligados a dados reais, skills customizadas, loops de subagentes) e orquestrei **Claude Code e Codex** todo dia em vez de digitar cada linha
+- Desenhei RBAC/ABAC entre organizadores, equipe e participantes, webhooks de pagamento idempotentes, filas assíncronas para mensageria e fluxos de assinatura, observabilidade via Sentry e endpoints públicos com rate limit, garantindo isolamento multi-tenant e pagamentos confiáveis em produção
 
 **Stack:** Next.js, TypeScript, tRPC, Prisma, MongoDB, Tailwind, shadcn/ui, Vercel, Inngest, Sentry, Asaas (PIX + cartão)
 
@@ -60,17 +61,17 @@ Trabalho de forma **agêntica por padrão**: em vez de digitar cada linha, orque
 Agência de desenvolvimento de software dos EUA. Fui responsável pela engenharia em múltiplos engajamentos de longa duração com clientes nos EUA e na Europa.
 
 **SwitchCare (Dallas, TX) — plataforma de staffing de saúde nos EUA, mais de 10.000 usuários ativos**
-- **S/T:** uma plataforma com 10 mil usuários pagava enfermeiros via folha manual no Excel, lenta e sujeita a erro. **A:** substituí por um pagamento diário automatizado com um clique (Branch Payments + carteiras digitais criadas automaticamente no onboarding). **R:** milhares de transações automatizadas por dia, sem planilha manual.
-- **S/T:** a base era fragmentada em Node + Angular + Flutter, freando cada mudança. **A:** liderei a migração de toda a stack para **TypeScript** (API + web Next.js + mobile React Native). **R:** uma única linguagem de ponta a ponta, além de turnos em tempo real e isolamento de dados multi-tenant.
+- Substituí uma folha de pagamento manual em Excel, lenta e sujeita a erro, por um pagamento diário automatizado com um clique (Branch Payments + carteiras digitais criadas automaticamente no onboarding), rodando milhares de transações automatizadas por dia
+- Liderei a migração de uma base fragmentada em Node + Angular + Flutter para uma stack unificada em **TypeScript** (API + web Next.js + mobile React Native), com turnos em tempo real e isolamento de dados multi-tenant
 
 **Unicrow (Zurique, Suíça) — protocolo de escrow open-source no ar na Arbitrum & Base**
-- **S/T:** o protocolo precisava de um SDK tipado e de dados on-chain confiáveis para seus apps. **A:** construí um **SDK em TypeScript** de 3 camadas (unicrowio/sdk) e um indexador de eventos on-chain de produção (unicrowio/indexer) alimentando **PostgreSQL via Hasura com API GraphQL**, além do frontend em **Next.js**. **R:** protocolo no ar em produção com 99,9% de precisão no indexador.
+- Construí um **SDK em TypeScript** de 3 camadas (unicrowio/sdk) e um indexador de eventos on-chain de produção (unicrowio/indexer) alimentando **PostgreSQL via Hasura com API GraphQL**, além do frontend em **Next.js**: protocolo no ar em produção com 99,9% de precisão no indexador
 
 **OnGaia / Gaia NFT (Flórida, EUA) — marketplace de NFT na Flow, avaliação de $150M pós-lançamento**
-- **S/T:** o marketplace queria vendas em tempo real de produtos digitais. **A:** construí a funcionalidade de live-streaming para vendas em tempo real (Next.js, TypeScript, Cadence, Dapper Wallet, IPFS). **R:** comércio em tempo real entregue em produção.
+- Construí a funcionalidade de live-streaming para vendas em tempo real (Next.js, TypeScript, Cadence, Dapper Wallet, IPFS), entregando comércio em tempo real em produção
 
 **WAX NFT (EUA) — fluxos de mint on-chain + leilão em tempo real**
-- **S/T:** os fluxos de mint e leilão exigiam estado on-chain consistente e UX fluida. **A:** construí formulários complexos com consistência de estado on-chain, modais de status de operação e otimização de renderização de mídia. **R:** fluxos de mint e leilão confiáveis em produção.
+- Construí formulários complexos com consistência de estado on-chain, modais de status de operação e otimização de renderização de mídia, para fluxos de mint e leilão confiáveis em produção
 
 Remoto async-native com times dos EUA por 5 anos; confortável com agendas em overlap com PST e entrega distribuída.
 
@@ -121,7 +122,7 @@ Remoto async-native com times dos EUA por 5 anos; confortável com agendas em ov
 
 ## 🏆 Principais Conquistas
 
-- 💳 **R$5M+ em pagamentos processados** — mais de 15 mil inscrições no SaaS multi-tenant da iTOP
+- 💳 **R$5M+ em pagamentos processados** — mais de 15 mil inscrições no SaaS multi-tenant da iTOP, com clientes satisfeitos gerenciando seus eventos em uma plataforma de ponta
 - ⚡ **Lead time de features 3× mais rápido** — entrega agêntica e AI-first com Claude Code e Codex sobre um harness customizado (CLAUDE.md, templates de spec, servidores MCP, loops de subagentes)
 - 🏥 **Mais de 10.000 usuários ativos** — pagamentos diários automatizados com um clique para uma plataforma de saúde dos EUA
 - ⛓️ **Avaliação de $150M pós-lançamento** — funcionalidade de live-streaming de vendas para um marketplace de NFT na Flow

@@ -162,6 +162,9 @@
       },
       "members": {
         "description": "App CRUD para gestão de membros e pessoas, com dashboard, apoiado por uma API GraphQL no Hasura. Feito com Next.js, Apollo e Chakra UI."
+      },
+      "legendarios": {
+        "description": "Site institucional de um movimento comunitário sem fins lucrativos, feito como trabalho voluntário. Centraliza informações de eventos, links de inscrição, galerias de fotos e guias de preparação, melhorando a comunicação entre participantes e líderes. Next.js, Tailwind e Vercel."
       }
     }
   },
