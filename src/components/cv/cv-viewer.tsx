@@ -151,21 +151,8 @@ function parseMarkdown(content: string) {
 
     if (trimmed.startsWith(">")) {
       flushLists();
-      const blockquoteText = trimmed.substring(1).trim();
-      const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : "";
-      if (nextLine.startsWith(">")) {
-        inBlockquote = true;
-        blockquoteContent.push(blockquoteText);
-      } else {
-        elements.push(
-          <p
-            key={`contact-${i}`}
-            className="my-1 font-mono text-[11.5px] uppercase tracking-[0.14em] leading-[1.6] text-muted-foreground"
-          >
-            {formatInlineMarkdown(blockquoteText)}
-          </p>
-        );
-      }
+      inBlockquote = true;
+      blockquoteContent.push(trimmed.substring(1).trim());
       continue;
     }
 
@@ -185,12 +172,12 @@ function parseMarkdown(content: string) {
       flushLists();
       flushBlockquote();
       elements.push(
-        <h2
+        <h1
           key={`h1-${i}`}
-          className="mb-2 font-display text-[36px] font-bold leading-[1.05] tracking-[-0.025em] text-foreground md:text-[44px]"
+          className="mb-1 font-display text-[22px] font-bold leading-[1.1] tracking-[-0.02em] text-foreground md:text-[26px]"
         >
           {formatInlineMarkdown(trimmed.substring(2))}
-        </h2>
+        </h1>
       );
       continue;
     }
@@ -209,9 +196,9 @@ function parseMarkdown(content: string) {
         <h2
           id={id}
           key={`h2-${i}`}
-          className="mt-12 mb-4 flex items-baseline gap-3 font-display text-[22px] font-semibold tracking-[-0.02em] text-foreground md:text-[26px]"
+          className="mt-10 mb-3 flex items-baseline gap-2.5 font-display text-[15px] font-semibold tracking-[-0.01em] text-foreground md:text-[17px]"
         >
-          <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-cyan-300/85">
+          <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/85">
             {String(sectionNumber).padStart(2, "0")} ━
           </span>
           <span>{formatInlineMarkdown(trimmed.substring(3))}</span>
@@ -225,7 +212,7 @@ function parseMarkdown(content: string) {
       elements.push(
         <h3
           key={`h3-${i}`}
-          className="mt-7 mb-2 font-display text-[17px] font-semibold tracking-tight text-foreground md:text-[18px]"
+          className="mt-6 mb-2 font-display text-[15px] font-semibold tracking-tight text-foreground md:text-[16px]"
         >
           {formatInlineMarkdown(trimmed.substring(4))}
         </h3>
