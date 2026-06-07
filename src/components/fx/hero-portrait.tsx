@@ -109,7 +109,7 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onDragStart={(e) => e.preventDefault()}
-      aria-label="Thiago Marinho portrait — morphing between human, hybrid, and agent modes"
+      aria-label="Thiago Marinho portrait, morphing between human, hybrid, and agent modes"
     >
       {/* Wide ambient aurora — bleeds far beyond the portrait so the figure
           dissolves into the page atmosphere. */}
@@ -187,7 +187,7 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
               >
                 <Image
                   src={s.src}
-                  alt={`Thiago Marinho — ${s.label}`}
+                  alt={`Thiago Marinho, ${s.label}`}
                   fill
                   priority={i === 0}
                   loading={i === 0 ? undefined : "lazy"}

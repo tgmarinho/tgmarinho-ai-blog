@@ -5,10 +5,13 @@ import type FuseType from "fuse.js";
 import { Search as SearchIcon, X } from "lucide-react";
 import { PostCard } from "./post-card";
 import type { PostMeta } from "@/lib/velite";
+import { categoryLabel } from "@/lib/categories";
+import type { Locale } from "@/i18n/routing";
 
 interface BlogSearchProps {
   posts: PostMeta[];
   categories: string[];
+  locale: Locale;
   searchPlaceholder?: string;
   emptyLabel?: string;
   allLabel?: string;
@@ -26,6 +29,7 @@ interface SearchIndexItem {
 export function BlogSearch({
   posts,
   categories,
+  locale,
   searchPlaceholder = "Search posts, topics, ideas…",
   emptyLabel = "no posts match · try another query",
   allLabel = "all",
@@ -138,7 +142,7 @@ export function BlogSearch({
           {categories.map((cat) => (
             <CategoryPill
               key={cat}
-              label={cat}
+              label={categoryLabel(cat, locale)}
               active={selectedCategory === cat}
               onClick={() =>
                 setSelectedCategory(selectedCategory === cat ? null : cat)

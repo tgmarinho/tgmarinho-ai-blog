@@ -13,6 +13,7 @@ import { TableOfContents } from "@/components/blog/table-of-contents";
 import { siteConfig } from "@/lib/constants";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { getPostLanguage, getTranslationPair } from "@/lib/posts-i18n";
+import { categoryLabel, normalizeCategories } from "@/lib/categories";
 import { extractToc } from "@/lib/toc";
 import { routing, type Locale } from "@/i18n/routing";
 
@@ -46,13 +47,14 @@ function getFormattedDate(date: string, locale: Locale) {
 function getRelatedPosts(post: Post) {
   if (!post.categories?.length) return [];
   const postLocale = getPostLanguage(post);
+  const postCats = new Set(normalizeCategories(post.categories));
   return posts
     .filter(
       (c) =>
         c.published &&
         c.slug !== post.slug &&
         getPostLanguage(c) === postLocale &&
-        c.categories?.some((cat) => post.categories.includes(cat)),
+        normalizeCategories(c.categories ?? []).some((cat) => postCats.has(cat)),
     )
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 3);
@@ -261,12 +263,16 @@ export default async function PostPage({ params }: PostPageProps) {
 
       <header className="mx-auto mt-10 max-w-[680px]">
         <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[10.5px] uppercase tracking-[0.22em]">
-          {post.categories.slice(0, 3).map((cat, i) => (
-            <span key={cat} className="flex items-center gap-3">
-              {i > 0 && <span className="text-white/15">·</span>}
-              <span className="text-cyan-300/85">{cat}</span>
-            </span>
-          ))}
+          {normalizeCategories(post.categories)
+            .slice(0, 3)
+            .map((cat, i) => (
+              <span key={cat} className="flex items-center gap-3">
+                {i > 0 && <span className="text-white/15">·</span>}
+                <span className="text-cyan-300/85">
+                  {categoryLabel(cat, postLocale)}
+                </span>
+              </span>
+            ))}
           <span className="text-white/15">·</span>
           <span className="text-muted-foreground">{readingTimeText}</span>
         </div>
@@ -337,7 +343,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <div className="mx-auto mt-16 max-w-[680px]">
         <div className="mesh-divider" />
         <p className="mt-10 font-[family-name:var(--font-fraunces)] text-[15px] italic leading-relaxed text-muted-foreground">
-          — {t("aiDisclaimer")}
+          {t("aiDisclaimer")}
           <Link
             href="/about"
             className="text-foreground underline decoration-cyan-300/30 underline-offset-4 transition-colors hover:decoration-cyan-300"
