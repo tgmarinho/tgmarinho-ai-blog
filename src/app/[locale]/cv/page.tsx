@@ -55,7 +55,7 @@ export default function CVPage() {
       <!DOCTYPE html>
       <html lang="${language}">
         <head>
-          <title>CV — ${siteConfig.name}${language === "en" ? "" : " (PT-BR)"}</title>
+          <title>CV - ${siteConfig.name}${language === "en" ? "" : " (PT-BR)"}</title>
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <style>${getPDFStyles()}</style>
