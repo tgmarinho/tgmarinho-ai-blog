@@ -78,7 +78,12 @@
       "translationMissingDescription": "This post hasn't been translated to English yet. Showing the original version.",
       "related": "related reading",
       "readingTime": "{minutes} min read",
-      "onThisPage": "on this page"
+      "onThisPage": "on this page",
+      "commentKicker": "comments",
+      "commentTitle": "Liked it? Let's talk on X",
+      "commentBody": "Got a take, a question, or a disagreement? Reply on X and I'll answer.",
+      "commentCta": "Comment on X",
+      "aiDisclaimer": "Written by AI, reviewed by Thiago Marinho"
     }
   },
   "projects": {

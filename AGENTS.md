@@ -134,6 +134,13 @@ Rules:
 - After editing, run `bun velite` to validate the schema.
 - Categories are free-form strings — follow existing ones when possible (`rg` against `content/posts/*.mdx` to see what's used).
 
+### Writing style (prose — non-negotiable)
+
+> Applies to authored content (post titles, descriptions, body copy). Not to code or to these meta docs.
+
+- **Never use em dashes (`—`) or en dashes (`–`) for emphasis or asides in prose.** This is a recognizable LLM tell, and in 2026 readers carry a bias against it precisely because AI overuses the em dash. Restructure the sentence with a comma, colon, parentheses, or a period. Don't just swap `—` for a hyphen; rewrite so it reads naturally.
+- **English content uses plain English:** short sentences, common words, active voice.
+
 ### Required project skills for blog authoring
 
 When creating new posts, agents must use the project skill in `.cursor/skills/`:

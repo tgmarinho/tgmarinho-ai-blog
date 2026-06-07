@@ -28,7 +28,7 @@ If your training conflicts with these files, **the files win**.
 
 > Applies to all authored content: posts, descriptions, titles, body copy. Not to code.
 
-- **No em dashes (`—`) or en dashes (`–`) in prose.** Rewrite the sentence with a comma, colon, parentheses, or a period instead. Don't just swap `—` for a hyphen; restructure so it reads naturally.
+- **No em dashes (`—`) or en dashes (`–`) in prose.** Rewrite the sentence with a comma, colon, parentheses, or a period instead. Don't just swap `—` for a hyphen; restructure so it reads naturally. **Why:** the em dash is a recognizable LLM tell, and in 2026 readers carry a bias against it because AI overuses it. Avoiding it keeps the prose from reading as machine-written.
 - **English content must use plain English.** Short sentences, common words, active voice. Avoid fancy vocabulary and long subordinate clauses. Translate meaning, not sentence shape (the pt-BR can be a touch more expressive; the EN stays simple).
 - These rules are non-negotiable in the `blog-post-bilingual` workflow.
 

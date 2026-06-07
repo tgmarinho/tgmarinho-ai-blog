@@ -14,6 +14,7 @@ const postSchema = s
     translationKey: s.string().min(1),
     categories: s.array(s.string()).default([]),
     image: s.string().optional(),
+    tweetUrl: s.string().url().optional(),
   });
 
 const posts = defineCollection({
