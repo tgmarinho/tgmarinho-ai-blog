@@ -153,7 +153,8 @@ Mandatory behavior enforced by the skills:
 1. Follow repository frontmatter/schema conventions.
 2. Use recent project posts as style references.
 3. **Always request/create a contextual cover image** and set `image` in frontmatter.
-4. For bilingual posts, share the same `translationKey` (and same image by default).
+4. **Any text embedded inside generated or selected blog images must be in English**, including covers, diagrams, OG images, and social previews, even when the post is pt-BR. Localize the article copy and alt text, not the image text, unless the human explicitly requests another language.
+5. For bilingual posts, share the same `translationKey` (and same image by default).
 
 ---
 

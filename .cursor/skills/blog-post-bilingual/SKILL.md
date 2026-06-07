@@ -69,6 +69,13 @@ Default behavior:
 3. Use the same `image` path in pt-BR and EN frontmatter.
 4. Only use separate images if the user explicitly asks.
 
+### Image text language (mandatory)
+
+Any text embedded inside generated or selected blog images must be in English,
+including covers, diagrams, OG images, and social previews, even for pt-BR posts.
+Localize article copy and alt text, not the image text, unless the human explicitly
+requests another language for the image itself.
+
 ### Image weight & format (mandatory)
 
 Social previews (WhatsApp, Telegram, iMessage, X) silently drop OG images
@@ -109,7 +116,7 @@ above ~300 KB and fall back to the site favicon. To avoid that:
 - [ ] Set same translationKey in both files
 - [ ] Validate frontmatter fields and categories
 - [ ] Save both files in content/posts/
-- [ ] Run npm run velite
+- [ ] Run bun velite
 ```
 
 ## Naming conventions
