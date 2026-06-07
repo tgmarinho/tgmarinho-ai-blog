@@ -1,0 +1,92 @@
+---
+title: "Conductor: orquestrando vários agentes de IA no Mac sem virar bagunça"
+description: "Minha experiência usando o Conductor para rodar Claude Code e Codex em paralelo em workspaces isolados, com git worktree, diff viewer e merge sem precisar abrir o GitHub."
+date: "2026-05-29"
+published: true
+slug: "conductor-mac-experiencia-agentes-paralelos-pt-br"
+language: "pt-BR"
+translationKey: "conductor-mac-parallel-agents"
+categories: ["ai", "tools", "software-engineering", "pt-br"]
+image: "/images/blog/photo-1603860785202-70ee34aa7b68.jpg"
+---
+
+Faz algumas semanas que adotei o [Conductor](https://www.conductor.build/) como hub para rodar agentes de IA no Mac. Inclusive, este post está sendo escrito dentro de um workspace do Conductor.
+
+Em uma frase: é o app que faltava para parar de brigar com `git worktree`, `tmux` e cinco janelas do terminal toda vez que eu quero ter Claude Code, Codex e outros agentes trabalhando em paralelo.
+
+### O problema antes do Conductor
+
+Quando você começa a usar agentes de IA de forma séria, esbarra rápido em dois limites:
+
+1. **Um agente, um repositório, um terminal** — se você quer rodar duas tarefas ao mesmo tempo, elas brigam pelo mesmo working tree.
+2. **Contexto fragmentado** — cada janela tem seu próprio estado, suas próprias dependências instaladas, seu próprio `.env`.
+
+A solução manual existe: criar um `git worktree` por tarefa, instalar deps em cada um, abrir o editor certo apontado pro diretório certo. Funciona. Mas é fricção suficiente para você desistir e voltar a fazer tudo em série.
+
+### O que o Conductor resolve
+
+O Conductor é um app nativo para macOS que pega essa orquestração toda e esconde atrás de uma UI limpa. Cada "workspace" é um `git worktree` real do seu repositório, com seu próprio agente rodando em isolamento.
+
+Você vê todos os workspaces lado a lado, sabe em qual cada agente está trabalhando, revisa o diff e mescla — tudo sem sair do app.
+
+### As features que mais uso no dia a dia
+
+Listo o que de fato mudou meu workflow:
+
+- **Workspaces paralelos isolados** — Claude Code, Codex e outros agentes rodando ao mesmo tempo, cada um no seu worktree. Sem conflito de branch, sem `git stash` desesperado.
+- **Git worktree automático** — quando você clica em "+ New workspace", o Conductor já cria um worktree novo a partir da branch `main` atualizada. Zero comando manual.
+- **Diff viewer integrado** — você revisa as mudanças do agente direto no app, com a mesma qualidade de revisão que faria em um PR.
+- **Abrir e mesclar PR sem ir pro GitHub** — botão "Open PR", botão "Merge". Para tarefas pequenas, isso economiza muito clique e quebra de fluxo.
+- **Guard de conflito no merge** — se houver conflito com a `main`, o Conductor te bloqueia de mesclar e mostra o motivo. Você não consegue criar lixo no histórico por descuido.
+- **Checks visíveis no workspace** — CI status aparece junto do diff, então você decide com informação completa.
+- **Archive limpo** — terminou a tarefa, mesclou o PR, clica em archive e o Conductor remove o worktree para você. Sem `rm -rf` errado.
+- **Pasta `.context` por workspace** — gitignored, ideal para arquivos de coordenação entre agentes (planos, anotações, attachments) sem poluir o repositório.
+- **Suporte multi-agente** — não é um wrapper só de Claude Code. Roda Codex e outros agentes em paralelo no mesmo projeto, então você compara abordagens.
+
+### O que mudou no meu workflow
+
+Antes, eu tinha medo de iniciar uma segunda tarefa enquanto a primeira ainda estava rodando. Hoje é o oposto: enquanto o Claude Code aqui está terminando este post, em outro workspace tem um Codex resolvendo uma issue de UI, e em um terceiro tem outro Claude refatorando um script de build.
+
+Quando um termina, eu reviso o diff, mesclo o PR, faço archive e abro um workspace novo no `+`. Branch nova, main atualizada, pronto para a próxima tarefa.
+
+Concretamente: enquanto escrevia este texto, eu tinha dois workspaces ativos no mesmo repositório — um com este post (+180 linhas) e outro com a integração do Lenis smooth scroll (+262 linhas). Dois PRs criados e processados em paralelo, no mesmo intervalo de tempo em que eu antes resolveria uma tarefa só.
+
+A sensação que fica é a que o pessoal do Conductor descreve na home: *"feels like going from typing with two fingers to having eight arms"*. Não é exagero — é exatamente isso.
+
+### O fluxo de PR é o grande destaque
+
+Entre todas as features, a que mais me ganhou foi o ciclo de **revisar → abrir PR → mesclar → arquivar**, todo dentro do app:
+
+1. O agente termina a tarefa no workspace.
+2. Você abre o diff no Conductor — e o diff é, sinceramente, muito bom. Lê melhor que em vários clientes desktop.
+3. Clica em "Open PR". O PR vai para o GitHub, com o título e o corpo já preenchidos.
+4. Se a tarefa estiver limpa, clica em "Merge" e pronto.
+5. Se houver conflito com a `main`, o Conductor **te bloqueia o merge** e te avisa — então você não mescla porcaria por descuido.
+6. Depois do merge, archive deleta o worktree.
+7. No "+ New workspace", o próximo já vem com a `main` recém-atualizada, incluindo o que você acabou de mesclar.
+
+O resultado é que você praticamente não precisa abrir o GitHub no navegador. A entrega vira um loop fechado no próprio Conductor, e isso muda muito a sensação de fluidez no dia a dia.
+
+### O que falta (wishlist)
+
+Se eu pudesse pedir uma feature ao time do Conductor, seria a liberdade de plugar o meu coding agent preferido do momento: o [pi.dev](https://pi.dev/).
+
+No pi.dev eu uso o `cmux` terminal, o que ajuda bastante a coordenar sessões — mas a experiência aqui no Conductor continua sendo muito melhor para o ciclo completo de workspace → diff → PR → archive.
+
+Suporte nativo a pi.dev dentro do Conductor seria o combo perfeito. Vamos ver as cenas dos próximos capítulos.
+
+### Quando faz sentido adotar
+
+Se você já trabalha com Claude Code ou Codex e percebe que está limitado a uma tarefa por vez, o Conductor paga o ticket de entrada rapidamente. Se você ainda está aprendendo agentes, talvez seja melhor dominar o básico antes — orquestrar três agentes errados em paralelo só multiplica o caos.
+
+Para um overview oficial, vale ver:
+
+- Site: [conductor.build](https://www.conductor.build/)
+- Docs: [conductor.build/docs](https://www.conductor.build/docs)
+- X: [@conductor_build](https://x.com/conductor_build)
+
+### Fechando
+
+Ferramenta boa é a que some na sua frente. O Conductor faz isso com a parte chata de `git worktree` + multi-agente, e deixa você no que importa: revisar o trabalho dos agentes e tomar decisão.
+
+Para quem está construindo com IA como prática diária, não como brinquedo, vale a experimentada.

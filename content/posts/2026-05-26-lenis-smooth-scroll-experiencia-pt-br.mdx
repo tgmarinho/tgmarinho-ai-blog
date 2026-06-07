@@ -1,0 +1,131 @@
+---
+title: "Lenis no Next.js: como o scroll do site ficou cinematográfico em 19 linhas"
+description: "O scroll do site era nativo, duro, com aquele 'tranco' do trackpad em página longa. Coloquei o Lenis via ReactLenis root e o resultado encaixou no resto do redesign sem hijack, sem quebrar âncoras e sem brigar com prefers-reduced-motion."
+date: "2026-05-26"
+published: true
+slug: "lenis-smooth-scroll-experiencia-pt-br"
+language: "pt-BR"
+translationKey: "lenis-smooth-scroll-experience"
+categories: ["frontend", "react", "nextjs", "ux", "pt-br"]
+image: "/images/blog/photo-1451187580459-43490279c0fa.jpg"
+---
+
+O site está no meio do redesign "agentic futurism": dark theatre, luz volumétrica no hero, tipografia editorial dentro dos posts. Tudo isso pedia um detalhe que faltava — **o scroll**.
+
+Scroll nativo é correto, mas em página longa com hero pesado ele entrega o jogo: cada giro do trackpad é um passo discreto, a página "pula" entre frames, e a sensação de "site vivo" some no primeiro `wheel`.
+
+Ontem coloquei o [**Lenis**](https://github.com/darkroomengineering/lenis) (do pessoal da [darkroom.engineering](https://darkroom.engineering)) via o wrapper React oficial e o site mudou de textura.
+
+### Como era
+
+- `overflow-y: auto` no `html` + scroll nativo.
+- No macOS com trackpad ainda tinha um inércia razoável, mas no mouse de rodinha era _step-step-step_.
+- Pior em Windows/Linux: scroll discreto, sem easing nenhum.
+- Âncoras (`#section`) funcionavam, mas com aquele "tap" instantâneo que cortava a leitura.
+
+A foto do hero, o anel de névoa, a luz volumétrica — tudo isso pede uma câmera que se move de forma contínua. Scroll nativo é o oposto disso.
+
+### Como ficou
+
+- `lerp 0.1` + `duration 1.2` — o scroll vira uma **câmera com inércia**, sem nunca passar a sensação de "página travada".
+- Mantém âncoras funcionando (Lenis intercepta o scroll programático e anima ele também).
+- Continua respondendo a `Page Up/Down`, `Space`, setas e `Home/End`.
+- Encaixou no resto do redesign sem precisar tocar em mais nada — header sticky, hero, listas, tudo continuou se comportando.
+
+### O setup, inteiro
+
+Instalei o pacote:
+
+```bash
+bun add lenis
+```
+
+Criei o wrapper como **client component** isolado:
+
+```tsx
+// src/components/fx/smooth-scroll.tsx
+"use client";
+
+import { ReactLenis } from "lenis/react";
+import type { ReactNode } from "react";
+
+export function SmoothScroll({ children }: { children: ReactNode }) {
+  return (
+    <ReactLenis
+      root
+      options={{
+        lerp: 0.1,
+        duration: 1.2,
+        smoothWheel: true,
+      }}
+    >
+      {children}
+    </ReactLenis>
+  );
+}
+```
+
+E plugei no `LocaleLayout` (App Router, com `next-intl`):
+
+```tsx
+// src/app/[locale]/layout.tsx
+<NextIntlClientProvider>
+  <SmoothScroll>
+    <Atmospheric />
+    <Header />
+    <main className="flex-1">{children}</main>
+    <Footer />
+  </SmoothScroll>
+</NextIntlClientProvider>
+```
+
+Três decisões que importam:
+
+1. **`root`** — sem isso, o Lenis cria um container próprio e o `html`/`body` ficam fora do controle. Com `root`, ele se anexa ao `documentElement` e o scroll global é o "verdadeiro" scroll da página.
+2. **`lerp` baixo (0.1)** — é o fator de interpolação por frame. Quanto menor, mais "câmera". `0.1` ficou no ponto entre "responsivo" e "manteigado". Acima de `0.15` começa a parecer página travada.
+3. **`duration 1.2`** — usado nos `scrollTo` programáticos (âncoras, "voltar ao topo"). Casa com a inércia do scroll normal e evita a sensação de "salto cinematográfico" exagerado.
+
+### Por que `ReactLenis` em vez do `useLenis` no `useEffect`
+
+Tinha duas opções:
+
+```tsx
+useEffect(() => {
+  const lenis = new Lenis({ /* ... */ });
+  function raf(time: number) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+  return () => lenis.destroy();
+}, []);
+```
+
+Ou:
+
+```tsx
+<ReactLenis root options={{ /* ... */ }}>{children}</ReactLenis>
+```
+
+O `ReactLenis` faz exatamente o boilerplate do `useEffect` lá em cima — instancia, registra o `raf`, limpa no `unmount` — só que dentro do ciclo de vida do React e expondo um `LenisContext` para componentes filhos chamarem `useLenis()` ou `useScroll()` quando precisarem. Menos código, menos chance de vazar listener em hot-reload.
+
+### O que eu tinha medo e não aconteceu
+
+- **Quebrar âncoras de heading.** Não quebrou. O Lenis intercepta navegação interna e anima o `scrollTo` com a mesma duração.
+- **Brigar com `scroll-margin-top`.** Continua respeitando. O cálculo de offset é feito no `documentElement`, então o CSS já existente para "header sticky" continuou valendo.
+- **Aumentar bundle.** O pacote é ~7 KB gzipped. Fica abaixo do ruído nas Web Vitals.
+- **Atrapalhar `prefers-reduced-motion`.** Lenis lê a media query e desativa o smoothing automaticamente quando o usuário pede menos animação. Não precisei de `if` nenhum no meu lado.
+
+### Onde Lenis _não_ encaixa
+
+- **Scroll-snap CSS.** Se você usa `scroll-snap-type` em uma seção, Lenis pode brigar. Resolvido isolando aquela seção fora do contexto Lenis ou desligando `smoothWheel` por classe.
+- **Embeds com scroll próprio.** `iframe`, `<textarea>`, mapas. O Lenis só controla o scroll do root — embeds continuam nativos. Era o que eu queria.
+- **Sites onde "ler rápido" é o produto.** Documentação muito densa, busca interna com muitos resultados. Aí o nativo é melhor — o usuário quer voar pela página, não viajar nela.
+
+### Veredicto
+
+A diferença é uma daquelas mudanças que parecem cosméticas até você usar o site por trinta segundos e perceber que o ritmo de leitura mudou. **19 linhas de código** + dois lugares no layout = scroll que respeita o tom do resto do design.
+
+Para sites com hero forte, parallax sutil, ou qualquer pretensão "cinematográfica", o custo/benefício do Lenis é absurdo. Para um docs site, eu não colocaria. Para o meu blog/portfolio? Já era pra ter colocado antes.
+
+PR no repositório: [#126](https://github.com/tgmarinho/tgmarinho-ai-website/pull/126).

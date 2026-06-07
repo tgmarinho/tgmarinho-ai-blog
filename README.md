@@ -149,7 +149,9 @@ npm run start
 
 ## ✍️ MDX Authoring
 
-Posts live in `content/posts/*.mdx`.
+Posts live in `content/posts/*.mdx`, named `YYYY-MM-DD-<slug>-<lang>.mdx` (the `date` as prefix, then the slug, then `-pt-br`/`-en`). The prefix keeps the folder sorted by date and does **not** affect the URL (the slug comes from frontmatter). Both files of a bilingual pair share the same date prefix.
+
+**One article per calendar day** (a bilingual pair counts as one; drafts reserve their day too). Pick a free date — `grep -rhoE '^date: "[0-9-]+"' content/posts | sort | uniq -d` must print nothing.
 
 ```mdx
 ---

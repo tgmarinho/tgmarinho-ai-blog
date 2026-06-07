@@ -1,0 +1,167 @@
+---
+title: "Afinal, o que é um agente?"
+description: "Uma definição honesta de agente de IA, com base em Chip Huyen, Anthropic e Cedric Chee: percepção + ação em um ambiente, com tools, memória e um loop de decisão."
+date: "2026-05-22"
+published: true
+slug: "afinal-o-que-e-um-agente-pt-br"
+language: "pt-BR"
+translationKey: "what-is-an-agent"
+categories: ["ai", "software-engineering", "pt-br"]
+image: "/images/blog/what-is-an-agent-cover.jpg"
+---
+
+A palavra "agente" virou o "blockchain" de 2026.
+
+Toda startup tem um. Todo SaaS lançou o seu. Todo chatbot com dois tools virou "AI agent". E quando você pergunta o que é, ninguém concorda.
+
+Antes de continuar caindo nesse vácuo de definição, vale parar e responder a pergunta com honestidade técnica:
+
+**Afinal, o que é um agente?**
+
+Esse artigo é uma síntese pragmática de três leituras que considero as melhores sobre o tema:
+
+- [Chip Huyen — *Agents*](https://huyenchip.com/2025/01/07/agents.html)
+- [Anthropic — *Building effective agents*](https://www.anthropic.com/engineering/building-effective-agents)
+- [Cedric Chee — *The DNA of AI Agents*](https://cedricchee.com/blog/the-dna-of-ai-agents/)
+
+Os três chegam, por caminhos diferentes, em conclusões muito parecidas. É isso que torna a definição confiável.
+
+### A definição mínima
+
+Chip Huyen recupera a definição clássica de Russell & Norvig:
+
+> "Anything that can be viewed as perceiving its environment through sensors and acting upon that environment through actuators."
+
+Em português simples: **um agente percebe um ambiente e age sobre ele.**
+
+Isso é o mínimo. Sem percepção, é só um script. Sem ação, é só um classificador. Sem ambiente, é só um chat de uma rodada.
+
+Quando você troca "sensores" por "input de texto, ferramentas e leitura de arquivos", e "atuadores" por "tool calls que mexem em sistemas reais", você tem a versão moderna: um LLM com olhos e mãos.
+
+### Agente não é modelo
+
+Esse é o erro mais comum.
+
+O modelo (GPT-5, Claude Opus 4.7, Gemini) é só o cérebro. Sozinho, ele responde texto e para.
+
+Um agente é:
+
+`agente = modelo + ambiente + tools + loop de decisão (+ memória)`
+
+Cedric Chee chama isso de **"augmented LLM"**: o modelo base mais retrieval, tools e memória. É o tijolo fundamental — e é o que a Anthropic também aponta como o building block central de qualquer sistema agêntico sério.
+
+### Agente vs. workflow (a distinção da Anthropic)
+
+Essa é a parte que mais limpa confusão.
+
+A Anthropic separa dois mundos:
+
+- **Workflow:** o LLM e as tools são orquestrados por **caminhos de código predefinidos**.
+- **Agente:** o LLM **decide dinamicamente** o próximo passo e como usar as tools.
+
+Tradução prática:
+
+- Se quem decide "agora chama o tool X, depois o Y, depois retorna" é o seu código, é um **workflow**.
+- Se quem decide o próximo passo é o modelo, observando o resultado anterior e replanejando, é um **agente**.
+
+Isso explica por que "agente" virou um espectro, não um botão. Você pode ter:
+
+1. **LLM puro** — uma resposta, sem tools.
+2. **LLM aumentado** — tools, retrieval, memória, mas sequência fixa.
+3. **Workflows** — múltiplos LLMs orquestrados por código (chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer).
+4. **Agentes** — o modelo controla seu próprio loop.
+
+A Anthropic lista cinco padrões de workflow que cobrem a maior parte dos casos de produção:
+
+- **Prompt chaining** — saída de um vira entrada do próximo.
+- **Routing** — classifica o input e direciona para um handler especializado.
+- **Parallelization** — tarefas em paralelo (sectioning ou voting).
+- **Orchestrator-workers** — um LLM central delega para workers.
+- **Evaluator-optimizer** — um LLM avalia e refina a saída de outro.
+
+A maior parte do que está em produção hoje é **workflow**, não agente. E está tudo bem — workflows são mais previsíveis e mais baratos.
+
+### O DNA: as quatro peças que aparecem em todas as definições
+
+Cruzando Huyen, Anthropic e Chee, sempre aparecem quatro componentes:
+
+**1. Ambiente.** O que o agente consegue ver e mexer. Um coding agent vive no filesystem + terminal + Git. Um agente de suporte vive no CRM + base de conhecimento. Sem ambiente, não há agência.
+
+**2. Tools.** As mãos. Huyen separa em três famílias:
+
+- **Augmentação de conhecimento:** retrievers, APIs, web search.
+- **Extensão de capacidade:** calculadora, code interpreter, tradutor.
+- **Write actions:** atualizar banco, mandar e-mail, fazer pagamento.
+
+A última família é a que dá medo — e a que mais multiplica o valor.
+
+**3. Planejamento.** Decompor a tarefa em passos, validar, executar, refletir, corrigir. Cedric Chee defende explicitamente separar isso em papéis: **Planner**, **Evaluator**, **Executor**. Só plano validado executa.
+
+**4. Memória.** O que sobrevive entre passos e entre sessões. Curto prazo (contexto), médio (scratchpad, working memory) e longo (vector store, arquivos, banco). Sem memória, todo passo recomeça do zero.
+
+### Por que erros compõem (a matemática que todo mundo ignora)
+
+Huyen joga uma conta cruel:
+
+> Um modelo com 95% de acurácia por passo cai para ~60% em 10 passos.
+
+`0.95^10 ≈ 0.598`
+
+É por isso que "só plugar mais um tool" raramente resolve. Agentes longos compõem erro de forma exponencial. As três defesas conhecidas são:
+
+- **Loops curtos** — quanto menos passos, menos chance de cair na cascata.
+- **Verificação** — checar a saída antes de continuar (evaluator, types, testes, lints, human-in-the-loop).
+- **Idempotência e undo** — desfazer barato é melhor que acertar de primeira.
+
+Isso conecta com a outra ideia que escrevi em [Agent Harness Engineering na prática](/blog/agent-harness-engineering-na-pratica): o harness — ambiente, regras, tools, loops de verificação — costuma importar mais que o modelo.
+
+### Quando usar agente, quando usar workflow
+
+A regra da Anthropic é desconfortavelmente simples:
+
+> Comece simples. Só aumente a complexidade quando o ganho medido justificar.
+
+Tradução:
+
+- **Workflow** para tarefas bem definidas, passos previsíveis, alto volume, baixo custo de erro acumulado.
+- **Agente** para problemas abertos, em que os passos não podem ser pré-decididos, e onde a flexibilidade compensa o custo extra e o risco.
+
+Na prática:
+
+- "Extrair campos de um PDF e jogar no banco" → workflow.
+- "Resolver esse ticket de suporte que veio do nada, com 4 sistemas envolvidos" → talvez agente.
+- "Refatorar esse repositório seguindo essa convenção" → agente, com harness forte.
+
+Quase ninguém precisa de um agente onde um workflow resolve. E quase todo mundo está pagando custo de agente para resolver workflow.
+
+### A convergência
+
+O ponto mais interessante do Cedric Chee é meta: ele mostra que Anthropic e Huyen, vindo de lugares diferentes, chegam nos mesmos blocos — augmented LLM, tools, memória, planejamento, loops de avaliação. Isso deixou de ser "uma teoria do laboratório X" e virou prática estabelecida.
+
+O que significa, na prática:
+
+- Se você está desenhando um sistema agêntico hoje, **pode parar de inventar vocabulário** e adotar o que já convergiu.
+- Os trade-offs são os mesmos: autonomia × previsibilidade, flexibilidade × custo, abertura × segurança.
+- A pergunta não é "vou usar agente?" e sim "onde no espectro de autonomia esse problema vive?"
+
+### Resumindo em uma frase
+
+**Agente é um LLM que percebe um ambiente, decide dinamicamente o próximo passo, age via tools e fecha o loop com memória e verificação.**
+
+Tudo abaixo disso é workflow. Tudo acima disso ainda não existe direito.
+
+Quando alguém te disser que tem um "agente", pergunte três coisas:
+
+1. Quem decide o próximo passo — o código ou o modelo?
+2. Quais tools ele tem, e o que elas escrevem no mundo real?
+3. Como o sistema verifica que o passo deu certo antes de continuar?
+
+Se as respostas forem vagas, provavelmente é um chatbot com marketing melhor.
+
+---
+
+Leituras-base:
+
+- Chip Huyen — [*Agents*](https://huyenchip.com/2025/01/07/agents.html)
+- Anthropic — [*Building effective agents*](https://www.anthropic.com/engineering/building-effective-agents)
+- Cedric Chee — [*The DNA of AI Agents*](https://cedricchee.com/blog/the-dna-of-ai-agents/)

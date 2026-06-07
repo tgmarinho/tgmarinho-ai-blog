@@ -1,0 +1,150 @@
+---
+title: "Higher-Order Function with Reduce"
+description: "Higher-Order Function with Reduce — Recompose's Compose explained"
+date: "2018-09-11"
+published: true
+slug: "higher-order-function-with-reduce"
+categories: ["js"]
+language: "en"
+translationKey: "fun-o-de-ordem-superior-com-reduce"
+image: "/images/hero/portrait-agent-v2-removebg.png"
+---
+
+Introduction
+
+Hey there, how's it going? I want to talk about a pretty advanced JavaScript topic.
+
+Motivation
+
+We all know JavaScript gets tough as you move deeper into it. If you understand what I'm about to explain in this post, internalize it, and know how to apply it, your JS is advanced — for sure! That's what I was told, so I'm passing the claim along.
+
+In this post we'll dig into this algorithm:
+
+```
+const compose = (...funcs) => funcs.reduce((a, b) => (...args) => a(b(...args)))
+```
+
+**Prerequisites**
+
+to keep reading:
+
+- Know the basics of JavaScript (const/let/var).
+- Be familiar with ES6, parameter destructuring, arrays, functions, arrow functions, HOFs, and "that's it".
+- Be curious, willing to learn, ask questions and give feedback.
+
+**Use Case**
+
+The `compose` function is very useful in React applications that use the Recompose lib to handle Smart/Dumb components and write fewer lines of code. In the example below, at the end of the line I call `compose`, which returns to `BirthdaysContainer` the pure `Birthdays` component — just the birthdays screen with the loaded data, `data` and `withApollo`. `BirthdaysContainer` is used in the Router, and the Router is rendered in `App.js`, and so on up the React component tree… Let's get back to the topic — I just wanted to highlight one advantage of using recompose/compose.
+
+![Example of using Compose](/assets/img/code-hoc.png "Example of using Compose")
+
+**Explanation**
+
+Read the code once more — debugging `reduce` is kind of annoying, so I'll break down piece by piece what's happening. Any questions, suggestions or corrections, feel free to comment.
+
+```
+const compose = (...funcs) => funcs.reduce((a, b) => (...args) => a(b(...args)))
+```
+
+To help illustrate, I'll create five very simple sum functions that take a number as a parameter and add a specific value to it:
+
+```
+const add1 = (num) => num + 1;
+const add2 = (num) => num + 2;
+const add3 = (num) => num + 3;
+const add4 = (num) => num + 4;
+const add5 = (num) => num + 5;
+
+const compose = (...funcs) =>
+   funcs.reduce((a, b) => (...args) => a(b(...args)))
+
+console.log(compose(add1,add2,add3,add4,add5)(5));
+```
+
+`add1` takes a number and adds 1, `add2` takes any number and adds 2, and so on for `add3`, `add4` and `add5`.
+
+**Compose**
+
+Look at line 10 — the `console.log()` just exists to display the result of calling `compose`.
+
+When `compose` is called, I'm passing in the five functions as arguments, and since `compose` returns a function, I then pass another argument (5) to that returned function.
+
+See the code below — if you call `compose` passing a single function, it returns a function.
+
+![Example of compose calls.](/assets/img/compose-code.png "Example of compose calls.")
+
+If you call the returned function with a parameter, it executes with the value you passed. In the example above I passed `5` and got `5 + 1 = 6`.
+
+```
+const compose = (...funcs) =>  funcs.reduce((a, b) => (...args) => a(b(...args)))
+```
+
+The arguments received by `compose` will be destructured into an array containing all parameters.
+
+So if I make the call as in the example below, I get the following result (line 7):
+
+```
+const compose = (...funcs) =>  funcs.reduce((a, b) => (...args) => a(b(...args));
+
+compose(add1, add2, add3, add4, add5)(5);
+
+const compose = (...funcs) => [add1,add2,add3,add4,add5].reduce((a, b) => (...args) => a(b(...args));
+```
+
+That's why I can use `reduce` on the `funcs` variable — `funcs` is an array of the received parameters.
+
+This `reduce` returns a HOF.
+
+## (…args) => a(b(…args)
+
+Parameter `a` is the accumulator and parameter `b` is the current array value.
+
+So on the first iteration, the accumulator `a` will be the first array value `[add1]` and `b` will be the second position of the array `[add2]`, since no initial value was provided, and `args` are the arguments the function may receive.
+
+Reduce reference — check the `reduce` documentation if you have any doubts, I always do!
+
+// Reduce
+
+a = accumulator
+
+b = current array value
+
+Since each element of the array is a function, each iteration looks like this:
+
+```
+// iteration
+1: add1(add2(5))
+2: add1(add2(add3(5)))
+3: add1(add2(add3(5)))
+4: add1(add2(add3(add4(5)))
+5: add1(add2(add3(add4(add5(5)))))
+```
+
+The function was just being built up, not invoked — the call happens after the iteration ends and `reduce` returns the function, which then executes.
+
+After the fifth iteration above, the reducer returns the result of executing the function — it reduces (resolves) like this:
+
+```
+1: add1(add2(add3(add4(add5(5)))))
+2: add1(add2(add3(add4(10)))
+3: add1(add2(add3(14)))
+4: add1(add2(17))
+5: add1(19)
+6: // 20
+```
+
+We clearly see functions returning and calling functions — a function that calls a function, a function that returns another function, a.k.a. a Higher-Order Function (HOF).
+
+So the result of this call is `20`.
+
+## 5 + 5 = 10 + 4 = 14 +3 = 17 + 2 = 19 + 1 = 20
+
+There you go! All of this for that! lol.
+
+The hardest part is understanding the flow of `reduce` inside an array of functions, and the worst part is that it returns a function — which feels a bit magical and is tricky to debug.
+
+Now things get a lot clearer when using some famous libs and even when designing your own systems. This function leans heavily on functional programming concepts — you can see it's very declarative, it just gets things done without you giving lots of imperative instructions on how.
+
+It's tricky and takes a while to grasp at first, but you'll internalize it. I wrote this precisely to nail down the concept myself, share what I've been learning, and get some feedback.
+
+Thanks for reading — if you liked it, drop some claps!

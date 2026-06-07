@@ -22,9 +22,9 @@ Execution policy:
 
 ## Reference baseline (3 latest posts)
 
-- `content/posts/new-website-visual-identity-agentic-futurism-en.mdx`
-- `content/posts/nova-identidade-visual-website-blog-pt-br.mdx`
-- `content/posts/tenho-mais-medo-do-arrependimento-do-que-de-quebrar-a-cara.mdx`
+- `content/posts/2026-06-09-best-programming-language-for-llm-agents-en.mdx`
+- `content/posts/2026-06-09-qual-a-melhor-linguagem-de-programacao-para-agentes-de-ia-pt-br.mdx`
+- `content/posts/2026-06-07-the-harness-is-the-product-en.mdx`
 
 ## Output contract
 
@@ -121,14 +121,31 @@ above ~300 KB and fall back to the site favicon. To avoid that:
 
 ## Naming conventions
 
+Every file name starts with the post `date` (ISO `YYYY-MM-DD`), then the slug, then the language suffix. The date prefix keeps `content/posts/` sorted chronologically at a glance. The file name does **not** affect the URL slug (that comes from frontmatter), so the prefix is purely organizational.
+
 Prefer:
-- `tema-do-post-pt-br.mdx`
-- `post-topic-en.mdx`
+- `YYYY-MM-DD-tema-do-post-pt-br.mdx`
+- `YYYY-MM-DD-post-topic-en.mdx`
+
+Both files of a bilingual pair use the **same date prefix** (they are the same article).
 
 Avoid:
+- a file without the date prefix
 - mixed language slugs
 - uppercase letters
 - vague slugs like `new-post.mdx`
+
+## One post per day (date rule)
+
+Each calendar day holds **at most one article** (a bilingual pair counts as one, since both share a `translationKey`). This includes drafts (`published: false`): a draft still reserves its day.
+
+Before setting `date`, pick a day that no other post already uses. Check with:
+
+```sh
+grep -rhoE '^date: "[0-9-]+"' content/posts | sort | uniq -d   # must print nothing
+```
+
+For a brand-new post, the simplest safe choice is the first free day at or after today. Both files of the pair get that same date, and both file names get that same `YYYY-MM-DD` prefix.
 
 ## Examples
 
