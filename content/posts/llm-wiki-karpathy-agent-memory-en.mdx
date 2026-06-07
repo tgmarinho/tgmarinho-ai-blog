@@ -47,15 +47,15 @@ Humans abandon wikis because that cost grows faster than the value. The LLM does
 
 ### The bridge to agent memory
 
-This is where the idea connected to something I have been seeing. **Fabio Akita** wrote a piece tying Karpathy's LLM Wiki straight to the problem of **agent memory**.
+This is where the idea connects to something I have been seeing. **Fabio Akita** wrote a piece tying Karpathy's LLM Wiki straight to the problem of **agent memory**.
 
-The logic: every agent (Codex CLI, opencode, Claude Code) hits the context limit and solves it with *compaction*, that is, it compresses the conversation into a summary when the buffer fills up. It works, but long-term memory dies with the session, and a compressed summary is **fragile**: without reindexing and active management, it degrades fast.
+The logic from Akita's first article is simple: coding agents such as Codex CLI, opencode, and Claude Code eventually hit the context limit and rely on *compaction*, that is, they compress the conversation into a summary when the buffer fills up. It works inside a session, but anything not written somewhere durable dies with the session. And a compressed summary is **fragile**: without reindexing and active management, it degrades fast.
 
 Karpathy's wiki is an answer to that. It is not just compressing, it is **systematically managing** what stays.
 
-That is why Akita's follow-up on `ai-memory` is worth reading next. The first article explains the idea. The second one shows where the idea breaks or survives when you try to make coding agents use it every day.
+The sequence matters. Karpathy gives the pattern: compile knowledge into a maintained wiki. Akita's first article maps that pattern onto agent memory and `agentmemory`. His follow-up on `ai-memory` then shows where that stack breaks or survives when coding agents use it every day.
 
-Akita did not stop at theory. He had recommended `agentmemory` (a mature open source project, in TypeScript, that captures every agent interaction through hooks, runs hybrid BM25 + vector + graph search, and exposes it all over MCP), hit real limits in daily use (slow BM25 reindexing on every restart, timeouts during persistence), and ended up writing his own system: `ai-memory`, a successor in **Rust**, built on Karpathy's LLM Wiki. The design is the interesting part, because it implements the idea almost literally:
+Akita did not stop at theory. He had recommended `agentmemory` (a popular open source project, mostly in TypeScript, that captures agent activity through hooks, runs hybrid BM25 + vector + graph search, and exposes memory over MCP), hit real limits in daily use (slow BM25 reindexing on restart, persistence timeouts, and hook/config edge cases), and ended up writing his own system: `ai-memory`, a successor in **Rust**, built on Karpathy's LLM Wiki. The design is the interesting part, because it implements the idea almost literally:
 
 - **A git-versioned markdown wiki as the single source of truth.** At the end of each session, the system compiles its observations into markdown pages. It is Karpathy's LLM Wiki turned into code: a `wiki/` directory (the synthesis), a `raw/` one (the immutable log), and a `db/` one (the index).
 - **Multi-layer retrieval:** FTS5 (full-text, in SQLite) plus graph neighborhood plus vector reranking, fused with RRF (Reciprocal Rank Fusion).
