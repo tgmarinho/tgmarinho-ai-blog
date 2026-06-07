@@ -101,6 +101,9 @@
     "source": "source",
     "live": "live",
     "items": {
+      "print3d": {
+        "description": "Internal management system for an on-demand 3D printing studio. Client registry, filament stock control per location with low-stock alerts, a drag-and-drop production queue with status tracking, payment status, and a full audit log. Real-time sync across devices via Supabase, with a mobile-first interface built for the shop floor."
+      },
       "itop": {
         "description": "Multi-tenant SaaS in production for managing large Legendários events — registrations, payments (PIX/card with webhook reconciliation), QR Code check-in, contract generation with biometric digital signature, boarding plan, and real-time dashboards. Processes real money, real events, and hundreds of participants in production. Predecessor of inscricoestop.com.br before the pivot."
       },
