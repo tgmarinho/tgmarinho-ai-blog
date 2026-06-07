@@ -146,7 +146,7 @@
         "description": "Sistema de gestão interno para um estúdio de impressão 3D sob demanda. Cadastro de clientes, controle de estoque de filamento por local com alertas de baixa quantidade, fila de produção com arrastar e soltar e acompanhamento de status, status de pagamento e um log de auditoria completo. Sincronização em tempo real entre dispositivos via Supabase, com interface mobile-first feita para o chão de fábrica."
       },
       "itop": {
-        "description": "SaaS multi-tenant em produção para gestão de grandes eventos dos Legendários — inscrições, pagamentos (PIX/cartão com reconciliação por webhook), check-in via QR Code, geração de contratos com assinatura digital biométrica, plano de embarque e dashboards em tempo real. Processa dinheiro real, eventos reais e centenas de participantes em produção. Antecessor do inscricoestop.com.br antes do pivot."
+        "description": "SaaS multi-tenant em produção para gestão de grandes eventos dos Legendários: inscrições, pagamentos (PIX/cartão com reconciliação por webhook), check-in via QR Code, geração de contratos com assinatura digital biométrica, plano de embarque e dashboards em tempo real. Processa dinheiro real, eventos reais e centenas de participantes em produção. Antecessor do inscricoestop.com.br antes do pivot."
       },
       "unicrow": {
         "description": "Plataforma Web3 de escrow na Ethereum. Contribuí no SDK, indexador blockchain e integrações com smart contracts. SDK em TypeScript pronto para produção que transformou semanas de onboarding em um setup no mesmo dia."
