@@ -21,6 +21,27 @@ type Project = {
 
 const projects: Project[] = [
   {
+    key: "print3d",
+    title: "3D Print Management System",
+    status: "open-source",
+    year: "2026",
+    highlight: true,
+    tags: [
+      "Next.js 16",
+      "React 19",
+      "TypeScript",
+      "Supabase",
+      "Tailwind v4",
+      "shadcn/ui",
+      "dnd-kit",
+      "PostgreSQL",
+      "RLS",
+      "Realtime",
+      "Bun",
+    ],
+    github: "https://github.com/tgmarinho/3d-print-management-system",
+  },
+  {
     key: "itop",
     title: "iTOP — Inscrições TOP",
     status: "shipped",
