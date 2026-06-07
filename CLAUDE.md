@@ -102,7 +102,8 @@ For any request like "criar post", "novo artigo", "post em inglês/PT", or "vers
 1. Use the project skill (`blog-post-bilingual`) as the default and mandatory workflow.
 2. Follow repository MDX/frontmatter conventions.
 3. **Always request/create a contextual cover image** and set `image` in frontmatter.
-4. Run `bun velite` after writing/editing posts.
+4. **Use English for any text embedded inside blog images**, including covers, diagrams, OG images, and social previews, even for pt-BR posts. Article copy and alt text remain localized unless the human explicitly asks for image text in another language.
+5. Run `bun velite` after writing/editing posts.
 
 ### Daily journal policy (security — non-negotiable)
 
