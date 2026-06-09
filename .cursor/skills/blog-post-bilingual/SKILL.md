@@ -105,6 +105,34 @@ above ~300 KB and fall back to the site favicon. To avoid that:
 1. **Never use em dashes (`—`) or en dashes (`–`) for emphasis or asides**, in either language. Restructure with a comma, colon, parentheses, or a period. Don't just swap `—` for a hyphen; rewrite so it reads naturally. The em dash is a recognizable LLM tell, and in 2026 readers carry a bias against it because AI overuses it; avoiding it keeps the prose from reading as machine-written.
 2. **English content stays in plain English:** short sentences, common words, active voice. The pt-BR may be a touch more expressive; the EN stays simple.
 
+## SEO + GEO (search engines and AI engines)
+
+Every post must be written to rank on Google **and** to be cited by AI engines
+(ChatGPT, Perplexity, Claude, Gemini, Google AI Overviews). The acronym for
+the latter is **GEO** (Generative Engine Optimization); related terms are AEO
+(Answer Engine Optimization) and LLMO. The repository already emits JSON-LD
+`BlogPosting`, OpenGraph, hreflang, and `llms.txt`, so the leverage is in the
+**copy itself**. Apply these four rules to both language versions:
+
+1. **Answer-first opening.** The first paragraph must answer the title in 2-3
+   sentences, standalone, no preamble. This is the passage AI engines quote and
+   Google lifts as a snippet. Bury the lede and you lose the citation.
+2. **Headings as questions.** Prefer `## How do you X?` / `## Como fazer X?`
+   over noun-phrase headings. Matches voice search and AI Overview extraction.
+3. **Bold the key term, not the sentence.** One `**term**` per paragraph, on the
+   concept/entity (`**Server Components**`, `**RAG**`), never on a whole clause.
+   AI engines treat bolded entities as extractable facts; more than ~2 per
+   paragraph reads as keyword stuffing to Google. Bold the definition right after
+   introducing a term (`**X** is ...` / `**X** é ...`), a pattern AEO favors.
+4. **Extractable structure.** Use lists and tables for any enumerable content,
+   and close with a short TL;DR / resumo. These formats are the easiest for LLMs
+   to lift and reuse verbatim.
+
+**Description field = meta description.** Write `description` at 150-160 chars,
+leading with the primary keyword and an action verb. It is what Google shows and
+what AI engines read as the summary. Keep `categories` tight and keyword-bearing:
+they populate both the page `keywords` meta tag and the JSON-LD `keywords`.
+
 ## Workflow
 
 ```txt
@@ -112,6 +140,8 @@ above ~300 KB and fall back to the site favicon. To avoid that:
 - [ ] Define shared outline (4-8 sections)
 - [ ] Write pt-BR version first
 - [ ] Write English version with same structure
+- [ ] Apply the four SEO+GEO rules (answer-first, question headings, key-term bold, extractable structure)
+- [ ] Write keyword-bearing description (150-160 chars) and tight categories
 - [ ] Create/generate contextual cover image
 - [ ] Set same translationKey in both files
 - [ ] Validate frontmatter fields and categories
