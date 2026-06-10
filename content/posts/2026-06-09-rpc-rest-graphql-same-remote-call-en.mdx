@@ -1,0 +1,131 @@
+---
+title: "RPC, REST and GraphQL: the same remote call with different interfaces"
+description: "In a fullstack TypeScript web app, REST, GraphQL and RPC/tRPC look like three different worlds. But all three serialize data, send it over HTTP and read the response back. They all live on OSI layer 7. What changes is not how remote the call is, it is the mental interface at the top, and the price each abstraction charges. With the tRPC vs Server Action contrast on the same create."
+date: "2026-06-09"
+published: true
+slug: "rpc-rest-graphql-same-remote-call-en"
+language: "en"
+translationKey: "rpc-rest-graphql-remote-call"
+categories: ["rpc", "graphql", "rest", "typescript", "architecture", "en"]
+image: "/images/blog/rpc-rest-graphql-osi-cover.svg"
+---
+
+Every "REST vs GraphQL vs RPC" debate starts wrong, as if they were three rival technologies fighting over which one is more modern. They are not. Under the hood all three do the same thing: they serialize data, send it over HTTP across the network, and read a response back. None is more remote than the others.
+
+The browser does not run server code. No database access, no secret keys. The real work happens on the server, and any of these three interfaces exists to bridge that gap. The only difference is the **mental interface at the top**, and the price each abstraction charges.
+
+This post grew out of a string of real questions about a fullstack TypeScript app (Next.js plus tRPC), while I was drawing the line between client and server. I will follow the same trail.
+
+### RPC: the abstraction that hides the fetch
+
+RPC means Remote Procedure Call. The idea is to call a function that runs on **another machine** as if it were local.
+
+```ts
+// WITHOUT RPC: plumbing by hand, untyped return
+const res = await fetch("/api/orders", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ eventId, qty }),
+});
+const order = await res.json(); // type "any"
+
+// WITH RPC (tRPC): looks like a local function, typed return
+const order = await api.order.create.mutate({ eventId, qty });
+```
+
+RPC only **hid** the `fetch`, the `JSON.stringify` and the `parse`. Underneath, it is still HTTP. That is the key to the rest of this post: the remote call does not vanish, it just puts on more comfortable clothes.
+
+### The three, side by side: the interface changes, not the transport
+
+REST, GraphQL and RPC/tRPC are all remote calls over HTTP. What changes is how you **think** about the call:
+
+| | How you think | Underneath |
+|---|---|---|
+| **REST** | resources and verbs (`POST /orders`) | HTTP |
+| **GraphQL** | a query over a graph (`{ order { id } }`) | HTTP (1 endpoint) |
+| **RPC/tRPC** | calling a function (`order.create()`) | HTTP |
+
+REST thinks in nouns and verbs: you act on resources (`/orders`, `/users`) with methods (`GET`, `POST`, `DELETE`). GraphQL thinks in a graph: one endpoint, and a query describes the exact fields you want, which avoids over-fetching. RPC thinks in a direct verb: you call the action (`order.create`) and the transport leaves your head.
+
+These are three ways to organize the same conversation. It is not a ladder of evolution. It is a choice of interface.
+
+### The price of each abstraction
+
+No choice is free. The difference that matters most in a fullstack TypeScript app:
+
+- **REST and GraphQL are language-agnostic.** The server can be Go, the client can be Swift, and the contract (OpenAPI, the GraphQL schema) works for anyone. It is the right call when many different consumers hit your API.
+- **tRPC is coupled to TypeScript.** The client imports the server **type** directly, with no code generation and no intermediate schema. You trade universality for end-to-end type-safety for free. In a monorepo where front and back both speak TypeScript, that is a big speed lever.
+
+Notice what this means: the tRPC type-safety is a compile-time thing. After the build the type is erased, and what travels is plain JSON, the same as REST. That is why tRPC still validates the input at runtime with Zod. The type protects you while you write the code; Zod protects you when the request arrives.
+
+### Where all of this lives: OSI layer 7
+
+Here is where the piece clicks. REST, GraphQL and tRPC all live on **layer 7 (Application)** of the OSI model. Everything below is identical across the three. That is why the RPC abstraction works: it only swaps the interface at the top, and the whole stack underneath stays the same.
+
+| # | Layer | Example in a serverless stack | Do you touch it? |
+|---|---|---|---|
+| 7 | Application | **HTTP** plus REST/GraphQL/tRPC, webhooks | always |
+| 6 | Presentation | **TLS**, JSON/superjson, gzip/brotli | indirect |
+| 5 | Session | TLS handshake, keep-alive, connection reuse | rarely |
+| 4 | Transport | **TCP :443** (browser to app), **TCP :5432** (app to db), pooling | the db pool |
+| 3 | Network | the user **IP** (`x-forwarded-for`), Edge Anycast | `remoteIp` |
+| 2 | Data link | Ethernet/MAC inside the datacenter | no |
+| 1 | Physical | fiber, radio, hardware | no |
+
+Swapping REST for GraphQL for tRPC touches **only layer 7**. The TCP, the TLS, the connection pooling with the database, none of it moves. Once you see that the whole debate happens on a single floor of the building, it stops looking like a war of technologies and becomes what it is: a choice of vocabulary.
+
+And serverless does not change the layers, it changes who runs them. On a VPS you handled Nginx (7), TLS (6), ports and firewall (4/3). On serverless, layers 1 to 6 belong to the platform; you stay on 7 (the logic) and a slice of 4 (the database pool). That is what people call "zero-ops".
+
+### In the fullstack TypeScript app: tRPC vs Server Action
+
+In Next.js this gets interesting, because the framework has its **own native RPC**: Server Actions. A Server Action also hides the HTTP behind what looks like a function call. So the natural question is: if a Server Action is already RPC, why use tRPC?
+
+The answer is what comes **bundled** with each one. Look at the same `create` both ways.
+
+With tRPC, auth, validation and org scoping are declarative:
+
+```ts
+create: protectedProcedure                       // AUTH for free
+  .input(z.object({ orgSlug, eventId, code }))   // declarative VALIDATION
+  .mutation(async ({ ctx, input }) => {
+    const { org } = await requireOrgMember(ctx, input.orgSlug, ADMIN_ROLES);
+    // from here on, only business logic
+    return ctx.db.coupon.create({ data: { /* ... */ } });
+  }),
+```
+
+With a Server Action, all of that is by hand, every single time:
+
+```ts
+"use server";
+export async function createCoupon(raw: unknown) {
+  const parsed = schema.safeParse(raw);              // 1. validation by hand
+  if (!parsed.success) return { ok: false };
+  const session = await auth();                      // 2. auth by hand
+  if (!session?.user) return { ok: false };
+  const member = await db.member.findUnique({ /*...*/ }); // 3. org scoping by hand
+  if (!member || !hasRole(member.role, ADMIN_ROLES)) return { ok: false };
+  // only now the business logic
+}
+```
+
+The danger is concrete: in a Server Action, forgetting the auth or org-scoping block **compiles and ships to production**. It becomes a hole where one organization reads another one's data. In tRPC, `protectedProcedure` and `requireOrgMember` are explicit and consistent across every route.
+
+This is not "tRPC is better." It is knowing what each one charges:
+
+- **tRPC** shines the more permission rules and multi-tenant logic you have. It also gives you the read layer with client-side cache (TanStack Query).
+- **Server Action** shines on simple forms, with no org and no role (newsletter, contact), where the tRPC ceremony is overhead and the native form's progressive enhancement is a win.
+
+The rule I use: tRPC as the backbone of the data API (protected queries and mutations), Server Actions for the occasional simple form. Mixing them is healthy.
+
+### The practical rule
+
+> Do not pick REST, GraphQL or RPC by fashion. Pick the interface by the shape of the problem, and remember the transport is the same in all three.
+
+If your API is consumed by many clients in different languages, REST or GraphQL pay off with a universal contract. If it is a fullstack TypeScript app in a monorepo, tRPC gives you end-to-end type-safety with no codegen. And whatever you pick, remember it all happens on layer 7: RPC does not get you closer to the server, it just hides the `fetch` with more polish.
+
+The "which one is better" debate is almost always someone selling the interface they happen to know. The grown-up question is different: who consumes this API, in what language, and how much is automatic type-safety worth to your team?
+
+---
+
+**TL;DR:** REST, GraphQL and RPC/tRPC are the same remote call over HTTP, all on OSI layer 7; what changes is the mental interface (resource, graph, function) and the price (REST/GraphQL are language-agnostic; tRPC trades that for automatic type-safety coupled to TypeScript). In a fullstack TS app, tRPC and Server Action are both RPC: tRPC wins when there are permissions and multi-tenant rules, Server Action wins on simple forms. Swapping the interface touches only the top of the stack; the TCP, the TLS and the pooling stay the same.
