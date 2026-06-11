@@ -143,6 +143,9 @@ Rules:
 
 - **Never use em dashes (`—`) or en dashes (`–`) for emphasis or asides in prose.** This is a recognizable LLM tell, and in 2026 readers carry a bias against it precisely because AI overuses the em dash. Restructure the sentence with a comma, colon, parentheses, or a period. Don't just swap `—` for a hyphen; rewrite so it reads naturally.
 - **English content uses plain English:** short sentences, common words, active voice.
+- **Professional, concise, direct tone:** less is more. Remove jokes, filler, "cute" phrasing, war-story padding, and sentences that do not add diagnosis, context, decision, or action. Keep the narrative useful, not theatrical.
+- **Define non-obvious acronyms on first use:** avoid acronym-only titles for terms that a broader technical audience may not know. Prefer "Out Of Memory" over "OOM" in titles and first mentions, then use the acronym only if it improves readability.
+- **Show the applied fix:** for debugging or incident posts, state exactly what fixed or temporarily stabilized the issue. Include the relevant command, config, flag, or setting. Do not end with vague future plans unless the human explicitly asks for roadmap framing.
 
 ### Required project skills for blog authoring
 
@@ -159,6 +162,8 @@ Mandatory behavior enforced by the skills:
 3. **Always request/create a contextual cover image** and set `image` in frontmatter.
 4. **Any text embedded inside generated or selected blog images must be in English**, including covers, diagrams, OG images, and social previews, even when the post is pt-BR. Localize the article copy and alt text, not the image text, unless the human explicitly requests another language.
 5. For bilingual posts, share the same `translationKey` (and same image by default).
+6. Keep both language versions aligned in tone, structure, conclusion, and practical fix details.
+7. Prefer JPG covers at 1200×630. Target under 300 KB when possible, but never exceed 600 KB because OpenGraph/social previews may drop large images.
 
 ---
 

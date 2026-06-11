@@ -63,3 +63,6 @@ categories: ["ai", "software-engineering", "en"]
 - Same slug for both languages
 - Different section order between PT and EN (without reason)
 - Categories missing `pt-br` or `en`
+- Acronym-only title when the term is not obvious to a broader technical audience
+- Long anecdotal openings before the answer or diagnosis
+- Conclusions that mention a future plan but do not show the fix applied in the incident
