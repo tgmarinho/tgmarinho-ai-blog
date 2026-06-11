@@ -37,6 +37,7 @@ Both must:
 - keep equivalent section structure
 - use localized title/description (not literal line-by-line translation)
 - include contextual cover image in frontmatter
+- keep equivalent tone, conclusion, and practical fix details
 
 ## Frontmatter rules
 
@@ -84,14 +85,14 @@ above ~300 KB and fall back to the site favicon. To avoid that:
 1. **Format:** prefer `.jpg` (quality 82–85) over `.png` for photographic /
    AI-generated covers. Only use `.png` when transparency is required.
 2. **Dimensions:** exactly **1200×630** (1.91:1 OG ratio).
-3. **Target size:** **< 300 KB**. Hard ceiling 500 KB.
+3. **Target size:** **< 300 KB** when possible. **Hard ceiling: 600 KB.**
 4. After generating, verify with `ls -lh` and `sips -g pixelWidth -g pixelHeight`.
    If oversized, recompress:
    ```sh
    sips -z 630 1200 --setProperty format jpeg --setProperty formatOptions 85 \
      input.png --out public/images/blog/<slug>-cover.jpg
    ```
-5. Never commit cover PNGs larger than 500 KB.
+5. Never commit blog cover images larger than 600 KB.
 
 ## Localization rules
 
@@ -99,11 +100,14 @@ above ~300 KB and fall back to the site favicon. To avoid that:
 2. Keep same narrative arc across both versions.
 3. Preserve technical terms when standard (`RAG`, `MCP`, `typecheck`, etc.).
 4. Adapt idioms and tone naturally for each language.
+5. Define non-obvious acronyms on first use. Avoid acronym-only titles when a broader technical audience may not know the term. Prefer "Out Of Memory" over "OOM" in titles and first mentions, then use the acronym only when it improves readability.
 
 ## Writing style (non-negotiable)
 
 1. **Never use em dashes (`—`) or en dashes (`–`) for emphasis or asides**, in either language. Restructure with a comma, colon, parentheses, or a period. Don't just swap `—` for a hyphen; rewrite so it reads naturally. The em dash is a recognizable LLM tell, and in 2026 readers carry a bias against it because AI overuses it; avoiding it keeps the prose from reading as machine-written.
 2. **English content stays in plain English:** short sentences, common words, active voice. The pt-BR may be a touch more expressive; the EN stays simple.
+3. **Professional, concise, direct tone:** less is more. Remove jokes, filler, "cute" phrasing, war-story padding, and sentences that do not add diagnosis, context, decision, or action.
+4. **Debugging posts must show the applied fix:** state exactly what fixed or temporarily stabilized the issue. Include the relevant command, config, flag, or setting. Do not end with vague future plans unless the human explicitly asks for roadmap framing.
 
 ## SEO + GEO (search engines and AI engines)
 
@@ -140,9 +144,13 @@ they populate both the page `keywords` meta tag and the JSON-LD `keywords`.
 - [ ] Define shared outline (4-8 sections)
 - [ ] Write pt-BR version first
 - [ ] Write English version with same structure
+- [ ] Remove filler and make both versions professional, concise, and direct
+- [ ] Define non-obvious acronyms on first use
+- [ ] For debugging posts, include the exact applied fix or temporary mitigation
 - [ ] Apply the four SEO+GEO rules (answer-first, question headings, key-term bold, extractable structure)
 - [ ] Write keyword-bearing description (150-160 chars) and tight categories
 - [ ] Create/generate contextual cover image
+- [ ] Convert cover to 1200×630 JPG, target under 300 KB and never above 600 KB
 - [ ] Set same translationKey in both files
 - [ ] Validate frontmatter fields and categories
 - [ ] Save both files in content/posts/

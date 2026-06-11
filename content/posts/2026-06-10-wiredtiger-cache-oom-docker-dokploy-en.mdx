@@ -1,0 +1,140 @@
+---
+title: "Deploy cancelled by Out Of Memory: WiredTiger cache in containers"
+description: "A Dokploy deploy stopped during the Next.js build and was cancelled without a clear error. The cause was memory pressure: two MongoDB instances in containers calculated their WiredTiger cache from the VPS RAM, not from an isolated container limit."
+date: "2026-06-10"
+published: true
+slug: "wiredtiger-cache-oom-docker-dokploy-en"
+language: "en"
+translationKey: "wiredtiger-cache-oom-containers"
+image: "/images/blog/wiredtiger-cache-oom-docker-dokploy-cover.jpg"
+categories: ["mongodb", "docker", "devops", "infrastructure", "en"]
+---
+
+The frontend deploy ran almost to the end and stopped at the build step:
+
+```text
+#17 [builder 4/4] RUN npm run build
+#17    ▲ Next.js 15.5
+#17    Creating an optimized production build ...
+<process terminated>
+```
+
+No compilation error. No stack trace. `next build` simply disappeared, and Dokploy marked the deploy as cancelled.
+
+That pattern usually points to **Out Of Memory**. The kernel terminates the process because the host is out of memory, and the build has no chance to print a useful error.
+
+### The problem was not Dokploy
+
+Dokploy was only triggering `docker build`. The issue was the memory available before the build started.
+
+At rest, with no build running, the 8 GB VPS already showed:
+
+```text
+Memory: 6.17 GB / 7.56 GB used (~82%)
+```
+
+The baseline already used most of the RAM. When `next build` started, the system had no margin left.
+
+```bash
+free -h
+#                total        used        free      available   Swap
+# Mem:           7.6Gi       7.3Gi       113Mi       294Mi       0B
+```
+
+Only 294 MB was available, with no swap. The key question was: what was consuming that much memory at rest?
+
+### The cause: two MongoDB instances and two WiredTiger caches
+
+The VPS ran production and staging on the same machine: two Next.js apps, two MongoDB instances and Dokploy. The largest memory consumers were the MongoDB instances.
+
+MongoDB uses WiredTiger as its default storage engine. It keeps frequently used data and indexes in an internal RAM cache. By default, that cache is calculated like this:
+
+```text
+max(50% of (RAM - 1GB), 256MB)
+```
+
+On an 8 GB machine, each `mongod` tends to configure:
+
+```text
+0.5 * (8 - 1) = 3.5 GB
+```
+
+Each MongoDB instance had roughly **3.5 GB** of cache. With two instances, the intended cache reached **7 GB** on a VPS that also had to run applications, Dokploy and builds.
+
+That default only makes sense when there is one `mongod` instance on the machine. With multiple instances, the cache should be set explicitly.
+
+### The container detail
+
+The formula depends on the RAM that `mongod` can see. In Docker, if the container has no memory limit, it may see the full host RAM.
+
+In practice, each container calculated the cache as if it could use the whole VPS. The result was predictable: two instances targeting 3.5 GB each, plus the rest of the stack.
+
+There is another important detail: besides the internal WiredTiger cache, MongoDB also benefits from the operating system filesystem cache. Real memory usage can exceed the configured WiredTiger cache value.
+
+### How to diagnose
+
+Before changing configuration, confirm the hypothesis.
+
+```bash
+# RAM seen by mongod
+docker exec <mongo-container> mongosh --quiet \
+  --eval "db.hostInfo().system.memLimitMB"
+
+# WiredTiger configured cache
+docker exec <mongo-container> mongosh --quiet \
+  --eval "(db.serverStatus().wiredTiger.cache['maximum bytes configured']/1024/1024/1024).toFixed(2) + ' GB'"
+
+# actual container usage
+docker stats --no-stream
+```
+
+To confirm Out Of Memory on the host:
+
+```bash
+dmesg | grep -i -E "killed process|out of memory" | tail
+# Killed process 12345 (node) total-vm:...
+```
+
+If `memLimitMB` is close to the full host RAM and WiredTiger shows around 3.5 GB in each instance, the cause is clear.
+
+### The temporary fix
+
+Set the cache for each `mongod` explicitly:
+
+```yaml
+# production
+command: ["mongod", "--wiredTigerCacheSizeGB", "1.5"]
+
+# staging
+command: ["mongod", "--wiredTigerCacheSizeGB", "0.75"]
+```
+
+The intended cache changes from:
+
+```text
+before: 3.5 GB (prod) + 3.5 GB (staging) = 7.0 GB
+after:  1.5 GB (prod) + 0.75 GB (staging) = 2.25 GB
+```
+
+Also set a memory limit on each container. The WiredTiger cache should be lower than the memory actually available to the container, not based on total host RAM.
+
+This is how I stabilized the deploy in the short term: I reduced the WiredTiger cache in each MongoDB instance so it fit within the VPS budget, then added swap as protection against spikes. It does not solve the architecture permanently, but it prevents the two MongoDB instances from consuming almost all RAM before the build starts.
+
+As an emergency measure, add swap. It does not replace the cache fix, but it reduces the chance of the kernel killing the build during spikes.
+
+```bash
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+sudo sysctl vm.swappiness=10   # use only under pressure
+```
+
+### Conclusion
+
+The temporary fix was straightforward: limit WiredTiger cache, set container memory limits and keep swap as protection.
+
+The architectural decision matters more: this incident exists because the database is self-hosted on a shared VPS. Moving it to a managed service removes this class of problem from the application.
+
+In practice, what fixed the deploy was reducing memory pressure before the build: `--wiredTigerCacheSizeGB` on each `mongod` and swap to absorb spikes.
