@@ -32,6 +32,7 @@ export const navLinks = [
   { href: "/about", key: "about" },
   { href: "/cv", key: "cv" },
   { href: "/projects", key: "projects" },
+  { href: "/ask", key: "ask" },
   { href: "/blog", key: "blog" },
   { href: "/daily", key: "daily" },
   { href: "/community", key: "community" },
