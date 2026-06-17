@@ -66,3 +66,7 @@ categories: ["ai", "software-engineering", "en"]
 - Acronym-only title when the term is not obvious to a broader technical audience
 - Long anecdotal openings before the answer or diagnosis
 - Conclusions that mention a future plan but do not show the fix applied in the incident
+- Blog covers that explain the whole idea with paragraphs inside the image
+- Architecture diagrams with text placed on 3D cube faces or tilted surfaces
+- Labels crossed by connector lines, perspective edges, glow trails, or object borders
+- Images that look acceptable as standalone files but become cramped or unreadable inside the blog layout
