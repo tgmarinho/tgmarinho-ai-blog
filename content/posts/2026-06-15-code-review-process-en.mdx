@@ -1,0 +1,221 @@
+---
+title: "Code review process: how to review code without blocking the team"
+description: "Code review process improves quality without blocking the team: prepare small PRs, review risk, separate blockers from suggestions, and keep a clear flow."
+date: "2026-06-15"
+published: true
+slug: "code-review-process"
+language: "en"
+translationKey: "code-review-process"
+categories: ["software-engineering", "code-review", "team-process", "quality", "en"]
+image: "/images/blog/code-review-process-cover.jpg"
+---
+
+A good **code review process** protects the product, the team, and the future maintainability of the codebase. It reduces risk without turning every pull request into an endless async meeting. It also makes clear what the author must provide, what the reviewer must check, and which problems truly block merge.
+
+I do not see code review as just finding bugs. I see it as a quality checkpoint for behavior, readability, edge cases, tests, and shared understanding. The goal is not to prove who is right. It is to improve the code without making the author feel attacked.
+
+Code review works best when it becomes a small repeatable contract. The author shows intent, scope, evidence, and risk. The reviewer looks for contract failures, regressions, security issues, data leaks, observability gaps, maintainability problems, and fit with the codebase patterns. Everything else should be treated as a suggestion, not a veto.
+
+I also believe everyone should review code, not only senior people. Review is one of the fastest ways to understand what is happening in the codebase, the project, and the product. The reviewer learns architecture, business rules, scope decisions, and the team's real patterns. The author also teaches, because they explain intent, context, and trade-offs.
+
+## What should code review validate?
+
+The **review** should validate whether the change can reach production with known risk. That is not the same as rewriting code in the reviewer's style.
+
+Use this mental order:
+
+| Question | What to look for |
+|---|---|
+| Was the right problem solved? | The PR matches the issue, bug, or technical decision |
+| Did something others depend on change? | API, schema, event, route, permission, visible copy |
+| Was the risk covered? | Tests, safe logs, fallback, rollback, migration |
+| Is future reading acceptable? | Names, ownership boundaries, removal of real duplication |
+| Were codebase rules respected? | Local patterns, lint, types, folder structure, test conventions |
+| Is the scope controlled? | No side refactor, no surprise behavior change |
+
+If the answer to one of these questions is "no", the comment can block merge. If it is only local preference, it should be a suggestion.
+
+## How should the author prepare a good pull request?
+
+The author is responsible for making the **pull request** reviewable. A good PR lowers cognitive load before anyone opens the diff.
+
+Always include:
+
+- **Intent:** what changes and why.
+- **Scope:** what was left out on purpose.
+- **Evidence:** test run, screenshot, short video, log, preview link, or reason for not testing.
+- **Risk:** migration, permission, data, performance, cache, SEO, accessibility, or compatibility.
+- **Rollback plan:** how to undo or stabilize if something fails.
+
+Depending on the PR and the feature, visual evidence matters a lot. If the change affects a screen, empty state, form, checkout flow, dashboard, loading state, error state, or responsiveness, add a screenshot or a short video showing the result. This reduces review back-and-forth, helps reviewers who did not run the project locally, and records which behavior was validated.
+
+Also keep the diff clean. If the linter or formatter changed indentation, quotes, imports, or line breaks in files that are not part of the change, split that into another PR or revert it before requesting review. The reviewer needs to see what is behavior change and what is just mechanical noise.
+
+Size matters too. A small PR is not morally better. It is technically cheaper to review. When the change grows too much, split it by contract: schema first, backend next, UI next, cleanup last.
+
+## How should the reviewer read the diff without becoming a bottleneck?
+
+The reviewer should start with the **intent**, not with style. First understand why the change exists. Then look for behavior changes, type safety, error handling, edge cases, and test coverage. Only after that, look at readability and whether the solution fits the existing patterns of the codebase.
+
+A practical sequence:
+
+1. Read the PR description and find the declared risk.
+2. Understand the intent of the change before judging the solution.
+3. Open the tests or evidence before the implementation.
+4. Read the entry point: route, handler, action, job, component, or migration.
+5. Follow the data path to the final effect.
+6. Only then review names, small extractions, and formatting.
+
+This order avoids a common failure: spending energy on cosmetic detail while missing a permission bug, data leak, or contract break.
+
+## Which comments should block merge?
+
+A comment blocks when it points to a **production failure** or a real evidence gap. A blocker is not an aesthetic disagreement.
+
+Good reasons to block:
+
+- Missing authentication, authorization, or multi-tenant isolation.
+- Possible data loss, corruption, or exposure.
+- Sensitive information leaking through logs, events, errors, analytics, or API responses.
+- Migration with no rollback path or no compatibility.
+- Public API, event, or schema changing without versioning or communication.
+- Missing test for critical business logic.
+- Clear performance, accessibility, SEO, or observability regression.
+- Code that compiles but contradicts the stated intent of the PR.
+- Lint, formatting, or indentation changes mixed with a feature when they hide the real diff.
+
+Weak reasons to block:
+
+- Naming preference with no real impact.
+- Pattern swap with no project rule behind it.
+- Refactor that would be nice but does not belong to the scope.
+- Request to "make it cleaner" without concrete risk.
+
+When something does not block, write it as a suggestion. That preserves speed and keeps review from becoming a taste debate.
+
+## How do you review information leaks?
+
+One of the easiest risks to underestimate in **code review** is an information leak. It does not only happen when someone exposes an API key. It also happens when code logs too much data, returns too much error detail to the client, or sends sensitive fields to analytics, queues, and observability tools.
+
+Look especially for:
+
+- Logs with tokens, cookies, authorization headers, API keys, or raw payloads.
+- `console.log`, logger calls, or error events printing whole request, user, session, or payment objects.
+- Error messages that reveal internal rules, another tenant's ID, SQL, stack traces, or file paths.
+- Analytics receiving email, phone, document ID, address, IP, or sensitive identifiers without need.
+- Webhooks, queues, or events containing more fields than the consumer needs.
+- Screenshots, fixtures, tests, or snapshots with real data.
+
+The practical question is: "If this log lands in an external tool, can someone reconstruct private information?" If the answer is yes or maybe, the comment should block merge.
+
+The safe default is to log minimum context. Prefer non-sensitive internal IDs, status, flow name, duration, counts, and a sanitized error. When you need to investigate an incident, use correlation and controlled sampling, not full payload dumps.
+
+## How do you write useful comments?
+
+A good **code review** comment shows the risk, proposes a path, and makes clear whether it is a blocker or a suggestion. It critiques the diff, not the person.
+
+Prefer this format:
+
+| Type | Example |
+|---|---|
+| Blocker | "Blocker: this mutation does not validate `orgId`. A user from another organization could try to write this record." |
+| Blocker | "Blocker: this log prints the full payment payload. It can leak sensitive data into the observability tool." |
+| Suggestion | "Suggestion: this name could be more specific, because it now represents paid orders only." |
+| Question | "Question: does this cache need to be invalidated when the status changes?" |
+| Nit | "Nit: remove log before merge." |
+
+The label changes the tone of the conversation. The author knows whether they must act before merge or whether they can accept, answer, or defer.
+
+A direct comment like "remove log" is valid when it is only a forgotten temporary `console.log`. It does not need to become a debate. When there is risk involved, the comment should explain more: what data is exposed, where it can land, and why that blocks merge.
+
+Code review is also a place to learn and teach, but it should not become an endless debate. When the thread starts getting long, when product context is missing, or when two people are discussing architecture through tiny comments, it is probably better to talk. Five minutes in a call or a short pairing session can solve what would become a long PR thread.
+
+After the conversation, come back to the PR with a short decision: what was agreed, what will change now, and what will be left for later. That keeps the history useful without turning the pull request into a chat.
+
+## How do you keep flow without losing quality?
+
+The **flow** improves when boring rules move out of conversation and into the pipeline. Humans should review risk, intent, and trade-offs. Tools should review format, lint, types, tests, and part of repeatable security.
+
+Use these practices:
+
+- Run lint, typecheck, and tests before requesting review.
+- Configure CI to block mechanical failures.
+- Even with CI, check that the code follows the codebase rules and local patterns.
+- Do not mix automatic lint or formatting changes with product changes in the same diff.
+- Define an expected first response time, for example, by the next work block.
+- Define who is responsible for answering comments, updating the PR, and carrying the change to merge.
+- Request review from the right person, not from a whole channel.
+- Use agents or review tools as a first pass, but keep a human responsible for risk.
+
+The best process is not the strictest one on every line. It is the one that catches important risks early and lets the rest move.
+
+## How do you do code review in the AI era?
+
+In the **AI** era, code review needs two layers: an automated review and a human review. Agents and specialized tools can provide a useful first pass, especially on large PRs, changes generated by coding agents, and regressions that follow repeated patterns. AI helps catch what the human eye missed, but it can also add a lot of noise to the PR if it comments on everything without priority.
+
+Tools like [CodeRabbit](https://coderabbit.ai/) and [Macroscope](https://macroscope.com/) fit well in this layer. They can summarize the PR, flag suspicious code, find inconsistencies, suggest tests, and give context so the human reviewer gets to the important parts faster.
+
+But the final decision stays human. The agent can call attention to risk, but the team understands product priority, trade-offs, team context, roadmap, support load, and maintenance cost. A healthy flow looks like this:
+
+- Agent reviews first and flags likely risks.
+- Author fixes the obvious issues before requesting human review.
+- Human reviewer reads for behavior, security, data, architecture, and product.
+- Repeated agent comments become rules, tests, lint, or docs.
+- False positives and noisy comments become instruction tuning, not a reason to ignore everything.
+
+The point is not to outsource judgment. It is to save human attention for the risks that tools still cannot decide alone.
+
+## What checklist should you use before merge?
+
+Use a short **checklist**. If it gets too long, nobody uses it.
+
+For the author:
+
+- Does the PR solve a clear intent?
+- Is the diff small enough to review?
+- Is the diff free from lint, formatting, or indentation noise outside the scope?
+- Is the evidence in the PR body?
+- If there is UI or a visual flow, is there a screenshot or short video?
+- Was the main risk declared?
+- Is the rollback or mitigation clear?
+
+For the reviewer:
+
+- Are APIs, routes, schemas, events, props, and return values that other code depends on still compatible?
+- Does the code follow the codebase rules and patterns?
+- Are permission and data isolation correct?
+- Do logs, errors, and events avoid leaking information?
+- Were the happy path and main error covered?
+- Does the change have enough observability?
+- Is any comment just preference? If yes, mark it as a suggestion.
+
+## How do you know the process is working?
+
+A **healthy review** process shows up in simple metrics and in the team's tone. PRs do not sit for days, important bugs are caught before merge, and comments do not turn into identity debates.
+
+Good signals:
+
+- Fast first response.
+- Few giant PRs.
+- Few style blockers.
+- Important regressions trending down.
+- Repeated comments becoming lint, tests, or docs.
+
+Bad signals:
+
+- Review only happens at the end of the day.
+- The same kind of mistake appears every week.
+- Reviewers rewrite the whole solution.
+- PRs arrive with vague descriptions and do not explain risk, trade-offs, or behavior that can break.
+
+When a problem repeats, do not blame the person. Improve the process: template, test, lint, architecture guide, or CI gate.
+
+And when the PR is good, **LGTM** is good too. Code review does not need to look for a problem where there is none. Sometimes the final comment can be simple:
+
+> Amazing PR
+>
+> Thank you for this great job
+
+---
+
+**TL;DR:** code review is a risk reduction process, not an opinion arena. The author prepares intent, scope, evidence, and risk. The reviewer checks contract, security, information leaks, data, tests, and maintainability. Block merge only for real risk. Mark preferences as suggestions. Use agents as the first pass, automate mechanical checks, and preserve human attention for what can break the product.
