@@ -28,11 +28,13 @@ export const siteConfig = {
   },
 };
 
+export const isAskEnabled = process.env.NEXT_PUBLIC_ENABLE_ASK === "true";
+
 export const navLinks = [
   { href: "/about", key: "about" },
   { href: "/cv", key: "cv" },
   { href: "/projects", key: "projects" },
-  { href: "/ask", key: "ask" },
+  ...(isAskEnabled ? [{ href: "/ask", key: "ask" } as const] : []),
   { href: "/blog", key: "blog" },
   { href: "/daily", key: "daily" },
   { href: "/community", key: "community" },
