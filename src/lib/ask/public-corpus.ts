@@ -32,6 +32,36 @@ const COMPILED_MDX_MARKERS = [
   "jsxDEV",
   "Fragment",
 ];
+const SEARCH_STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "about",
+  "does",
+  "he",
+  "it",
+  "know",
+  "of",
+  "on",
+  "or",
+  "sobre",
+  "the",
+  "what",
+  "with",
+  "ele",
+  "ela",
+  "que",
+  "sabe",
+  "tem",
+  "uma",
+  "uns",
+  "das",
+  "dos",
+  "com",
+  "por",
+  "para",
+]);
 
 function compactText(value: string | undefined): string {
   return (value ?? "")
@@ -49,15 +79,34 @@ function safePublishedBody(value: string | undefined): string {
   return clean && !isCompiledMdx(clean) ? clean : "";
 }
 
+function searchTerms(query: string): string[] {
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .map((term) => term.replace(/[^\p{L}\p{N}.+#-]/gu, ""))
+    .filter((term) => term.length > 2 && !SEARCH_STOP_WORDS.has(term));
+}
+
+function literalScore(doc: PublicCorpusDocument, terms: string[]): number {
+  const title = doc.title.toLowerCase();
+  const description = doc.description.toLowerCase();
+  const categories = doc.categories.join(" ").toLowerCase();
+  const text = doc.text.toLowerCase();
+
+  return terms.reduce((score, term) => {
+    if (title.includes(term)) return score + 5;
+    if (description.includes(term)) return score + 4;
+    if (categories.includes(term)) return score + 3;
+    if (text.includes(term)) return score + 1;
+    return score;
+  }, 0);
+}
+
 function excerptAroundQuery(text: string, query: string): string {
   const clean = compactText(text);
   if (clean.length <= MAX_EXCERPT_LENGTH) return clean;
 
-  const terms = query
-    .toLowerCase()
-    .split(/\s+/)
-    .map((term) => term.replace(/[^\p{L}\p{N}]/gu, ""))
-    .filter((term) => term.length > 3);
+  const terms = searchTerms(query);
 
   const lower = clean.toLowerCase();
   const firstHit = terms
@@ -153,6 +202,8 @@ export function searchPublicCorpus(
   if (!cleanQuery) return [];
 
   const fuse = getFuse();
+  const terms = searchTerms(cleanQuery);
+  const byId = new Map<string, PublicCorpusSearchResult>();
   const sameLocale: PublicCorpusSearchResult[] = [];
   const otherLocale: PublicCorpusSearchResult[] = [];
 
@@ -164,8 +215,30 @@ export function searchPublicCorpus(
       excerpt: excerptAroundQuery(item.text, cleanQuery),
     };
 
-    if (item.locale === locale) sameLocale.push(mapped);
-    else otherLocale.push(mapped);
+    byId.set(item.id, mapped);
+  }
+
+  if (terms.length > 0) {
+    for (const document of getPublicCorpus()) {
+      const score = literalScore(document, terms);
+      if (score === 0) continue;
+
+      const existing = byId.get(document.id);
+      const mapped = {
+        document,
+        score: Math.max(existing?.score ?? 0, Math.min(0.98, 0.5 + score / 20)),
+        excerpt: excerptAroundQuery(document.text, cleanQuery),
+      };
+
+      byId.set(document.id, mapped);
+    }
+  }
+
+  const merged = Array.from(byId.values()).sort((a, b) => b.score - a.score);
+
+  for (const result of merged) {
+    if (result.document.locale === locale) sameLocale.push(result);
+    else otherLocale.push(result);
   }
 
   return [...sameLocale, ...otherLocale].slice(0, limit);
