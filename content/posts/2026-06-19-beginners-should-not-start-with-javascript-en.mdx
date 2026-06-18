@@ -1,0 +1,190 @@
+---
+title: "Beginners should not start with JavaScript"
+description: "JavaScript for beginners feels easy, but it teaches risky habits early. Start with compiler feedback, types and immutability before scaling real codebases."
+date: "2026-06-19"
+published: true
+slug: "beginners-should-not-start-with-javascript-en"
+language: "en"
+translationKey: "beginners-should-not-start-with-javascript"
+categories: ["javascript", "programming-languages", "software-engineering", "beginners", "en"]
+image: "/images/blog/compile-first-programming-cover.jpg"
+---
+
+Beginners should not start with plain **JavaScript** if the goal is to learn how to write software that grows well. The language is great for building fast, but its flexibility lets bad code look acceptable for too long. To learn the basics, I prefer Java, Go, C#, Kotlin, Rust, or strict TypeScript, any environment where the compiler complains early.
+
+This is not about hating JavaScript, or making learning harder for no reason. I use JavaScript and TypeScript all the time. The point is to make the trade-off explicit: a lot of freedom requires a lot of responsibility. Sometimes it is too much power for someone who has not yet understood the responsibility.
+
+## Why does JavaScript feel so good at first?
+
+Because the first feedback is almost always positive. You create a file, run it in the browser or in Node.js, see something working, and feel progress. That is powerful for motivation.
+
+The problem is that **ease** is not the same as training. JavaScript lets you mix types, change object shapes, reassign variables, and push validation to later. In a first project, that feels like freedom. In a codebase with real customers, it becomes a steady source of bugs.
+
+That freedom is misleading because the error does not always show up where it was created. A variable changes in one place, behavior breaks somewhere else, and the beginner learns to debug symptoms instead of modeling the problem.
+
+## Where does mutation become a production bug?
+
+Imagine a query built from the request body:
+
+```ts
+const { id, state, name } = request.body;
+
+let whereBy = { id, state };
+
+// Many lines later...
+whereBy = { name };
+
+const users = await userRepository.findMany({ where: whereBy });
+```
+
+The bug is not in the syntax. The code runs. The problem is semantic: `whereBy` started as a search by `id` and `state`, then became a different search by `name`. The previous condition was dropped.
+
+In the example above, this is easy to spot because the code is small. Now put the same idea inside a huge controller or service, with validation, permission rules, status branches, logs, try/catch, and calls to other services in between. The problem should not be there in that shape, but one thing is what books, YouTube, college, and bootcamps teach. Another thing is what still lives inside many real codebases.
+
+In a small system, this looks like local mess. In production, it can become a wrong result, a query that is too broad, a tenant leak, a bad report, or a broken business rule. I saw this pattern in 2024 in real, large production systems.
+
+The key point is this: **mutation** increases the number of mental states you need to hold. To understand the final query, you must read every path that changed `whereBy`, not only the place where it is used.
+
+## Why does dynamic typing make the mess worse?
+
+Other languages also allow mutation. Java does. Go does. Ruby does. The JavaScript problem is the mix of **mutation**, dynamic typing, and implicit contracts. You do not only know that a value can change. Many times, you also do not know what shape it should have.
+
+And this does not disappear automatically because the file ends in `.ts`. I have seen production TypeScript where a function received an object with five to ten parameters, but the type did not describe the real contract. The variable name was generic. The documentation did not exist. The reader had to guess.
+
+The classic example is `status`:
+
+```ts
+function updateOrder(input: {
+  id: string;
+  status: unknown;
+}) {
+  // ...
+}
+```
+
+Should `status` be `true` or `false`? Should it be `1`, `2`, `3`, `4`, `5`? Should it be `"PENDING"`, `"PROCESSING"`, `"DONE"`, or `"CANCELED"`? If it is a `string`, which values are valid? Without a type, enum, literal union, or validation schema, everyone on the team starts coding by assumption.
+
+The contract should appear in the code:
+
+```ts
+type OrderStatus = "PENDING" | "PROCESSING" | "DONE" | "CANCELED";
+
+type UpdateOrderInput = {
+  id: string;
+  status: OrderStatus;
+};
+```
+
+This is not nitpicking. In React components and Node.js APIs, this kind of poorly described object becomes a bug because the system boundary is blurry. The front end sends one shape, the API expects another, the business rule accepts a third, and nobody knows where the truth lives.
+
+## Why does a compiler help beginners?
+
+A **compiler** does not make anyone a good programmer by itself, but it adds friction in the right place. It forces the person to state intent, handle types, respect contracts, and face errors before deploy.
+
+That friction teaches habits plain JavaScript often delays:
+
+| Habit | What the beginner learns |
+| --- | --- |
+| Explicit types | Data has shape, contract, and limits |
+| Immutability by default | A new value is easier to trace than a changed value |
+| Early errors | A cheap bug is one caught before production |
+| Safe refactoring | Names, signatures, and structure should break where they must break |
+| Less magic | Predictable code is worth more than short code |
+
+Java, Go, C#, Kotlin, and Rust are good for different reasons, but they all build a healthier relationship with contracts. Even TypeScript, when used with `strict: true`, `noImplicitAny`, boundary validation, and `noUncheckedIndexedAccess`, improves the learning path a lot.
+
+Ruby is a partial exception here, because it is not compiled like Java or Go. Still, Ruby with tests, well-used Rails, and strong conventions can teach design, small objects, and domain reading better than loose JavaScript with no guardrails.
+
+## How should the same code be written?
+
+The first step is to stop reusing one variable for different meanings. If `name` is an extra condition, the final query should be built as a new value.
+
+```ts
+const { id, state, name } = request.body;
+
+const baseWhere = {
+  id,
+  state,
+};
+
+const whereBy = name
+  ? { ...baseWhere, name }
+  : baseWhere;
+
+const users = await userRepository.findMany({ where: whereBy });
+```
+
+Better yet, hide the query building in a small function with clear input and output.
+
+```ts
+type UserSearchInput = {
+  id: string;
+  state: string;
+  name?: string;
+};
+
+type UserWhere = {
+  id: string;
+  state: string;
+  name?: string;
+};
+
+function buildUserWhere(input: UserSearchInput): UserWhere {
+  return {
+    id: input.id,
+    state: input.state,
+    ...(input.name ? { name: input.name } : {}),
+  };
+}
+
+const whereBy = buildUserWhere(request.body);
+const users = await userRepository.findMany({ where: whereBy });
+```
+
+Now `whereBy` has one origin and one meaning. If the rule changes, you change the function. If the type changes, the compiler points to the affected places.
+
+## Should nobody learn JavaScript, then?
+
+They should, but not as their first model of rigor. **JavaScript** is excellent for the web, automation, interfaces, light APIs, and prototypes. The mistake is treating the most permissive mainstream language as the best teacher of fundamentals.
+
+A better order for beginners would be:
+
+1. Learn logic and structure in a language with strong feedback.
+2. Understand types, functions, collections, modules, tests, and immutability.
+3. Use JavaScript later, knowing which freedoms to accept and which to block.
+4. If you use JavaScript on the backend, use strict TypeScript from day one.
+5. Configure linting, formatting, input validation, and rules against needless reassignment.
+
+This path is not about slowing learning down for the sake of barriers. It makes the cost of freedom more visible. It prevents the person from confusing "it worked now" with "this will survive in a real codebase."
+
+## What is my conclusion after using JavaScript for years?
+
+I like JavaScript a lot. I started using it in full-stack apps around 2017, coming from Java, and it was very good for me. JavaScript opened the door for me to learn frontend for real: React, HTML, CSS, interface engineering, implementation design, and the cutting-edge library and framework ecosystem of that time.
+
+It also let me follow the whole evolution of React and the styling libraries that became popular across different cycles, up to things like shadcn/ui. On the backend, I used Node.js, Express, tRPC, and other pieces that make the full-stack TypeScript experience very productive.
+
+So the conclusion is not "JavaScript is bad." It is not an absolute rule either. Beginners can start with JavaScript, of course. Who am I to make a law about that? My point is to bring a warning: JavaScript gives you a lot of power very early, and power without awareness gets expensive.
+
+And I am not even talking about async JavaScript, the call stack, callbacks, promises, the event loop, or concurrency. I am talking about something more basic: a simple object `{}` mutation can already make code hard to read, hard to maintain, and hard to follow. When that lands inside large controllers, services, React components, and Node.js APIs, the cognitive load stops being individual and becomes a cost for the whole team.
+
+For someone coming from a stricter base, that power can speed up learning. For someone still building a sense of contracts, state, types, and maintenance, it can become freedom without guardrails.
+
+## What is the practical rule?
+
+To learn how to build, JavaScript is fun. To learn how to sustain software, start with a language or toolchain that corrects you early.
+
+If you are teaching someone today, my practical rule is simple:
+
+| Goal | Better start |
+| --- | --- |
+| See something on screen fast | JavaScript can work |
+| Learn backend with contracts | Java, Go, C#, or Kotlin |
+| Learn systems and memory cost | Rust or Go |
+| Enter the web ecosystem with rigor | Strict TypeScript |
+| Work on a real product with JavaScript | TypeScript, runtime validation, linting, and immutability |
+
+JavaScript remains an important language. It just should not be the first mental mold for someone still learning what a healthy codebase is.
+
+---
+
+**TL;DR:** JavaScript is easy, versatile, and still an excellent language. The warning is starting with it before understanding the cost of freedom: mutation, reassignment, and weak contracts too early. Even a simple object mutation can raise the team's cognitive load when the code grows. Beginners learn better when the compiler, typechecker, tests, and lint complain before production. Start with strong feedback. Then use JavaScript with discipline.
