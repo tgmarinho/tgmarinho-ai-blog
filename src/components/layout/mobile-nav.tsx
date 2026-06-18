@@ -10,15 +10,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { navLinks } from "@/lib/constants";
-import { isAskEnabled } from "@/lib/feature-flags";
+import type { NavLink } from "@/lib/constants";
 import { useState } from "react";
 
-const visibleNavLinks = navLinks.filter(
-  (link) => isAskEnabled || link.href !== "/ask"
-);
+type MobileNavProps = {
+  navLinks: readonly NavLink[];
+};
 
-export function MobileNav() {
+export function MobileNav({ navLinks }: MobileNavProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
@@ -42,7 +41,7 @@ export function MobileNav() {
           ━ navigation
         </SheetTitle>
         <nav className="mt-10 flex flex-col gap-1.5">
-          {visibleNavLinks.map((link, i) => {
+          {navLinks.map((link, i) => {
             const active =
               pathname === link.href || pathname.startsWith(link.href + "/");
             return (

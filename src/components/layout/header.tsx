@@ -4,16 +4,15 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { navLinks } from "@/lib/constants";
-import { isAskEnabled } from "@/lib/feature-flags";
+import type { NavLink } from "@/lib/constants";
 import { MobileNav } from "./mobile-nav";
 import { LocaleSwitcher } from "./locale-switcher";
 
-const visibleNavLinks = navLinks.filter(
-  (link) => isAskEnabled || link.href !== "/ask"
-);
+type HeaderProps = {
+  navLinks: readonly NavLink[];
+};
 
-export function Header() {
+export function Header({ navLinks }: HeaderProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const [scrolled, setScrolled] = useState(false);
@@ -54,7 +53,7 @@ export function Header() {
 
         <nav className="hidden md:flex">
           <ul className="relative flex items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.025] px-1.5 py-1 backdrop-blur-xl">
-            {visibleNavLinks.map((link) => {
+            {navLinks.map((link) => {
               const active =
                 pathname === link.href || pathname.startsWith(link.href + "/");
               return (
@@ -94,7 +93,7 @@ export function Header() {
             </span>
             agent · online
           </span>
-          <MobileNav />
+          <MobileNav navLinks={navLinks} />
         </div>
       </div>
     </header>

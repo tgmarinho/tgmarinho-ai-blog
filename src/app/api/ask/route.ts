@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { answerPublicQuestion } from "@/lib/ask/answer";
 import { routing, type Locale } from "@/i18n/routing";
-import { isAskEnabled } from "@/lib/feature-flags";
+import { featureFlags } from "@/lib/feature-flags";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -40,7 +40,7 @@ function rateLimit(request: NextRequest): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAskEnabled) {
+  if (!featureFlags.ask) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 

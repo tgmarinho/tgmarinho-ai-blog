@@ -4,7 +4,7 @@ import type { Locale } from "@/i18n/routing";
 
 export type AskThiagoSource = {
   id: string;
-  kind: "post" | "journal";
+  kind: "about" | "cv" | "project" | "post" | "journal";
   title: string;
   description: string;
   date: string;
@@ -30,10 +30,19 @@ function sourceLabel(locale: Locale, index: number): string {
   return locale === "en" ? `Source ${index}` : `Fonte ${index}`;
 }
 
+function truncate(value: string, maxLength: number): string {
+  const clean = value.replace(/\s+/g, " ").trim();
+  if (clean.length <= maxLength) return clean;
+  return `${clean.slice(0, maxLength - 3).trim()}...`;
+}
+
 function sourceSummary(locale: Locale, sources: AskThiagoSource[]): string {
   const labels = sources
-    .slice(0, 4)
-    .map((source, index) => `${sourceLabel(locale, index + 1)}: ${source.title}`)
+    .slice(0, 3)
+    .map((source, index) => {
+      const excerpt = truncate(source.excerpt, 150);
+      return `${sourceLabel(locale, index + 1)}: ${source.title}. ${excerpt}`;
+    })
     .join("\n");
 
   return labels ? `\n\n${labels}` : "";
@@ -47,8 +56,8 @@ function fallbackAnswer(locale: Locale, sources: AskThiagoSource[]): string {
   }
 
   return locale === "en"
-    ? `I found ${sources.length} public sources that seem relevant. Configure Vercel AI Gateway to generate a synthesized answer, or use the source cards below to inspect the evidence.${sourceSummary(locale, sources)}`
-    : `Encontrei ${sources.length} fontes públicas relacionadas. Configure o Vercel AI Gateway para gerar uma resposta sintetizada, ou use os cards de fontes abaixo para inspecionar as evidências.${sourceSummary(locale, sources)}`;
+    ? `Yes. I found ${sources.length} public sources that support this. Here is the short evidence from the public corpus.${sourceSummary(locale, sources)}`
+    : `Sim. Encontrei ${sources.length} fontes públicas que sustentam isso. Aqui está a evidência curta do corpus público.${sourceSummary(locale, sources)}`;
 }
 
 function toSources(

@@ -4,7 +4,7 @@ import { setRequestLocale } from "next-intl/server";
 import { AskThiago } from "@/components/ask/ask-thiago";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import { routing, type Locale } from "@/i18n/routing";
-import { isAskEnabled } from "@/lib/feature-flags";
+import { featureFlags } from "@/lib/feature-flags";
 
 export const revalidate = 3600;
 
@@ -70,7 +70,7 @@ const COPY = {
 export async function generateMetadata({
   params,
 }: AskPageProps): Promise<Metadata> {
-  if (!isAskEnabled) notFound();
+  if (!featureFlags.ask) notFound();
 
   const { locale } = await params;
   const copy = COPY[locale];
@@ -94,7 +94,7 @@ export function generateStaticParams() {
 }
 
 export default async function AskPage({ params }: AskPageProps) {
-  if (!isAskEnabled) notFound();
+  if (!featureFlags.ask) notFound();
 
   const { locale } = await params;
   setRequestLocale(locale);

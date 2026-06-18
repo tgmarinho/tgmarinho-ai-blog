@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Atmospheric } from "@/components/fx/atmospheric";
 import { SmoothScroll } from "@/components/fx/smooth-scroll";
-import { siteConfig } from "@/lib/constants";
+import { getEnabledNavLinks, siteConfig } from "@/lib/constants";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import { routing, type Locale } from "@/i18n/routing";
 
@@ -92,6 +92,7 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const homeUrl = localizedUrl(locale as Locale, "/");
+  const enabledNavLinks = getEnabledNavLinks();
   const personJsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -143,7 +144,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <SmoothScroll>
             <Atmospheric />
-            <Header />
+            <Header navLinks={enabledNavLinks} />
             <main className="flex-1">{children}</main>
             <Footer />
           </SmoothScroll>
