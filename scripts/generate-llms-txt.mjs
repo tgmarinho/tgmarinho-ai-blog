@@ -12,6 +12,8 @@ const posts = JSON.parse(
   readFileSync(resolve(ROOT, ".velite/posts.json"), "utf8"),
 );
 
+const now = Date.now();
+
 function postUrl(post) {
   const localePrefix = post.language === "en" ? "/en" : "";
   return `${SITE_URL}${localePrefix}/blog/${post.slug}`;
@@ -19,6 +21,10 @@ function postUrl(post) {
 
 const published = posts
   .filter((p) => p.published !== false)
+  .filter((p) => {
+    const publishedAt = new Date(p.date).getTime();
+    return Number.isFinite(publishedAt) && publishedAt <= now;
+  })
   .sort((a, b) => new Date(b.date) - new Date(a.date));
 
 const byLang = {

@@ -12,7 +12,11 @@ import { ShareButton } from "@/components/mdx/share-button";
 import { TableOfContents } from "@/components/blog/table-of-contents";
 import { siteConfig } from "@/lib/constants";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
-import { getPostLanguage, getTranslationPair } from "@/lib/posts-i18n";
+import {
+  getPostLanguage,
+  getTranslationPair,
+  isPostVisible,
+} from "@/lib/posts-i18n";
 import { categoryLabel, normalizeCategories } from "@/lib/categories";
 import { extractToc } from "@/lib/toc";
 import { routing, type Locale } from "@/i18n/routing";
@@ -24,7 +28,7 @@ interface PostPageProps {
 }
 
 function getPostBySlug(slug: string) {
-  return posts.find((post) => post.slug === slug && post.published);
+  return posts.find((post) => post.slug === slug && isPostVisible(post));
 }
 
 function getAbsoluteUrl(pathOrUrl?: string) {
@@ -51,7 +55,7 @@ function getRelatedPosts(post: Post) {
   return posts
     .filter(
       (c) =>
-        c.published &&
+        isPostVisible(c) &&
         c.slug !== post.slug &&
         getPostLanguage(c) === postLocale &&
         normalizeCategories(c.categories ?? []).some((cat) => postCats.has(cat)),
@@ -129,7 +133,7 @@ export async function generateMetadata({
 export function generateStaticParams() {
   const params: Array<{ locale: Locale; slug: string }> = [];
   for (const post of posts) {
-    if (!post.published) continue;
+    if (!isPostVisible(post)) continue;
     const lang = getPostLanguage(post);
     params.push({ locale: lang, slug: post.slug });
   }

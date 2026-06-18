@@ -1,0 +1,141 @@
+---
+title: "What does it mean to be agentic in AI?"
+description: "Agentic AI means goal-directed autonomy: the system uses tools, observes results, corrects course, and improves the output in a loop."
+date: "2026-06-21T17:00:00-04:00"
+published: true
+slug: "what-it-means-to-be-agentic"
+language: "en"
+translationKey: "what-it-means-to-be-agentic"
+categories: ["ai", "agents", "software-engineering", "en"]
+image: "/images/blog/what-is-agentic-cover.jpg"
+---
+
+**Agentic** AI is when a system does more than answer a prompt: it works toward a goal. It uses tools, observes results, corrects course, and improves the output in a loop. The difference from AI-assisted work is that AI stops being help on demand and becomes an operational layer between intent and execution.
+
+Until 2025, most AI use in software was still assisted: autocomplete, chat, copilot, explanation, small refactors. In 2026, with agents, better tools, orchestration, sandboxes, and automatic validation, the layer started to become truly agentic.
+
+## Why do we call it agentic?
+
+**Agentic** comes from *agency*, meaning the ability to act with autonomy. It is not "agent" as a job title or character. It is the ability to take actions toward a goal.
+
+In Portuguese, **agêntico** is a direct adaptation of *agentic*. It still sounds new, but it is becoming a technical term for systems that use agents. You can avoid it when clarity matters more, and write "agent layer", "agent-based process", or "workflow with agents".
+
+## What is the difference between AI-assisted and agentic?
+
+**AI-assisted** means AI helps when you ask. You open a chat, paste an error, ask for a function, accept an autocomplete suggestion, or request an explanation. The human still drives almost every step.
+
+**Agentic** means AI receives a goal and works through steps. It plans, calls tools, reads files, runs commands, observes outputs, adjusts the plan, and tries to complete the task. The human still decides what matters, reviews risk, and approves change. But execution is no longer only a chain of manual microcommands.
+
+A simple table helps:
+
+| Layer | AI-assisted | Agentic |
+|---|---|---|
+| Input | A single request | A goal with context |
+| Unit of work | Answer or suggestion | Sequence of actions |
+| Tools | The human calls them | The agent calls them with permission |
+| Validation | Manual or separate | Part of the loop |
+| Correction | Another human prompt | Adjustment after observation |
+| Result | Local help | Operational delivery |
+
+The jump is not only "better AI". It changes who drives the intermediate steps.
+
+## How does a car show the difference?
+
+A modern car, like a Tesla, is a useful conceptual analogy. **Assisted** means the car makes execution easier: you do not need to shift gears, press hard on the accelerator, or control every detail to reach 100 km/h. You are still commanding the main action, maybe even by voice.
+
+**Agentic** would be another level: the car understands that the road allows 120 km/h, sees that nobody is ahead, checks that the weather is good, that it is not raining, that the risk is within bounds, and decides to drive at the road limit to better reach the destination.
+
+The sleeping driver provocation shows both the point and the danger of the metaphor. The human stops operating every micro-action, but should not disappear from the system. They become the reviewer of the agentic work: watching whether the driving is good for them and their family, judging risk, intervening when needed, and doing something close to a real-time code review.
+
+## What changes when there is a loop?
+
+The **loop** is the core of agentic behavior. Without a loop, AI follows one instruction and stops. With a loop, it acts, observes, compares the result with the goal, corrects course, and tries again.
+
+This is what makes 2026 different. The agent is not only a very good task executor. It starts to behave like a reactive system: it sees that something failed, reads the error, changes strategy, runs another command, updates the plan, and improves the output.
+
+Before, the mindset was "done is better than not done". In an agentic flow, that turns into a stronger rule: done, validated, and improved is better than only done. The goal is not only to reach the end. It is to reach it, measure it, fix it, and improve it.
+
+## What is an agent?
+
+An **agent** is a system that combines a language model with a goal, tools, operational memory, and stop criteria. The model chooses the next step, but the environment around it defines what it can do and how it knows it is done.
+
+A normal chatbot answers text. An agent can:
+
+- research sources;
+- edit files;
+- call an API;
+- run tests;
+- open a browser;
+- create a report;
+- pass context to another agent;
+- ask for human approval when an action is risky.
+
+This does not mean full autonomy. A good agent has limits. It needs permissions, sandboxing, scope, logs, and objective validation.
+
+## What does LLM + agent mean?
+
+An **LLM** is the language model. It predicts and generates text, code, plans, JSON, or tool calls. By itself, it has no real access to the world. It depends on the context it receives.
+
+**LLM + agent** means the model runs inside a harness: instructions, tools, files, shell, browser, memory, tests, policies, and done criteria. The practical formula is the same one used in Harness Engineering: an agent is a model plus an operational environment.
+
+That is why switching models does not always fix the problem. If the tool is weak, the context is wrong, the command validates nothing, or the agent has no memory of what failed, the system is still fragile.
+
+## Where do ReAct loop, auto-research, and handoff fit?
+
+The **ReAct loop** combines reasoning and action: the agent thinks about the next step, acts with a tool, observes the result, and decides again. The name comes from *reason* + *act*. In many products, you do not see this cycle directly, but it appears when the agent alternates between plan, command, observation, and correction.
+
+**Auto-research** is this behavior applied to research. The agent searches sources, compares versions, rejects weak passages, digs into missing points, and builds a synthesis. It is not only "searching the web". It is researching, judging, reorganizing, and returning to the goal.
+
+**Handoff** is the transfer of context between people, agents, or tools. One agent can implement and another can review. One can research and another can write. One can stop in a workspace and another can continue later with the diff, logs, decisions, and next steps. Without clear handoff, each agent starts from zero.
+
+These three concepts show that being agentic is not one feature. It is an execution pattern:
+
+| Concept | Role in the flow |
+|---|---|
+| ReAct loop | Move between decision, action, and observation |
+| Auto-research | Investigate and synthesize without every human command |
+| Handoff | Transfer context so work can continue |
+| Harness | Provide tools, limits, memory, and validation |
+
+## Why is the harness what makes this real?
+
+A **harness** is the operational environment that turns a model into a useful agent. It includes instructions, tools, MCP servers, scripts, tests, lint, typecheck, browser access, memory, logs, worktrees, sandboxes, and review rules.
+
+Without a harness, you have a smart AI trying to guess how to work. With a harness, you have a system that knows which commands to run, which files to respect, what evidence to produce, and when to stop.
+
+This connects directly to the MCP vs CLI discussion. The agent needs tools, but too many tools without limits create risk. MCP, CLI, SDKs, and browser automation are means. The important work is designing the right capability for the right task.
+
+## How should you use the term?
+
+Use **agentic** when you want to describe goal-directed autonomy:
+
+| Term | Practical use |
+|---|---|
+| Agentic layer | Agents acting between human intent and technical execution |
+| Agentic workflow | A flow where agents perform steps with tools and validation |
+| Agentic process | A process redesigned for humans and agents to work together |
+| Agentic system | A product that uses agents to pursue goals, not only answer prompts |
+
+If the audience does not know the term yet, define it in the first sentence. If the term gets in the way, use "agent-based process". Clarity comes before fashion.
+
+## What does this change for software engineering?
+
+The biggest effect is that engineering stops treating AI as a box of suggestions and starts treating it as an execution layer. This changes how we write specs, test, review, document, and organize work.
+
+Instead of asking "fix this bug", the task starts to include:
+
+1. expected goal;
+2. system context;
+3. allowed tools;
+4. validation commands;
+5. scope limits;
+6. required evidence;
+7. handoff or done criteria.
+
+This is the line that connects my AI journey from 2023 to 2026 with the modern GenAI platform stack. The value moved out of the isolated chat and into the system around it: context, tools, evaluation, memory, and orchestration.
+
+## Summary
+
+**Agentic** is the word for AI systems that act with controlled autonomy toward a goal. They use tools, observe results, correct course, and improve the output in a loop.
+
+The difference from AI-assisted work is simple: in assisted mode, AI answers when you call it. In agentic mode, it takes part in execution. It does not only do the task. It reacts, validates, learns from output, and tries to improve the result.
