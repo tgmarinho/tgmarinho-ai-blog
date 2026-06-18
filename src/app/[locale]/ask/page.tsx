@@ -4,7 +4,7 @@ import { setRequestLocale } from "next-intl/server";
 import { AskThiago } from "@/components/ask/ask-thiago";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import { routing, type Locale } from "@/i18n/routing";
-import { isAskEnabled } from "@/lib/constants";
+import { isAskEnabled } from "@/lib/feature-flags";
 
 export const revalidate = 3600;
 

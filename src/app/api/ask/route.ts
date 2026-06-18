@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { answerPublicQuestion } from "@/lib/ask/answer";
 import { routing, type Locale } from "@/i18n/routing";
-import { isAskEnabled } from "@/lib/constants";
+import { isAskEnabled } from "@/lib/feature-flags";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;

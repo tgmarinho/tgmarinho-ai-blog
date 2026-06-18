@@ -11,7 +11,12 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { navLinks } from "@/lib/constants";
+import { isAskEnabled } from "@/lib/feature-flags";
 import { useState } from "react";
+
+const visibleNavLinks = navLinks.filter(
+  (link) => isAskEnabled || link.href !== "/ask"
+);
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -37,7 +42,7 @@ export function MobileNav() {
           ━ navigation
         </SheetTitle>
         <nav className="mt-10 flex flex-col gap-1.5">
-          {navLinks.map((link, i) => {
+          {visibleNavLinks.map((link, i) => {
             const active =
               pathname === link.href || pathname.startsWith(link.href + "/");
             return (
