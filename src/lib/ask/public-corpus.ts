@@ -26,12 +26,27 @@ export type PublicCorpusSearchResult = {
 };
 
 const MAX_EXCERPT_LENGTH = 520;
+const COMPILED_MDX_MARKERS = [
+  "function _createMdxContent",
+  "arguments[0]",
+  "jsxDEV",
+  "Fragment",
+];
 
 function compactText(value: string | undefined): string {
   return (value ?? "")
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isCompiledMdx(value: string): boolean {
+  return COMPILED_MDX_MARKERS.some((marker) => value.includes(marker));
+}
+
+function safePublishedBody(value: string | undefined): string {
+  const clean = compactText(value);
+  return clean && !isCompiledMdx(clean) ? clean : "";
 }
 
 function excerptAroundQuery(text: string, query: string): string {
@@ -69,7 +84,7 @@ export function getPublicCorpus(): PublicCorpusDocument[] {
     .map((post): PublicCorpusDocument => {
       const locale = getPostLanguage(post);
       const description = compactText(post.description);
-      const body = compactText(post.plainBody || post.body);
+      const body = safePublishedBody(post.plainBody);
       return {
         id: `post:${locale}:${post.slug}`,
         kind: "post",
@@ -88,7 +103,7 @@ export function getPublicCorpus(): PublicCorpusDocument[] {
   const entries = journal.map((entry): PublicCorpusDocument => {
     const locale = entry.language;
     const description = compactText(entry.summary);
-    const body = compactText(entry.plainBody || entry.body);
+    const body = safePublishedBody(entry.plainBody);
     return {
       id: `journal:${locale}:${entry.slug}`,
       kind: "journal",

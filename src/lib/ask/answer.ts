@@ -30,6 +30,15 @@ function sourceLabel(locale: Locale, index: number): string {
   return locale === "en" ? `Source ${index}` : `Fonte ${index}`;
 }
 
+function sourceSummary(locale: Locale, sources: AskThiagoSource[]): string {
+  const labels = sources
+    .slice(0, 4)
+    .map((source, index) => `${sourceLabel(locale, index + 1)}: ${source.title}`)
+    .join("\n");
+
+  return labels ? `\n\n${labels}` : "";
+}
+
 function fallbackAnswer(locale: Locale, sources: AskThiagoSource[]): string {
   if (sources.length === 0) {
     return locale === "en"
@@ -37,16 +46,9 @@ function fallbackAnswer(locale: Locale, sources: AskThiagoSource[]): string {
       : "Não encontrei evidência suficiente no corpus público do Thiago para responder isso. Tente perguntar sobre posts, projetos, agentes de IA, RAG, Next.js, Vercel, carreira ou o diário.";
   }
 
-  const list = sources
-    .slice(0, 4)
-    .map((source, index) => {
-      return `${sourceLabel(locale, index + 1)}: ${source.title}. ${source.excerpt}`;
-    })
-    .join("\n\n");
-
   return locale === "en"
-    ? `I found these public sources that seem relevant. Configure Vercel AI Gateway to generate a synthesized answer.\n\n${list}`
-    : `Encontrei estas fontes públicas relacionadas. Configure o Vercel AI Gateway para gerar uma resposta sintetizada.\n\n${list}`;
+    ? `I found ${sources.length} public sources that seem relevant. Configure Vercel AI Gateway to generate a synthesized answer, or use the source cards below to inspect the evidence.${sourceSummary(locale, sources)}`
+    : `Encontrei ${sources.length} fontes públicas relacionadas. Configure o Vercel AI Gateway para gerar uma resposta sintetizada, ou use os cards de fontes abaixo para inspecionar as evidências.${sourceSummary(locale, sources)}`;
 }
 
 function toSources(
