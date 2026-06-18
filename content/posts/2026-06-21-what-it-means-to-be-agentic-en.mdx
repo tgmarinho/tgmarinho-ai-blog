@@ -105,6 +105,25 @@ Without a harness, you have a smart AI trying to guess how to work. With a harne
 
 This connects directly to the MCP vs CLI discussion. The agent needs tools, but too many tools without limits create risk. MCP, CLI, SDKs, and browser automation are means. The important work is designing the right capability for the right task.
 
+## How does loop engineering explain the agentic layer?
+
+**Loop engineering** is a useful name for the layer that sits above the harness. [Addy Osmani](https://addyosmani.com/blog/loop-engineering/) describes this shift as moving from being the person who prompts the agent at every step to designing the system that does that for you.
+
+This agentic layer is not only "an agent with tools". It is the system that finds work, hands it to agents, checks the result, records state, and decides the next round. The loop no longer depends on the human saying "now do this" at every turn.
+
+In practice, the agentic layer combines:
+
+| Piece | Role in the loop |
+|---|---|
+| Automation | Run discovery, triage, or review on a cadence |
+| Worktree | Isolate parallel agents without file collisions |
+| Skills | Turn project knowledge into a reusable procedure |
+| Connectors and MCP | Connect the loop to the team's real tools |
+| Subagents | Separate the maker from the checker |
+| State | Track what was tried, what passed, and what comes next |
+
+This is where the word agentic becomes more concrete. Autonomy does not come only from the model. It comes from the loop around it.
+
 ## How should you use the term?
 
 Use **agentic** when you want to describe goal-directed autonomy:

@@ -105,6 +105,25 @@ Sem harness, você tem uma IA inteligente tentando adivinhar como trabalhar. Com
 
 Isso conecta diretamente com a discussão de MCP vs CLI. O agente precisa de ferramentas, mas ferramenta demais sem limite vira risco. MCP, CLI, SDK e browser automation são meios. O ponto importante é desenhar a capacidade certa para a tarefa certa.
 
+## Como loop engineering explica a camada agêntica?
+
+**Loop engineering** é um bom nome para a camada que aparece acima do harness. [Addy Osmani](https://addyosmani.com/blog/loop-engineering/) descreveu essa virada como deixar de ser a pessoa que fica promptando o agente a cada passo e passar a desenhar o sistema que faz isso por você.
+
+Essa camada agêntica não é apenas "um agente com ferramentas". É o conjunto que descobre trabalho, distribui para agentes, valida resultado, registra estado e decide a próxima rodada. O loop deixa de depender do humano dizendo "agora faça isso" em todo turno.
+
+Na prática, a camada agêntica combina:
+
+| Peça | Função no loop |
+|---|---|
+| Automação | Rodar descoberta, triagem ou revisão em uma cadência |
+| Worktree | Isolar agentes paralelos sem colisão de arquivos |
+| Skills | Transformar conhecimento do projeto em procedimento reutilizável |
+| Connectors e MCP | Conectar o loop às ferramentas reais do time |
+| Subagentes | Separar quem implementa de quem verifica |
+| Estado | Guardar o que foi tentado, o que passou e qual é o próximo passo |
+
+Esse é o ponto em que o termo agêntico fica mais concreto. A autonomia não nasce só do modelo. Ela nasce do loop ao redor dele.
+
 ## Como usar o termo no dia a dia?
 
 Você pode usar **agêntico** quando quiser falar da camada de autonomia orientada a objetivo:
