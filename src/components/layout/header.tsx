@@ -4,11 +4,15 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { navLinks } from "@/lib/constants";
+import type { NavLink } from "@/lib/constants";
 import { MobileNav } from "./mobile-nav";
 import { LocaleSwitcher } from "./locale-switcher";
 
-export function Header() {
+type HeaderProps = {
+  navLinks: readonly NavLink[];
+};
+
+export function Header({ navLinks }: HeaderProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const [scrolled, setScrolled] = useState(false);
@@ -89,7 +93,7 @@ export function Header() {
             </span>
             agent · online
           </span>
-          <MobileNav />
+          <MobileNav navLinks={navLinks} />
         </div>
       </div>
     </header>

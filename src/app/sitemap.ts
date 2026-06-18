@@ -3,6 +3,7 @@ import { allPosts as posts } from "@/lib/all-posts";
 import { routing } from "@/i18n/routing";
 import { getPostLanguage, getTranslationPair } from "@/lib/posts-i18n";
 import { buildAlternates, localizedUrl } from "@/lib/seo";
+import { featureFlags } from "@/lib/feature-flags";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPaths = [
@@ -10,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/blog",
     "/about",
     "/projects",
+    ...(featureFlags.ask ? ["/ask"] : []),
     "/contact",
     "/community",
     "/cv",
