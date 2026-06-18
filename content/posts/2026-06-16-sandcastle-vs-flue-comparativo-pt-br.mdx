@@ -1,0 +1,176 @@
+---
+title: "Sandcastle vs Flue: runner de coding agent ou framework de agentes?"
+description: "Sandcastle vs Flue: compare função, sandbox, Git, sessões, workflows e deploy para escolher entre runner de coding agent e framework de agentes."
+date: "2026-06-16"
+published: true
+slug: "sandcastle-vs-flue-comparativo-pt-br"
+language: "pt-BR"
+translationKey: "sandcastle-vs-flue"
+categories: ["ai", "software-engineering", "agents", "tools", "pt-br"]
+image: "/images/blog/sandcastle-vs-flue-cover.jpg"
+---
+
+[Sandcastle](https://github.com/mattpocock/sandcastle) e [Flue](https://github.com/withastro/flue) parecem disputar o mesmo espaço porque os dois falam de agentes, sandboxes e TypeScript. Na prática, **Sandcastle** é mais forte como runner de coding agents em repositórios Git, enquanto **Flue** é mais forte como framework para criar agentes, workflows e produtos com agentes. Se o objetivo é automatizar trabalho de código em branches isoladas, eu começaria por Sandcastle. Se o objetivo é expor agentes como parte de uma aplicação, eu olharia Flue primeiro.
+
+Este comparativo foi escrito a partir dos READMEs, docs e metadados públicos verificados em 17 de junho de 2026. Os números de stars, forks e versões podem mudar rápido, então trate essa parte como fotografia do momento.
+
+## Qual problema cada projeto resolve?
+
+**Sandcastle** resolve o problema de mandar um coding agent trabalhar em um checkout real, dentro de uma sandbox, com estratégia de branch, logs, sessões e commits como resultado. O README descreve o fluxo em três passos: chamar `sandcastle.run()`, isolar o agente com uma estratégia de branch configurável e trazer de volta os commits produzidos.
+
+Isso coloca Sandcastle perto de ferramentas como Conductor, pipelines de agents em CI e automações de issue para PR. O centro do produto é: "pegue uma tarefa de código, rode um ou mais agentes em ambientes separados, capture o diff e deixe o humano revisar".
+
+**Flue** resolve outro problema: criar uma camada de agentes dentro de uma aplicação. O README chama Flue de "Agent Harness Framework" e organiza o runtime em `createAgent()`, tools, skills, sandboxes, workflows, sessões, rotas HTTP, SDK e observabilidade.
+
+Isso coloca Flue mais perto de uma plataforma de produto. Você não está só rodando um agente no repo. Você está definindo agentes endereçáveis, workflows finitos, canais, controle de acesso, storage de sessão e superfícies HTTP para outras partes do sistema chamarem.
+
+## O que muda na API mental?
+
+| Critério | Sandcastle | Flue |
+| --- | --- | --- |
+| API principal | `run()`, `interactive()`, `createSandbox()`, `createWorktree()` | `createAgent()`, `run()` de workflow, `dispatch()`, sessões e routes |
+| Unidade de trabalho | Uma tarefa de coding agent em repo Git | Um agente contínuo ou um workflow finito |
+| Resultado natural | Commits, branch, logs, stdout, sessão capturada | Resposta, artefatos, run history, eventos, sessão persistente |
+| Onde você programa | Script local, CI, automação de repo | Aplicação TypeScript com runtime, HTTP e SDK |
+| Modelo de produto | Orquestrador de coding agents | Framework de harness para agentes |
+
+**A diferença central** é a fronteira do sistema. Em Sandcastle, o repo Git é o mundo. Em Flue, a aplicação é o mundo.
+
+No Sandcastle, você pensa em branch strategy, worktree, sandbox provider, agent provider, prompt e commits. No Flue, você pensa em agentes com identidade, tools autorizadas, skills, sessions, workflows, rotas HTTP e observabilidade.
+
+## Como sandboxes, Git e sessões se comparam?
+
+**Sandcastle** trata Git como parte nativa do contrato. Ele tem estratégias `head`, `merge-to-head` e `branch`; consegue criar worktrees; aceita providers de sandbox como Docker, Podman, Vercel e `noSandbox()`; e retorna commits produzidos pelo agente. Também captura sessões de Claude Code, Codex e Pi para retomar conversas quando o provider suporta. O fork de sessão é um caso mais específico, principalmente para Claude Code e Codex.
+
+Isso é uma vantagem forte para automação de engenharia. Se você quer rodar vários agentes contra issues diferentes, cada um em uma branch ou worktree, Sandcastle já fala a língua que você precisa: checkout isolado, commit, merge, log e sessão de agente capturada.
+
+**Flue** tem sandboxes, mas com outra semântica. A doc separa virtual sandbox, `local()` no Node.js e sandboxes remotas por adapter. A virtual sandbox é leve e em memória, boa para arquivos que a própria aplicação fornece; `local()` acessa o filesystem e o shell do host; sandboxes remotas entram quando o trabalho precisa de isolamento, toolchain Linux ou ciclo de vida gerenciado.
+
+Git pode existir em Flue, mas não é o centro do contrato. Você modelaria Git como tool, workflow, sandbox remota ou integração própria. Em troca, Flue dá primitives que Sandcastle não tenta resolver como framework de aplicação: rotas HTTP para agents, `dispatch()` para eventos, workflows com `runId`, SDK, adapters de persistência e observabilidade. A diferença importante é que, em Flue, sessão e workspace são decisões separadas: persistir a conversa não torna automaticamente a sandbox durável, e uma sandbox durável não substitui histórico de sessão.
+
+## O que "sandbox" significa na prática?
+
+**Sandbox** não é uma garantia única de segurança. É um conjunto de escolhas sobre filesystem, processo, rede, credenciais, ciclo de vida e persistência. Duas ferramentas podem dizer "sandbox" e estar falando de isolamentos bem diferentes.
+
+Para agentes de código, a sandbox precisa responder cinco perguntas:
+
+| Pergunta | Por que importa |
+| --- | --- |
+| Quais arquivos o agente pode ler e escrever? | Evita que uma tarefa pequena toque o repo inteiro, arquivos pessoais ou segredos |
+| Quais comandos ele pode executar? | Define se o agente consegue instalar pacotes, rodar testes, abrir processos longos ou chamar CLIs |
+| Qual rede ele pode acessar? | Controla downloads, APIs externas, webhooks e risco de exfiltração |
+| Quais credenciais entram no ambiente? | Reduz o blast radius quando o agente usa shell, GitHub, package registries ou serviços internos |
+| O que persiste depois da execução? | Separa histórico de conversa, arquivos gerados, dependências instaladas, branch e logs |
+
+Em **Sandcastle**, sandbox está amarrada ao ciclo de vida do repo. Docker e Podman fazem bind mount do worktree para dentro do container; Vercel usa uma sandbox isolada; `noSandbox()` roda direto no host. A escolha afeta branch strategy, cópia de arquivos, coleta de commits e merge de volta para o host. Por isso, Sandcastle é bom quando o isolamento precisa acompanhar Git.
+
+Em **Flue**, sandbox é uma capacidade do harness. A virtual sandbox é leve e em memória, boa para workflows que recebem arquivos da aplicação. `local()` roda no host e serve para ambientes confiáveis, como CI descartável ou ferramenta interna. Sandboxes remotas entram quando você precisa de Linux completo, isolamento por tenant, ciclo de vida gerenciado ou storage fora do processo da aplicação.
+
+| Tipo de sandbox | Melhor uso | Cuidado |
+| --- | --- | --- |
+| Sem sandbox ou `local()` | Desenvolvimento local, protótipos, CI confiável | O agente pode tocar o host, então trate como acesso privilegiado |
+| Container local | Coding agents em repo real, testes, dependências do projeto | Bind mounts ainda expõem arquivos do host montados no container |
+| Sandbox virtual | Workflows leves com arquivos fornecidos pela aplicação | Não substitui um Linux completo nem uma fronteira forte de rede |
+| Sandbox remota | Tarefas não confiáveis, multi-tenant, toolchain pesado, execução longa | Você precisa modelar credenciais, rede, cleanup e custo |
+
+A regra prática: use a sandbox mais estreita que ainda permite a tarefa. Se o agente só precisa revisar um documento, uma virtual sandbox pode bastar. Se precisa rodar `bun test` em um repo, container ou worktree isolado faz mais sentido. Se a tarefa vem de usuário externo ou cliente, trate sandbox remota e autorização explícita como parte do design, não como detalhe.
+
+## Onde Sandcastle ganha?
+
+**Sandcastle** ganha quando o problema é coding agent em repo real.
+
+- Você quer rodar Claude Code, Codex, Pi, Cursor, OpenCode ou Copilot com uma API parecida.
+- Você quer que cada agente trabalhe em branch ou worktree própria.
+- Você quer resultado em forma de commit.
+- Você quer paralelizar issues, gerar PRs, revisar diffs ou criar pipelines implement-then-review.
+- Você quer escolher entre Docker, Podman, Vercel Sandbox ou um provider custom.
+- Você quer capturar e retomar sessões nativas de agents de código.
+
+O ponto mais importante: Sandcastle já tem opinião sobre o ciclo de vida de código. Ele sabe preparar worktree, rodar agente, coletar commit, preservar worktree suja, lidar com completion signal, logs e timeouts. Para engenharia de software com agents, isso remove muito trabalho estrutural.
+
+## Onde Flue ganha?
+
+**Flue** ganha quando o problema é produto ou plataforma de agentes.
+
+- Você quer criar agentes que continuam recebendo mensagens ao longo do tempo.
+- Você quer workflows finitos com run history, eventos e resultado estruturado.
+- Você quer expor agentes e workflows por HTTP com autenticação no boundary da route.
+- Você quer tools tipadas, skills reutilizáveis, MCP, subagents e channels.
+- Você quer deploy em Node.js, Cloudflare, GitHub Actions, GitLab CI, Render ou providers de sandbox como Daytona.
+- Você quer observabilidade integrada com OpenTelemetry, Braintrust, Sentry ou observer próprio.
+
+O ponto mais importante: Flue organiza o harness como parte da aplicação. Isso é útil quando o agente precisa conversar com produto, usuários, tickets, webhooks, filas, banco de dados e permissões. Sandcastle pode ser chamado por um produto, mas Flue foi desenhado para ser esse produto.
+
+## Como decidir entre Sandcastle e Flue?
+
+| Se você precisa de... | Escolha provável |
+| --- | --- |
+| Agentes abrindo commits em branches separadas | Sandcastle |
+| Runner local ou CI para issues de GitHub | Sandcastle |
+| Pipeline de revisão automática de código | Sandcastle |
+| Um painel ou API para agentes dentro do seu SaaS | Flue |
+| Agentes com sessões persistentes e autorização por usuário | Flue |
+| Workflows com `runId`, logs e resultado consumível por app | Flue |
+| Sandboxes como detalhe de um produto maior | Flue |
+| Git como principal interface de saída | Sandcastle |
+
+**Minha leitura prática**: para o contexto de vários agentes mexendo em código em paralelo, Sandcastle encaixa melhor. Ele começa no lugar certo: repo, branch, sandbox, commit e revisão.
+
+Flue fica mais interessante quando esse fluxo precisa virar uma camada de produto. Por exemplo: um bot interno que recebe eventos, um painel SaaS para agents, uma API multi-tenant, uma esteira de workflows com histórico ou um runtime onde agents executam tarefas além de programação.
+
+## Quais riscos entram na escolha?
+
+**Maturidade** ainda importa. Em 17 de junho de 2026, Sandcastle aparecia com cerca de 6.059 stars, 607 forks, licença MIT e pacote `@ai-hero/sandcastle` na versão `0.9.0`. Flue aparecia com cerca de 5.098 stars, 275 forks, licença Apache-2.0 e `@flue/runtime` em `1.0.0-beta.1`.
+
+Sandcastle parece mais direto para uso hoje em automação de código, mas isso não significa que ele resolva governança de produto, multi-tenant ou autorização de usuário. Flue parece mais ambicioso como framework, mas ainda exige mais arquitetura sua para transformar coding work em branch, commit, PR e merge.
+
+Também existe um risco comum: os dois projetos envolvem model-directed work com acesso a filesystem, shell, rede ou ferramentas. A pergunta de segurança não é "tem sandbox?". A pergunta é: qual sandbox, com quais credenciais, quais arquivos, qual rede, qual duração e qual mecanismo de revisão?
+
+## Quais outras alternativas existem?
+
+**Outras alternativas** existem, mas elas não substituem Sandcastle e Flue do mesmo jeito. A escolha depende da camada que você quer resolver: agente direto, orquestração de código, plataforma de coding agents ou framework de aplicação.
+
+| Alternativa | Use quando | Observação |
+| --- | --- | --- |
+| Claude Code, Codex, Cursor, OpenCode ou Copilot | Você quer usar um coding agent diretamente no editor ou terminal | É a opção mais simples, mas você orquestra branches, logs e revisão manualmente |
+| Conductor | Você quer rodar vários agentes em paralelo no Mac, em workspaces isolados | É bom para coordenação humana de várias tentativas, não para embutir um runtime em produto |
+| OpenHands | Você quer uma plataforma open source e model-agnostic para cloud coding agents | Fica mais perto de uma plataforma de agentes de engenharia do que de uma biblioteca pequena |
+| Mastra | Você quer um framework TypeScript para agentes, workflows, memory e observability | É uma alternativa mais próxima de Flue do que de Sandcastle |
+| LangGraph | Você quer orquestração com estado, durable execution, streaming e human-in-the-loop | É forte quando o fluxo de agente vira grafo ou máquina de estado |
+| Vercel AI SDK | Você quer primitives TypeScript para apps com LLMs, tools e agentes | É menos opinativo que Flue sobre runtime completo de agents |
+
+Se a pergunta for "qual ferramenta substitui Sandcastle?", a resposta mais próxima está no eixo Conductor, OpenHands ou scripts próprios sobre Claude Code/Codex. Se a pergunta for "qual ferramenta substitui Flue?", a resposta se aproxima de Mastra, LangGraph ou AI SDK, dependendo do nível de abstração que você quer.
+
+## Quais são os casos de uso para cada um?
+
+| Ferramenta | Casos de uso que fazem sentido |
+| --- | --- |
+| Sandcastle | Transformar issues em commits, rodar refactors em branches paralelas, criar pipeline implement-then-review, testar vários agents no mesmo repo, automatizar tarefas de engenharia em CI |
+| Flue | Criar agente de suporte com sessão, bot interno com tools autorizadas, workflow de revisão de documentos, API de agents para um SaaS, automações com webhooks e histórico de runs |
+| Conductor | Comparar resultados de vários agents no mesmo projeto, tocar workstreams paralelos com revisão humana, experimentar Claude Code e Codex lado a lado |
+| OpenHands | Operar uma plataforma self-hosted de cloud coding agents, delegar tarefas de engenharia end-to-end, criar um control center para agentes de software |
+| Mastra | Construir apps TypeScript com agents, memory, workflows e observability sem começar do zero |
+| LangGraph | Modelar fluxos agentic com estado explícito, retries, checkpoints, intervenção humana e múltiplos nós especializados |
+| Vercel AI SDK | Construir agentes e features de IA dentro de apps Next.js ou Node com controle fino sobre modelos, tools e streaming |
+
+O jeito prático de decidir é perguntar qual é o output principal. Se o output é um commit em um repo, Sandcastle tende a ganhar. Se o output é uma resposta, um run, uma sessão ou um endpoint dentro de produto, Flue e os frameworks de aplicação tendem a ganhar.
+
+## Quais fontes foram usadas?
+
+- [Sandcastle no GitHub](https://github.com/mattpocock/sandcastle)
+- [Sandcastle README](https://github.com/mattpocock/sandcastle/blob/main/README.md)
+- [Flue no GitHub](https://github.com/withastro/flue)
+- [Flue README](https://github.com/withastro/flue/blob/main/README.md)
+- [Flue docs: Agents](https://flueframework.com/docs/guide/building-agents/)
+- [Flue docs: Sandboxes](https://flueframework.com/docs/guide/sandboxes/)
+- [Flue docs: Workflows](https://flueframework.com/docs/guide/workflows/)
+- [OpenHands](https://openhands.dev/)
+- [Mastra](https://mastra.ai/)
+- [LangGraph](https://www.langchain.com/langgraph)
+- [Vercel AI SDK](https://ai-sdk.dev/)
+
+## Qual é o resumo?
+
+**TL;DR:** Sandcastle e Flue têm propósitos diferentes. Use Sandcastle se o seu problema é orquestrar coding agents em repositórios Git. Use Flue se o seu problema é construir agentes e workflows como parte de uma aplicação.
+
+Sandcastle é o caminho mais natural para branches, worktrees, commits e agentes paralelos. Flue é o caminho mais natural para agentes com sessão, tools, workflows, HTTP, SDK, deploy e observabilidade. Não é uma disputa direta de vencedor e perdedor. São ferramentas para camadas diferentes do stack agentic, e podem até coexistir: Sandcastle como worker de código, Flue como camada de produto que chama ou coordena esse trabalho.

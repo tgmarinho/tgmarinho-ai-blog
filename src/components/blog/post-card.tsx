@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
+import Image from "next/image";
 import { ArrowUpRight, Clock } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { GlowCard } from "@/components/fx/glow-card";
@@ -14,6 +15,7 @@ interface PostCardProps {
   description?: string;
   date: string;
   slug: string;
+  image?: string;
   categories: string[];
   /** Pre-computed reading time text (server-side). */
   readingTimeText: string;
@@ -27,6 +29,7 @@ export function PostCard({
   description,
   date,
   slug,
+  image,
   categories,
   readingTimeText,
   variant = "default",
@@ -59,7 +62,7 @@ export function PostCard({
       intensity={variant === "feature" ? "strong" : "subtle"}
       className={cn(
         "border-conic group block hover-lift",
-        variant === "feature" && "md:row-span-2",
+        variant === "feature" && "md:row-span-2 md:flex md:h-full md:flex-col",
         sizing,
         className
       )}
@@ -99,9 +102,27 @@ export function PostCard({
         </p>
       )}
 
+      {image && variant === "feature" && (
+        <div className="relative mt-7 hidden min-h-[220px] flex-1 overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03] md:block">
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 42rem, (min-width: 768px) 50vw, 100vw"
+            className="object-cover opacity-90 transition duration-700 group-hover:scale-[1.03] group-hover:opacity-100"
+            priority
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/55 via-transparent to-white/[0.03]"
+          />
+        </div>
+      )}
+
       <div
         className={cn(
-          "mt-6 flex items-center gap-4 border-t border-white/[0.06] pt-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground"
+          "mt-6 flex items-center gap-4 border-t border-white/[0.06] pt-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground",
+          variant === "feature" && "md:mt-7"
         )}
       >
         <time dateTime={date}>{formattedDate}</time>

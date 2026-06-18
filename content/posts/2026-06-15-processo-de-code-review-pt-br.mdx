@@ -1,0 +1,221 @@
+---
+title: "Processo de code review: como revisar código sem travar o time"
+description: "Processo de code review melhora qualidade sem travar o time: prepare PRs pequenos, revise risco, separe bloqueios de sugestões e mantenha fluxo claro."
+date: "2026-06-15"
+published: true
+slug: "processo-de-code-review"
+language: "pt-BR"
+translationKey: "code-review-process"
+categories: ["software-engineering", "code-review", "team-process", "quality", "pt-br"]
+image: "/images/blog/code-review-process-cover.jpg"
+---
+
+Um bom **processo de code review** protege o produto, o time e a manutenção futura do codebase. Ele reduz risco sem transformar cada pull request em uma reunião assíncrona infinita. Também deixa claro o que o autor precisa entregar, o que o revisor precisa checar e quais problemas realmente bloqueiam o merge.
+
+Eu não vejo code review como uma caça a bugs. Vejo como um checkpoint de qualidade para comportamento, legibilidade, edge cases, testes e entendimento compartilhado. O objetivo não é provar quem está certo, é melhorar o código sem fazer o autor se sentir atacado.
+
+Code review funciona melhor quando vira um contrato pequeno e repetível. O autor mostra intenção, escopo, evidência e risco. O revisor procura falhas de contrato, regressões, segurança, dados, vazamento de informação, observabilidade, manutenção e aderência aos padrões do codebase. Todo o resto precisa ser tratado como sugestão, não como veto.
+
+Também acredito que todo mundo deveria revisar código, não só as pessoas mais seniores. Review é uma das formas mais rápidas de entender o que está acontecendo na codebase, no projeto e no produto. Quem revisa aprende arquitetura, regra de negócio, decisões de escopo e padrões reais do time. Quem recebe review também ensina, porque explica intenção, contexto e trade-offs.
+
+## O que o code review deveria validar?
+
+O **review** deve validar se a mudança pode entrar em produção com risco conhecido. Isso é diferente de reescrever o código no gosto do revisor.
+
+Use esta ordem mental:
+
+| Pergunta | O que procurar |
+|---|---|
+| O problema certo foi resolvido? | O PR bate com a issue, bug ou decisão técnica |
+| Algo que outros dependem mudou? | API, schema, evento, rota, permissão, copy visível |
+| O risco foi coberto? | Testes, logs seguros, fallback, rollback, migração |
+| A leitura futura ficou aceitável? | Nomes, limites de responsabilidade, remoção de duplicação real |
+| As regras da codebase foram respeitadas? | Padrões locais, lint, tipos, estrutura de pastas, convenções de teste |
+| O escopo está controlado? | Sem refactor lateral, sem alteração surpresa |
+
+Se a resposta para uma dessas perguntas é "não", o comentário pode bloquear o merge. Se é apenas preferência local, deve virar sugestão.
+
+## Como o autor prepara um pull request bom?
+
+O autor é responsável por fazer o **pull request** ser revisável. Um PR bom diminui carga cognitiva antes de qualquer pessoa abrir o diff.
+
+Inclua sempre:
+
+- **Intenção:** o que muda e por quê.
+- **Escopo:** o que ficou fora de propósito.
+- **Evidência:** teste rodado, screenshot, vídeo curto, log, link de preview ou motivo para não testar.
+- **Risco:** migração, permissão, dados, performance, cache, SEO, acessibilidade ou compatibilidade.
+- **Plano de rollback:** como desfazer ou estabilizar se algo falhar.
+
+Dependendo do PR e da feature, evidência visual vale muito. Se a mudança altera uma tela, estado vazio, formulário, fluxo de checkout, dashboard, loading, erro ou responsividade, coloque um print ou um vídeo curto mostrando o resultado. Isso reduz ida e volta no review, ajuda quem não rodou o projeto localmente e registra qual comportamento foi validado.
+
+Também cuide da higiene do diff. Se o linter ou formatter alterou indentação, aspas, imports ou quebras de linha em arquivos que não fazem parte da mudança, separe isso em outro PR ou reverta antes de pedir review. O revisor precisa conseguir enxergar o que é mudança de comportamento e o que é só ruído mecânico.
+
+O tamanho também importa. Um PR pequeno não é moralmente melhor, ele é tecnicamente mais barato de revisar. Quando a mudança cresce demais, divida por contrato: schema primeiro, backend depois, UI depois, limpeza por último.
+
+## Como o revisor lê o diff sem virar gargalo?
+
+O revisor deve começar pela **intenção**, não pelo estilo. Primeiro entenda por que a mudança existe. Depois procure mudança de comportamento, type safety, tratamento de erro, edge cases e cobertura de testes. Só então olhe legibilidade e aderência aos padrões existentes do codebase.
+
+Uma sequência prática:
+
+1. Leia a descrição do PR e procure o risco declarado.
+2. Entenda a intenção da mudança antes de julgar a solução.
+3. Abra os testes ou evidências antes da implementação.
+4. Leia a entrada do fluxo: rota, handler, action, job, componente ou migration.
+5. Siga o caminho dos dados até o efeito final.
+6. Só depois revise nomes, pequenas extrações e formato.
+
+Essa ordem evita um problema comum: gastar energia em detalhe cosmético e deixar passar bug de permissão, vazamento de dado ou quebra de contrato.
+
+## Quais comentários deveriam bloquear o merge?
+
+Um comentário bloqueia quando aponta uma **falha de produção** ou uma lacuna real de evidência. Bloqueio não é discordância estética.
+
+Boas razões para bloquear:
+
+- Falta de autenticação, autorização ou isolamento multi-tenant.
+- Possível perda, corrupção ou exposição de dados.
+- Vazamento de informação sensível em logs, eventos, erros, analytics ou respostas de API.
+- Migração sem caminho de rollback ou sem compatibilidade.
+- API pública, evento ou schema mudando sem versão ou comunicação.
+- Teste ausente em regra de negócio crítica.
+- Regressão clara de performance, acessibilidade, SEO ou observabilidade.
+- Código que compila, mas contradiz a intenção declarada do PR.
+- Mudança de lint, formatação ou indentação misturada com feature, quando isso esconde o diff real.
+
+Razões fracas para bloquear:
+
+- Preferência de nome sem impacto real.
+- Troca de padrão sem regra do projeto.
+- Refactor que seria bom, mas não pertence ao escopo.
+- Pedido de "deixar mais elegante" sem risco concreto.
+
+Quando algo não bloqueia, escreva como sugestão. Isso preserva velocidade e evita transformar review em disputa de gosto.
+
+## Como revisar vazamento de informação?
+
+Um dos riscos mais fáceis de subestimar em **code review** é vazamento de informação. Não acontece só quando alguém expõe uma chave de API. Também acontece quando o código registra dados demais em logs, retorna erro detalhado demais para o cliente ou manda campos sensíveis para analytics, filas e ferramentas de observabilidade.
+
+Procure principalmente por:
+
+- Logs com token, cookie, header de autorização, chave de API ou payload bruto.
+- `console.log`, logger ou evento de erro imprimindo objeto inteiro de request, usuário, sessão ou pagamento.
+- Mensagem de erro que revela regra interna, ID de outro tenant, SQL, stack trace ou caminho de arquivo.
+- Analytics recebendo email, telefone, documento, endereço, IP ou identificador sensível sem necessidade.
+- Webhook, fila ou evento contendo mais campos do que o consumidor precisa.
+- Screenshot, fixture, teste ou snapshot com dado real.
+
+A pergunta prática é: "Se esse log cair em uma ferramenta externa, alguém consegue reconstruir informação privada?" Se a resposta for sim ou talvez, o comentário deve bloquear o merge.
+
+O padrão seguro é registrar contexto mínimo. Prefira IDs internos não sensíveis, status, nome do fluxo, duração, contagem e um erro sanitizado. Quando precisar investigar um incidente, use correlação e amostragem controlada, não dump completo de payload.
+
+## Como escrever comentários úteis?
+
+Um bom comentário de **code review** mostra o risco, propõe um caminho e deixa claro se é bloqueio ou sugestão. Ele critica o diff, não a pessoa.
+
+Prefira este formato:
+
+| Tipo | Exemplo |
+|---|---|
+| Bloqueio | "Blocker: essa mutation não valida `orgId`. Um usuário de outra organização pode tentar escrever neste registro." |
+| Bloqueio | "Blocker: este log imprime o payload completo do pagamento. Isso pode vazar dados sensíveis na ferramenta de observabilidade." |
+| Sugestão | "Suggestion: este nome pode ficar mais específico, porque agora ele representa apenas pedidos pagos." |
+| Pergunta | "Question: esse cache precisa ser invalidado quando o status muda?" |
+| Nítido | "Nit: remove log antes do merge." |
+
+O rótulo muda o clima da conversa. O autor sabe se precisa agir antes do merge ou se pode aceitar, responder ou deixar para depois.
+
+Comentário direto como "remove log" é válido quando é só um `console.log` temporário esquecido. Não precisa transformar isso em debate. Quando há risco envolvido, aí sim o comentário precisa explicar melhor: qual dado está sendo exposto, onde ele pode cair e por que isso bloqueia o merge.
+
+Code review também serve para aprender e ensinar, mas não deve virar debate infinito. Quando a conversa começa a ter muitas mensagens, quando falta contexto de produto ou quando duas pessoas estão discutindo arquitetura em comentários pequenos, provavelmente é melhor chamar para conversar. Cinco minutos em uma call ou pareamento curto podem resolver o que viraria uma thread longa no PR.
+
+Depois da conversa, volte para o PR com uma decisão resumida: o que foi combinado, o que será alterado agora e o que fica para depois. Assim o histórico continua útil sem transformar a pull request em chat.
+
+## Como manter o fluxo sem perder qualidade?
+
+O **fluxo** melhora quando as regras chatas saem da conversa e entram no pipeline. Humanos devem revisar risco, intenção e trade-offs. Ferramentas devem revisar formato, lint, tipos, testes e parte da segurança repetível.
+
+Use estas práticas:
+
+- Rode lint, typecheck e testes antes de pedir review.
+- Configure CI para bloquear o que é mecânico.
+- Mesmo com CI, confira se o código segue as regras da codebase e os padrões locais.
+- Não misture ajuste automático de lint/formatação com mudança de produto no mesmo diff.
+- Defina um tempo esperado de primeira resposta, por exemplo, até o próximo bloco de trabalho.
+- Defina quem é responsável por responder aos comentários, ajustar o PR e levar a mudança até o merge.
+- Peça review de uma pessoa certa, não de um canal inteiro.
+- Use agentes ou ferramentas de revisão como primeira passada, mas mantenha humano responsável pelo risco.
+
+O melhor processo não é o mais rigoroso em cada linha. É o que pega os riscos importantes cedo e deixa o resto avançar.
+
+## Como fazer code review na era da IA?
+
+Na era da **IA**, code review precisa de duas camadas: uma revisão automática e uma revisão humana. Agentes e ferramentas especializadas conseguem fazer uma primeira passada muito útil, especialmente em PRs grandes, mudanças geradas por coding agents e regressões que seguem padrões repetidos. A IA ajuda a enxergar o que o olho humano passou batido, mas também pode gerar muito ruído na PR se comentar tudo sem prioridade.
+
+Ferramentas como [CodeRabbit](https://coderabbit.ai/) e [Macroscope](https://macroscope.com/) entram bem nessa camada. Elas podem resumir o PR, apontar trechos suspeitos, encontrar inconsistências, sugerir testes e dar contexto para o revisor humano chegar mais rápido no que importa.
+
+Mas a decisão final continua humana. O agente pode chamar atenção para risco, mas quem entende prioridade de produto, trade-off, contexto político do time, roadmap, suporte e custo de manutenção é a equipe. O uso saudável é:
+
+- Agente revisa primeiro e aponta riscos prováveis.
+- Autor corrige o óbvio antes de pedir revisão humana.
+- Revisor humano lê com foco em comportamento, segurança, dados, arquitetura e produto.
+- Comentários repetidos do agente viram regra, teste, lint ou documentação.
+- Falso positivo e comentário ruidoso viram ajuste de instrução, não motivo para ignorar tudo.
+
+O ponto não é terceirizar julgamento. É economizar atenção humana para os riscos que ferramentas ainda não conseguem decidir sozinhas.
+
+## Qual checklist usar antes do merge?
+
+Use um **checklist** curto. Se ele ficar longo demais, ninguém usa.
+
+Para o autor:
+
+- O PR resolve uma intenção clara?
+- O diff está pequeno o bastante para revisar?
+- O diff está livre de ruído de lint, formatação ou indentação fora do escopo?
+- A evidência está no corpo do PR?
+- Se tem UI ou fluxo visual, há print ou vídeo curto?
+- O risco principal foi declarado?
+- O rollback ou mitigação está claro?
+
+Para o revisor:
+
+- APIs, rotas, schemas, eventos, props e retornos que outros códigos dependem continuam compatíveis?
+- O código respeita as regras e padrões da codebase?
+- A permissão e o isolamento de dados estão corretos?
+- Logs, erros e eventos evitam vazamento de informação?
+- O caminho feliz e o erro principal foram cobertos?
+- A mudança tem observabilidade suficiente?
+- Algum comentário seu é só preferência? Se sim, marque como sugestão.
+
+## Como saber se o processo está funcionando?
+
+Um processo de **review saudável** aparece em métricas simples e no clima do time. PRs não ficam dias parados, bugs importantes são pegos antes do merge e comentários não viram debate de identidade.
+
+Sinais bons:
+
+- Primeira resposta rápida.
+- Poucos PRs gigantes.
+- Poucos bloqueios por estilo.
+- Regressões importantes caindo ao longo do tempo.
+- Comentários repetidos virando lint, teste ou documentação.
+
+Sinais ruins:
+
+- Review só acontece no fim do dia.
+- O mesmo tipo de erro aparece toda semana.
+- Revisores reescrevem a solução inteira.
+- PRs chegam com descrição vaga, sem explicar risco, trade-off ou comportamento que pode quebrar.
+
+Quando um problema se repete, não culpe a pessoa. Melhore o processo: template, teste, lint, guia de arquitetura ou gate de CI.
+
+E quando o PR está bom, **LGTM** é legal também. Code review não precisa procurar problema onde não tem. Às vezes o comentário final pode ser simples:
+
+> Amazing PR
+>
+> Thank you for this great job
+
+---
+
+**Resumo:** code review é um processo de redução de risco, não uma arena de opinião. O autor prepara intenção, escopo, evidência e risco. O revisor checa contrato, segurança, vazamento de informação, dados, testes e manutenção. Bloqueie o merge apenas por risco real. Marque preferências como sugestão. Use agentes como primeira passada, automatize o mecânico e preserve a atenção humana para o que pode quebrar o produto.

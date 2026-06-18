@@ -94,6 +94,68 @@ above ~300 KB and fall back to the site favicon. To avoid that:
    ```
 5. Never commit blog cover images larger than 600 KB.
 
+### Blog image quality bar (mandatory)
+
+Blog images must look like intentional editorial assets, not rough diagrams.
+Before saving a cover or in-article diagram, apply this checklist:
+
+1. **Prefer visual metaphor over text.** Use depth, light, paths, layers,
+   objects, or composition to explain the idea. Text should support the visual,
+   not carry the whole image.
+2. **Keep in-image text minimal.** Cover images should usually have no more
+   than 1 short headline or 3-5 short labels. In-article diagrams may use more
+   labels only when they are essential to understand the architecture.
+3. **Never put text on angled or perspective surfaces.** Text on 3D cubes,
+   tilted planes, walls, device screens, or curved paths often looks cheap and
+   becomes hard to read. Put labels on flat overlay cards, callouts, or captions
+   instead.
+4. **Do not let lines, edges, glows, or objects cross text.** Every label must
+   remain readable at the displayed blog width, not only at full resolution.
+5. **Avoid dense explanatory copy inside images.** Put explanations in the MDX
+   body. The image should be scannable in 1-2 seconds.
+6. **Use short English labels only.** Good examples: `DATABASE`, `API CALL`,
+   `QUEUE`, `DISK`, `CPU mostly waiting`, `120 ms`. Avoid paragraphs, long
+   subtitles, and localized text inside the image.
+7. **Prefer polished 3D/isometric or editorial abstract visuals over wireframe
+   boxes.** If using SVG/HTML/CSS, make it feel finished: clear hierarchy,
+   restrained palette, proper spacing, soft shadows, consistent lighting, and
+   no overlapping labels.
+8. **Use the right tool for the asset.** Use image generation for rich bitmap
+   covers, concept art, photoreal or 3D-style editorial visuals. Use SVG/HTML
+   only for deterministic diagrams where text accuracy and precise layout matter.
+
+### Technical diagrams and architecture images
+
+For diagrams such as system architecture, I/O paths, agents, databases, or
+network layers:
+
+1. Start with a simple visual model: source -> application -> I/O targets.
+2. Use shapes and paths to show flow. Use labels only for entities and key
+   timings.
+3. If using 3D/isometric blocks, keep text off the block faces. Place labels in
+   flat HUD-style cards or below the object.
+4. Keep each label visually independent. No label should overlap another object,
+   connector, glow, grid line, or perspective edge.
+5. Test the diagram both as a standalone image and inside the blog layout.
+6. If the result looks amateur, busy, or text-heavy, simplify before finishing.
+
+### Visual validation (mandatory)
+
+After creating or editing a blog image:
+
+1. Open or inspect the final JPG/PNG with the available image viewer.
+2. Check at least these things:
+   - no cropped objects
+   - no overlapping text
+   - no text crossed by perspective edges or connector lines
+   - labels readable at blog display size
+   - composition has a clear focal point
+   - visual style matches the site's dark, cyan/magenta, agentic futurist look
+3. If the image is used inside a post body, inspect it in the rendered page when
+   a dev server is already running or easy to start.
+4. Do not finish with "good enough" visuals. Iterate once when readability,
+   composition, or polish is visibly weak.
+
 ## Localization rules
 
 1. Translate meaning, not sentence shape.
@@ -150,7 +212,9 @@ they populate both the page `keywords` meta tag and the JSON-LD `keywords`.
 - [ ] Apply the four SEO+GEO rules (answer-first, question headings, key-term bold, extractable structure)
 - [ ] Write keyword-bearing description (150-160 chars) and tight categories
 - [ ] Create/generate contextual cover image
+- [ ] Apply the blog image quality bar: minimal text, no text on perspective surfaces, no overlapping labels
 - [ ] Convert cover to 1200×630 JPG, target under 300 KB and never above 600 KB
+- [ ] Inspect the final image visually and iterate if it looks rough, busy, cropped, or hard to read
 - [ ] Set same translationKey in both files
 - [ ] Validate frontmatter fields and categories
 - [ ] Save both files in content/posts/

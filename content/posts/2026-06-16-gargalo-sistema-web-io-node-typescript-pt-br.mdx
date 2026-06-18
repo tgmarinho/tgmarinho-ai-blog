@@ -1,0 +1,230 @@
+---
+title: "O gargalo do sistema web quase nunca é CPU, é I/O"
+description: "Entenda por que sistemas web travam mais por I/O do que por CPU e como Node.js com TypeScript reduz latência sem arquitetura prematura."
+date: "2026-06-16"
+published: true
+slug: "gargalo-sistema-web-io-node-typescript-pt-br"
+language: "pt-BR"
+translationKey: "web-systems-io-bound-node-typescript"
+categories: ["nodejs", "typescript", "backend", "architecture", "performance", "pt-br"]
+image: "/images/blog/web-io-node-typescript-cover.jpg"
+---
+
+Na maioria dos sistemas web, o gargalo não é CPU. É **I/O**, ou seja, Input/Output: banco de dados, rede, disco, filas, cache e APIs externas. É por isso que Node.js com TypeScript costuma brilhar nesse tipo de backend: ele foi desenhado para manter muitas requisições andando enquanto quase tudo está esperando resposta.
+
+Essa ideia parece simples, mas muda a forma de diagnosticar performance. Antes de trocar linguagem, framework ou banco, vale perguntar: o servidor está calculando algo pesado ou está esperando alguém responder?
+
+## Por que CPU vira suspeito antes de I/O?
+
+CPU é o suspeito mais visível porque é fácil de imaginar: "o código está lento". Só que um request web comum passa pouco tempo executando JavaScript e muito tempo parado em **latência**.
+
+Um fluxo típico de API faz algo assim:
+
+1. Recebe HTTP.
+2. Valida payload.
+3. Busca usuário no banco.
+4. Chama um serviço externo.
+5. Escreve evento em uma fila.
+6. Monta JSON.
+7. Responde HTTP.
+
+O passo 2 e o passo 6 usam CPU. O resto é espera. Se o banco leva 120 ms, a API externa leva 240 ms e a fila leva 80 ms, otimizar 5 ms de JavaScript não muda o produto. A conta fecha no caminho mais lento, não no trecho que parece mais elegante no editor.
+
+## O que I/O significa em um backend web?
+
+**I/O** é toda operação em que o processo precisa sair de si mesmo para ler, escrever ou pedir algo. Em sistemas web, quase sempre é aí que a latência mora.
+
+| Fonte de espera | Exemplo comum | Sintoma |
+| --- | --- | --- |
+| Banco de dados | query sem índice, lock, pool cheio | p95 alto com CPU baixa |
+| Rede | API externa, DNS, TLS, gateway | variação grande entre requests |
+| Disco | upload, relatório, PDF, log síncrono | spikes em operações específicas |
+| Cache | Redis lento, miss rate alto | muitos requests caem no banco |
+| Fila | consumer atrasado, broker saturado | tempo de resposta bom, processamento ruim |
+
+Essa tabela explica um caso comum: a máquina mostra 20% de CPU, mas o usuário sente lentidão. Não é contradição. A CPU está livre porque a aplicação está esperando.
+
+## Como isso aparece em uma arquitetura fullstack?
+
+Uma arquitetura comum de produto web e mobile tem quatro peças principais: **Next.js** no frontend web, React Native no aplicativo mobile, uma API em Node.js e um banco Postgres.
+
+```txt
+Browser
+  -> Next.js frontend
+  -> Node.js API
+  -> Postgres
+
+Mobile app
+  -> React Native
+  -> Node.js API
+  -> Postgres
+```
+
+![Arquitetura fullstack mostrando as camadas de I/O entre Next.js, React Native, API Node.js, Postgres, cache, filas, disco e APIs externas.](/images/blog/web-io-fullstack-architecture.jpg)
+
+Na prática, o Next.js pode ter Server Components, rotas de aplicação e páginas renderizadas no servidor. O React Native roda no aparelho e fala com a mesma API. A API Node.js centraliza regras de negócio, autenticação, autorização, validação, integrações e acesso ao banco. O Postgres guarda o estado durável do produto.
+
+O fluxo de uma ação simples, como abrir o perfil do usuário, costuma ser assim:
+
+1. O usuário abre a tela no browser ou no app.
+2. O frontend chama a API.
+3. A API valida sessão, permissões e parâmetros.
+4. A API consulta Postgres.
+5. A API talvez chame cache, fila ou serviço externo.
+6. A API devolve JSON.
+7. O frontend renderiza a tela.
+
+Repare onde o tempo vai embora. Renderizar uma tela simples usa alguma CPU. Validar payload também. Mas banco, cache, rede e serviço externo são I/O. A maior parte do request acontece fora da CPU do processo Node.
+
+| Camada | Responsabilidade | Gargalo comum |
+| --- | --- | --- |
+| Next.js | UI web, SSR, Server Components, cache de página | waterfall de dados, cache mal definido |
+| React Native | UI mobile, estado local, chamadas HTTP | rede móvel instável, retries ruins |
+| API Node.js | regras de negócio, auth, integração, orquestração | espera em banco, APIs externas, pool cheio |
+| Postgres | dados relacionais, transações, índices | query lenta, lock, índice ausente |
+
+Esse desenho também explica por que a API precisa ser pequena e objetiva. Ela não deveria fazer processamento pesado dentro do request. Ela deveria validar, orquestrar I/O, aplicar regra de negócio e responder. Trabalho demorado vai para fila, worker ou serviço especializado.
+
+## Por que Node.js combina com esse problema?
+
+**Node.js** combina com I/O porque usa um event loop e APIs assíncronas não bloqueantes. Quando uma requisição espera o banco, o processo não precisa ficar parado naquela requisição. Ele pode continuar aceitando outras conexões e retomar a primeira quando a resposta chegar.
+
+Esse modelo é muito bom para:
+
+1. Backend for Frontend (BFF).
+2. APIs REST ou GraphQL que agregam dados.
+3. WebSocket, Server-Sent Events e realtime.
+4. Integrações com muitos serviços externos.
+5. Serverless e rotas de aplicação em Next.js.
+
+O ganho não é magia. O ganho é encaixe entre modelo de execução e requisito. Se o trabalho dominante é esperar rede e banco, um runtime leve e assíncrono aproveita bem o tempo morto.
+
+## Onde Go entra nessa discussão?
+
+**Go** entra muito bem quando você quer backend simples, compilado, concorrente e previsível. Ele também é ótimo para sistemas I/O-bound, mas chega lá por outro modelo: em vez de event loop explícito, Go usa goroutines leves e um runtime que agenda essas goroutines sobre threads do sistema.
+
+Na prática, Go é forte para:
+
+1. APIs internas de alta concorrência.
+2. Gateways, proxies e serviços de rede.
+3. Workers que misturam I/O com algum processamento.
+4. Serviços pequenos com deploy simples em um binário.
+5. Infraestrutura, CLIs, agentes, collectors e control planes.
+6. Backends onde consumo de memória previsível importa.
+
+Go não invalida o argumento sobre Node.js. Ele reforça a tese principal: o problema web comum é I/O. A diferença é ergonomia e contexto de produto.
+
+| Escolha | Brilha quando | Custo |
+| --- | --- | --- |
+| Node.js + TypeScript | Produto web/mobile fullstack, tipos compartilhados, Next.js, API agregadora | CPU pesada trava o event loop se ficar no request |
+| Go | Serviços backend independentes, rede, workers, infra, binário simples | Menos reaproveitamento direto de tipos e código com frontend |
+
+Se o time tem frontend Next.js, mobile React Native e quer velocidade de produto, Node + TypeScript reduz troca de contexto. O mesmo tipo pode atravessar formulário, API client, handler e contrato de resposta. Isso é uma vantagem real no dia a dia.
+
+Se o time está construindo um serviço de plataforma, proxy, worker de alta concorrência, coletor de eventos ou API isolada que precisa ser barata em memória e simples de operar, Go vira uma escolha excelente.
+
+O ponto honesto é este: Go é uma das melhores linguagens para backend moderno. Node + TypeScript é uma das melhores combinações quando o backend faz parte de um produto fullstack em TypeScript. A decisão não é "Go ou Node". A decisão é qual custo você quer pagar no seu contexto.
+
+## Como call stack, callbacks e event loop explicam isso?
+
+O modelo fica claro quando você separa três peças: **call stack**, callbacks e event loop. Elas explicam por que Node consegue lidar bem com muitas operações esperando I/O sem abrir uma thread pesada para cada request.
+
+| Peça | O que faz | Por que importa |
+| --- | --- | --- |
+| Call stack | Executa o código síncrono atual | Se ficar ocupada, tudo espera |
+| Callback | Guarda o que deve acontecer depois do I/O | Permite retomar o fluxo quando a resposta chega |
+| Event loop | Move callbacks prontos de volta para execução | Mantém o processo avançando entre várias esperas |
+
+Quando o código chama o banco, a parte síncrona sai da call stack rapidamente. O trabalho de I/O segue fora dela. Quando a resposta chega, o callback, ou a continuação de uma `Promise`, volta para ser executado pelo event loop.
+
+Em outras palavras: Node não ganha porque faz o banco responder mais rápido. Ele ganha porque não bloqueia a call stack enquanto espera. O processo fica livre para atender outro request, ler outro socket, resolver outra Promise ou enviar outra resposta.
+
+O limite também aparece aqui. Se você coloca CPU pesada na call stack, não há event loop que salve. O processo não consegue processar callbacks prontos enquanto está preso calculando.
+
+## Onde TypeScript entra nessa conta?
+
+**TypeScript** não deixa o I/O mais rápido. Ele deixa o sistema mais fácil de mudar com confiança enquanto você lida com muitas bordas: request, response, banco, fila, cache, webhook e contrato de API.
+
+O valor aparece em três lugares:
+
+1. Tipos compartilhados entre frontend e backend.
+2. Refactors mais seguros em handlers, services e clients.
+3. Contratos explícitos para dados que cruzam fronteiras.
+
+Existe uma ressalva importante: tipos de TypeScript somem em runtime. Se o dado vem de fora, valide em runtime com Zod, Valibot, JSON Schema ou uma camada equivalente. TypeScript protege o código que você escreve. Validação protege a entrada que você não controla.
+
+## Quando Node.js deixa de ser a escolha certa?
+
+Node deixa de brilhar quando o problema principal é **CPU-bound**, ou seja, quando a aplicação precisa gastar ciclos de CPU por muito tempo.
+
+Exemplos:
+
+1. Compressão pesada.
+2. Processamento de imagem ou vídeo.
+3. Criptografia intensiva.
+4. Geração massiva de PDF.
+5. Machine learning inference.
+6. Transformação grande de dados em memória.
+7. Parse de JSON gigante dentro do request.
+
+Nesses casos, um job pesado pode travar o event loop e prejudicar requests que só queriam esperar I/O. A solução prática é separar o trabalho: `worker_threads`, fila com workers dedicados, serviço em outra linguagem, ou infraestrutura feita para processamento paralelo. O erro é forçar o event loop a carregar uma carga que não é dele.
+
+## Como diagnosticar antes de trocar a stack?
+
+Antes de culpar Node, TypeScript ou o framework, meça o caminho do request. **Observabilidade** simples já separa CPU de espera.
+
+Comece por estas perguntas:
+
+1. Qual é o p95 e p99 de cada query?
+2. O pool do banco está cheio?
+3. Há lock, wait event ou query sequencial sem índice?
+4. Qual chamada externa domina a latência?
+5. O event loop está atrasando?
+6. O processo está usando CPU alta ou só acumulando requests pendentes?
+
+Um check útil no Postgres:
+
+```sql
+SELECT state, wait_event_type, wait_event, count(*)
+FROM pg_stat_activity
+GROUP BY state, wait_event_type, wait_event
+ORDER BY count(*) DESC;
+```
+
+E um sinal útil no Node:
+
+```ts
+import { monitorEventLoopDelay } from "node:perf_hooks";
+
+const delay = monitorEventLoopDelay({ resolution: 20 });
+delay.enable();
+
+setInterval(() => {
+  console.log({
+    eventLoopP95Ms: Math.round(delay.percentile(95) / 1_000_000),
+  });
+  delay.reset();
+}, 10_000);
+```
+
+Se o event loop está saudável, a CPU está baixa e o p95 vem de queries ou APIs externas, trocar de linguagem não resolve. Resolver I/O resolve.
+
+## Qual é a regra prática?
+
+A regra prática é simples: escolha a stack pela natureza do gargalo. Se o sistema é majoritariamente **I/O-bound**, Node.js com TypeScript é uma escolha forte, produtiva e madura. Se o sistema é majoritariamente CPU-bound, trate processamento pesado como outro tipo de problema.
+
+Isso também evita arquitetura prematura. Muitos backends web precisam primeiro de:
+
+1. Índices certos.
+2. Pool de conexão configurado.
+3. Timeouts e retries com limite.
+4. Cache onde existe leitura repetida.
+5. Filas para trabalho fora do request.
+6. Validação de runtime nas bordas.
+7. Medição por etapa do request.
+
+Depois disso, talvez você ainda precise trocar algo. Mas a decisão vai vir de evidência, não de preferência por linguagem.
+
+## Resumo
+
+**TL;DR:** Sistema web comum é mais espera do que cálculo. Se a latência vem de banco, rede, filas, cache, disco e APIs externas, Node.js combina bem com o problema porque mantém o processo útil enquanto I/O responde. TypeScript adiciona segurança de mudança e contratos entre camadas, desde que entradas externas sejam validadas em runtime. Quando o trabalho vira CPU-bound, tire esse peso do event loop.
