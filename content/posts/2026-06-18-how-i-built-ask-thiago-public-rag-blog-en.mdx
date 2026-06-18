@@ -16,7 +16,7 @@ The goal was not to add a generic chatbot to the blog. The goal was to build a s
 
 ## How did the idea start?
 
-The first question was where an agentic interface made sense around this project without turning the site into a loose lab. The scope was pragmatic: keep Next.js and Velite as the public runtime, use only published content, and build search with cited answers.
+The first question came from looking at Flue as a framework for building agents: where would an agentic layer make sense around this project without turning the site into a loose lab? The scope was pragmatic: keep Next.js and Velite as the public runtime, use only published content, and build search with cited answers.
 
 The strongest fit was a **public RAG** over the site: an "ask Thiago's corpus" experience limited to about, CV, projects, posts, and the public journal. That scope was small enough for an MVP and useful enough to show product thinking, architecture, and privacy discipline.
 
@@ -25,6 +25,7 @@ The feature thesis was:
 - use only published content;
 - answer with sources;
 - work without an LLM dependency;
+- improve profile questions by crossing about, CV, and projects;
 - allow the whole feature to turn off with a feature flag.
 
 ## What was the first architecture boundary?
@@ -91,16 +92,19 @@ Search does not use embeddings in the MVP. It uses `fuse.js` for fuzzy search an
 
 The **search fallback** is part of the product, not just a backup plan. If Vercel AI Gateway credentials are missing, the API still returns relevant sources and points the user to the evidence cards.
 
-The flow is:
+The final flow is:
 
 1. normalize the question;
 2. remove stop words such as "what", "about", "he", "know", "o que", "ele", "sabe";
 3. search with Fuse across title, description, categories, and text;
 4. add literal score for direct terms;
-5. prefer documents in the current page language;
-6. return up to six sources with excerpts.
+5. detect profile intent, such as "who is Thiago?";
+6. apply small boosts by document type;
+7. prefer documents in the current page language;
+8. diversify results so the answer does not return six sources of the same type;
+9. return up to six sources with excerpts.
 
-This also fixed real questions such as "o que ele sabe sobre react?", "Thiago sabe React Native?", and "Does Thiago know TypeScript?". The answer needs to cross CV, projects, and posts. React Native appears in the CV, the SwitchCare experience, and projects such as BMI Calculator, Meetapp, Ecoleta, and Be the Hero. TypeScript appears in the CV, iTOP, Unicrow, many projects, and technical writing.
+This also fixed real questions such as "o que ele sabe sobre react?", "Thiago sabe React Native?", "Does Thiago know TypeScript?", and "who is Thiago Marinho?". The answer needs to cross CV, projects, about, and posts. React Native appears in the CV, the SwitchCare experience, and projects such as BMI Calculator, Meetapp, Ecoleta, and Be the Hero. TypeScript appears in the CV, iTOP, Unicrow, many projects, and technical writing.
 
 ## When does the LLM enter?
 
@@ -133,20 +137,22 @@ Protection is simple on purpose. The feature flag lives in `src/lib/feature-flag
 export const featureFlags = {
   ask: process.env.NEXT_PUBLIC_FF_ASK_ENABLED === "true",
 } as const;
+
+export type FeatureFlag = keyof typeof featureFlags;
 ```
 
 The **rollout** uses the same flag in four places:
 
-- desktop and mobile menu, to hide the Ask link;
+- `getEnabledNavLinks()`, to hide the Ask link in desktop and mobile nav;
 - `/ask` page, to return `notFound()` when disabled;
 - `/api/ask`, to return 404 when called through `curl`, Postman, or another client;
 - `sitemap.ts`, to avoid publishing the route when the feature is disabled.
 
 There is also an in-memory rate limit in the API: eight requests per minute per IP. It is not a full defense against distributed abuse, but it is enough for a small personal MVP.
 
-## Why did I not use another runtime in the final version?
+## Why did Flue not enter the final runtime?
 
-An agentic framework came up as an option for local agent and workflow experiments. In the end, that layer did not stay in the architecture because the public feature did not need another runtime.
+Flue came up because it is a framework for building agents, tools, and workflows. It is still a good path for local automation experiments, but the public feature did not need another runtime to deliver value.
 
 The final version is simpler: Next.js receives the question, `src/lib/ask/public-corpus.ts` builds the public corpus, `fuse.js` searches for sources, and the AI SDK synthesizes an answer when Vercel AI Gateway is available. Fewer parts means less coupling and less confusion about what runs in production.
 
@@ -163,7 +169,7 @@ The main fixes were:
 - the flag needed a clear feature flag name;
 - the corpus needed about, CV, and projects to answer better questions about skills.
 
-The layout fix was to shorten fallback answers and move full excerpts into source cards. The corpus fix was to use only safe `plainBody` and add public profile, CV, and project documents. The search fix was to combine Fuse, literal score, and stop words. The rollout fix was to centralize `NEXT_PUBLIC_FF_ASK_ENABLED`.
+The layout fix was to shorten fallback answers and move full excerpts into source cards. The corpus fix was to use only safe `plainBody` and add public profile, CV, and project documents. The search fix was to combine Fuse, literal score, stop words, profile intent, kind boosts, and diversification. The rollout fix was to centralize `NEXT_PUBLIC_FF_ASK_ENABLED` in `featureFlags.ask`.
 
 ## What is the final architecture?
 
@@ -205,10 +211,10 @@ The decisions that paid off:
 - cite sources every time;
 - keep Ask away from private files;
 - use a feature flag from the start;
-- avoid an agentic framework when the production feature does not need one.
+- keep the production runtime simple when the feature does not need an agentic framework.
 
 ## TL;DR
 
-Ask Thiago started as a small, useful hype bet: a public RAG over my own site. The implementation became a focused feature with a bilingual route, controlled API, public corpus, search fallback, optional Vercel AI Gateway synthesis, and rollout through `NEXT_PUBLIC_FF_ASK_ENABLED`.
+Ask Thiago started as a small, useful hype bet: a public RAG over my own site. The implementation became a focused feature with a bilingual route, controlled API, public corpus, search fallback, hybrid scoring, optional Vercel AI Gateway synthesis, and rollout through `NEXT_PUBLIC_FF_ASK_ENABLED`.
 
 The result is not a generic chatbot. It is a query interface over what I already published, with sources and clear limits.

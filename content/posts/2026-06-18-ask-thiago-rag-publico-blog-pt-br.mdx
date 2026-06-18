@@ -16,7 +16,7 @@ A ideia não era colocar um chatbot genérico no blog. Era criar uma interface p
 
 ## Como a ideia começou?
 
-A pergunta inicial era onde uma interface agentic faria sentido ao redor deste projeto sem transformar o site em um laboratório solto. O recorte foi pragmático: manter Next.js e Velite como runtime público, usar apenas conteúdo publicado e criar uma busca com resposta citada.
+A pergunta inicial veio olhando para o Flue como framework para construir agentes: onde uma camada agentic faria sentido ao redor deste projeto sem transformar o site em um laboratório solto? O recorte foi pragmático: manter Next.js e Velite como runtime público, usar apenas conteúdo publicado e criar uma busca com resposta citada.
 
 O encaixe mais forte foi um **RAG público** sobre o site: um "pergunte ao corpus do Thiago" limitado a about, currículo, projetos, posts e diário público. Esse recorte era pequeno o bastante para virar MVP e útil o bastante para mostrar produto, arquitetura e cuidado com privacidade.
 
@@ -25,6 +25,7 @@ A tese da feature ficou assim:
 - usar apenas conteúdo publicado;
 - responder com fontes;
 - funcionar sem depender de LLM;
+- melhorar perguntas sobre perfil cruzando about, CV e projetos;
 - permitir desligar tudo com uma feature flag.
 
 ## Qual foi o primeiro limite de arquitetura?
@@ -91,16 +92,19 @@ A busca não depende de embedding no MVP. Ela usa `fuse.js` para fuzzy search e 
 
 O **fallback de busca** é parte do produto, não só plano B. Se não houver credencial do Vercel AI Gateway, a API ainda retorna fontes relevantes e orienta o usuário a abrir os cards de evidência.
 
-O fluxo é:
+O fluxo final é:
 
 1. normalizar a pergunta;
 2. remover stop words como "o que", "ele", "sabe", "what", "about";
 3. buscar com Fuse por título, descrição, categorias e texto;
 4. somar score literal para termos diretos;
-5. priorizar documentos no mesmo idioma da página;
-6. retornar até seis fontes com excerpt.
+5. detectar intenção de perfil, como "quem é Thiago?";
+6. aplicar boosts leves por tipo de documento;
+7. priorizar documentos no mesmo idioma da página;
+8. diversificar os resultados para não retornar seis fontes do mesmo tipo;
+9. retornar até seis fontes com excerpt.
 
-Esse ajuste também resolveu perguntas reais como "o que ele sabe sobre react?", "Thiago sabe React Native?" e "Thiago sabe TypeScript?". A resposta precisa cruzar currículo, projetos e posts. React Native aparece no currículo, na experiência com SwitchCare e em projetos como BMI Calculator, Meetapp, Ecoleta e Be the Hero. TypeScript aparece no currículo, na iTOP, em Unicrow, em vários projetos e no conteúdo técnico.
+Esse ajuste também resolveu perguntas reais como "o que ele sabe sobre react?", "Thiago sabe React Native?", "Thiago sabe TypeScript?" e "quem é Thiago Marinho?". A resposta precisa cruzar currículo, projetos, about e posts. React Native aparece no currículo, na experiência com SwitchCare e em projetos como BMI Calculator, Meetapp, Ecoleta e Be the Hero. TypeScript aparece no currículo, na iTOP, em Unicrow, em vários projetos e no conteúdo técnico.
 
 ## Quando o LLM entra?
 
@@ -133,20 +137,22 @@ A proteção é simples de propósito. A feature flag fica em `src/lib/feature-f
 export const featureFlags = {
   ask: process.env.NEXT_PUBLIC_FF_ASK_ENABLED === "true",
 } as const;
+
+export type FeatureFlag = keyof typeof featureFlags;
 ```
 
 O **rollout** usa a mesma flag em quatro lugares:
 
-- menu desktop e mobile, para esconder o link Ask;
+- `getEnabledNavLinks()`, para esconder o link Ask no menu desktop e mobile;
 - página `/ask`, para retornar `notFound()` quando desligada;
 - API `/api/ask`, para retornar 404 quando chamada por `curl`, Postman ou outro cliente;
 - `sitemap.ts`, para não publicar a rota quando a feature estiver desligada.
 
 Também existe um rate limit em memória na API: oito requests por minuto por IP. Não é uma defesa definitiva contra abuso distribuído, mas é suficiente para um MVP pessoal e barato.
 
-## Por que não usei outro runtime na versão final?
+## Por que o Flue não entrou no runtime final?
 
-Um framework agentic entrou na conversa como hipótese para experimentar agentes e workflows locais. No fim, essa camada não ficou na arquitetura porque a feature pública não precisava de outro runtime.
+O Flue entrou na conversa porque é um framework para construir agentes, tools e workflows. Ele continua sendo um bom caminho para experimentos locais de automação, mas a feature pública não precisava de outro runtime para entregar valor.
 
 A versão final é mais simples: Next.js recebe a pergunta, `src/lib/ask/public-corpus.ts` monta o corpus público, `fuse.js` busca fontes e o AI SDK sintetiza a resposta quando o Vercel AI Gateway está disponível. Menos peça, menos acoplamento e menos confusão sobre o que roda em produção.
 
@@ -163,7 +169,7 @@ Os principais ajustes foram:
 - a flag precisava ter nome explícito de feature flag;
 - o corpus precisava incluir about, currículo e projetos para responder melhor sobre habilidades.
 
-O fix de layout foi encurtar a resposta fallback e mover trechos completos para os cards de fontes. O fix de corpus foi usar apenas `plainBody` seguro e adicionar documentos públicos de perfil, CV e projetos. O fix de busca foi combinar Fuse, score literal e stop words. O fix de rollout foi centralizar `NEXT_PUBLIC_FF_ASK_ENABLED`.
+O fix de layout foi encurtar a resposta fallback e mover trechos completos para os cards de fontes. O fix de corpus foi usar apenas `plainBody` seguro e adicionar documentos públicos de perfil, CV e projetos. O fix de busca foi combinar Fuse, score literal, stop words, intenção de perfil, boost por tipo e diversificação. O fix de rollout foi centralizar `NEXT_PUBLIC_FF_ASK_ENABLED` em `featureFlags.ask`.
 
 ## Qual é a arquitetura final?
 
@@ -205,10 +211,10 @@ As decisões que mais valeram a pena:
 - citar fontes sempre;
 - deixar o Ask sem acesso a arquivos privados;
 - usar feature flag desde o começo;
-- evitar um framework agentic quando a feature não precisa dele em produção.
+- manter o runtime de produção simples quando a feature não precisa de um framework agentic.
 
 ## Resumo
 
-O Ask Thiago começou como uma ideia de hype bem recortada: um RAG público sobre o próprio site. A implementação virou uma feature pequena, com rota bilíngue, API controlada, corpus público, fallback sem LLM, síntese opcional via Vercel AI Gateway e rollout por `NEXT_PUBLIC_FF_ASK_ENABLED`.
+O Ask Thiago começou como uma ideia de hype bem recortada: um RAG público sobre o próprio site. A implementação virou uma feature pequena, com rota bilíngue, API controlada, corpus público, fallback sem LLM, busca com score híbrido, síntese opcional via Vercel AI Gateway e rollout por `NEXT_PUBLIC_FF_ASK_ENABLED`.
 
 O resultado não é um chatbot genérico. É uma interface de consulta sobre o que já foi publicado, com fontes e limites claros.
