@@ -1,0 +1,123 @@
+---
+title: "What agentic AI means: the autonomous car reread"
+description: "Agentic AI is autonomy with human judgment. Learn the difference from AI-assisted systems through the autonomous car metaphor."
+date: "2026-06-23"
+published: true
+slug: "what-agentic-ai-means-autonomous-car-en"
+language: "en"
+translationKey: "agentic-ai-autonomous-car-code-review"
+categories: ["ai", "agents", "agentic-ai", "software-engineering", "en"]
+image: "/images/blog/agentic-car-code-review-cover.jpg"
+---
+
+**Agentic** AI is when a system does not only help with one isolated action, but pursues a goal with controlled autonomy. It observes the environment, makes intermediate decisions, uses tools, validates the result, and adjusts the route. The difference from AI-assisted is simple: assisted AI reduces effort. Agentic AI participates in the execution.
+
+A useful reread is the autonomous car. Not as a claim about the safety or real capability of any specific product, but as a metaphor for the mental shift: moving from assisted commands to systems that choose next steps under human supervision.
+
+## How does a car show the difference between assisted and agentic?
+
+**AI-assisted** is the car making your execution easier. You do not need to shift gears, manage every detail of acceleration, or maybe you can say by voice: "get to 100 km/h". The system reduces mechanical work, but the main intent and driving direction still come from you.
+
+**Agentic** would be a different level. The car sees that the road allows 120 km/h, detects that nobody is ahead, checks that the weather is good, confirms that it is not raining, estimates that risk is within the limit, and decides to drive at the road limit because that better serves the goal of reaching the destination.
+
+But good autonomy also needs to change its mind when the context changes. If a cow appears on the shoulder, or if rain is expected 25 km ahead, the system should detect the threat, reduce the risk margin, maybe slow down, and explain the warning to the human.
+
+The difference is not "more automation". It is changing who handles the microdecisions.
+
+| Situation | Assisted | Agentic |
+|---|---|---|
+| Input | Point command | Goal with context |
+| Decision | Human chooses almost everything | System chooses next steps |
+| Environment | Reacts to commands | Observes external conditions |
+| Risk | Human calculates all the time | System calculates, human supervises |
+| Human role | Operator | Reviewer and final owner |
+
+## Can the driver sleep?
+
+The sleeping driver question is useful because it feels uncomfortable. In an **agentic** flow, the human should not disappear. The human stops operating every microaction, but remains responsible for judging whether the system is doing good work.
+
+In the car, that means watching whether the driving is right for the driver and the family. In engineering, it means reviewing whether the agent understood the goal, respected scope, validated the result, and avoided hidden risk.
+
+It is similar to **code review**. You do not rewrite every line by hand when you trust the author, but you also do not approve a critical change just because it looks clean. You check intent, diff, tests, impact, regression risk, and maintainability.
+
+The human in an agentic flow becomes less of a second-by-second driver and more of a behavior reviewer.
+
+## Why do I like the word taste here?
+
+**Taste** is the quality judgment that does not fit well into a simple metric yet. In software, it is noticing whether a solution is coherent, whether the scope stayed clean, whether an abstraction came too early, whether a name helps, whether a test proves the right point, and whether the delivery fits the product.
+
+An agent can run lint, tests, typecheck, search, browsers, and scripts. That is a lot. But there is still a human taste layer: "is this good for the user?", "does this reduce risk?", "does this decision fit the system?", "would I put my family in this car?".
+
+The autonomous car question makes this clear. It is not enough to reach 120 km/h because the limit allows it. The behavior must make sense in context: road, current weather, weather ahead, visibility, shoulder, distance, comfort, trust, and consequence.
+
+## What changes when AI starts choosing steps?
+
+When AI is **assisted**, the human still breaks the work into small commands. The human asks for a function, pastes an error, requests an explanation, accepts a suggestion, runs the test, and decides the next prompt.
+
+When AI is **agentic**, the system receives a goal and works in a loop:
+
+1. understand the goal;
+2. plan a few steps;
+3. call tools;
+4. observe outputs;
+5. compare against the expected result;
+6. adjust the route;
+7. validate before delivery;
+8. explain what changed and what still needs attention.
+
+That loop is the main difference. Without a loop, AI is a response. With a loop, it becomes an operational layer.
+
+## How does this show up in coding agents?
+
+In code, an **agentic** agent does not only suggest a function. It reads the repository, learns local patterns, edits files, runs tests, interprets errors, adjusts the implementation, reviews the diff, and delivers evidence.
+
+The human remains essential, but the role changes. Instead of naming every command, the human defines:
+
+| Human decision | Practical example |
+|---|---|
+| Goal | "fix the bug without changing the public contract" |
+| Scope | "do not touch the database now" |
+| Permissions | "you may run lint and tests, but do not deploy" |
+| Quality bar | "it must pass the mobile and desktop flow" |
+| Accepted risk | "small change today, refactor later" |
+| Final review | "does this diff make sense for the product?" |
+
+The agent executes. The human judges.
+
+## Where is assisted still better?
+
+Not everything needs to be **agentic**. Sometimes AI-assisted is faster, cheaper, and safer. If you want to explain an error, improve one paragraph, generate a small regex, or compare two options, a chat or copilot may be enough.
+
+Agentic mode is more useful when there is sequence, context, and validation:
+
+| Better assisted | Better agentic |
+|---|---|
+| Point question | Multi-step task |
+| Local suggestion | Repository change |
+| Quick explanation | Investigation with evidence |
+| Initial idea | Execution with tests |
+| Low risk | Risk that needs logs and review |
+
+The mistake is calling every autocomplete an agent. The other mistake is giving autonomy without a harness, limits, and review.
+
+## What makes agentic work trustworthy?
+
+**Harness** is the environment that turns a model into an operational work system. It gives tools, instructions, permissions, memory, sandboxing, logs, tests, and stopping criteria. Without a harness, the model tries to help. With a harness, it can act with some control.
+
+In the car, the harness would be the set of sensors, maps, rules, limits, telemetry, redundancy, and human intervention. In software, it is the set of tools, scripts, CI, tests, linters, typecheck, docs, permissions, and review.
+
+The point is not to trust the agent blindly. The point is to create a system where autonomy is observable, limited, and reviewable.
+
+## How would I define agentic in one sentence?
+
+**Agentic** is AI operating between intent and execution, with autonomy to choose intermediate steps and a duty to produce reviewable evidence.
+
+That definition matters because it removes two exaggerations. Agentic is not just "a smarter chat". It is also not "the machine does everything and the human disappears". It is a new work arrangement: the human defines direction, taste, risk, and approval. The agent executes parts of the route in a loop.
+
+In the end, the best metaphor is not the driver sleeping forever. It is the driver being attentive enough to know when to relax, when to intervene, and when to reject the car's behavior.
+
+## TL;DR
+
+**Agentic** means controlled autonomy toward a goal. AI-assisted reduces effort in point commands. Agentic changes execution: the system observes, decides, acts, validates, and corrects.
+
+The car metaphor makes the difference visible. Assisted is helping you reach 100 km/h. Agentic is the system reading the road, weather, limit, and risk to decide how to drive. The human does not leave the story. The human becomes the behavior reviewer, with taste, responsibility, and power to intervene.
