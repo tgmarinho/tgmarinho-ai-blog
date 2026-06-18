@@ -1,0 +1,199 @@
+---
+title: "Como desenvolver software mudou em 2026"
+description: "Desenvolver software em 2026 mudou com agentes, specs, skills, MCPs e QA automático, mas os fundamentos continuam iguais."
+date: "2026-06-19"
+published: true
+slug: "como-desenvolver-software-mudou-em-2026"
+language: "pt-BR"
+translationKey: "how-software-development-changed-in-2026"
+categories: ["ai", "software-engineering", "agents", "tools", "pt-br"]
+image: "/images/blog/agentic-software-development-2026-cover.jpg"
+---
+
+**Desenvolver software em 2026** mudou no processo, nas ferramentas e na velocidade. Até 2025, a maior parte do fluxo ainda girava em torno de humanos escrevendo tickets, código, testes, documentação e pull requests (PRs). Em 2026, agentes, specs, skills, Model Context Protocol (MCP), sandboxes e controle de qualidade (QA) automático começaram a virar uma camada operacional entre a intenção e o software entregue.
+
+Mas os fundamentos não mudaram. Ainda importa entender o problema certo, modelar bem o sistema, proteger dados, testar comportamento, revisar risco e escrever código que outra pessoa consiga manter. O que mudou foi a camada operacional em volta disso.
+
+## Como era desenvolver software até 2025?
+
+Até 2025, o **processo de desenvolvimento** ainda era reconhecível para qualquer equipe moderna. O time quebrava uma demanda em tickets, escrevia uma especificação curta, implementava localmente, abria um pull request, recebia review, rodava integração contínua (CI) e entregava.
+
+Mesmo usando inteligência artificial (IA), o centro ainda era humano:
+
+| Camada | Até 2025 |
+|---|---|
+| Planejamento | Ticket, refinamento, documento curto |
+| Implementação | Dev no editor, IA como autocomplete ou chat |
+| Contexto | README, docs internas, memória do time |
+| Teste | Unit, integração, manual QA, CI |
+| Review | Humano lendo diff e discutindo risco |
+| Automação | Scripts, GitHub Actions, bots pontuais |
+
+Ferramentas como Copilot, Cursor, Claude e ChatGPT já ajudavam muito, mas o fluxo ainda dependia de uma pessoa conduzindo quase cada passo. A IA sugeria, explicava, refatorava e acelerava. Ela ainda não era a camada que conectava o processo inteiro.
+
+## O que mudou em 2026?
+
+Em 2026, a **camada agêntica** começou a ocupar o espaço entre intenção e execução. Uso "agêntica" no sentido de agency: capacidade de agir com autonomia, usar ferramentas, observar resultado, corrigir rota e continuar em direção a um objetivo. O pedido não vira só uma conversa no chat. Ele pode virar uma spec, acionar skills, chamar ferramentas por MCP, abrir navegador, escrever teste Playwright, rodar QA, corrigir falhas, editar arquivos, preparar PR e deixar evidência.
+
+Até 2025, boa parte do uso de IA era **AI-assisted**: a IA ajudava quando alguém pedia. Ela completava código, explicava um erro, sugeria uma função ou acelerava um refactor. Isso já era útil, mas ainda dependia de uma pessoa conduzindo cada próxima ação.
+
+Em 2026, o salto é o loop. O agente recebe um objetivo, executa, observa, testa, encontra falhas, ajusta e tenta de novo. Ele não é apenas um executor excelente de tarefas. Ele começa a funcionar como um sistema reativo, que melhora a própria entrega conforme avança. O objetivo deixa de ser só "fazer". Passa a ser fazer, medir, corrigir e aperfeiçoar.
+
+A unidade de trabalho mudou:
+
+| Antes | Agora |
+|---|---|
+| Ticket para humano implementar | Spec para humano e agente executarem |
+| Prompt solto | Skill reutilizável com instruções e exemplos |
+| Ferramenta isolada | Tool conectada por MCP ou kit de desenvolvimento de software (SDK) |
+| QA manual no fim | Browser agent testando durante a execução |
+| Review só do diff | Review do diff, da evidência e do processo |
+| Documentação depois | Documento vivo atualizado após cada falha |
+
+Essa mudança ainda não está limpa. Ela está em movimento. Por isso parece que não dá tempo de criar padrão: enquanto você documenta um fluxo, surge outro com browser automation, sandbox, skill de projeto, agente paralelo ou integração nova. A camada ficou realmente agêntica quando deixou de ser "feito é melhor que não feito" e começou a perguntar: "já foi feito, agora como deixo melhor?".
+
+## O que não mudou em 2026?
+
+Os **fundamentos de engenharia** continuam iguais. A camada agêntica muda a forma de executar, mas não muda o que torna software confiável.
+
+Ainda é preciso acertar:
+
+- O problema certo antes da solução.
+- O modelo de dados antes da tela.
+- A fronteira entre módulos, serviços e responsabilidades.
+- A segurança de credenciais, permissões e dados sensíveis.
+- A observabilidade para entender falhas reais.
+- Testes que provam comportamento, não só cobertura.
+- Código legível para manutenção futura.
+
+A diferença é que, em 2026, esses fundamentos precisam ser expressos de forma mais operacional. Não basta "o time sabe". O agente não sabe o que está só na cabeça do time. Fundamento que importa precisa aparecer em spec, skill, teste, lint, checklist, MCP permitido, sandbox, guardrail ou validação obrigatória de CI.
+
+## Por que specs viraram mais importantes?
+
+**Spec** virou mais importante porque agente executa melhor quando a intenção é explícita. Um ticket vago já era ruim para humanos. Para agentes, ele vira risco operacional: o agente completa lacunas, inventa escopo e segue padrões que talvez não sejam os do projeto.
+
+Uma spec boa para 2026 precisa dizer:
+
+- Qual problema deve ser resolvido.
+- Qual comportamento não pode mudar.
+- Quais arquivos, rotas ou módulos estão dentro do escopo.
+- Qual evidência valida a entrega.
+- Quais comandos devem ser rodados.
+- Quais limites o agente não pode ultrapassar.
+
+É por isso que projetos como [Sandcastle](https://github.com/mattpocock/sandcastle), [Flue](https://flueframework.com/docs/getting-started/quickstart/) e frameworks de harness estão ficando relevantes. Eles tratam execução como processo, não como prompt isolado.
+
+## Por que skills mudam o jeito de trabalhar?
+
+**Skills** são uma forma de transformar conhecimento repetível em capacidade operacional. Em vez de explicar toda vez como escrever um post, testar uma UI, abrir um PR, revisar um diff ou gerar um relatório, o time empacota instruções, exemplos, scripts e critérios de qualidade.
+
+Isso muda a dinâmica:
+
+| Sem skill | Com skill |
+|---|---|
+| O humano repete contexto em todo chat | O agente carrega um procedimento estável |
+| Cada execução depende de memória | Cada execução começa com um padrão |
+| Erros viram conversa | Erros viram atualização da skill |
+| O processo fica informal | O processo fica versionável |
+
+[Vercel Agent Skills](https://github.com/vercel-labs/agent-skills) e o ecossistema [`npx skills`](https://github.com/vercel-labs/skills) são bons sinais dessa direção: skills como unidades reutilizáveis de trabalho para agentes. O mesmo vale para skills de projeto, como as que ficam em `.cursor/skills/`, `.codex/skills/` ou dentro de frameworks como [Superpowers](https://github.com/obra/Superpowers).
+
+A ideia central é simples: quando um agente erra do mesmo jeito duas vezes, o problema não é só o agente. Falta uma skill, um teste, uma regra, um guardrail ou uma validação obrigatória.
+
+## Onde entram MCPs e ferramentas conectadas?
+
+**Model Context Protocol (MCP)** muda o processo porque tira o agente do modo "texto puro" e coloca ferramentas reais no fluxo. O agente passa a consultar dados, abrir arquivos, chamar APIs, mexer em navegador, ler issues, buscar logs, criar artefatos e validar comportamento.
+
+Na prática, isso cria uma nova camada de desenvolvimento:
+
+- MCP de GitHub para issue, PR, review e CI.
+- MCP de browser ou Chrome para testar fluxo real.
+- MCP de Playwright para gerar e executar testes end-to-end.
+- MCP de banco, logs ou observabilidade para investigar incidentes.
+- MCP de design, docs ou sistema de gestão de conteúdo (CMS) para manter conteúdo alinhado.
+
+O risco também aumenta. Se o agente tem ferramenta, ele tem poder. Por isso o processo precisa definir permissão, sandbox, escopo, segredo, rede e evidência. O futuro não é "dar todas as ferramentas para o agente". É dar a ferramenta certa, no ambiente certo, com limite claro.
+
+## Como QA automático muda a entrega?
+
+**QA automático** está deixando de ser só CI depois do PR. Em 2026, o agente pode abrir a aplicação no navegador, clicar no fluxo, observar o resultado, gerar um teste Playwright, corrigir a UI e anexar evidência.
+
+Isso muda o papel do QA e do review:
+
+| Antes | Agora |
+|---|---|
+| Teste manual no fim | Teste durante a implementação |
+| Screenshot depois de pronto | Screenshot como evidência do agente |
+| Bug visual descoberto no review | Bug visual descoberto pelo browser agent |
+| Playwright escrito depois | Playwright sugerido ou escrito no fluxo |
+| CI como barreira final | CI como uma das várias barreiras |
+
+Code review entra aqui como parte de qualidade, não como tema central. O reviewer não está apenas lendo código. Ele está checando se a evidência faz sentido: teste rodou, screenshot corresponde, fluxo crítico foi coberto, regressão visual não passou e o agente não inventou validação.
+
+## Por que sandboxes e runners viraram infraestrutura?
+
+**Sandboxes** viraram infraestrutura porque agentes executam comandos, instalam dependências, abrem navegador, editam muitos arquivos e podem fazer isso em paralelo. Rodar tudo no mesmo checkout local não escala bem e aumenta risco.
+
+O novo stack precisa responder:
+
+- Onde o agente pode escrever?
+- Quais comandos pode rodar?
+- A rede está liberada?
+- Quais credenciais entram no ambiente?
+- O trabalho vira commit, patch, artefato ou relatório?
+- Como o humano revisa e aprova?
+
+[Sandcastle](https://github.com/mattpocock/sandcastle) aponta para uma resposta focada em repositório Git: rodar coding agents em branches, worktrees e sandboxes. [Flue](https://flueframework.com/docs/getting-started/quickstart/) aponta para outra resposta: criar agentes, workflows, skills e sandboxes como parte de uma aplicação. [Superpowers](https://github.com/obra/Superpowers) aponta para uma direção complementar: empacotar habilidades e workflows que aumentam o que agentes conseguem fazer.
+
+Nenhuma dessas ferramentas fecha o assunto. Elas mostram que o processo de engenharia está ganhando uma nova camada.
+
+## O que muda para o engenheiro?
+
+O **engenheiro de software** passa a trabalhar mais perto do desenho do sistema de execução. Escrever código continua importante, mas não é mais a única medida de entrega.
+
+O trabalho passa a incluir:
+
+- Escrever specs boas para humanos e agentes.
+- Criar skills para tarefas repetidas.
+- Definir MCPs permitidos por tipo de tarefa.
+- Separar tarefas que podem rodar em paralelo.
+- Projetar sandboxes e worktrees.
+- Criar guardrails e validações obrigatórias de QA automático.
+- Transformar falhas recorrentes em testes, scripts ou documentação.
+- Revisar evidência, não só diff.
+
+Isso muda a senioridade. Senioridade em 2026 não é só saber resolver o problema manualmente. É saber transformar a solução em um processo que agente, CI e time conseguem repetir com menos risco.
+
+## Qual é o padrão mínimo para 2026?
+
+Um **padrão mínimo** para desenvolvimento com agentes precisa ser pequeno o bastante para ser usado todo dia:
+
+| Camada | Regra prática |
+|---|---|
+| Spec | Toda tarefa precisa de intenção, escopo, limite e evidência |
+| Skill | Toda tarefa repetida vira skill, script ou playbook |
+| MCP | Toda ferramenta externa precisa de permissão e escopo |
+| Sandbox | Toda execução com shell ou browser roda isolada quando possível |
+| QA | Toda mudança crítica precisa de teste, screenshot, log ou comando verificável |
+| Review | Todo PR precisa explicar o processo, não só o resultado |
+| Guardrail | Toda falha recorrente vira regra, teste, script ou validação obrigatória |
+
+O objetivo não é burocracia. É reduzir improviso. Quanto mais agentes entram no fluxo, mais o processo precisa ser explícito.
+
+## Quais ferramentas mostram essa virada?
+
+Estas ferramentas não são a lista final. Elas são sinais da direção:
+
+- [Sandcastle](https://github.com/mattpocock/sandcastle): runner para coding agents em repositórios Git, com branch, sandbox, sessão e commits.
+- [Flue](https://flueframework.com/docs/getting-started/quickstart/): framework para agentes, tools, skills, workflows, sandboxes e runtime de aplicação.
+- [Superpowers](https://github.com/obra/Superpowers): pacote de habilidades e workflows para ampliar o que agentes conseguem executar.
+- [Vercel Agent Skills](https://github.com/vercel-labs/agent-skills) e [`npx skills`](https://github.com/vercel-labs/skills): coleção e ferramenta para skills reutilizáveis em fluxos agênticos.
+- MCPs de browser, GitHub, Playwright, banco e observabilidade: conectores que colocam ferramentas reais dentro do loop.
+
+O detalhe importante é que essas ferramentas não são apenas "mais IA". Elas mexem no processo de desenvolvimento: como a tarefa é descrita, executada, testada, revisada, documentada e repetida.
+
+## Resumo
+
+**Desenvolver software em 2026** está virando um processo agêntico. O fluxo deixou de ser apenas ticket, código, PR e review. Agora envolve spec, skill, MCP, sandbox, QA automático, evidência, guardrails e revisão do processo.
+
+Code review continua importante, mas é só uma parte da qualidade. A mudança maior é que engenharia de software está ganhando uma camada operacional nova. Ela não apenas executa tarefas. Ela reage, mede, corrige e aperfeiçoa o caminho até o objetivo. Ainda não existem padrões maduros para tudo isso. Mesmo assim, já está mudando como software é planejado, implementado, testado e entregue.
