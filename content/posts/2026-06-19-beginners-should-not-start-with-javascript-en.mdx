@@ -163,7 +163,11 @@ I like JavaScript a lot. I started using it in full-stack apps around 2017, comi
 
 It also let me follow the whole evolution of React and the styling libraries that became popular across different cycles, up to things like shadcn/ui. On the backend, I used Node.js, Express, tRPC, and other pieces that make the full-stack TypeScript experience very productive.
 
-So the conclusion is not "JavaScript is bad." The more honest conclusion is this: JavaScript gives you a lot of power very early. For someone coming from a stricter base, that power can speed up learning. For someone still building a sense of contracts, state, types, and maintenance, it can become freedom without guardrails.
+So the conclusion is not "JavaScript is bad." It is not an absolute rule either. Beginners can start with JavaScript, of course. Who am I to make a law about that? My point is to bring a warning: JavaScript gives you a lot of power very early, and power without awareness gets expensive.
+
+And I am not even talking about async JavaScript, the call stack, callbacks, promises, the event loop, or concurrency. I am talking about something more basic: a simple object `{}` mutation can already make code hard to read, hard to maintain, and hard to follow. When that lands inside large controllers, services, React components, and Node.js APIs, the cognitive load stops being individual and becomes a cost for the whole team.
+
+For someone coming from a stricter base, that power can speed up learning. For someone still building a sense of contracts, state, types, and maintenance, it can become freedom without guardrails.
 
 ## What is the practical rule?
 
@@ -183,4 +187,4 @@ JavaScript remains an important language. It just should not be the first mental
 
 ---
 
-**TL;DR:** JavaScript is easy, versatile, and still an excellent language. The problem is starting with it before understanding the cost of freedom: mutation, reassignment, and weak contracts too early. Beginners learn better when the compiler, typechecker, tests, and lint complain before production. Start with strong feedback. Then use JavaScript with discipline.
+**TL;DR:** JavaScript is easy, versatile, and still an excellent language. The warning is starting with it before understanding the cost of freedom: mutation, reassignment, and weak contracts too early. Even a simple object mutation can raise the team's cognitive load when the code grows. Beginners learn better when the compiler, typechecker, tests, and lint complain before production. Start with strong feedback. Then use JavaScript with discipline.

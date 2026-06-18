@@ -163,7 +163,11 @@ Eu gosto muito de JavaScript. Comecei a usar em apps full-stack por volta de 201
 
 Também foi uma linguagem que me deixou acompanhar a evolução inteira do React e das bibliotecas de estilização que viraram moda em diferentes ciclos, até chegar em coisas como shadcn/ui. No backend, usei Node.js, Express, tRPC e outras peças que tornam a experiência full-stack em TypeScript muito produtiva.
 
-Então a conclusão não é "JavaScript é ruim". A conclusão é mais honesta: JavaScript dá muito poder muito cedo. Para quem já vem de uma base mais rígida, esse poder pode acelerar o aprendizado. Para quem ainda está formando o senso de contrato, estado, tipo e manutenção, pode virar liberdade sem freio.
+Então a conclusão não é "JavaScript é ruim". Também não é uma regra absoluta. Iniciantes podem começar com JavaScript, claro. Quem sou eu para criar uma lei sobre isso? O meu ponto é trazer um alerta: JavaScript dá muito poder muito cedo, e poder sem consciência cobra caro.
+
+E aqui nem estou falando de JavaScript assíncrono, call stack, callbacks, promises, event loop ou concorrência. Estou falando de algo mais básico: uma simples mutação de objeto `{}` já pode deixar o código difícil de ler, difícil de manter e difícil de seguir. Quando isso entra em controllers, services, componentes React e APIs Node.js grandes, a carga cognitiva deixa de ser individual e vira custo para o time inteiro.
+
+Para quem já vem de uma base mais rígida, esse poder pode acelerar o aprendizado. Para quem ainda está formando o senso de contrato, estado, tipo e manutenção, pode virar liberdade sem freio.
 
 ## Qual é a regra prática?
 
@@ -183,4 +187,4 @@ JavaScript continua sendo uma linguagem importante. Só não deveria ser o prime
 
 ---
 
-**Resumo:** JavaScript é fácil, versátil e continua sendo uma linguagem excelente. O problema é começar por ela sem entender o custo da liberdade: mutação, reassignment e contratos fracos cedo demais. Iniciantes aprendem melhor quando o compilador, o typechecker, os testes e o lint reclamam antes da produção. Comece com feedback forte. Depois use JavaScript com disciplina.
+**Resumo:** JavaScript é fácil, versátil e continua sendo uma linguagem excelente. O alerta é começar por ela sem entender o custo da liberdade: mutação, reassignment e contratos fracos cedo demais. Mesmo uma simples mutação de objeto pode aumentar a carga cognitiva do time quando o código cresce. Iniciantes aprendem melhor quando o compilador, o typechecker, os testes e o lint reclamam antes da produção. Comece com feedback forte. Depois use JavaScript com disciplina.
