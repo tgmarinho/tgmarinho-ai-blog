@@ -1,0 +1,220 @@
+---
+title: "Como construí o Ask Thiago: um RAG público para o blog"
+description: "Ask Thiago mostra como criar um RAG público no blog com corpus publicado, fontes citadas, fallback sem LLM, AI Gateway opcional e feature flag segura."
+date: "2026-06-18"
+published: true
+slug: "ask-thiago-rag-publico-blog"
+categories: ["ai", "rag", "nextjs", "software-engineering", "pt-br"]
+image: "/images/blog/ask-thiago-public-rag-cover.jpg"
+language: "pt-BR"
+translationKey: "ask-thiago-public-rag-blog"
+---
+
+O **Ask Thiago** nasceu como uma pergunta simples: o que aconteceria se o site pudesse responder sobre o próprio conteúdo publicado, com fontes e sem tocar em nada privado? A feature virou um RAG público (Retrieval-Augmented Generation, ou geração aumentada por recuperação) dentro do site, usando about, currículo, projetos, posts e diário como corpus, busca local como fallback e geração com modelo de linguagem grande (LLM) só quando o Vercel AI Gateway estiver configurado.
+
+A ideia não era colocar um chatbot genérico no blog. Era criar uma interface pequena para consultar o que já foi publicado, dizer quando não há evidência suficiente e transformar a própria feature em material técnico para o portfólio.
+
+## Como a ideia começou?
+
+A pergunta inicial veio olhando para o Flue como framework para construir agentes: onde uma camada agentic faria sentido ao redor deste projeto sem transformar o site em um laboratório solto? O recorte foi pragmático: manter Next.js e Velite como runtime público, usar apenas conteúdo publicado e criar uma busca com resposta citada.
+
+O encaixe mais forte foi um **RAG público** sobre o site: um "pergunte ao corpus do Thiago" limitado a about, currículo, projetos, posts e diário público. Esse recorte era pequeno o bastante para virar MVP e útil o bastante para mostrar produto, arquitetura e cuidado com privacidade.
+
+A tese da feature ficou assim:
+
+- usar apenas conteúdo publicado;
+- responder com fontes;
+- funcionar sem depender de LLM;
+- melhorar perguntas sobre perfil cruzando about, CV e projetos;
+- permitir desligar tudo com uma feature flag.
+
+## Qual foi o primeiro limite de arquitetura?
+
+O limite principal foi privacidade. O site convive com agentes, workspaces, diários de desenvolvimento e arquivos locais, mas a feature pública não pode ler nada disso.
+
+Por isso o corpus do runtime ficou restrito a dados já publicados pelo pipeline do site:
+
+| Camada | Arquivo | Papel |
+|---|---|---|
+| Página | `src/app/[locale]/ask/page.tsx` | Renderiza a rota bilíngue e aplica `notFound()` quando a flag está desligada |
+| UI | `src/components/ask/ask-thiago.tsx` | Captura a pergunta, chama a API e mostra resposta com fontes |
+| API | `src/app/api/ask/route.ts` | Valida payload, locale, limite de tamanho, rate limit e feature flag |
+| Corpus | `src/lib/ask/public-corpus.ts` | Monta about, currículo, projetos, posts e diário em documentos pesquisáveis |
+| Resposta | `src/lib/ask/answer.ts` | Decide entre fallback de busca e resposta sintetizada por LLM |
+| Flag | `src/lib/feature-flags.ts` | Centraliza `NEXT_PUBLIC_FF_ASK_ENABLED` |
+
+Esse desenho evita que a UI fale direto com o modelo. A UI pergunta para uma API controlada, a API busca no corpus público, e só depois uma resposta pode ser sintetizada.
+
+## Como o corpus público foi montado?
+
+O corpus usa a camada que o site já confia: Velite. Em vez de raspar HTML ou ler arquivos soltos no request, a busca usa os dados tipados que o build já gera.
+
+O **corpus público** inclui cinco tipos de documento:
+
+- about, com habilidades e foco técnico;
+- currículo público, quebrado por seções;
+- projetos públicos, com tags e descrições;
+- posts publicados vindos de `allPosts`;
+- entradas públicas do diário vindas de `journal`.
+
+Cada documento vira uma estrutura comum:
+
+```ts
+type PublicCorpusDocument = {
+  id: string;
+  kind: "about" | "cv" | "project" | "post" | "journal";
+  locale: Locale;
+  title: string;
+  description: string;
+  date: string;
+  url: string;
+  categories: string[];
+  text: string;
+};
+```
+
+Um detalhe importante apareceu no teste manual. Um post interativo entrou no corpus com conteúdo compilado de MDX, e a resposta começou a mostrar trechos como `function _createMdxContent` e `arguments[0]`. O ajuste foi usar apenas `plainBody` seguro e ignorar textos que pareçam MDX compilado.
+
+```ts
+const COMPILED_MDX_MARKERS = [
+  "function _createMdxContent",
+  "arguments[0]",
+  "jsxDEV",
+  "Fragment",
+];
+```
+
+Esse foi o tipo de bug que só aparece quando a feature é usada como produto real, não como demo isolada.
+
+## Como a busca funciona antes do LLM?
+
+A busca não depende de embedding no MVP. Ela usa `fuse.js` para fuzzy search e soma um score literal por título, descrição, categoria e corpo.
+
+O **fallback de busca** é parte do produto, não só plano B. Se não houver credencial do Vercel AI Gateway, a API ainda retorna fontes relevantes e orienta o usuário a abrir os cards de evidência.
+
+O fluxo final é:
+
+1. normalizar a pergunta;
+2. remover stop words como "o que", "ele", "sabe", "what", "about";
+3. buscar com Fuse por título, descrição, categorias e texto;
+4. somar score literal para termos diretos;
+5. detectar intenção de perfil, como "quem é Thiago?";
+6. aplicar boosts leves por tipo de documento;
+7. priorizar documentos no mesmo idioma da página;
+8. diversificar os resultados para não retornar seis fontes do mesmo tipo;
+9. retornar até seis fontes com excerpt.
+
+Esse ajuste também resolveu perguntas reais como "o que ele sabe sobre react?", "Thiago sabe React Native?", "Thiago sabe TypeScript?" e "quem é Thiago Marinho?". A resposta precisa cruzar currículo, projetos, about e posts. React Native aparece no currículo, na experiência com SwitchCare e em projetos como BMI Calculator, Meetapp, Ecoleta e Be the Hero. TypeScript aparece no currículo, na iTOP, em Unicrow, em vários projetos e no conteúdo técnico.
+
+## Quando o LLM entra?
+
+O LLM entra só depois que a busca encontrou fontes. Se não houver fonte ou credencial, a resposta fica em modo `search`.
+
+Quando existe `AI_GATEWAY_API_KEY` ou `VERCEL_OIDC_TOKEN`, `answerPublicQuestion()` chama `generateText()` do AI SDK com um prompt fechado:
+
+- use apenas os excerpts fornecidos;
+- não infira fatos privados;
+- não mencione memórias, sessões, segredos, saúde, finanças ou detalhes locais;
+- cite fontes inline com `[1]`, `[2]`;
+- responda no idioma da rota.
+
+O **Vercel AI Gateway** ficou como integração opcional. O modelo default é `openai/gpt-5.4`, configurável por `ASK_THIAGO_MODEL`.
+
+```env
+NEXT_PUBLIC_FF_ASK_ENABLED=false
+ASK_THIAGO_MODEL=openai/gpt-5.4
+# AI_GATEWAY_API_KEY=
+# VERCEL_OIDC_TOKEN=
+```
+
+Essa decisão mantém o custo e o risco sob controle. A busca funciona sem LLM, e a síntese vira melhoria progressiva.
+
+## Como a rota foi protegida?
+
+A proteção é simples de propósito. A feature flag fica em `src/lib/feature-flags.ts`:
+
+```ts
+export const featureFlags = {
+  ask: process.env.NEXT_PUBLIC_FF_ASK_ENABLED === "true",
+} as const;
+
+export type FeatureFlag = keyof typeof featureFlags;
+```
+
+O **rollout** usa a mesma flag em quatro lugares:
+
+- `getEnabledNavLinks()`, para esconder o link Ask no menu desktop e mobile;
+- página `/ask`, para retornar `notFound()` quando desligada;
+- API `/api/ask`, para retornar 404 quando chamada por `curl`, Postman ou outro cliente;
+- `sitemap.ts`, para não publicar a rota quando a feature estiver desligada.
+
+Também existe um rate limit em memória na API: oito requests por minuto por IP. Não é uma defesa definitiva contra abuso distribuído, mas é suficiente para um MVP pessoal e barato.
+
+## Por que o Flue não entrou no runtime final?
+
+O Flue entrou na conversa porque é um framework para construir agentes, tools e workflows. Ele continua sendo um bom caminho para experimentos locais de automação, mas a feature pública não precisava de outro runtime para entregar valor.
+
+A versão final é mais simples: Next.js recebe a pergunta, `src/lib/ask/public-corpus.ts` monta o corpus público, `fuse.js` busca fontes e o AI SDK sintetiza a resposta quando o Vercel AI Gateway está disponível. Menos peça, menos acoplamento e menos confusão sobre o que roda em produção.
+
+## O que quebrou no caminho?
+
+A feature melhorou quando foi testada com perguntas reais e screenshot real.
+
+Os principais ajustes foram:
+
+- fallback muito longo quebrava o layout do card de resposta;
+- conteúdo compilado de MDX vazava para excerpts;
+- pergunta ampla sobre React não achava boas fontes;
+- a feature precisava sumir do menu e da rota quando desligada;
+- a flag precisava ter nome explícito de feature flag;
+- o corpus precisava incluir about, currículo e projetos para responder melhor sobre habilidades.
+
+O fix de layout foi encurtar a resposta fallback e mover trechos completos para os cards de fontes. O fix de corpus foi usar apenas `plainBody` seguro e adicionar documentos públicos de perfil, CV e projetos. O fix de busca foi combinar Fuse, score literal, stop words, intenção de perfil, boost por tipo e diversificação. O fix de rollout foi centralizar `NEXT_PUBLIC_FF_ASK_ENABLED` em `featureFlags.ask`.
+
+## Qual é a arquitetura final?
+
+A arquitetura final é pequena e intencional:
+
+```text
+Usuário
+  |
+  v
+/[locale]/ask
+  |
+  v
+AskThiago client component
+  |
+  v
+POST /api/ask
+  |
+  v
+searchPublicCorpus()
+  |
+  +--> sem credencial ou sem fonte: fallback de busca
+  |
+  +--> com fonte e AI Gateway: generateText()
+  |
+  v
+Resposta + fontes públicas
+```
+
+O ponto central é que o modelo nunca escolhe o corpus. A aplicação monta o contexto, limita as fontes e só então pede uma síntese.
+
+## O que essa feature ensinou?
+
+O **aprendizado principal** foi que um RAG útil começa mais por limite do que por modelo. O valor não está em "ter chat no site". O valor está em responder sobre um corpus confiável, mostrar evidência e falhar de forma previsível.
+
+As decisões que mais valeram a pena:
+
+- começar com busca local antes de embedding;
+- tratar fallback como experiência real;
+- citar fontes sempre;
+- deixar o Ask sem acesso a arquivos privados;
+- usar feature flag desde o começo;
+- manter o runtime de produção simples quando a feature não precisa de um framework agentic.
+
+## Resumo
+
+O Ask Thiago começou como uma ideia de hype bem recortada: um RAG público sobre o próprio site. A implementação virou uma feature pequena, com rota bilíngue, API controlada, corpus público, fallback sem LLM, busca com score híbrido, síntese opcional via Vercel AI Gateway e rollout por `NEXT_PUBLIC_FF_ASK_ENABLED`.
+
+O resultado não é um chatbot genérico. É uma interface de consulta sobre o que já foi publicado, com fontes e limites claros.

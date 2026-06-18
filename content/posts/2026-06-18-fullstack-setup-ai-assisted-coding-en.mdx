@@ -1,0 +1,154 @@
+---
+title: "A fullstack setup for AI-assisted coding"
+description: "Fullstack setup for AI-assisted coding: React, tRPC, Drizzle, Postgres, MinIO, R2, Docker, Hetzner and Dokploy with fast feedback for agents in the product."
+date: "2026-06-18"
+published: false
+slug: "fullstack-setup-ai-assisted-coding"
+language: "en"
+translationKey: "ai-assisted-fullstack-setup"
+categories: ["ai", "fullstack", "backend", "frontend", "architecture", "en"]
+image: "/images/blog/ai-assisted-fullstack-setup-cover.jpg"
+---
+
+A good **fullstack setup for AI-assisted coding** is not a nice list of tools. It is an environment that reduces ambiguity, shortens feedback, and lets the agent validate real changes. React, tRPC, Drizzle, Postgres, MinIO, R2, Docker, Hetzner, and Dokploy make sense when they work together to turn an idea into a testable product.
+
+This post was triggered by [a post from Luchian](https://x.com/luchian_mvp/status/2061759534335398113) listing a modern stack for AI-assisted coding: Cursor, OpenCode, GPT 5.5, React, React Router or TanStack Router, shadcn/ui or Base UI, Fastify or Hono, tRPC or oRPC, Drizzle, Postgres, Docker, MinIO, Cloudflare R2, Files SDK, Hetzner, and Dokploy.
+
+The useful reading, for me, is not "use all of this every time." It is: choose pieces that shrink the distance between prompt, diff, local execution, test, storage, and deploy.
+
+## What is the real value of this setup?
+
+The value is the **feedback loop**. Agents write better code when they can observe the system: types breaking, migrations failing, tests complaining, uploads working, endpoints responding, and deploy showing real errors.
+
+A good AI coding stack must answer three questions quickly:
+
+1. Does the code compile?
+2. Is the contract between layers clear?
+3. Does the change run in an environment close to production?
+
+If the answer depends on too much manual context, the agent starts making things up. If the answer comes from TypeScript, a local database, Docker, tests, and logs, the agent stays closer to the real project.
+
+## How should you split the layers?
+
+I would organize the setup into simple layers:
+
+| Layer | Tools | Why it helps agents |
+| --- | --- | --- |
+| Editor and agent | Cursor, OpenCode, GPT 5.5 | Generate, review, and iterate on the diff |
+| Frontend | React, React Router, or TanStack Router | Shape screens, routes, and states |
+| UI | shadcn/ui or Base UI | Reduce repetitive component work |
+| Backend | Fastify + tRPC, or Hono + oRPC | Create clear contracts between app and server |
+| Database | Drizzle + Postgres | Keep schema, migration, and query in one flow |
+| Local dev | Docker | Run dependencies without relying on external services |
+| Storage | Local MinIO, Cloudflare R2 in production | Test real file flows before deploy |
+| Files | Files SDK | Standardize upload, reads, and metadata |
+| Hosting | Hetzner + Dokploy | Keep VPS deploy simple, predictable, and cheap |
+
+The design is coherent because the tools have little conceptual distance. TypeScript crosses frontend, contract, and backend. Postgres and Drizzle structure the data. Docker brings local and production closer. MinIO and R2 make storage testable. Dokploy reduces the ceremony of shipping.
+
+## Why are React, shadcn/ui, and routing still strong?
+
+On the frontend, **React** remains practical because the ecosystem is huge and agents know the patterns well. That matters. An agent makes fewer mistakes when it works in familiar ground: components, hooks, props, forms, routing, and loading state.
+
+React Router or TanStack Router fit when you want an independent React app outside Next.js. They make routes and navigation explicit. shadcn/ui or Base UI help because you do not need to reinvent dialogs, menus, selects, tabs, toasts, form controls, and basic accessibility.
+
+The gain is not visual polish. It is operational. The less time the agent spends building basic components from scratch, the more attention remains for product rules.
+
+## Why do Fastify, Hono, tRPC, and oRPC fit AI work?
+
+In the backend, the main point is **contract**. tRPC and oRPC are interesting because they keep the contract close to the language the frontend already uses. The agent can follow types, inputs, outputs, and errors without mentally translating everything between layers.
+
+Fastify is a good choice when you want a mature Node server with performance and a broad plugin ecosystem. Hono is attractive when you want something light, simple, and aligned with modern runtimes.
+
+The practical choice:
+
+| If you want | It tends to fit |
+| --- | --- |
+| Traditional Node server, plugins, and maturity | Fastify + tRPC |
+| Light runtime, simple handlers, and edge-friendly code | Hono + oRPC |
+| Fullstack TypeScript product with close contracts | tRPC or oRPC |
+| Public API consumed by many third parties | Well documented REST may still be better |
+
+The important part is not letting the backend become a black box to the agent. The more explicit the contract, the better the output.
+
+## Why are Drizzle and Postgres a good base?
+
+**Postgres** is still strong because it solves the basics of real products: relational data, transactions, indexes, constraints, JSON when needed, and operational maturity. For most products, starting with Postgres is less risky than splitting data too early.
+
+Drizzle fits this flow because it keeps schema and queries close to TypeScript. The agent can change a table, adjust a query, and see the type break where it should break. That is better than relying only on convention or chat memory.
+
+A good local flow should make this clear:
+
+```sh
+docker compose up -d postgres
+bun db:generate
+bun db:migrate
+bun dev
+```
+
+Script names change by project, but the idea is the same: the agent needs predictable commands to generate migrations, apply schema, and run the app.
+
+## How does storage fit without becoming a hack?
+
+Storage is easy to underestimate. Fake upload with `setTimeout` passes in the prototype and breaks in the product. That is why **MinIO** locally with Docker and Cloudflare R2 in production make a good pair.
+
+The file contract should appear early:
+
+1. Max size.
+2. Accepted types.
+3. Direct upload or backend upload.
+4. Signed URL or proxy.
+5. Preview.
+6. Retry.
+7. Removal.
+8. Metadata stored in Postgres.
+
+Files SDK enters as an ergonomics layer. The idea is to standardize file operations so frontend, backend, and storage do not become three disconnected implementations.
+
+## Why do Docker, Hetzner, and Dokploy close the loop?
+
+**Docker** gives the agent a concrete way to reproduce dependencies. Postgres, MinIO, Redis, workers, and support services live in the repo, not in someone's memory.
+
+Hetzner with Dokploy is a pragmatic combination for an independent product. You get a virtual private server, Docker, dashboard deploy, domains, env vars, and services without building a full platform. It does not replace Vercel for every case, or Kubernetes for teams that truly need it. But it solves the middle ground well.
+
+For AI-assisted coding, this matters because deploy also becomes feedback. The agent should not only "pass on my machine." It should have a short path to build output, logs, variables, and containers.
+
+## How would I ask the agent to implement?
+
+I would not ask "build the app with this stack" all at once. I would give **small tasks** with clear criteria.
+
+A better prompt:
+
+```txt
+Implement the file upload flow.
+Use React on the frontend, tRPC for the contract, Drizzle with Postgres for metadata,
+MinIO in Docker for local storage, and keep the adapter ready for R2.
+Include loading states, item-level errors, and retry.
+Validate with lint, typecheck, migration, and one test for the main flow.
+```
+
+This request has scope, layers, behavior, and verification. The agent knows where to work and how to prove it worked.
+
+## What is the practical rule?
+
+The practical rule is: choose the setup that lets the agent fail cheaply and recover fast.
+
+| Problem | The setup should provide |
+| --- | --- |
+| Unclear contract | Shared types, tRPC, or oRPC |
+| Fragile data | Postgres, constraints, and migrations |
+| Unrealistic upload | Local MinIO and production R2 |
+| Manual environment | Docker compose |
+| Slow deploy | Dokploy or another simple delivery layer |
+| Repetitive UI | shadcn/ui or Base UI |
+| Agent without proof | lint, typecheck, tests, and logs |
+
+That is the point of the setup: not tool fashion. It is reducing the distance between intent, implementation, and evidence.
+
+## References
+
+- Luchian, ["When I code AI assisted"](https://x.com/luchian_mvp/status/2061759534335398113), Twitter/X.
+
+---
+
+**TL;DR:** a good fullstack setup for AI-assisted coding needs fast feedback and clear contracts. React, shadcn/ui, Fastify or Hono, tRPC or oRPC, Drizzle, Postgres, MinIO, R2, Docker, Hetzner, and Dokploy form a coherent combination when each piece helps the agent observe, validate, and fix the system.

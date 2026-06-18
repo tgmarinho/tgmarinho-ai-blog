@@ -1,3 +1,5 @@
+import { featureFlags, type FeatureFlag } from "@/lib/feature-flags";
+
 export const siteConfig = {
   name: "Thiago Marinho",
   username: "tgmarinho",
@@ -28,12 +30,27 @@ export const siteConfig = {
   },
 };
 
+export type NavLink = {
+  href: string;
+  key: string;
+  featureFlag?: FeatureFlag;
+};
+
 export const navLinks = [
   { href: "/about", key: "about" },
   { href: "/cv", key: "cv" },
   { href: "/projects", key: "projects" },
+  { href: "/ask", key: "ask", featureFlag: "ask" },
   { href: "/blog", key: "blog" },
   { href: "/daily", key: "daily" },
   { href: "/community", key: "community" },
   { href: "/contact", key: "contact" },
-] as const;
+] as const satisfies readonly NavLink[];
+
+function isNavLinkEnabled(link: NavLink): boolean {
+  return link.featureFlag ? featureFlags[link.featureFlag] : true;
+}
+
+export function getEnabledNavLinks(): readonly NavLink[] {
+  return navLinks.filter(isNavLinkEnabled);
+}
