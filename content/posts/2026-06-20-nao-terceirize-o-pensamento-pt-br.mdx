@@ -1,0 +1,118 @@
+---
+title: "Não terceirize o pensamento"
+description: "Não terceirize o pensamento ao usar IA: use research, plan, implement, validate e ship com julgamento humano antes de publicar software real."
+date: "2026-06-20"
+published: true
+slug: "nao-terceirize-o-pensamento"
+language: "pt-BR"
+translationKey: "do-not-outsource-the-thinking"
+categories: ["ai", "software-engineering", "agents", "productivity", "pt-br"]
+image: "/images/blog/do-not-outsource-the-thinking-cover.jpg"
+---
+
+**Não terceirize o pensamento** quando usar inteligência artificial (IA) para programar. No fim, construir bom software não mudou: research, plan, implement, validate, ship. O que mudou foi a velocidade, o volume de opções e o ruído em volta do trabalho.
+
+A IA pode escrever código, sugerir planos, resumir diffs e rodar comandos. Mas ela não deve decidir o que importa. Pensar continua sendo sua identidade e seu propósito como engenheiro.
+
+```txt
+research -> plan -> implement -> validate -> ship
+```
+
+Esse loop parece simples porque é antigo. A novidade não é o processo. A novidade é que agora cada etapa pode ser acelerada por agentes. E justamente por isso cada etapa precisa de mais julgamento, não menos.
+
+## Onde entra o pensamento?
+
+**Pensamento** não é uma etapa antes do loop. Pensamento é o operador aplicado a todas as etapas.
+
+```txt
+engineering = think(research) -> think(plan) -> think(implement) -> think(validate) -> think(ship)
+```
+
+Você pensa quando pesquisa: o que é verdade?
+
+Você pensa quando planeja: qual caminho respeita o problema?
+
+Você pensa quando implementa: o código ainda segue a intenção?
+
+Você pensa quando valida: essa evidência prova algo real?
+
+Você pensa quando publica: o impacto confirma ou muda o plano?
+
+Esse feedback é o loop de engenharia. A realidade publicada muda a próxima rodada de pesquisa.
+
+## Por que pensar ficou mais difícil?
+
+**Ruído** é o inimigo real de boa engenharia.
+
+Sempre tem uma nova `SKILL.md`, um agente novo, uma ferramenta nova, uma IDE nova, um processo melhor. A técnica que parecia inevitável hoje pode parecer hype ultrapassado em dois meses. Spec-driven development (SDD) é bom, depois é excesso de processo, depois volta com outro nome.
+
+Isso cria uma confusão mental real para quem só quer construir software bom.
+
+O exagero útil seria o engenheiro ter um MacBook com quatro horas de internet e quatro horas sem internet. Quatro horas para pesquisar, comparar ferramentas e entender o estado do mundo. Quatro horas sem feed, sem anúncio de ferramenta, sem trend nova e sem ansiedade, só para pensar no problema.
+
+Pensar é remover ruído.
+
+| Fase | Remove ruído de quê? |
+|---|---|
+| Research | Do problema |
+| Plan | Do caminho |
+| Implement | Do artefato |
+| Validate | Da confiança |
+| Ship | Da teoria |
+
+## O que a IA pode fazer e o que continua seu?
+
+Use IA para acelerar iteração, não para abandonar critério.
+
+| Fase | A IA pode acelerar | Você precisa pensar |
+|---|---|---|
+| Research | Ler arquivos, buscar padrões, resumir riscos | Qual leitura está correta? |
+| Plan | Propor passos, arquivos e validações | Esse plano resolve o problema certo? |
+| Implement | Editar código e testes | O código pertence ao sistema? |
+| Validate | Rodar checks e juntar evidência | Essa evidência mede o que importa? |
+| Ship | Preparar diff, PR e resumo | O risco está pequeno o bastante? |
+
+O erro não é usar IA. O erro é deixar a IA carregar intenção, critério e responsabilidade.
+
+## Onde está a maior alavancagem?
+
+**Alavancagem** vem antes do código.
+
+Uma linha ruim de código costuma gerar um problema local. Uma pesquisa ruim gera um plano ruim. Um plano ruim gera uma implementação coerente na direção errada. Uma instrução ruim no `CLAUDE.md`, `AGENTS.md` ou `SKILL.md` pode espalhar erro por várias sessões.
+
+Por isso revisar `research.md` e `plan.md` pode valer mais do que revisar uma PR gigante tentando reconstruir a intenção depois.
+
+O ponto não é criar burocracia. É pensar cedo, quando ainda é barato mudar de ideia.
+
+## Qual é o mínimo?
+
+Antes de publicar, responda:
+
+1. O problema real está claro?
+2. O plano segue a pesquisa?
+3. A implementação segue o plano?
+4. A validação prova comportamento, não só atividade?
+5. O que foi publicado muda a próxima decisão?
+
+Se a resposta ainda é vaga, o agente pode continuar trabalhando. Você ainda não deveria shippar.
+
+## Referências
+
+As **referências** principais deste post são estas:
+
+- [No Vibes Allowed: Solving Hard Problems in Complex Codebases](https://www.youtube.com/watch?v=rmvDxxNubIg), Dex Horthy, HumanLayer, AI Engineer Code Summit.
+- [Advanced Context Engineering for Coding Agents](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/ace-fca.md), HumanLayer, 2025.
+- [Imagem direta do workflow research, planning e implementation](https://www.humanlayer.dev/blog/advanced-context-engineering/workflow.png), da HumanLayer.
+- [Imagem direta da Impact Hierarchy for Coding Agents](https://www.humanlayer.dev/blog/advanced-context-engineering/leverage.png), da HumanLayer.
+- [Vibe Coding Our Way to Disaster](https://www.arthropod.software/p/vibe-coding-our-way-to-disaster), Jake Nations, 2025.
+- [Imagem direta do método em três fases](https://substackcdn.com/image/fetch/%24s_%21UC4a%21%2Cw_1456%2Cc_limit%2Cf_auto%2Cq_auto%3Agood%2Cfl_progressive%3Asteep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc7aa3030-eec5-4b65-830f-c3f128ac5a2c_704x658.png), usada como referência visual.
+- [research_codebase.md](https://github.com/humanlayer/humanlayer/blob/main/.claude/commands/research_codebase.md), [create_plan.md](https://github.com/humanlayer/humanlayer/blob/main/.claude/commands/create_plan.md) e [implement_plan.md](https://github.com/humanlayer/humanlayer/blob/main/.claude/commands/implement_plan.md).
+- [Simple Made Easy](https://www.youtube.com/watch?v=SxdOUGdseq4) e [Hammock-Driven Development](https://www.youtube.com/watch?v=f84n5oFoZBc), Rich Hickey.
+
+## Resumo
+
+**IA na programação** muda a velocidade, não a responsabilidade. O loop continua: research, plan, implement, validate, ship.
+
+Não terceirize o pensamento. Terceirize partes da execução.
+
+Pensar é a parte que dá sentido ao trabalho.

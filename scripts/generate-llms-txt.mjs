@@ -7,6 +7,7 @@ const SITE_URL = "https://tgmarinhopro.com";
 const AUTHOR = "Thiago Marinho";
 const TAGLINE =
   "Engineering leader writing about agentic systems, AI tooling, and the craft of building with LLMs.";
+const PUBLISH_TIME_ZONE = "America/Campo_Grande";
 
 const posts = JSON.parse(
   readFileSync(resolve(ROOT, ".velite/posts.json"), "utf8"),
@@ -17,8 +18,23 @@ function postUrl(post) {
   return `${SITE_URL}${localePrefix}/blog/${post.slug}`;
 }
 
+function todayIso(timeZone = PUBLISH_TIME_ZONE) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (type) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function isPostVisible(post) {
+  return post.published !== false && post.date <= todayIso();
+}
+
 const published = posts
-  .filter((p) => p.published !== false)
+  .filter(isPostVisible)
   .sort((a, b) => new Date(b.date) - new Date(a.date));
 
 const byLang = {

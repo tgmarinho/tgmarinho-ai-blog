@@ -5,7 +5,7 @@ import { journal } from "#site/content";
 import { allPosts } from "@/lib/all-posts";
 import { projects } from "@/lib/projects";
 import { localizedUrl } from "@/lib/seo";
-import { getPostLanguage } from "@/lib/posts-i18n";
+import { getPostLanguage, isPostVisible } from "@/lib/posts-i18n";
 import type { Locale } from "@/i18n/routing";
 import enMessages from "../../../messages/en.json";
 import ptMessages from "../../../messages/pt-BR.json";
@@ -377,7 +377,7 @@ export function getPublicCorpus(): PublicCorpusDocument[] {
   if (corpusCache) return corpusCache;
 
   const posts = allPosts
-    .filter((post) => post.published)
+    .filter((post) => isPostVisible(post))
     .map((post): PublicCorpusDocument => {
       const locale = getPostLanguage(post);
       const description = compactText(post.description);
