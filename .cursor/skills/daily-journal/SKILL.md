@@ -143,8 +143,12 @@ mention the leak in the entry or in chat. If unsure whether something is sensiti
 2. **English content stays in plain English:** short sentences, common words, active voice. The
    pt-BR may be a touch more expressive; the EN stays simple.
 3. pt-BR and en are **mirrors** (same facts), not literal line-by-line translations.
-4. Voice: first person, reflective, build-in-public. End with one reflective sentence.
-5. Code identifiers and file paths in backticks, in English.
+4. **Say less, mean more:** keep only the themes that explain what changed, what was decided,
+   and what moved forward. Remove busy chronology, filler, and decorative transitions.
+5. **Substance before ornament:** each section needs real weight: a decision, fix, shipped change,
+   learning, or clear trade-off. Remove busy narration that does not change the reader's understanding.
+6. Voice: first person, reflective, build-in-public, calm, direct, and respectful. End with one reflective sentence.
+7. Code identifiers and file paths in backticks, in English.
 
 ## Workflow
 

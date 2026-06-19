@@ -142,6 +142,10 @@ Rules:
 > Applies to authored content (post titles, descriptions, body copy). Not to code or to these meta docs.
 
 - **Never use em dashes (`—`) or en dashes (`–`) for emphasis or asides in prose.** This is a recognizable LLM tell, and in 2026 readers carry a bias against it precisely because AI overuses the em dash. Restructure the sentence with a comma, colon, parentheses, or a period. Don't just swap `—` for a hyphen; rewrite so it reads naturally.
+- **Say less, mean more:** lead with the conclusion, then give only the context needed for the reader to decide, act, or understand the trade-off.
+- **Substance before ornament:** every paragraph needs real weight: a thesis, decision, diagnosis, example, command, metric, or useful question. Remove decorative openings, filler transitions, clever phrasing, and anything that only makes the text look busy.
+- **Use an authority voice:** calm, direct, precise, respectful. The writing should project clarity, power, leadership, and respect without sounding aggressive or inflated.
+- **Prefer short sentences with weight:** one idea per sentence when possible. Let a strong sentence end instead of explaining it into weakness.
 - **English content uses plain English:** short sentences, common words, active voice.
 - **Professional, concise, direct tone:** less is more. Remove jokes, filler, "cute" phrasing, war-story padding, and sentences that do not add diagnosis, context, decision, or action. Keep the narrative useful, not theatrical.
 - **Define non-obvious acronyms on first use:** avoid acronym-only titles for terms that a broader technical audience may not know. Prefer "Out Of Memory" over "OOM" in titles and first mentions, then use the acronym only if it improves readability.
@@ -291,7 +295,7 @@ decided. hermes memories (`USER.md`, `SOUL.md`, life-os, diet) are personal and 
 
 - Collapse Conductor city codenames into the real project; merge all cities into one `### project` section.
 - Mirror pt-BR + en (same facts, not literal translation). Distill busy days to the 3-6 top themes.
-- Skip near-empty days. Apply the prose writing style (no em/en dashes; plain English in `en`).
+- Skip near-empty days. Apply the prose writing style (no em/en dashes; plain English in `en`; say less, mean more; substance before ornament).
 - **Privacy is non-negotiable:** never publish secrets, env vars, credentials, private URLs,
   client/customer data, or personal data (people, health, finances, location, job-application
   /company/recruiter specifics, spiritual reflections, or anything from user-profile memories).
