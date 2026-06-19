@@ -20,10 +20,27 @@ export type AskThiagoResponse = {
   model?: string;
 };
 
-const DEFAULT_MODEL = "openai/gpt-5.4";
+const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
+const DEFAULT_MAX_OUTPUT_TOKENS = 400;
+const MAX_ALLOWED_OUTPUT_TOKENS = 800;
+const DEFAULT_TEMPERATURE = 0.2;
 
 function hasGatewayCredentials(): boolean {
   return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
+}
+
+function askModel(): string {
+  return process.env.ASK_THIAGO_MODEL ?? process.env.AI_MODEL ?? DEFAULT_MODEL;
+}
+
+function askMaxOutputTokens(): number {
+  const raw = process.env.ASK_THIAGO_MAX_OUTPUT_TOKENS;
+  if (!raw) return DEFAULT_MAX_OUTPUT_TOKENS;
+
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_MAX_OUTPUT_TOKENS;
+
+  return Math.min(parsed, MAX_ALLOWED_OUTPUT_TOKENS);
 }
 
 function sourceLabel(locale: Locale, index: number): string {
@@ -84,7 +101,7 @@ export async function answerPublicQuestion(
 ): Promise<AskThiagoResponse> {
   const results = searchPublicCorpus(question, locale, 6);
   const sources = toSources(results);
-  const model = process.env.ASK_THIAGO_MODEL ?? DEFAULT_MODEL;
+  const model = askModel();
 
   if (sources.length === 0 || !hasGatewayCredentials()) {
     return {
@@ -101,6 +118,9 @@ export async function answerPublicQuestion(
   try {
     const { text } = await generateText({
       model,
+      maxOutputTokens: askMaxOutputTokens(),
+      maxRetries: 1,
+      temperature: DEFAULT_TEMPERATURE,
       system: [
         "You are Ask Thiago, a public guide to Thiago Marinho's published website.",
         "Use only the provided public corpus excerpts.",
