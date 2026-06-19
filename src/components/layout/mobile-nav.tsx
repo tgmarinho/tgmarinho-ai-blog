@@ -10,10 +10,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { navLinks } from "@/lib/constants";
+import type { NavLink } from "@/lib/constants";
 import { useState } from "react";
 
-export function MobileNav() {
+type MobileNavProps = {
+  navLinks: readonly NavLink[];
+};
+
+export function MobileNav({ navLinks }: MobileNavProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
