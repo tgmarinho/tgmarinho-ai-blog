@@ -118,11 +118,12 @@ Quando existe `AI_GATEWAY_API_KEY` ou `VERCEL_OIDC_TOKEN`, `answerPublicQuestion
 - cite fontes inline com `[1]`, `[2]`;
 - responda no idioma da rota.
 
-O **Vercel AI Gateway** ficou como integração opcional. O modelo default é `openai/gpt-5.4`, configurável por `ASK_THIAGO_MODEL`.
+O **Vercel AI Gateway** ficou como integração opcional. O modelo default é `anthropic/claude-haiku-4.5`, configurável por `ASK_THIAGO_MODEL` ou `AI_MODEL`.
 
 ```env
 NEXT_PUBLIC_FF_ASK_ENABLED=false
-ASK_THIAGO_MODEL=openai/gpt-5.4
+ASK_THIAGO_MODEL=anthropic/claude-haiku-4.5
+ASK_THIAGO_MAX_OUTPUT_TOKENS=400
 # AI_GATEWAY_API_KEY=
 # VERCEL_OIDC_TOKEN=
 ```
