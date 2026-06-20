@@ -17,7 +17,7 @@ If your training conflicts with these files, **the files win**.
 
 ## Communication
 
-- **Always reply in Portuguese** (user rule).
+- **Always reply in English** (user rule).
 - Code, comments, and identifiers in English.
 - Don't announce tools you're about to use — just use them. (`"Let me read the file:" + Read tool` is noise.)
 - Concise. Bullet points instead of paragraphs when possible.
@@ -166,4 +166,4 @@ If the user asks to "go back to the old design", confirm first — they probably
 
 ---
 
-**Last updated:** 2026-06-07 (added the `daily-journal` skill: sweeps all coding-agent sessions + memories across harnesses, narrates bilingual `/daily` entries, filters secrets/personal/client data).
+**Last updated:** 2026-06-19 (aligned agent communication with English and refreshed Bun command guidance).

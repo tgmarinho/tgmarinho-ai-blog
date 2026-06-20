@@ -73,7 +73,7 @@ velite.config.ts       # post schema + rehype pipeline (hardened in Phase 2.2)
 5. **Do not swap the stack without asking.** No Pages Router, no replacing Velite with contentlayer/next-mdx-remote, no Tailwind→CSS-in-JS, no Redux. Stack changes need explicit human confirmation.
 6. **Do not run `bun run build` "just to test"** without reason — it's expensive and regenerates `.velite/`. Prefer `bun lint` + reading the diff. Full builds only when explicitly requested or when type/config changes require it.
 7. **`docs/redesign-2026-agentic-futurist.md`** is the visual changelog. Any non-trivial design change (tokens, fonts, hero layout, prose) must be reflected there.
-8. **Communication language with the human:** the user's rule is to **reply in Portuguese**. Code, comments, and identifiers stay in English.
+8. **Communication language with the human:** the user's rule is to **reply in English**. Code, comments, and identifiers stay in English.
 
 ---
 
