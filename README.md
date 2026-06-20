@@ -30,6 +30,7 @@ The visual direction is **Minimalismo Futurista + IA Agentic**:
 - Asymmetric blog cards with `feature/default/compact` variants
 - Fast fuzzy search with `Fuse.js`
 - Reading-time and rich MDX prose
+- Browser-native text-to-speech for blog posts, with bilingual voice filtering and speed control
 - Responsive navigation (desktop + sheet mobile nav)
 - Performance-oriented App Router architecture
 
@@ -58,6 +59,7 @@ The visual direction is **Minimalismo Futurista + IA Agentic**:
 ### Features
 - [Fuse.js](https://fusejs.io/)
 - [reading-time](https://github.com/ngryman/reading-time)
+- Browser Web Speech API for article text-to-speech
 - [Upstash Redis](https://upstash.com/) (optional)
 
 ## 🛰️ Architecture
@@ -75,9 +77,9 @@ tgmarinho-ai-website/
 │   ├── llms.txt                  # generated at build (SEO for LLMs)
 │   └── llms-full.txt             # generated at build (full corpus)
 ├── scripts/
-│   ├── generate-llms-txt.mjs     # runs in `npm run build`
-│   ├── audit-broken-refs.mjs     # `npm run audit:refs`
-│   ├── validate-i18n-seo.mjs     # `npm run audit:i18n-seo`
+│   ├── generate-llms-txt.mjs     # runs in `bun run build`
+│   ├── audit-broken-refs.mjs     # `bun audit:refs`
+│   ├── validate-i18n-seo.mjs     # `bun audit:i18n-seo`
 │   ├── daily-journal.mjs         # extracts the day's coding-agent sessions + git log
 │   ├── journal-narrate.mjs       # narrates the raw log into a bilingual /daily entry
 │   └── journal-cron.sh           # local orchestrator (runs the two above, opens a draft PR)
@@ -114,20 +116,20 @@ Deep context + lessons learned:
 
 ### Requirements
 - Node.js 20+ (Vercel runtime is Node 24 LTS / Fluid Compute)
-- npm
+- Bun
 
 ### Install
 
 ```bash
 git clone <repository-url>
 cd tgmarinho-ai-website
-npm install
+bun install
 ```
 
 ### Dev
 
 ```bash
-npm run dev
+bun dev
 ```
 
 Pipeline:
@@ -137,20 +139,20 @@ Pipeline:
 ### Build & Run
 
 ```bash
-npm run build
-npm run start
+bun run build
+bun start
 ```
 
 ## 🧩 Scripts
 
-- `npm run dev` → Velite + Next.js dev
-- `npm run build` → clean Velite + generate llms.txt + production build
-- `npm run start` → production server
-- `npm run velite` → content only
-- `npm run lint` → ESLint
-- `npm run llms` → regenerate `public/llms.txt` + `public/llms-full.txt`
-- `npm run audit:refs` → scan posts/pages for broken internal references
-- `npm run audit:i18n-seo` → validate bilingual SEO (hreflang, translationKey pairs, canonical)
+- `bun dev` → Velite + Next.js dev
+- `bun run build` → clean Velite + generate llms.txt + production build
+- `bun start` → production server
+- `bun velite` → content only
+- `bun lint` → ESLint
+- `bun llms` → regenerate `public/llms.txt` + `public/llms-full.txt`
+- `bun audit:refs` → scan posts/pages for broken internal references
+- `bun audit:i18n-seo` → validate bilingual SEO (hreflang, translationKey pairs, canonical)
 
 ## ✍️ MDX Authoring
 

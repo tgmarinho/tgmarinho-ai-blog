@@ -68,7 +68,7 @@ velite.config.ts       # post schema + rehype pipeline (hardened in Phase 2.2)
 
 1. **Never edit `.velite/` by hand.** It's Velite output. To change post data, edit `content/posts/*.mdx` and run `bun velite`.
 2. **Never commit secrets.** `.env.local` is gitignored. Sensitive vars: `BUTTONDOWN_API_KEY`, `UPSTASH_REDIS_REST_*`.
-3. **Server Components by default.** Add `"use client"` **only** if you need `useState`/`useEffect`/browser events. Today's clients: `BlogSearch`, `CVViewer`, `ShareButton`, forms (`feedback`, `newsletter`), FX components with mouse listeners.
+3. **Server Components by default.** Add `"use client"` **only** if you need `useState`/`useEffect`/browser events. Today's clients: `BlogSearch`, `PostAudioPlayer` (browser Web Speech API TTS for posts), `CVViewer`, `ShareButton`, forms (`feedback`, `newsletter`), FX components with mouse listeners.
 4. **Do not introduce a CMS.** Content lives in MDX in Git, by design.
 5. **Do not swap the stack without asking.** No Pages Router, no replacing Velite with contentlayer/next-mdx-remote, no Tailwind→CSS-in-JS, no Redux. Stack changes need explicit human confirmation.
 6. **Do not run `bun run build` "just to test"** without reason — it's expensive and regenerates `.velite/`. Prefer `bun lint` + reading the diff. Full builds only when explicitly requested or when type/config changes require it.
@@ -178,6 +178,15 @@ When migrating to Upstash Redis, follow the `Redis.fromEnv()` pattern documented
 ### Build-time generators
 
 - `scripts/generate-llms-txt.mjs` runs inside `bun run build` and writes `public/llms.txt` + `public/llms-full.txt` from the Velite output. Re-run manually via `bun llms` after large content changes.
+
+### Blog post audio
+
+- Blog post pages render `PostAudioPlayer` before the article body.
+- It uses the browser Web Speech API only: no external TTS service, no API key, no generated audio files.
+- The server page passes `post.title`, `post.description`, and `post.plainBody` as text so the player does not scrape rendered DOM.
+- Keep the player client-side and isolated. Do not move `window.speechSynthesis` access into Server Components.
+- When changing TTS behavior, validate both `pt-BR` and `en` posts, because voice filtering depends on the post locale.
+- The next planned enhancement is active chunk highlighting and auto-scroll. See GitHub issue #209.
 
 ---
 
