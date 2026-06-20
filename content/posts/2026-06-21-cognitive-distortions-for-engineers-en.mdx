@@ -1,0 +1,250 @@
+---
+title: "Cognitive distortions for engineers: how to think better under pressure"
+description: "Cognitive distortions affect technical decisions. Learn common patterns and replace automatic reactions with clearer evidence under pressure in day-to-day work."
+date: "2026-06-21"
+published: true
+slug: "cognitive-distortions-for-engineers"
+language: "en"
+translationKey: "cognitive-distortions-for-engineers"
+categories: ["software-engineering", "decision-making", "psychology", "ai", "en"]
+image: "/images/blog/cognitive-distortions-mind-guardrails-cover.jpg"
+---
+
+**Cognitive distortions** are thinking patterns that make a situation feel more certain, worse, or more personal than the evidence supports. For engineers, they show up during incidents, code review, planning, career decisions, and work with artificial intelligence (AI). The practical gain is simple: separate fact, interpretation, emotion, and next action before you decide.
+
+This post was inspired by the Terapia Cognitiva article on [types of cognitive distortions](https://terapiacognitiva.com.br/distorcoes-cognitivas/) and its explanation of [how Cognitive Behavioral Therapy works](https://terapiacognitiva.com.br/terapia-cognitivo-comportamental-2/). It also connects with the core idea of Cognitive Behavioral Therapy (CBT), described by the [Beck Institute](https://beckinstitute.org/about/understanding-cbt/): thoughts and perceptions influence how people feel and act.
+
+This is not clinical advice. If a thinking pattern is affecting your sleep, health, work, relationships, or safety, talk to a licensed mental health professional. This post focuses on decision-making at work.
+
+## What are cognitive distortions in technical work?
+
+A **cognitive distortion** is an automatic interpretation that feels like a fact, but has not been tested yet. It can come from stress, fear, urgency, bad past experiences, perfectionism, or too much responsibility.
+
+In technical work, the sequence often looks like this:
+
+| Layer | Example |
+|---|---|
+| Fact | The deploy failed in production |
+| Interpretation | "I broke everything" |
+| Emotion | Shame, anxiety, irritation |
+| Automatic action | Hide, blame someone, revert without investigating |
+| Better action | Read logs, reduce impact, communicate state, find cause |
+
+The problem is not feeling something. The problem is letting the first interpretation control the next action.
+
+## Why does this matter for engineers?
+
+**Software engineering** is decision-making under uncertainty. We almost never have all the data, all the context, and all the time. Cognitive distortions add noise to that decision.
+
+They show up when you:
+
+- Overestimate the risk of a small change.
+- Underestimate a bug because "it has always worked this way".
+- Read a review comment as a personal attack.
+- Treat an incident as proof that you are incompetent.
+- Believe an AI tool solved everything without validation.
+- Think that if it was not perfect, it was useless.
+
+The result is predictable: more anxiety, more defensive decisions, larger pull requests, tense reviews, less learning, and less evidence.
+
+## Which distortions show up most in software teams?
+
+These are not clinical categories for self-diagnosis. They are useful labels for spotting patterns at work.
+
+**Personalization** shows up when you take full blame for something that was systemic. An incident is not caused only by the person who clicked deploy. It also involves review, tests, alerts, feature flags, rollback, observability, and deadline pressure. The useful question is: which system factors contributed beyond my action?
+
+**Magnification and minimization** shows up when your mistakes become huge and your wins disappear. You remember the bug that escaped, but ignore the feature you shipped, the test that prevented a regression, and the help you gave the team. The useful question is: am I enlarging the failure and shrinking the evidence of progress?
+
+**Catastrophizing** shows up when risk becomes certain disaster. "If this PR breaks, the team will never trust me again" or "if one company had layoffs, nobody needs engineers anymore". The useful question is: what is the realistic worst case, what is the probability, and what is the response plan?
+
+**Mind reading** shows up when you assume you know what another person thinks. "The reviewer thinks I am bad", "leadership realized I am not really senior", or "the interviewer already failed me". The useful question is: what evidence do I have beyond my fear?
+
+**Labeling** shows up when a specific behavior becomes an identity. "I am terrible at backend", "I am a tutorial developer", "I am too junior for this market". The useful question is: which concrete skill needs to improve, without turning it into a verdict about who I am?
+
+**Emotional reasoning** shows up when emotion becomes proof. "I feel unsure, so the architecture must be wrong" or "I feel anxious, so I will be laid off". The useful question is: which test, conversation, or evidence can validate this interpretation?
+
+**Polarized thinking** shows up as all-or-nothing thinking. AI is either salvation or total threat. The PR is perfect or useless. The career is going great or it is over. The useful question is: which part is good, which part is weak, and which next adjustment is enough?
+
+**Selective abstraction** shows up when you pick one negative detail and ignore the rest of the picture. One interview question you could not answer becomes "I was awful", even if architecture, communication, and experience went well. The useful question is: what am I leaving out of the analysis?
+
+**Fortune telling** shows up when you treat a prediction as fact. "The market will not hire mid-level engineers", "AI will eliminate my role", "this application will go nowhere". The useful question is: is this data, hypothesis, or fear?
+
+**Discounting the positive** shows up when a good delivery loses value because you had support. "I only shipped because I used AI", "I only got through because someone referred me", "I only solved it because someone explained it". The useful question is: what did I decide, review, test, communicate, and own?
+
+**Overgeneralization** shows up when one event becomes a universal rule. One bad interview becomes "I always fail". One hard feedback becomes "nobody trusts me". One difficult new stack becomes "I do not learn fast anymore". The useful question is: how many times did this actually happen?
+
+**Should statements** show up in the "I should" loop. "I should know everything about AI", "I should handle this without help", "I should be senior in every technology". The useful question is: is this expectation realistic for my level, context, and available time?
+
+**Victimization** shows up when all agency leaves your hands. "The market is impossible, so there is no point doing anything" or "AI ruined the developer career". Sometimes the context is truly hard. Even then, the useful question is: which small action is still under my control?
+
+**Questioning** shows up when the mind gets stuck in questions with no exit. "Why did I not learn this earlier?", "why did I take this job?", "why did I not start with AI in 2023?". The useful question is: which question moves me toward action now?
+
+The label does not solve the problem. It creates a pause between reaction and choice.
+
+## How can you identify a distortion before deciding?
+
+Use a short protocol. The NHS summarizes one CBT practice as [catching, checking, and changing unhelpful thoughts](https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/self-help-cbt-techniques/reframing-unhelpful-thoughts/). For engineering, I would adapt it like this:
+
+1. Catch the automatic sentence.
+2. Separate fact from interpretation.
+3. Name the likely distortion.
+4. Look for evidence for and against it.
+5. Choose a small verifiable action.
+
+Example:
+
+| Step | Answer |
+|---|---|
+| Automatic sentence | "This comment proves I cannot code" |
+| Fact | The reviewer asked for a test for an edge case |
+| Interpretation | "They think I am incompetent" |
+| Distortion | Mind reading, labeling |
+| Evidence against it | The comment points to a specific case and includes a concrete suggestion |
+| Next action | Add the test, reply with the rationale, and move on |
+
+This practice does not ask for forced optimism. It asks for precision.
+
+## How do you use this in code review?
+
+**Code review** is one of the places where cognitive distortions become visible, because one person's work becomes a public object of criticism.
+
+For the author:
+
+- Read the comment as information about the diff, not as a verdict about you.
+- Ask for an example when the comment is vague.
+- Separate blocker, suggestion, question, and preference.
+- Reply with evidence: test, log, screenshot, benchmark, or product decision.
+
+For the reviewer:
+
+- Criticize code behavior, not the person.
+- Say whether the comment blocks or suggests.
+- Explain the concrete risk.
+- Avoid turning personal taste into a universal rule.
+
+A comment like "this is wrong" invites defense. A comment like "Blocker: this mutation does not validate `orgId`, so a user could change another organization's data" invites correction.
+
+## How do you use this during incidents?
+
+During incidents, **catastrophizing** and personalization often arrive fast. The mind wants to close the story before the logs do.
+
+Replace the story with an operating loop:
+
+| Question | Goal |
+|---|---|
+| What do we know? | Separate fact from assumption |
+| What is the current impact? | Prioritize mitigation |
+| What changed recently? | Reduce the search space |
+| What is the safest reversible action? | Avoid impulsive fixes |
+| Who needs to know what? | Communicate without drama |
+
+After the incident, a better question than "who messed up?" is: "which barrier was missing?". It may be a test, feature flag, rollback, alert, runbook, permission limit, review, or observability.
+
+## How does this change work with AI?
+
+**Generative AI** amplifies automatic thinking. It can speed up analysis, but it can also give a fluent answer to a bad interpretation.
+
+Three distortions show up often:
+
+| Distortion | Poor prompt | Better prompt |
+|---|---|---|
+| Confirmation | "Prove this library is bad" | "Compare risks, benefits, and cases where this library makes sense" |
+| Catastrophizing | "Is this error severe?" | "List hypotheses by probability, impact, and evidence needed" |
+| All-or-nothing thinking | "Is this architecture right or wrong?" | "Which trade-offs does this architecture assume, and which signals would invalidate it?" |
+
+The agent should help test your thinking, not only obey your fear. Ask for counterexamples, alternative hypotheses, a risk matrix, and the minimum evidence needed to decide.
+
+## How does this show up in AI, the job market, and seniority?
+
+The **tech job market** became noisier with AI, layoffs, and fast changes in software development. That noise does not affect everyone the same way. Junior, mid-level, and senior engineers often distort different situations.
+
+| Context | Common distortion | Automatic thought | Better question |
+|---|---|---|---|
+| AI in software development | All-or-nothing thinking | "If AI writes code, my job is over" | Which parts of my work still require context, judgment, validation, and responsibility? |
+| AI tools | Discounting the positive | "I only shipped this because I used AI" | What did I decide, review, test, and own? |
+| Layoffs | Catastrophizing | "If one company cut developers, nobody needs engineers anymore" | What is the real market signal, and what is my next verifiable step? |
+| Stricter job posts | Overgeneralization | "Every job asks for everything, so I have no chance" | Which requirements are mandatory, and which are a wish list? |
+| Salary and seniority | Mind reading | "They will realize I am not that good" | Which evidence of my work can I show clearly? |
+
+For a **junior engineer**, the common distortion is turning lack of experience into identity. "I do not know how to debug production yet" becomes "I am not meant for programming". The better question is: which specific skill should I train this week?
+
+For a **mid-level engineer**, the risk is comparing your real work with someone else's best public slice. A video of someone using AI to build a whole app in minutes can become shame, when it should become analysis: what was demo, what was product, what was validated, and what was hidden?
+
+For a **senior engineer**, the distortion can show up as total responsibility. "If the team made a mistake, I failed as a technical reference." Sometimes there is real responsibility. But the question needs to be operational: which system was missing to prevent, detect, or correct the error earlier?
+
+AI and the market do not require positive thinking. They require **verifiable thinking**. The point is not to deny risk. It is to avoid letting fear choose the interpretation alone.
+
+## Which checklist should you use before reacting?
+
+Use this checklist when you notice tension, urgency, or defensiveness:
+
+- What is the observable fact?
+- What is my interpretation?
+- Which emotion is making that interpretation louder?
+- Which distortion may be active?
+- Which evidence is missing?
+- Which small action reduces uncertainty?
+- Who needs context now?
+- What can wait until I cool down?
+
+If the answer requires urgency, act on impact. If it does not require urgency, buy time to think.
+
+## Which Dale Carnegie ideas help here?
+
+In **How to Stop Worrying and Start Living**, Dale Carnegie returns to a simple idea many times: worry grows when the mind stays trapped in vague futures, old guilt, and problems without a defined action. For engineering, that maps well to cognitive distortions.
+
+Practical adaptations:
+
+| Idea | How to use it in technical work |
+|---|---|
+| Live in smaller units of time | Instead of solving your whole career today, solve the next block: study one concept, review one PR, send one application, write one learning note |
+| Face the realistic worst case | If the deploy fails, what is the rollback? If the interview goes badly, what do you learn? If the role does not happen, who do you contact next? |
+| Turn worry into action | Replace "what if I get laid off?" with "I will update my resume, review my portfolio, and talk to three people this week" |
+| Do not saw sawdust | After a decision has passed, write the postmortem and adjust the process. Replaying guilt does not improve the system |
+| Count evidence, not only fears | Keep a record of bugs fixed, feedback received, things shipped, topics studied, and problems you already got through |
+
+This connects with my post on [imposter syndrome in tech](/en/blog/imposter-syndrome-in-tech). There I wrote that imposter syndrome distorts how you interpret your own competence: failures look huge and wins look tiny. The practical answer is similar: measure progress, seek reliable people, record evidence, and act before you feel 100% confident.
+
+Carnegie does not remove uncertainty. His value is more modest: reduce worry until it fits inside the next action.
+
+## How do you turn this into a habit?
+
+**Clear thinking** improves when it becomes a process, not when it depends on willpower.
+
+Simple practices help:
+
+- During incidents, use a status template with facts, impact, action, and next update.
+- In pull requests, write intent, scope, evidence, and risk before asking for review.
+- In technical decisions, record trade-offs and invalidation signals.
+- In AI prompts, ask for evidence against your first hypothesis.
+- In hard feedback, wait a few minutes before replying.
+- In postmortems, look for missing barriers before looking for blame.
+
+The goal is not to become a perfectly rational person. It is to reduce decisions made by impulse.
+
+## TL;DR
+
+**Cognitive distortions** are interpretation patterns that can deform technical decisions. In engineering, they include personalization, magnification and minimization, catastrophizing, mind reading, labeling, emotional reasoning, polarized thinking, selective abstraction, fortune telling, discounting the positive, overgeneralization, should statements, victimization, and questioning.
+
+The practical antidote is to separate fact, interpretation, emotion, and action. Then look for evidence and choose the smallest verifiable next step. This improves code review, incidents, planning, and AI work because it replaces automatic reaction with clearer judgment.
+
+## Sources
+
+This post starts from these references and adapts the concepts to software engineering:
+
+- [Distorções cognitivas: entenda o que é e quais os seus tipos](https://terapiacognitiva.com.br/distorcoes-cognitivas/), Terapia Cognitiva.
+- [Como funciona a Terapia Cognitivo Comportamental?](https://terapiacognitiva.com.br/terapia-cognitivo-comportamental-2/), Terapia Cognitiva.
+- [Understanding CBT](https://beckinstitute.org/about/understanding-cbt/), Beck Institute.
+- [Reframing unhelpful thoughts](https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/self-help-cbt-techniques/reframing-unhelpful-thoughts/), NHS.
+- [How to Stop Worrying and Start Living](https://www.dalecarnegie.com/en/resources/how-to-stop-worrying-and-start-living), Dale Carnegie.
+- [Imposter Syndrome in Tech](/en/blog/imposter-syndrome-in-tech), Thiago Marinho.
+
+## Care Recommendation
+
+If you recognized these patterns and feel they are affecting your mental health, work, or relationships, consider seeking professional support.
+
+I recommend [Carla Suzana Marinho](https://www.instagram.com/carlasuzanamarinhopsi/), a clinical psychologist who offers online therapy for adults, with a focus on ADHD, anxiety, depression, and mental and emotional health. Booking through WhatsApp: [wa.me/5567996882030](https://wa.me/5567996882030).
+
+## Verse for reflection
+
+Philippians 4:8 is a fitting close for this theme: it calls the mind toward what is true, just, pure, lovely, commendable, excellent, and worthy of praise. After identifying distorted thoughts, the next step is to feed thoughts that are more truthful and healthy.
