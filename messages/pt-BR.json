@@ -84,7 +84,21 @@
       "commentTitle": "Curtiu? Vamos conversar no X",
       "commentBody": "Tem uma opinião, discordância ou pergunta sobre o post? Comenta no X que eu respondo.",
       "commentCta": "Comentar no X",
-      "aiDisclaimer": "Escrito por IA, revisado por "
+      "aiDisclaimer": "Escrito por IA, revisado por ",
+      "audio": {
+        "title": "Ouvir este post",
+        "description": "Áudio gerado pelo navegador, sem serviço externo.",
+        "unsupported": "Seu navegador não oferece suporte a leitura em voz alta.",
+        "voiceLabel": "Voz",
+        "voiceDefault": "Voz padrão do navegador",
+        "noVoices": "Nenhuma voz disponível",
+        "rateLabel": "Velocidade",
+        "play": "Ouvir",
+        "pause": "Pausar",
+        "resume": "Continuar",
+        "stop": "Parar",
+        "progress": "Lendo trecho {current} de {total}"
+      }
     }
   },
   "projects": {

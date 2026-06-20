@@ -59,6 +59,7 @@ The visual direction is **Agentic Futurism**:
 - Asymmetric blog cards with `feature/default/compact` variants
 - Fast fuzzy search with `Fuse.js`
 - Reading-time and rich MDX prose
+- Browser-native text-to-speech for blog posts, with bilingual voice filtering and speed control
 - Responsive navigation (desktop + sheet mobile nav)
 - Performance-oriented App Router architecture
 
@@ -87,6 +88,7 @@ The visual direction is **Agentic Futurism**:
 ### Features
 - [Fuse.js](https://fusejs.io/)
 - [reading-time](https://github.com/ngryman/reading-time)
+- Browser Web Speech API for article text-to-speech
 - [Upstash Redis](https://upstash.com/) (optional)
 
 ## 🛰️ Architecture

@@ -10,6 +10,7 @@ import { Link, redirect } from "@/i18n/navigation";
 import { MdxContent } from "@/components/mdx/mdx-content";
 import { ShareButton } from "@/components/mdx/share-button";
 import { TableOfContents } from "@/components/blog/table-of-contents";
+import { PostAudioPlayer } from "@/components/blog/post-audio-player";
 import { siteConfig } from "@/lib/constants";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { getPostLanguage, getTranslationPair } from "@/lib/posts-i18n";
@@ -166,6 +167,9 @@ export default async function PostPage({ params }: PostPageProps) {
   const showMissingBanner = postLocale !== locale && !pair[locale];
   const toc = extractToc(post.body || "");
   const tocLabel = t("onThisPage");
+  const audioText = [post.title, post.description, post.plainBody]
+    .filter(Boolean)
+    .join(". ");
   const commentHref =
     post.tweetUrl ??
     `https://twitter.com/intent/tweet?text=${encodeURIComponent(
@@ -337,7 +341,29 @@ export default async function PostPage({ params }: PostPageProps) {
         </aside>
       )}
 
-      <div className="prose mx-auto mt-14 max-w-[680px]">
+      <div className="mx-auto mt-14 max-w-[680px]">
+        <PostAudioPlayer
+          locale={postLocale}
+          text={audioText}
+          labels={{
+            title: t("audio.title"),
+            description: t("audio.description"),
+            unsupported: t("audio.unsupported"),
+            voiceLabel: t("audio.voiceLabel"),
+            voiceDefault: t("audio.voiceDefault"),
+            noVoices: t("audio.noVoices"),
+            rateLabel: t("audio.rateLabel"),
+            play: t("audio.play"),
+            pause: t("audio.pause"),
+            resume: t("audio.resume"),
+            stop: t("audio.stop"),
+            progress: t("audio.progress", {
+              current: "{current}",
+              total: "{total}",
+            }),
+          }}
+          className="mb-12"
+        />
         <MdxContent code={post.body || ""} />
       </div>
 

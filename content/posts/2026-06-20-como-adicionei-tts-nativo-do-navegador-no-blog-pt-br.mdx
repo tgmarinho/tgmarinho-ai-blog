@@ -1,0 +1,350 @@
+---
+title: "Como adicionei TTS nativo do navegador no blog"
+description: "Tutorial de TTS no navegador para posts Next.js: pesquisei Web Speech API, planejei o player, implementei vozes, velocidade, testes e próximos passos."
+date: "2026-06-20"
+published: true
+slug: "como-adicionei-tts-nativo-do-navegador-no-blog"
+language: "pt-BR"
+translationKey: "browser-native-tts-blog"
+categories: ["nextjs", "react", "web-speech-api", "accessibility", "pt-br"]
+image: "/images/blog/browser-tts-blog-cover.jpg"
+---
+
+**Text-to-speech (TTS)** no navegador é uma forma simples de transformar um post em áudio sem criar arquivos MP3, sem pagar por uma API externa e sem mandar o conteúdo para outro serviço. Neste tutorial, mostro como adicionei um player de leitura aos posts deste blog usando Next.js, React e a Web Speech API.
+
+O resultado é um componente client-side que lê o título, a descrição e o corpo do artigo em pt-BR ou inglês. Ele deixa a pessoa escolher a voz do navegador, controlar a velocidade até `2.0x`, pausar, continuar, parar e acompanhar o progresso por trechos.
+
+## Research: o que o navegador entrega?
+
+A primeira decisão foi não usar serviço externo. O pedido era explícito: usar os recursos do próprio navegador. A API relevante é a [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API), que tem duas partes: reconhecimento de fala e síntese de fala. Para este caso, só precisei da parte de síntese.
+
+Na prática, três peças importam:
+
+| API | Papel no player |
+| --- | --- |
+| `window.speechSynthesis` | Controla a fila de fala, vozes, pause, resume, cancel e speak |
+| `SpeechSynthesisUtterance` | Representa um texto que o navegador deve falar |
+| `SpeechSynthesisVoice` | Representa uma voz disponível no dispositivo ou navegador |
+
+O ponto mais importante da pesquisa: `speechSynthesis.speak()` trabalha com uma fila de `SpeechSynthesisUtterance`. Isso parece simples, mas muda o design. Um post longo não deveria virar uma única utterance gigante. É melhor dividir o texto em trechos, falar um trecho, esperar `onend`, e então falar o próximo.
+
+Também olhei duas implementações minhas em projetos de estudo:
+
+- `english-study`, onde a ideia de TTS substitui arquivos de áudio pesados.
+- `fluent-stories`, onde já existia seleção de voz, ordenação de vozes melhores e persistência no `localStorage`.
+
+Essas referências deram duas decisões práticas: carregar vozes de forma assíncrona, porque Chrome pode demorar para expor a lista, e ordenar vozes com nomes como `Natural`, `Neural`, `Google`, `Online`, `Samantha`, `Alex`, `Daniel` e `Luciana` antes das vozes genéricas.
+
+## Plan: qual deveria ser o contrato?
+
+Eu queria manter a página do post como Server Component. O player precisava de browser APIs, então ele deveria ser um componente pequeno com `"use client"`, isolado em `src/components/blog/post-audio-player.tsx`.
+
+O contrato ficou assim:
+
+```tsx
+<PostAudioPlayer
+  locale={postLocale}
+  text={audioText}
+  labels={translatedLabels}
+  className="mb-12"
+/>
+```
+
+O Server Component monta o texto a partir do que o Velite já gera:
+
+```ts
+const audioText = [post.title, post.description, post.plainBody]
+  .filter(Boolean)
+  .join(". ");
+```
+
+Isso evita consultar o DOM renderizado. O conteúdo audível vem da fonte de dados do post, não de scraping da página. Também evita ler menus, rodapé, botões ou qualquer texto que não pertence ao artigo.
+
+O plano tinha cinco requisitos:
+
+1. Detectar se o navegador suporta `speechSynthesis`.
+2. Filtrar vozes por idioma do post: `pt-BR` ou `en`.
+3. Dividir o texto em chunks para leitura longa.
+4. Controlar play, pause, resume, stop, voz e velocidade.
+5. Não deixar evento antigo avançar a leitura depois de um `cancel()`.
+
+## Implementation: como o texto vira áudio?
+
+O primeiro passo é normalizar o texto e quebrar em chunks. O objetivo não é sincronização perfeita por frase. É estabilidade.
+
+```ts
+function chunkSpeechText(text: string, maxLength = 1800) {
+  const normalized = normalizeSpeechText(text);
+  if (!normalized) return [];
+
+  const sentences = normalized.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) ?? [
+    normalized,
+  ];
+  const chunks: string[] = [];
+  let current = "";
+
+  for (const sentence of sentences) {
+    const next = sentence.trim();
+    if (!next) continue;
+
+    if (`${current} ${next}`.trim().length > maxLength) {
+      chunks.push(current.trim());
+      current = next;
+    } else {
+      current = `${current} ${next}`.trim();
+    }
+  }
+
+  if (current) chunks.push(current.trim());
+  return chunks;
+}
+```
+
+O player não fala o post inteiro de uma vez. Ele chama `speakChunk(0)`, e cada chunk chama o próximo no `onend`.
+
+```ts
+function speakChunk(index: number) {
+  if (!isSupported) return;
+
+  const chunk = chunksRef.current[index];
+  if (!chunk) {
+    shouldContinueRef.current = false;
+    chunkIndexRef.current = 0;
+    setCurrentChunk(0);
+    setPlaybackState("idle");
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(chunk);
+  const speechRun = speechRunRef.current;
+  utterance.lang = getSpeechLang(locale);
+  utterance.rate = rateRef.current;
+  utterance.voice =
+    window.speechSynthesis
+      .getVoices()
+      .find((voice) => voice.voiceURI === selectedVoiceURIRef.current) ??
+    null;
+
+  chunkIndexRef.current = index;
+  setCurrentChunk(index + 1);
+  setPlaybackState("playing");
+
+  utterance.onend = () => {
+    if (!shouldContinueRef.current || speechRun !== speechRunRef.current) {
+      return;
+    }
+    speakChunk(index + 1);
+  };
+
+  utterance.onerror = () => {
+    if (speechRun !== speechRunRef.current) return;
+    shouldContinueRef.current = false;
+    setPlaybackState("idle");
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+```
+
+Esse código parece mais defensivo do que o esperado, mas cada parte existe por causa do comportamento real da Web Speech API.
+
+| Peça | Por que existe |
+| --- | --- |
+| `chunksRef` | Evita closure antiga quando callbacks do navegador rodam depois |
+| `chunkIndexRef` | Guarda o trecho atual para reiniciar quando a velocidade muda |
+| `rateRef` | Garante que a próxima utterance use a velocidade mais recente |
+| `selectedVoiceURIRef` | Garante que a próxima utterance use a voz mais recente |
+| `shouldContinueRef` | Impede avanço automático depois de stop ou cancel |
+| `speechRunRef` | Ignora `onend` e `onerror` atrasados de uma execução antiga |
+
+O detalhe mais importante é `speechRunRef`. Alguns navegadores ainda disparam eventos depois de `speechSynthesis.cancel()`. Sem esse contador, uma fala cancelada poderia chamar `speakChunk(index + 1)` e bagunçar a fila.
+
+## Implementation: como as vozes são escolhidas?
+
+A lista de vozes vem de `speechSynthesis.getVoices()`, mas ela pode chegar vazia no primeiro render. Por isso o player escuta `voiceschanged` e também tenta de novo depois de um pequeno timeout.
+
+```ts
+const loadVoices = () => {
+  const nextVoices = window.speechSynthesis.getVoices();
+  const nextAvailableVoices = getSupportedVoices(locale, nextVoices);
+
+  setVoices(nextVoices);
+
+  if (selectedVoiceURIRef.current || nextAvailableVoices.length === 0) {
+    return;
+  }
+
+  const savedVoiceURI = getStoredVoiceURI();
+  if (
+    savedVoiceURI &&
+    nextAvailableVoices.some((voice) => voice.voiceURI === savedVoiceURI)
+  ) {
+    setSelectedVoiceURI(savedVoiceURI);
+    return;
+  }
+
+  const preferredVoice =
+    nextAvailableVoices.find((voice) => voice.lang === getSpeechLang(locale)) ??
+    nextAvailableVoices[0];
+
+  setSelectedVoiceURI(preferredVoice.voiceURI);
+};
+```
+
+O filtro começa pelo idioma:
+
+- post em português usa vozes que começam com `pt`;
+- post em inglês usa vozes que começam com `en`;
+- se o navegador não tiver voz daquele idioma, o player mostra o restante.
+
+Depois vem uma pontuação simples para colocar vozes mais naturais no topo:
+
+```ts
+if (name.includes("natural") || name.includes("neural")) score += 100;
+if (name.includes("premium")) score += 90;
+if (name.includes("google")) score += 80;
+if (name.includes("online")) score += 70;
+```
+
+Isso não garante qualidade perfeita, mas melhora a primeira escolha sem criar uma dependência externa.
+
+## Implementation: por que mudar velocidade reinicia o trecho?
+
+A velocidade (`utterance.rate`) é aplicada quando a utterance começa. Se a pessoa altera o slider enquanto o navegador já está falando, a fala atual não muda de velocidade de forma confiável.
+
+A solução foi reiniciar o chunk atual:
+
+```ts
+const handleRateChange = (nextRate: number) => {
+  setRate(nextRate);
+  rateRef.current = nextRate;
+
+  if (!isSupported || playbackState !== "playing") return;
+
+  const currentIndex = chunkIndexRef.current;
+  shouldContinueRef.current = false;
+  speechRunRef.current += 1;
+  window.speechSynthesis.cancel();
+  shouldContinueRef.current = true;
+  speakChunk(currentIndex);
+};
+```
+
+O slider vai de `0.7x` até `2.0x`, com padrão em `1.2x`. Esse padrão ficou melhor para post técnico: rápido o suficiente para ouvir em fluxo, mas sem perder clareza.
+
+## Tests: como validei?
+
+Eu não rodei build completo porque o projeto evita `bun run build` sem necessidade. A validação foi focada no que mudou.
+
+Comandos:
+
+```sh
+bun install
+bun velite
+bun lint
+bunx tsc --noEmit
+bun dev
+```
+
+Também abri rotas reais do blog:
+
+```sh
+curl -I http://localhost:3000/blog/sindrome-do-impostor-na-tecnologia
+curl -I http://localhost:3000/en/blog/imposter-syndrome-in-tech
+```
+
+Durante o teste manual, encontrei dois ajustes importantes:
+
+| Problema | Correção |
+| --- | --- |
+| `next-intl` tentava interpolar `{current}` e `{total}` cedo demais | Passei os placeholders explicitamente para o componente |
+| Mudar velocidade não alterava a fala atual | Reiniciei o chunk atual com o novo `rate` |
+
+O lint passou com warnings antigos em `scripts/validate-i18n-seo.mjs`. O TypeScript passou sem erros.
+
+## Collaboration: qual foi o papel humano e qual foi o papel da IA?
+
+Essa feature não nasceu só de geração de código. Ela nasceu de uma conversa curta, com bons constraints, referências locais e QA de produto. Isso importa porque agentes de código executam melhor quando a intenção técnica e a intenção de produto aparecem cedo.
+
+### Como a IA capturou a intenção?
+
+Você definiu duas coisas que mudaram a arquitetura:
+
+1. "Quero um botão para ouvir o conteúdo em pt-BR ou inglês."
+2. "Nesse caso vai ser os recursos do próprio navegador."
+
+A primeira frase definiu a experiência. A segunda eliminou caminhos errados: nada de API externa, nada de arquivo MP3, nada de backend novo, nada de storage para áudio. A solução natural passou a ser Web Speech API.
+
+### O que na codebase facilitou?
+
+A codebase já tinha pontos de extensão bons:
+
+| Base existente | Como ajudou |
+| --- | --- |
+| `language` nos posts | Define se a fala usa `pt-BR` ou `en` |
+| `plainBody` gerado pelo Velite | Permite ler o post sem extrair texto do DOM |
+| Página de post centralizada | Deu um lugar claro para inserir o player |
+| `next-intl` | Deixou os labels do player bilíngues |
+| Server Components por padrão | Manteve a feature client-side só onde precisava |
+| Estética já consolidada | O player herdou o visual dark, glass e cyan/magenta |
+
+O ponto mais importante foi `plainBody`. Sem ele, eu teria duas opções piores: tentar raspar texto do HTML renderizado ou criar outro pipeline de extração. Como o Velite já entregava o corpo limpo do post, o player recebeu exatamente o conteúdo que deveria ser lido.
+
+### Qual foi o papel do engenheiro?
+
+O papel humano foi decisivo em três momentos.
+
+Primeiro, você impôs o constraint certo: usar o navegador. Isso simplificou a solução e evitou custo, latência, chave de API e complexidade operacional.
+
+Segundo, você trouxe memória de produto. Ao apontar `english-study` e `fluent-stories`, você conectou a feature a experiências anteriores. Isso puxou decisões melhores, como seleção de voz, carregamento assíncrono de vozes e persistência no `localStorage`.
+
+Terceiro, você fez QA de uso real. Você percebeu que mudar velocidade não afetava a fala atual, pediu limite até `2.0x`, definiu `1.2x` como padrão e escolheu a imagem que comunicava melhor o produto. Isso é engenharia de software com julgamento de produto.
+
+### Qual foi o papel da IA?
+
+A IA fez o trabalho de execução: leu a codebase, encontrou o ponto de integração, criou o componente, conectou i18n, validou com comandos locais, gerou a issue dos próximos passos e transformou a feature em documentação e post.
+
+Mas a parte relevante não foi "a IA escreveu código". Foi a combinação:
+
+| Humano | IA |
+| --- | --- |
+| Define intenção e constraints | Explora a codebase e propõe o caminho |
+| Traz referências locais | Reaproveita padrões e evita reinvenção |
+| Testa sensação de uso | Ajusta implementação e valida regressão |
+| Decide taste visual | Gera variações e aplica a aprovada |
+| Aponta próximos passos | Registra issue e documenta o plano |
+
+O resultado ficou melhor porque a IA não tentou inventar um produto paralelo. Ela seguiu a arquitetura existente. E você não tratou o agente como autocomplete. Tratou como um executor com contexto, feedback e direção.
+
+## Ship: o que entrou no produto?
+
+O ship final teve cinco partes:
+
+1. `src/components/blog/post-audio-player.tsx`, o player client-side.
+2. Integração em `src/app/[locale]/blog/[slug]/page.tsx`.
+3. Strings em `messages/pt-BR.json` e `messages/en.json`.
+4. Nota visual em `docs/redesign-2026-agentic-futurist.md`.
+5. Uma issue para próximos passos: [highlight e auto-scroll do TTS](https://github.com/tgmarinho/tgmarinho-ai-blog/issues/209).
+
+O resultado é uma melhoria pequena de interface, mas com uma boa propriedade arquitetural: o blog continua estático, bilíngue e baseado em Markdown. O áudio nasce no navegador da pessoa, quando ela pede.
+
+## Next steps: o que vem depois?
+
+O próximo passo não é trocar o TTS por uma API mais sofisticada. É melhorar a experiência de leitura enquanto o áudio toca.
+
+Roadmap:
+
+1. Highlight do chunk atual dentro do artigo.
+2. Auto-scroll suave acompanhando o chunk ativo.
+3. Highlight por palavra usando `SpeechSynthesisUtterance.onboundary` como melhoria progressiva.
+
+Eu não colocaria highlight por palavra como requisito principal. O evento `onboundary` varia por navegador e por voz. O caminho mais confiável é começar com chunk-level highlighting e usar palavra por palavra só quando o navegador entregar essa informação bem.
+
+## TL;DR
+
+- Usei **Web Speech API** para TTS nativo no navegador.
+- O post vira chunks, não uma utterance gigante.
+- O player filtra vozes por idioma e salva a escolha no `localStorage`.
+- A velocidade vai até `2.0x`, com padrão em `1.2x`.
+- Trocar velocidade durante a fala reinicia o chunk atual.
+- O próximo passo é highlight do trecho lido e auto-scroll.

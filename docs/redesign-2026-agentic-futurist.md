@@ -173,6 +173,7 @@ src/app/layout.tsx            ← +Manrope/Fraunces/Source Serif, +CursorAurora
 src/app/page.tsx              ← Hero + RecentPosts (estrutura preservada por pedido)
 src/app/blog/page.tsx         ← hero header + asymmetric grid
 src/app/blog/[slug]/page.tsx  ← editorial layout completo (Fraunces + drop-cap + sign-off)
+src/app/blog/[slug]/page.tsx  ← +browser TTS player antes do corpo do artigo, com voz e velocidade configuráveis
 src/app/about/page.tsx        ← achievements grid + timeline + skills + socials
 src/app/projects/page.tsx     ← hero + GlowCard grid com highlight prop
 src/app/contact/page.tsx      ← channels + inquiry hints
