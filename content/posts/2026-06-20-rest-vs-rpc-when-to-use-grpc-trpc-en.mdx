@@ -1,0 +1,192 @@
+---
+title: "REST vs RPC: when to use gRPC, tRPC, oRPC, or REST"
+description: "REST vs RPC: compare performance, OpenAPI, typed errors, streaming, and DX to choose between REST APIs, gRPC, tRPC, and oRPC in real production systems."
+date: "2026-06-20"
+published: true
+slug: "rest-vs-rpc-when-to-use-grpc-trpc-orpc-en"
+language: "en"
+translationKey: "rest-vs-rpc-grpc-trpc"
+categories: ["rpc", "rest", "grpc", "trpc", "orpc", "backend", "architecture", "performance", "en"]
+image: "/images/blog/rest-vs-rpc-internal-systems-cover.jpg"
+---
+
+**RPC** means Remote Procedure Call: the client calls a function that runs in another process or server. **REST** organizes the conversation as resources accessed through HTTP verbs. For public APIs, REST often wins because it is simple and universal; for high-performance internal communication, RPC, especially gRPC, often wins because it gives you strict contracts, compact payloads, and streaming. In TypeScript apps, tRPC and oRPC sit in another category: type-safe API productivity.
+
+The mature question is not "which one is better?". The question is: who consumes this API, in which language, with which latency target, and how much coupling can the team accept?
+
+## What is RPC in practice?
+
+**Remote Procedure Call** is an abstraction for calling remote code as if it were a local function. The client does not manually assemble every detail of the request. It calls a method, the client stub serializes the arguments, sends the message over the network, the server stub decodes the message, calls the real handler, and sends the response back.
+
+A **stub** is a piece of code that stands in for another piece. In RPC, the client stub represents the remote service inside the client. To the caller, it looks like a local function. To the infrastructure, it is the adapter that turns a function call into a network message. The server stub does the reverse: it turns the received message into a call to the real handler.
+
+In gRPC, that contract often starts in a `.proto` file:
+
+```proto
+service BillingService {
+  rpc ApproveInvoice(ApproveInvoiceRequest) returns (Invoice);
+}
+```
+
+On the client, the call looks like a function:
+
+```ts
+const invoice = await billingClient.approveInvoice({ invoiceId });
+```
+
+This does not remove the network. It only hides the plumbing. Latency, timeout, retry, authentication, observability, compatibility, and partial failure still exist. The difference is that the contract becomes more explicit.
+
+## How does the RPC client-server flow work?
+
+An RPC flow has six main steps:
+
+1. Client code calls a local-looking function.
+2. The **client stub** serializes the method name and arguments.
+3. The message crosses the network over HTTP/2, TCP, or another transport.
+4. The **server stub** decodes the message.
+5. The server calls the real handler.
+6. The return value, or error, comes back through the same contract.
+
+![RPC client-server flow showing a client call, client stub serialization, transport, server stub decoding, handler execution, and response path.](/images/blog/rpc-client-server-flow.svg)
+
+This diagram explains why RPC feels comfortable for internal microservices. The team calls `calculateRiskScore(input)` instead of inventing an artificial REST route for an action that is not exactly a resource.
+
+## What are the main differences between REST and RPC?
+
+REST and RPC can both use HTTP. The main difference is the mental model of the interface.
+
+| Criterion | REST | RPC |
+| --- | --- | --- |
+| Mental model | Resources and HTTP verbs | Remote functions and methods |
+| Example | `POST /invoices/123/approval` | `ApproveInvoice(invoiceId)` |
+| Contract | OpenAPI, JSON Schema, conventions | IDL, `.proto`, schema, or shared types |
+| Common payload | JSON | Protobuf in gRPC, JSON in tRPC |
+| Best for | Public APIs and broad integrations | Internal services and action-oriented calls |
+| Manual debugging | Very easy with `curl` and Postman | Depends on specific tooling |
+| Evolution | Simple, but can become inconsistent | More structured when the contract is maintained |
+| Streaming | Possible, but less natural | Native in gRPC |
+
+REST is excellent when the API must be consumed by anyone, in any stack. RPC is excellent when you control both sides and want less ambiguity between client and server.
+
+## Where does gRPC win on performance?
+
+**gRPC** often wins on performance because it combines three technical choices:
+
+1. **Protocol Buffers:** a binary payload that is more compact than JSON.
+2. **HTTP/2:** stream multiplexing, header compression, and better connection use.
+3. **Native streaming:** the client, server, or both can keep a continuous message flow.
+
+This matters in internal systems with a high volume of calls. Fewer bytes on the wire, lower serialization cost, and less overhead per request can reduce latency and CPU use. gRPC also gives you deadlines, its own status codes, interceptors, and strongly typed generated clients.
+
+But performance is not free. The cost is tooling, learning curve, `.proto` files, gateways when you need to expose it to a normal browser, and a less simple experience for manual API testing.
+
+## When is REST still the best choice?
+
+**REST** is still the best choice when simplicity, readability, and reach matter more than binary contracts and streaming.
+
+Prefer REST when:
+
+1. The API is public or consumed by third parties.
+2. You want simple onboarding with `curl`, Postman, and common HTTP docs.
+3. Consumers use many languages and platforms.
+4. Human-readable JSON helps support, debugging, and auditing.
+5. The domain maps well to resources: users, orders, payments, files.
+6. The team does not need bidirectional streaming or minimum latency between internal services.
+
+REST is also a good choice for early products. Clear JSON, a maintained OpenAPI spec, and good usage examples solve a lot before you need gRPC.
+
+## Where does tRPC fit?
+
+**tRPC** is RPC, but it is not gRPC. It shines in fullstack TypeScript apps, especially monorepos where frontend and backend share types.
+
+With tRPC, you write a procedure on the server:
+
+```ts
+approve: protectedProcedure
+  .input(z.object({ invoiceId: z.string() }))
+  .mutation(async ({ ctx, input }) => {
+    return ctx.billing.approveInvoice(input.invoiceId);
+  });
+```
+
+And call it on the client:
+
+```ts
+const invoice = await api.invoice.approve.mutate({ invoiceId });
+```
+
+The win is end-to-end **type-safety** without generating a client. The cost is coupling to TypeScript. Unlike gRPC, tRPC usually sends JSON over HTTP and still needs runtime validation, such as Zod, because TypeScript types disappear after build.
+
+Use tRPC when:
+
+1. Client and server live in the same TypeScript monorepo.
+2. You want product speed and safer refactors.
+3. The API does not need to be universal for third parties.
+4. Auth, permissions, and validation can become standardized procedures.
+
+Do not sell tRPC as "gRPC for the web". The ergonomics feel like RPC, but the contract model, transport, and performance profile are different.
+
+## Where does oRPC fit?
+
+**oRPC** sits close to tRPC in ergonomics, but it tries to solve two common pains in TypeScript APIs: exposing OpenAPI with less friction and treating errors as a typed part of the contract.
+
+In practice, oRPC has two mental modes:
+
+1. **RPCHandler:** good for oRPC clients, with a proprietary protocol over HTTP and support for native JavaScript types.
+2. **OpenAPIHandler:** good when you want to expose the same API as OpenAPI, with docs, generated clients, and interoperability outside TypeScript.
+
+This changes the decision. If the product is 100% TypeScript and internal, tRPC stays simple and mature. If the same backend must serve a TypeScript frontend, external partners, OpenAPI docs, generated SDKs, or tools that read OpenAPI, oRPC starts to look more interesting.
+
+The error story matters too. In tRPC, errors work well, but formatting and error shape tend to stay closer to the framework default. In oRPC, the idea is to declare errors with `.errors`, throw `ORPCError`, and let the client infer specific structures, such as `RATE_LIMITED` with `retryAfter`. For a product with many domain states, this improves DX and reduces generic `catch` code.
+
+Use oRPC when:
+
+1. You want RPC ergonomics in TypeScript.
+2. You need to publish OpenAPI without maintaining a separate spec.
+3. Domain errors are part of the public API contract.
+4. You want to choose RPC mode or OpenAPI mode per surface.
+5. The API may be consumed by TypeScript and by generated clients in other languages.
+
+The caution is the same: oRPC is not gRPC. It improves contracts, OpenAPI, and DX in TypeScript, but it does not automatically replace JSON with Protobuf or give you the same HTTP/2 streaming profile as gRPC.
+
+## How do you decide between REST, gRPC, tRPC, and oRPC?
+
+The practical choice becomes clearer when you look at the API consumer.
+
+| Scenario | Likely choice | Reason |
+| --- | --- | --- |
+| Public API for partners | REST | Universal, readable, and easy to test |
+| Internal microservices in many languages | gRPC | Strong contract, Protobuf, HTTP/2, and streaming |
+| Fullstack TypeScript product | tRPC | Shared types and fast DX |
+| TypeScript product that also needs OpenAPI | oRPC | Type-safe RPC with an OpenAPI surface |
+| API with typed domain errors on the client | oRPC | `.errors`, `ORPCError`, and inferable shape |
+| Mobile app consuming a public backend | REST | Simplicity, HTTP cache, and broad tooling |
+| Realtime continuous flow between services | gRPC | Native streaming and deadlines |
+| Simple form in Next.js | Server Action or REST | Less ceremony |
+
+My rule: REST is the public door. gRPC is the high-performance internal hallway. tRPC is the productive bridge when the whole product speaks TypeScript. oRPC is the productive bridge when you want that TypeScript ergonomics, but also need OpenAPI and typed errors as part of the contract.
+
+## What is the main caution?
+
+The main caution is not confusing a nice interface with a resilient system. **RPC** makes a remote call look local, but it is still remote. It can fail, take too long, duplicate effects during retries, break compatibility, or saturate a dependent service.
+
+So every choice still needs:
+
+1. Explicit timeouts and deadlines.
+2. Bounded retries and idempotency where it makes sense.
+3. Observability by method or route.
+4. Contract versioning.
+5. Runtime input validation.
+6. Authorization close to the handler.
+
+RPC improves ergonomics and contracts. It does not remove the laws of distributed systems.
+
+## Summary
+
+**TL;DR:** REST organizes APIs as resources and HTTP verbs. RPC organizes them as remote function calls. gRPC is strong for internal microservices because it uses Protobuf, HTTP/2, streaming, deadlines, and strict contracts. REST is still better for public APIs, simple debugging, and broad integration. tRPC is great in TypeScript monorepos. oRPC gets interesting when you want similar ergonomics, but with OpenAPI and typed errors as an explicit part of the contract.
+
+Source inspiration:
+
+1. [The Technical Architecture and Advantages of RPC Over REST](https://www.youtube.com/watch?v=K4_cgtAe4HM).
+2. [oRPC: Getting Started with OpenAPI](https://orpc.dev/docs/openapi/getting-started).
+3. [oRPC: Error Handling](https://orpc.dev/docs/error-handling).
