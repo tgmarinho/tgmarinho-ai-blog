@@ -1,0 +1,216 @@
+---
+title: "Loop Engineering: how AI agents work without you piloting every step"
+description: "Loop engineering turns prompts into cycles with goals, state, verifiers, and limits. Learn when agent loops help teams and when they burn expensive tokens."
+date: "2026-06-26"
+published: true
+slug: "loop-engineering-ai-agents"
+language: "en"
+translationKey: "loop-engineering-ai-agents"
+categories: ["ai", "agents", "loop-engineering", "software-engineering", "en"]
+image: "/images/blog/loop-engineering-ai-agents-cover.jpg"
+---
+
+**Loop engineering** is the design of cycles where an agent gets a goal, acts, checks the result, stores state, and tries again until a clear condition passes. The shift is not better prompting. The shift is to stop piloting every step and build the system that knows when to continue, when to stop, and when to call you.
+
+Boris Cherny, who created Claude Code at Anthropic, put the shift plainly: "I don't prompt Claude anymore. I have loops that are running. My job is to write loops."
+
+[Anatoli Kopadze's post about loops](https://x.com/AnatoliKopadze/status/2068328135611822149) gets the practical point right: a prompt gives an answer, a loop carries a job. [Addy Osmani's Loop Engineering essay](https://addyosmani.com/blog/loop-engineering/) places it one level above harness engineering. And [LangChain's post on the art of loop engineering](https://www.langchain.com/blog/the-art-of-loop-engineering) shows the layer people often miss: stacked loops for agent work, verification, events, optimization, and human oversight.
+
+## What changes from a prompt to a loop?
+
+A **prompt** is one instruction. You ask, the model answers, and you decide the next step.
+
+A **loop** is an operating cycle:
+
+1. Define the goal.
+2. Choose the next step.
+3. Execute.
+4. Verify against a condition.
+5. Update state.
+6. Repeat or stop.
+
+That difference looks small, but it changes the engineer's role. With a prompt, you are the engine. With a loop, you design the engine, dashboard, brake, and quality gate.
+
+## What parts make a loop real?
+
+A useful loop needs four parts. Without them, you only have repetition that looks like automation.
+
+| Part | Question it answers | Example |
+| --- | --- | --- |
+| Goal | What must become true? | "All auth tests pass." |
+| State | What has already been tried? | Previous errors, changed files, decisions made. |
+| Verifier | How do we reject bad output? | Test, lint, typecheck, rubric-based evaluation. |
+| Limit | When do we stop? | Success, 8 attempts, token budget, or human approval. |
+
+The **verifier** is the most important part. Without a test that can fail, the agent becomes its own judge. And the model that just wrote the answer is usually too kind to its own work.
+
+The **state** also separates serious loops from long chats. Each pass needs to know what failed, what worked, and which hypothesis comes next. Without that, the agent may repeat the same fix with different words.
+
+## How does loop engineering relate to harness engineering?
+
+**Harness engineering** builds the environment where the agent works: tools, context, instructions, permissions, tests, linters, worktrees, logs, and connectors.
+
+**Loop engineering** uses that harness to turn work into a cycle. Addy Osmani describes this layer well: the loop sits one level above the harness. The harness gives the agent hands, eyes, and rails. The loop decides when to run, how to evaluate, how to iterate, and when to escalate to a person.
+
+In practice:
+
+| Harness | Loop |
+| --- | --- |
+| Exposes commands, files, and tools | Decides the sequence of use |
+| Defines instructions and limits | Re-runs based on the result |
+| Provides tests and observability | Uses tests and metrics as gates |
+| Connects GitHub, Slack, Linear, CI | Acts when an event or schedule fires |
+
+A harness without a loop still depends on you to press the button. A loop without a harness cannot act reliably.
+
+## What loop levels exist inside an agent system?
+
+LangChain gives a useful frame: there is not just one loop. There are stacked loops.
+
+| Level | What it does | Where it fails |
+| --- | --- | --- |
+| Agent loop | Plans, uses tools, and chooses the next step | Can move in the wrong direction with confidence |
+| Verification loop | Reviews, tests, and rejects bad output | Needs a clear criterion |
+| Event loop | Runs when something happens | Can trigger too much work |
+| Optimization loop | Measures outcomes and improves the system | Can optimize the wrong metric |
+
+This stack explains why good agents still need traditional engineering. The model can reason, but the system must control flow, cost, permissions, evidence, and rollback.
+
+## When should you build a loop?
+
+Use a loop when four conditions are true:
+
+1. The task repeats often.
+2. There is an automatic way to reject bad output.
+3. The agent can do most of the work itself.
+4. "Done" is objective enough to become a rule.
+
+If one condition fails, use a good prompt, a checklist, or simple automation. Not every task needs an agent. Often, a script with `cron` and an alert is better.
+
+The common mistake is automating before stabilizing. The safer order is:
+
+1. Make one manual run reliable.
+2. Turn the procedure into a skill or playbook.
+3. Add a verifier and a limit.
+4. Only then add a schedule, event trigger, or parallelism.
+
+## What does a minimal coding loop look like?
+
+A coding loop should work small and verify often. A good starting shape is:
+
+```txt
+GOAL
+Fix the failing auth tests without changing public API behavior.
+
+STATE
+Keep a short note of:
+- failing test names
+- files changed
+- attempted fixes
+- current hypothesis
+
+EACH ITERATION
+1. Run the focused test command.
+2. Read the failure.
+3. Pick one change.
+4. Apply the smallest fix.
+5. Run the focused test again.
+6. If green, run lint and typecheck.
+
+VERIFY
+- focused tests pass
+- lint is clean
+- typecheck is clean
+- diff does not touch unrelated files
+
+STOP
+- success
+- 6 iterations
+- unclear requirement
+- destructive change needed
+```
+
+This is already **loop engineering**. It does not depend on a specific tool. It can run in Codex, Claude Code, Cursor, a custom workflow, or an internal agent.
+
+The point is to design the cycle before increasing autonomy.
+
+## Where do skills, sub-agents, and connectors fit?
+
+Loops improve when repeated work leaves the loose prompt and becomes system design.
+
+| Resource | Role in the loop |
+| --- | --- |
+| Skill | Stores reusable instructions and domain criteria |
+| Sub-agent | Separates the maker from the checker |
+| Connector | Lets the loop act in GitHub, Linear, Gmail, Slack, CI, or databases |
+| Worktree | Isolates changes and allows parallelism without shared-state conflicts |
+| External memory | Preserves decisions across passes and days |
+| Observability | Shows where the agent spent time, failed, or invented confidence |
+
+The split between executor and verifier is one of the most important choices. The agent that wrote the change should not be the only evaluator. A second agent, a deterministic test, or a human review reduces self-approval risk.
+
+## What is the hidden cost?
+
+Loop cost does not grow like one repeated call. It grows with context, tools, review, and parallelism.
+
+Each pass re-sends part of the goal, state, files, errors, and prior decisions. If you add a verifier with another model, part of the reading doubles. If you run agents in parallel, the spend multiplies.
+
+The right metric is not tokens used. It is **cost per accepted change**.
+
+If a loop creates ten changes and you reject seven, it did not save review. It moved the cost somewhere else. A healthy loop raises acceptance rate, reduces rework, and leaves clear evidence at the end.
+
+## How do you avoid dangerous loops?
+
+Loops fail in quiet ways. They can declare success too early, repeat the same attempt, burn tokens without progress, or touch sensitive areas without need.
+
+Use these guardrails:
+
+1. Set an attempt limit.
+2. Set a token or time budget.
+3. Require external evidence, not only agent text.
+4. Isolate the environment with a worktree, sandbox, or branch.
+5. Require human approval for irreversible actions.
+6. Store decisions and failures in short state.
+7. Promote a repeated manual fix into a rule.
+
+The human does not leave the system. They move to a different place. Instead of guiding every line, they approve goals, review gates, choose trade-offs, and decide when the automation has earned more trust.
+
+## How should you start without overbuilding?
+
+Start with the most boring, most verifiable loop.
+
+Good candidates:
+
+1. Fix simple lint failures.
+2. Update dependencies with existing tests.
+3. Generate changelogs from commits.
+4. Review pull requests against an objective checklist.
+5. Create issues from recurring bugs.
+6. Summarize logs and open an initial diagnosis.
+
+Bad candidates:
+
+1. Define architecture without human context.
+2. Write a new product without a done criterion.
+3. Change a production database.
+4. Reply to customers without approval.
+5. Refactor a critical area without tests.
+
+The best first loop is not the most impressive one. It is the one that fails cheaply.
+
+## TL;DR
+
+**Loop engineering** is the discipline of turning AI agents into verifiable work cycles. A loop needs a goal, state, verifier, and limit. The harness gives the agent tools and context. The loop decides when to act, how to measure, and when to stop.
+
+Use loops when the task repeats, the result can be rejected automatically, and the cost per accepted change improves. Outside that, keep using prompts, scripts, and human review. Autonomy without a gate is not engineering. It is recurring spend that looks like progress.
+
+## References
+
+1. [Anatoli Kopadze, "Loops explained: Claude, GPT, Mira and what actually works"](https://x.com/AnatoliKopadze/status/2068328135611822149)
+2. [Addy Osmani, "Loop Engineering"](https://addyosmani.com/blog/loop-engineering/)
+3. [LangChain, "The Art of Loop Engineering"](https://www.langchain.com/blog/the-art-of-loop-engineering)
+4. [OpenAI, "Unrolling the Codex agent loop"](https://openai.com/index/unrolling-the-codex-agent-loop/)
+5. [OpenAI, "Harness Engineering"](https://openai.com/index/harness-engineering/)
+6. [Stripe, "Minions: Stripe's one-shot end-to-end coding agents"](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents)
+7. [Nick Nisi, "Case Statement"](https://nicknisi.com/posts/case-statement/)
+8. [WorkOS CASE, GitHub repository](https://github.com/workos/case)
