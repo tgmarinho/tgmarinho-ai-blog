@@ -1,0 +1,438 @@
+---
+title: "Node.js AsyncLocalStorage: contexto assíncrono sem prop drilling"
+description: "AsyncLocalStorage no Node.js carrega contexto por request. Veja implementação, usos, benefícios e multi-tenancy com segurança."
+date: "2026-06-30"
+published: true
+slug: "nodejs-asynclocalstorage-contexto-assincrono-multitenancy"
+language: "pt-BR"
+translationKey: "nodejs-asynclocalstorage-multitenancy"
+categories: ["nodejs", "asynclocalstorage", "backend", "multi-tenancy", "architecture", "pt-br"]
+image: "/images/blog/nodejs-asynclocalstorage-multitenancy-cover.jpg"
+---
+
+**AsyncLocalStorage** é a API nativa do Node.js para carregar contexto por fluxo assíncrono. Ela permite que dados como `requestId`, `userId`, `tenantId`, logger, `traceId` ou cliente transacional fiquem disponíveis durante a vida de uma request, sem passar o mesmo objeto por todos os parâmetros.
+
+O valor não está em esconder estado. Está em remover encanamento repetido de código que só existe para transportar contexto. Em sistemas multi-tenant, isso ajuda a escolher o cliente de banco, aplicar filtros e enriquecer logs de forma consistente. A segurança, porém, continua no banco, nas constraints e na camada de autorização.
+
+## O que é AsyncLocalStorage?
+
+**AsyncLocalStorage** resolve um problema comum em servidores Node.js: como manter dados da request atual disponíveis depois de vários `awaits`, sem passar esses dados por todos os parâmetros. A documentação do Node descreve a classe como uma forma de criar stores que continuam coerentes através de operações assíncronas.
+
+Na prática, você cria uma caixa de contexto no início da request e lê essa caixa em qualquer função chamada dentro daquele fluxo. Se duas requests rodam ao mesmo tempo, cada uma continua enxergando seu próprio `requestId`, `tenantId` e logger, mesmo quando as operações se intercalam no event loop.
+
+```ts
+import { AsyncLocalStorage } from "node:async_hooks";
+
+type RequestContext = {
+  requestId: string;
+  userId?: string;
+  tenantId?: string;
+};
+
+const requestContext = new AsyncLocalStorage<RequestContext>();
+
+export function runWithRequestContext<T>(
+  context: RequestContext,
+  callback: () => T,
+): T {
+  return requestContext.run(context, callback);
+}
+
+export function getRequestContext(): RequestContext {
+  const context = requestContext.getStore();
+
+  if (!context) {
+    throw new Error("Request context is not available");
+  }
+
+  return context;
+}
+```
+
+O ponto central é este: `run` abre o escopo, `getStore` lê o contexto atual. Fora do escopo, `getStore` retorna `undefined`, por isso um helper com erro explícito costuma ser melhor do que espalhar `getStore()` pela aplicação.
+
+O detalhe importante é que isso não é uma variável global compartilhada por todo mundo. O valor fica local ao fluxo assíncrono criado por `run`.
+
+```ts
+await Promise.all([
+  runWithRequestContext(
+    { requestId: "req-a", tenantId: "tenant-a" },
+    () => createInvoice(inputA),
+  ),
+  runWithRequestContext(
+    { requestId: "req-b", tenantId: "tenant-b" },
+    () => createInvoice(inputB),
+  ),
+]);
+```
+
+Dentro de `createInvoice`, `getRequestContext()` lê o contexto correto para cada execução. A request A não enxerga o contexto da request B.
+
+## Quando AsyncLocalStorage entrou no Node.js?
+
+**AsyncLocalStorage** entrou no Node.js como parte do trabalho de async context tracking dentro de `node:async_hooks`. A primeira entrada pública aparece no Node.js `13.10.0`, em março de 2020, como a mudança "introduce async-context API". A mesma API também foi backportada para o Node.js `12.17.0` LTS como experimental.
+
+O histórico oficial é útil:
+
+| Versão | O que mudou |
+|---|---|
+| Node.js `13.10.0` | introduziu a API de async context na linha Current |
+| Node.js `12.17.0` | levou `AsyncLocalStorage` para LTS ainda como experimental |
+| Node.js `16.4.0` | marcou parte de `AsyncLocalStorage` como estável |
+
+A PR original foi a [`nodejs/node#26540`](https://github.com/nodejs/node/pull/26540), aberta por Vladimir de Turckheim. A motivação já era muito próxima do uso atual: monitoramento, logging e redução da necessidade de passar o objeto HTTP request até camadas profundas só para um logger ou ferramenta de observabilidade conseguir ler contexto.
+
+## O que existia antes de AsyncLocalStorage?
+
+**Antes de `AsyncLocalStorage`**, o contexto da request já existia. Ele só ficava preso na borda da aplicação ou precisava ser carregado manualmente por várias camadas.
+
+| Solução anterior | Como funcionava | Limite real |
+|---|---|---|
+| Passar `req` ou `context` por parâmetro | `service(input, req)` ou `service(input, ctx)` | polui assinaturas que não deveriam conhecer HTTP |
+| Usar `req.user`, `req.tenant` ou `res.locals` | padrão comum em Express e MVC | funciona bem na rota, mas não em código profundo desacoplado de `req` |
+| Request scope via injeção de dependência | comum em NestJS e stacks enterprise | resolve, mas adiciona cerimônia de framework |
+| Bibliotecas como `continuation-local-storage` e `cls-hooked` | tentavam manter contexto assíncrono antes da API nativa | dependiam de padrões antigos e eram mais frágeis |
+| Variáveis globais | `currentTenant = ...` | inseguro com requests concorrentes |
+
+Em uma rota Express simples, não há problema em usar o que a rota já tem:
+
+```ts
+app.get("/tasks", async (req, res) => {
+  const tenantId = req.user.tenantId;
+  const tasks = await taskService.listTasks(tenantId);
+
+  res.json(tasks);
+});
+```
+
+Esse código ainda é claro. `AsyncLocalStorage` começa a brilhar quando a cadeia cresce:
+
+```txt
+route -> controller -> service -> domain service -> repository -> logger -> audit
+```
+
+Sem contexto assíncrono, `tenantId`, `requestId`, `userId`, logger e transação passam por várias funções que não usam esses valores, apenas repassam. Com `AsyncLocalStorage`, a rota abre o contexto uma vez, e só o código que precisa lê.
+
+Middleware resolve contexto na borda. `AsyncLocalStorage` resolve contexto abaixo da borda, onde o objeto `req` não deveria vazar para todo service, repository, logger e helper de banco.
+
+## Como AsyncLocalStorage é implementado no servidor?
+
+**Implementação** normalmente começa no primeiro middleware da request. Você resolve os dados básicos, monta o contexto e chama o próximo handler dentro de `run`.
+
+```ts
+import { randomUUID } from "node:crypto";
+import type { Request, Response, NextFunction } from "express";
+import { runWithRequestContext } from "./request-context";
+
+export function contextMiddleware(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+) {
+  const requestId = req.header("x-request-id") ?? randomUUID();
+  const userId = req.user?.id;
+  const tenantId = req.header("x-tenant-id");
+
+  return runWithRequestContext({ requestId, userId, tenantId }, next);
+}
+```
+
+Depois disso, serviços internos podem ler o contexto sem receber `req`, `user`, `tenant` ou `logger` em todos os métodos.
+
+```ts
+import { getRequestContext } from "./request-context";
+
+export async function createInvoice(input: CreateInvoiceInput) {
+  const { tenantId, userId, requestId } = getRequestContext();
+
+  logger.info({ requestId, tenantId, userId }, "creating invoice");
+
+  return invoiceRepository.create({
+    tenantId,
+    createdBy: userId,
+    ...input,
+  });
+}
+```
+
+Em NestJS, a ideia é a mesma. A documentação mostra o `AsyncLocalStorage` sendo registrado como provider e preenchido em um middleware, antes dos controllers e services. Em Express, o padrão também costuma começar em middleware, mas o ponto importante não é o framework. O ponto é abrir o contexto antes de chamar o código que precisa herdar aquele escopo.
+
+No Next.js, o encaixe é diferente. O `middleware.ts`, ou Proxy na documentação mais recente, é ótimo para decisões antes da rota: autenticação inicial, redirect, rewrite, leitura de cookies, headers e pathname. Ele não deve ser tratado como um wrapper que carrega automaticamente um contexto profundo para toda a aplicação.
+
+Um fluxo mais preciso no App Router é: o middleware valida ou normaliza a request, passa dados mínimos por header quando necessário, e a Route Handler, Server Action ou função server-side abre o contexto próprio.
+
+```ts
+import { randomUUID } from "node:crypto";
+import { headers } from "next/headers";
+
+export async function GET() {
+  const requestId = (await headers()).get("x-request-id") ?? randomUUID();
+
+  return runWithRequestContext({ requestId }, async () => {
+    const tasks = await listTasks();
+
+    return Response.json(tasks);
+  });
+}
+```
+
+Use as APIs do framework quando elas já resolvem o problema. Use seu próprio `AsyncLocalStorage` para contexto que o Next.js não conhece: tenant resolvido, organização atual, papel do usuário, logger por request, ator de auditoria, trace customizado ou cliente transacional.
+
+## Quem usa AsyncLocalStorage e como usa?
+
+**Frameworks** usam `AsyncLocalStorage` para transformar contexto de request em APIs simples. O desenvolvedor chama uma função aparentemente global, mas o valor lido pertence ao fluxo assíncrono atual.
+
+| Quem usa | Como costuma usar |
+|---|---|
+| Frameworks web | contexto de request, headers, cookies, helpers de lifecycle |
+| Observabilidade | `requestId`, `traceId`, `spanId`, correlação de logs |
+| ORMs e data layers | transação atual, cliente atual, escopo de conexão |
+| Aplicações SaaS | `tenantId`, plano, permissões e banco do tenant |
+| Bibliotecas internas | logger contextual, feature flags, auditoria |
+
+O exemplo clássico é logging. Sem contexto assíncrono, cada função precisa receber `requestId`. Com `AsyncLocalStorage`, o logger consegue enriquecer a mensagem com o request atual.
+
+```ts
+import { getRequestContext } from "./request-context";
+
+export function logInfo(message: string, data: Record<string, unknown> = {}) {
+  const context = getRequestContext();
+
+  logger.info(
+    {
+      requestId: context.requestId,
+      tenantId: context.tenantId,
+      ...data,
+    },
+    message,
+  );
+}
+```
+
+## O que Next.js e Prisma mostram na prática?
+
+**Infraestrutura de request** é o melhor lugar mental para encaixar `AsyncLocalStorage`. Next.js e Prisma mostram onde ele pertence: não como regra de negócio escondida, mas como infraestrutura que deixa a request atual ser lida por código que está abaixo da rota.
+
+Next.js usa esse modelo para APIs de request-time. `headers()` e `cookies()` permitem ler dados da request no App Router sem passar `req` por todo componente ou função. A documentação do `after()` também mostra request context para integrações, e o próprio blog do Node.js cita que Next.js usa `AsyncLocalStorage` para rastrear contexto de request.
+
+Prisma mostra outro uso concreto: SQL comments. O pacote `@prisma/sqlcommenter-query-tags` adiciona tags em queries dentro de um contexto assíncrono usando `AsyncLocalStorage`. Isso permite que uma query saia com metadados como `requestId`, rota ou trace, sem passar esses valores para cada chamada do Prisma.
+
+O padrão é o mesmo nos dois casos: contexto de request desce para camadas internas sem virar parâmetro em toda assinatura. No seu código, isso combina com tenant atual, logger, auditoria e cliente transacional. Mas a regra continua explícita onde importa: autorização valida permissão, e o banco protege isolamento.
+
+Transações com Prisma merecem uma nota separada. A API oficial ainda passa o cliente transacional explicitamente:
+
+```ts
+await prisma.$transaction(async (tx) => {
+  await tx.account.update({ where: { id }, data });
+  await tx.auditLog.create({ data: auditData });
+});
+```
+
+Guardar o `tx` atual em `AsyncLocalStorage` é um padrão de arquitetura de aplicação, não o padrão principal da API do Prisma. Pode limpar repositories, mas precisa de convenção forte para evitar uma chamada acidental ao `prisma` global quando a intenção era usar `tx`.
+
+## Quais são os casos de uso?
+
+**Contexto assíncrono** é útil quando o dado pertence ao fluxo inteiro, mas não pertence ao domínio de cada função.
+
+| Caso de uso | O que fica no contexto |
+|---|---|
+| Logging | `requestId`, `tenantId`, `userId` |
+| Tracing | `traceId`, `spanId`, baggage |
+| Auditoria | ator atual, origem da request, IP normalizado |
+| Autorização | usuário autenticado, roles carregadas, tenant atual para validação |
+| Transações | cliente transacional atual |
+| Multi-tenancy | tenant resolvido, banco ou schema atual |
+| Feature flags | ambiente, plano, cohort, tenant |
+
+Use quando passar o mesmo argumento por 5 camadas não agrega clareza. Não use para esconder dependência de negócio que deveria aparecer na assinatura da função. Se `priceCalculator(product, customer)` precisa do cliente para calcular preço, o cliente deve ser parâmetro. Se uma função só precisa do `requestId` para log, o contexto é melhor.
+
+Essa é a troca real: `AsyncLocalStorage` reduz prop drilling, mas cria dependência implícita. A assinatura da função não mostra que ela lê `tenantId`, logger ou transação do contexto. Isso é aceitável para infraestrutura de request. Para regra de negócio, prefira parâmetros explícitos.
+
+## Por que AsyncLocalStorage deixa o código mais elegante e manutenível?
+
+**Manutenibilidade** melhora porque o código de negócio para de carregar parâmetros que não fazem parte da regra. A função fica menor, a assinatura fica mais honesta e o ponto de entrada da request concentra a criação do contexto.
+
+Sem contexto, a aplicação tende a espalhar isso:
+
+```ts
+await serviceA(input, { requestId, tenantId, userId, logger });
+await serviceB(result, { requestId, tenantId, userId, logger });
+await serviceC(result, { requestId, tenantId, userId, logger });
+```
+
+Com contexto, a request continua explícita no começo, mas o transporte deixa de poluir as camadas internas.
+
+```ts
+return runWithRequestContext(context, async () => {
+  const invoice = await createInvoice(input);
+  await publishInvoiceCreated(invoice.id);
+  return invoice;
+});
+```
+
+O benefício real aparece em mudanças. Se amanhã você adicionar `traceId`, `plan`, `region` ou `actorType`, não precisa alterar dezenas de assinaturas que só repassavam o objeto. Você altera o contexto, os helpers e os consumidores que realmente usam aquele dado.
+
+O cuidado é tratar `AsyncLocalStorage` como infraestrutura, não como variável global de negócio. Crie helpers pequenos, tipados e com erro claro. Teste funções críticas passando dependências de domínio por parâmetro. Para testes que dependem de contexto operacional, crie um wrapper como `withTestContext`. O contexto deve reduzir ruído, não esconder regra.
+
+## Como AsyncLocalStorage é usado em sistemas multi-tenancy?
+
+**Multi-tenancy** é onde `AsyncLocalStorage` fica especialmente útil, porque quase toda operação precisa saber "qual tenant está em execução". Esse dado pode vir do subdomínio, domínio customizado, header interno, token, sessão ou rota.
+
+Um fluxo comum:
+
+1. A request entra em `acme.app.com`.
+2. O middleware extrai `acme` como identificador do tenant.
+3. A aplicação consulta um banco landlord, que mapeia tenants para configuração.
+4. O sistema cria ou reutiliza o cliente de banco daquele tenant.
+5. O middleware abre o `AsyncLocalStorage` com `tenantId`, `tenantSlug`, `db` e `requestId`.
+6. Services e repositories leem o contexto atual.
+
+```ts
+type TenantContext = {
+  requestId: string;
+  tenantId: string;
+  tenantSlug: string;
+  db: TenantDatabase;
+};
+
+const tenantContext = new AsyncLocalStorage<TenantContext>();
+
+export function getTenantContext(): TenantContext {
+  const context = tenantContext.getStore();
+
+  if (!context) {
+    throw new Error("Tenant context is not available");
+  }
+
+  return context;
+}
+
+export async function tenantMiddleware(req: Request, res: Response, next: NextFunction) {
+  const tenantSlug = resolveTenantSlug(req);
+  const tenant = await landlordDb.tenant.findUnique({
+    where: { slug: tenantSlug },
+  });
+
+  if (!tenant) {
+    return res.status(404).send("Tenant not found");
+  }
+
+  const db = getTenantDatabase(tenant.databaseUrl);
+
+  return tenantContext.run(
+    {
+      requestId: req.header("x-request-id") ?? randomUUID(),
+      tenantId: tenant.id,
+      tenantSlug: tenant.slug,
+      db,
+    },
+    next,
+  );
+}
+```
+
+Com isso, o repository não precisa receber `tenantId` em todo método quando o banco já é específico daquele tenant.
+
+```ts
+export async function listTasks() {
+  const { db } = getTenantContext();
+
+  return db.task.findMany();
+}
+```
+
+Se o modelo for banco compartilhado, o repository ainda deve filtrar por `tenantId`, e o banco deve reforçar a regra quando possível.
+
+```ts
+export async function listTasks() {
+  const { db, tenantId } = getTenantContext();
+
+  return db.task.findMany({
+    where: { tenantId },
+  });
+}
+```
+
+Aqui entra a distinção mais importante: `AsyncLocalStorage` carrega contexto, mas não isola dados sozinho. Em uma arquitetura de banco por tenant, ele ajuda a selecionar o cliente correto. Em uma arquitetura de banco compartilhado, ele ajuda a aplicar `tenantId` de forma consistente. A garantia vem das constraints, permissões, Row-Level Security quando disponível, testes de isolamento e revisão de queries.
+
+## Quais modelos de multi-tenancy combinam com AsyncLocalStorage?
+
+**Tenancy model** é a escolha de como os dados de cada cliente são armazenados. A Microsoft resume bem o problema: o modelo de tenancy impacta design, gestão, custo e isolamento.
+
+| Modelo | Como AsyncLocalStorage ajuda | Cuidado principal |
+|---|---|---|
+| Banco por tenant | guarda `tenantId` e cliente de banco atual | pool de conexões, provisionamento e migração |
+| Schema por tenant | guarda `tenantId` e schema atual | controle de search path e migrações |
+| Banco compartilhado | guarda `tenantId` usado nas queries | vazamento por query sem filtro |
+| Shards multi-tenant | guarda tenant e shard resolvido | roteamento e rebalanceamento |
+
+Para SaaS pequeno ou médio com forte necessidade de isolamento, banco por tenant é simples de raciocinar e combina bem com `AsyncLocalStorage`. Para escala grande com muitos clientes pequenos, banco compartilhado costuma reduzir custo, mas exige disciplina maior: todas as queries precisam ser tenant-aware.
+
+## Quais cuidados evitam problemas?
+
+**AsyncLocalStorage** é estável no Node.js, mas ainda precisa de disciplina de uso.
+
+1. Prefira `run` no começo da request. Evite `enterWith` como padrão, porque ele altera o contexto atual de forma mais ampla.
+2. Não trate o contexto como fonte de autorização. Ele carrega o usuário e o tenant, mas a política precisa validar permissões.
+3. Não coloque objetos enormes no store. Guarde IDs, metadados pequenos e clientes necessários.
+4. Não coloque secrets no contexto, porque logs e erros podem acabar expondo o store.
+5. Tenha erro explícito quando `getStore()` vier vazio. Isso revela chamadas fora do escopo correto.
+6. Cuidado com bibliotecas antigas baseadas em callbacks ou thenables customizados. Se o contexto sumir, a documentação do Node recomenda localizar a operação que retorna `undefined` e, em casos raros, usar `AsyncResource`.
+7. Em testes, crie helpers para executar a função dentro de um contexto falso.
+
+Um helper de teste deixa o contrato claro:
+
+```ts
+export function withTestContext<T>(callback: () => T) {
+  return runWithRequestContext(
+    {
+      requestId: "test-request",
+      userId: "test-user",
+      tenantId: "test-tenant",
+    },
+    callback,
+  );
+}
+```
+
+## Quando não usar AsyncLocalStorage?
+
+**Contexto implícito** tem custo cognitivo. Use com intenção.
+
+Não use `AsyncLocalStorage` quando:
+
+- o dado é entrada essencial da regra de negócio;
+- a função deve ser pura e fácil de executar fora de request;
+- o código roda no browser;
+- a operação cruza worker threads ou processos sem propagação explícita;
+- a equipe ainda não tem helpers, testes e convenções para o contexto.
+
+O bom uso deixa o código mais claro. O mau uso transforma dependências reais em estado invisível.
+
+## Resumo
+
+**AsyncLocalStorage** é uma ferramenta pequena com impacto grande em backends Node.js. Ela carrega contexto por request através de código assíncrono e reduz parâmetros repetidos em logging, tracing, auditoria, transações e multi-tenancy.
+
+Em sistemas multi-tenant, ela ajuda a carregar `tenantId`, banco atual e metadados de request sem poluir todos os services. Mas ela não é fronteira de segurança. A fronteira continua em autorização, modelo de dados, constraints, Row-Level Security quando aplicável e testes que provam isolamento entre tenants.
+
+Use `AsyncLocalStorage` para transportar contexto. Use o banco e a política de acesso para proteger dados.
+
+## Referências
+
+- [Node.js: Asynchronous context tracking](https://nodejs.org/api/async_context.html)
+- [Node.js: Node.js 13.10.0 release notes](https://nodejs.org/en/blog/release/v13.10.0)
+- [Node.js: Node.js 12.17.0 release notes](https://nodejs.org/en/blog/release/v12.17.0)
+- [Node.js: Node.js 16.4.0 release notes](https://nodejs.org/en/blog/release/v16.4.0)
+- [Node.js PR #26540: async-hooks: introduce async-storage API](https://github.com/nodejs/node/pull/26540)
+- [Node.js: Mitigating Denial-of-Service Vulnerability from Unrecoverable Stack Space Exhaustion for React, Next.js, and APM Users](https://nodejs.org/en/blog/vulnerability/january-2026-dos-mitigation-async-hooks)
+- [Next.js: headers](https://nextjs.org/docs/app/api-reference/functions/headers)
+- [Next.js: cookies](https://nextjs.org/docs/app/api-reference/functions/cookies)
+- [Next.js: after](https://nextjs.org/docs/app/api-reference/functions/after)
+- [Next.js: Proxy](https://nextjs.org/docs/app/api-reference/file-conventions/proxy)
+- [Next.js: Authentication](https://nextjs.org/docs/app/guides/authentication)
+- [Prisma ORM: SQL comments](https://www.prisma.io/docs/orm/prisma-client/observability-and-logging/sql-comments)
+- [Prisma ORM: Transactions and batch queries](https://www.prisma.io/docs/orm/prisma-client/queries/transactions)
+- [NestJS: Async Local Storage](https://docs.nestjs.com/recipes/async-local-storage)
+- [Ross Robino: Async Local Storage](https://blog.robino.dev/posts/async-local-storage)
+- [Felipe Valencia: Multi-Tenancy with Node.js AsyncLocalStorage](https://medium.com/@jfelipevalr/multi-tenancy-with-node-js-asynclocalstorage-4c771a3d06ed)
+- [Microsoft Learn: Multitenant SaaS database tenancy patterns](https://learn.microsoft.com/en-us/azure/azure-sql/database/saas-tenancy-app-design-patterns?view=azuresql)
