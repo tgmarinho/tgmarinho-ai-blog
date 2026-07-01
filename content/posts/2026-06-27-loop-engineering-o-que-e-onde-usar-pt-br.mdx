@@ -1,0 +1,296 @@
+---
+title: "Loop Engineering: o que é, onde usar e quando evitar"
+description: "Loop Engineering aplica agentes de IA em ciclos com meta, memória, verificação e limite. Veja onde usar em produto, código e rotina pessoal prática."
+date: "2026-06-27"
+published: true
+slug: "loop-engineering-o-que-e-onde-usar"
+language: "pt-BR"
+translationKey: "loop-engineering-practical-guide"
+categories: ["ai", "agents", "loop-engineering", "product-engineering", "pt-br"]
+image: "/images/blog/loop-engineering-practical-guide-cover.jpg"
+---
+
+**Loop Engineering** é a prática de transformar agentes de IA em ciclos de trabalho com meta, estado, verificação e limite. Em vez de pedir uma resposta por vez, você desenha um sistema que executa, checa, aprende com a rodada anterior e para quando há evidência suficiente.
+
+O termo ainda é novo, mas a ideia já aparece em quem está construindo ferramentas reais: Claude Code, Codex, Conductor, pi.dev, LangGraph, Stripe Minions, WorkOS CASE e outros sistemas de agentes. O ponto não é seguir hype de produto. O ponto é identificar o padrão técnico por baixo: loops, harnesses, memória, verificação, observabilidade e escalonamento humano.
+
+## O que é Loop Engineering?
+
+**Loop Engineering** é desenhar o ciclo que faz um agente continuar trabalhando até um critério claro ser atingido.
+
+Um loop simples tem quatro partes:
+
+| Parte | Função |
+| --- | --- |
+| Meta | Define o que precisa ficar verdadeiro |
+| Estado | Guarda o que já aconteceu |
+| Verificador | Rejeita saída ruim |
+| Limite | Decide quando parar |
+
+Um prompt diz: "faça isso".
+
+Um loop diz: "faça isso, confira por este critério, lembre o que falhou, tente de novo até passar ou até este limite".
+
+Essa é a diferença entre usar IA como chat e usar IA como sistema.
+
+## Por que isso importa agora?
+
+Porque agentes de IA ficaram bons o suficiente para trabalhar por mais tempo, usar ferramentas, editar arquivos, abrir pull requests, rodar testes e operar em ambientes isolados.
+
+Mas autonomia sem verificação vira ruído caro. Por isso o assunto aparece ao mesmo tempo em vários lugares:
+
+1. **Addy Osmani** funciona como curador técnico. Ele separa padrão real de marketing em textos como [Loop Engineering](https://addyosmani.com/blog/loop-engineering/) e [Long-running Agents](https://addyosmani.com/blog/long-running-agents/).
+2. **Boris Cherny**, criador do Claude Code, resumiu a virada: "I don't prompt Claude anymore. I have loops that are running. My job is to write loops."
+3. **LangChain** descreve loops empilhados: loop do agente, loop de verificação, loop de eventos e loop de otimização.
+4. **OpenAI** mostra a mesma direção com Codex, harness engineering, agent loops e orquestração.
+5. **Stripe** e **WorkOS** mostram agentes de código em produção, com gates, evidência e revisão.
+
+O sinal forte é a convergência. Ferramentas diferentes estão chegando às mesmas primitivas.
+
+## Onde é útil usar Loop Engineering?
+
+Loop Engineering é útil quando o trabalho tem repetição, critério de sucesso e uma forma de rejeitar erro.
+
+Bons casos:
+
+| Área | Uso |
+| --- | --- |
+| Código | Corrigir testes, lint, typecheck, migrações pequenas |
+| Produto | Revisar specs, organizar feedback, validar critérios de aceite |
+| Conteúdo | Revisar posts, gerar resumos, checar links, adaptar formatos |
+| Operação | Triar tickets, resumir logs, criar relatórios recorrentes |
+| Rotina pessoal | Planejar semana, revisar agenda, lembrar hábitos, resumir leituras |
+
+O padrão é sempre o mesmo: uma tarefa recorrente, um gatilho, uma ação, uma memória curta, uma verificação e um limite.
+
+## Para que usar no dia a dia?
+
+Use loops para tirar você da microgestão de tarefas repetidas.
+
+Exemplos pessoais:
+
+1. Todo domingo, revisar calendário e sugerir prioridades da semana.
+2. Toda manhã, cruzar agenda, tarefas abertas e emails importantes.
+3. Toda noite, perguntar três coisas sobre o dia e gerar uma revisão semanal.
+4. Ao salvar um artigo, resumir, extrair ideias e criar cartões de estudo.
+5. Ao mandar uma nota de voz, transformar em tarefa, post ou checklist.
+
+Isso não precisa começar como sistema complexo. Pode começar com um prompt estruturado que você roda manualmente. Depois vira skill, automação, agenda ou agente.
+
+## Como ajuda em Product Engineering?
+
+**Product Engineering** vive no meio de produto, código, usuário e operação. É uma área perfeita para loops porque tem muitas tarefas recorrentes com critérios claros.
+
+Exemplos:
+
+| Loop | Verificador |
+| --- | --- |
+| Revisar spec antes de começar | Critérios de aceite completos |
+| Transformar feedback em issues | Cada issue tem problema, impacto e hipótese |
+| Revisar PR de produto | Teste, UX, copy, analytics e edge cases |
+| Preparar release notes | Commits e issues fechadas conferidos |
+| Analisar bugs recorrentes | Logs, reprodução e prioridade definidos |
+
+O benefício não é substituir o engenheiro de produto. É aumentar a cadência sem perder rastreabilidade.
+
+O engenheiro continua decidindo trade-offs. O loop ajuda a organizar evidência.
+
+## Como ajuda em coding?
+
+Código é o melhor lugar para começar porque tem verificadores naturais.
+
+Um loop de coding pode ser:
+
+```txt
+GOAL
+Make the failing tests pass without changing public behavior.
+
+STATE
+Track failing tests, files changed, attempted fixes, and current hypothesis.
+
+ITERATION
+1. Run the focused test.
+2. Read the failure.
+3. Apply the smallest fix.
+4. Re-run the test.
+5. If green, run lint and typecheck.
+
+VERIFY
+Tests pass, lint is clean, typecheck is clean, and the diff is scoped.
+
+STOP
+Success, 6 attempts, unclear requirement, or risky change.
+```
+
+Esse loop é pequeno, barato e verificável. É melhor do que pedir "corrija os testes" e deixar o agente mexer no projeto inteiro.
+
+Com o tempo, você pode criar loops para:
+
+1. Corrigir warnings simples.
+2. Atualizar dependências com testes.
+3. Abrir PRs pequenos.
+4. Revisar breaking changes.
+5. Criar testes para bugs reproduzidos.
+6. Auditar referências internas antes de publicar.
+
+## Quem deve usar?
+
+Loop Engineering é mais útil para pessoas que já têm tarefas recorrentes e algum controle sobre o ambiente.
+
+Perfis com alto fit:
+
+1. Engenheiros de produto.
+2. Engenheiros senior e staff.
+3. AI engineers.
+4. Founders técnicos.
+5. DevTools builders.
+6. Criadores técnicos com rotina de publicação.
+7. Times que já usam Codex, Claude Code, Cursor, Conductor, pi.dev, LangGraph ou agentes internos.
+
+Iniciantes também podem usar a ideia, mas devem começar com loops manuais e simples. O risco para quem está começando é automatizar confusão.
+
+## Quando não usar?
+
+Não use loop quando o trabalho não tem gate.
+
+Evite:
+
+1. Tarefas raras, que não justificam setup.
+2. Decisões com alto impacto e pouca evidência.
+3. Trabalho onde "bom" depende só de gosto.
+4. Ações irreversíveis sem aprovação humana.
+5. Refatorações grandes sem testes.
+6. Automação de processo que você ainda não entende manualmente.
+
+Se um script resolve, use um script. Se uma checklist resolve, use uma checklist. Se uma conversa humana resolve, converse.
+
+Loop Engineering não é uma desculpa para colocar agente em tudo.
+
+## Como empresas estão usando?
+
+As empresas sérias não usam loops como mágica. Elas usam loops com isolamento, gates e revisão.
+
+| Empresa ou projeto | Padrão interessante |
+| --- | --- |
+| Anthropic Claude Code | Agentes de coding com tools, subagents, hooks e long-running workflows |
+| OpenAI Codex | Agent loop, harness engineering, ambientes isolados e orquestração |
+| Conductor | Vários agentes em workspaces paralelos, com humano como orquestrador |
+| pi.dev | Harness mínimo, bom para enxergar o que é essencial |
+| LangChain | Grafos, estado, observabilidade e loops empilhados |
+| Stripe Minions | Agentes internos gerando PRs com verificação |
+| WorkOS CASE | Pipeline multiagente com evidence gates |
+| Cursor | Background agents e fluxo de IDE assistido por agentes |
+
+O padrão comum não é a marca. É o desenho do sistema:
+
+1. Contexto explícito.
+2. Ferramentas controladas.
+3. Ambiente isolado.
+4. Verificação externa.
+5. Limite de execução.
+6. Revisão humana nos pontos certos.
+
+## O que um loop sério precisa controlar?
+
+Um loop sério não controla apenas o prompt. Ele controla **tempo**, **espaço** e **evidência**.
+
+Tempo controlado evita que o agente rode para sempre. Espaço isolado evita que uma tarefa pequena toque áreas sensíveis. Evidência revisável evita que "parece pronto" vire critério de sucesso.
+
+| Dimensão | O que controlar | Por que importa |
+| --- | --- | --- |
+| Tempo | Iterações, tokens, timeout, condição de parada | Evita gasto sem progresso |
+| Espaço | Branch, worktree, sandbox, arquivos, rede, credenciais | Reduz blast radius |
+| Evidência | Testes, logs, commits, diffs, output estruturado | Torna o resultado auditável |
+| Papel humano | Aprovação, revisão, escalonamento, decisão de merge | Mantém julgamento onde ele importa |
+
+Essa é a essência da engenharia de loops: o agente pode executar, mas o sistema precisa governar o ciclo.
+
+Em coding, isso costuma virar um padrão simples:
+
+1. Criar um ambiente isolado.
+2. Dar uma meta pequena.
+3. Rodar uma iteração.
+4. Capturar logs e mudanças.
+5. Verificar com testes, lint, typecheck ou revisão.
+6. Transformar progresso em diff ou commit revisável.
+7. Repetir, parar ou chamar uma pessoa.
+
+O detalhe importante é separar produção de aceitação. O agente pode produzir código. O loop não deve aceitar esse código apenas porque o agente disse que terminou.
+
+Um bom loop também precisa distinguir dois modos:
+
+| Modo | Quando usar | Papel humano |
+| --- | --- | --- |
+| Hands-off | Tarefa pequena, verificável e barata de errar | Revisar o resultado depois |
+| Companion | Tarefa incerta, exploratória ou sensível | Acompanhar, corrigir rota e apertar critérios |
+
+Loop longo não significa humano ausente. Significa humano no nível certo: definindo meta, gates, limites e revisão, não digitando cada próximo prompt.
+
+## Como começar?
+
+Comece com um loop que falha barato.
+
+Um bom primeiro loop para este blog seria:
+
+```txt
+GOAL
+Validate a bilingual blog post before publishing.
+
+CHECKS
+- frontmatter is valid
+- pt-BR and en share translationKey
+- descriptions are 150 to 160 characters
+- no em dash or en dash in prose
+- cover image is 1200x630 and under 600 KB
+- bun velite passes
+- bun lint has no new errors
+
+STOP
+Success, missing source content, or 5 failed attempts.
+```
+
+Esse loop é pequeno, útil e conectado ao trabalho real. Ele também tem verificadores objetivos.
+
+Depois disso, vale criar loops para revisão de PR, auditoria de links, triagem de issues e geração de diário técnico.
+
+## Qual é a pergunta certa para avaliar uma nova ferramenta?
+
+Quando uma ferramenta de agente aparecer, pergunte:
+
+> Qual parte do loop ela melhora?
+
+Possíveis respostas:
+
+1. Gatilho.
+2. Contexto.
+3. Ferramentas.
+4. Estado.
+5. Verificação.
+6. Custo.
+7. Observabilidade.
+8. Handoff humano.
+
+Se a ferramenta não melhora nenhuma dessas partes, talvez seja só embalagem.
+
+Essa é a razão de seguir pessoas como Addy Osmani. Ele ajuda a transformar anúncio em padrão técnico. Você não precisa acreditar no marketing. Você precisa entender a peça do sistema.
+
+## TL;DR
+
+**Loop Engineering** é o próximo passo depois de prompt engineering. Prompt engineering ensina a pedir. Loop Engineering ensina a construir um sistema que continua trabalhando, verifica a própria saída, lembra o que aconteceu e para com segurança.
+
+Use em tarefas recorrentes, verificáveis e baratas de errar. Use em produto, código, conteúdo, operação e rotina pessoal. Não use onde não há gate, onde o erro é caro ou onde uma checklist simples já resolve.
+
+O futuro do trabalho com agentes não é escrever prompts maiores. É desenhar loops menores, verificáveis e seguros.
+
+## Referências
+
+1. [Addy Osmani, "Loop Engineering"](https://addyosmani.com/blog/loop-engineering/)
+2. [Addy Osmani, "Long-running Agents"](https://addyosmani.com/blog/long-running-agents/)
+3. [LangChain, "The Art of Loop Engineering"](https://www.langchain.com/blog/the-art-of-loop-engineering)
+4. [OpenAI, "Unrolling the Codex agent loop"](https://openai.com/index/unrolling-the-codex-agent-loop/)
+5. [OpenAI, "Harness Engineering"](https://openai.com/index/harness-engineering/)
+6. [Conductor Docs, "Introduction"](https://www.conductor.build/docs)
+7. [Pi Documentation](https://pi.dev/docs/latest)
+8. [Cursor, "Best practices for coding with agents"](https://cursor.com/blog/agent-best-practices)
+9. [Stripe, "Minions: Stripe's one-shot end-to-end coding agents"](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents)
+10. [WorkOS CASE, GitHub repository](https://github.com/workos/case)
