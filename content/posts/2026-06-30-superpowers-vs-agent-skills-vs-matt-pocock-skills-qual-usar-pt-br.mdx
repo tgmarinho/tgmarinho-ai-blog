@@ -1,0 +1,228 @@
+---
+title: "Superpowers vs Agent Skills vs Matt Pocock Skills: qual usar?"
+description: "Superpowers vs Agent Skills vs Matt Pocock Skills: compare autonomia, ciclo de vida e toolkit diário para escolher skills de coding com menos risco."
+date: "2026-06-30"
+published: true
+slug: "superpowers-vs-agent-skills-vs-matt-pocock-skills-qual-usar"
+language: "pt-BR"
+translationKey: "superpowers-vs-agent-skills-vs-matt-pocock-skills"
+categories: ["ai", "agents", "software-engineering", "tools", "pt-br"]
+image: "/images/blog/superpowers-vs-agent-skills-cover.jpg"
+---
+
+**Superpowers vs Agent Skills vs Matt Pocock Skills** não é uma disputa sobre qual pacote é melhor em abstrato. A escolha depende do formato do trabalho: Superpowers favorece autonomia com raciocínio profundo, Agent Skills cobre o ciclo de vida inteiro da entrega, e Matt Pocock Skills funciona como um toolkit diário, pequeno e opinativo, para engenharia real.
+
+Se eu tivesse que resumir em uma regra prática: use Superpowers quando o problema ainda precisa ser pensado com calma antes de virar código. Use Agent Skills quando o problema já está claro e você quer validação ampla. Use Matt Pocock Skills quando você quer um conjunto mais enxuto de comandos para alinhar requisito, fazer TDD, diagnosticar bugs e melhorar arquitetura sem adotar um framework inteiro.
+
+## O que cada projeto otimiza?
+
+[Superpowers](https://github.com/obra/superpowers) se apresenta como uma metodologia completa de desenvolvimento para agentes de coding. O fluxo puxa o agente para brainstorming, design aprovado, plano detalhado, worktree isolada, Test-Driven Development (TDD), subagentes implementando tarefas e revisão depois de cada etapa.
+
+[Agent Skills](https://github.com/addyosmani/agent-skills) se apresenta como um pacote de skills de engenharia para agentes. A organização é por ciclo de vida: definir, planejar, construir, verificar, revisar e entregar. O pacote inclui skills para interface, API, segurança, performance, documentação, observabilidade, CI/CD e lançamento.
+
+[Matt Pocock Skills](https://github.com/mattpocock/skills) se apresenta como um conjunto de skills usadas no dia a dia para engenharia real, não vibe coding. O foco é controle humano, skills pequenas, adaptação fácil e comandos úteis como `/grill-me`, `/grill-with-docs`, `/tdd`, `/diagnosing-bugs`, `/to-prd`, `/to-issues` e `/improve-codebase-architecture`.
+
+Eu atualizei os três repositórios em 30 de junho de 2026 antes de escrever este post. Neste snapshot, Superpowers tinha 14 arquivos `SKILL.md`; Agent Skills tinha 24; Matt Pocock Skills tinha 25 skills ativas fora das pastas `deprecated` e `in-progress` (36 se contar tudo).
+
+| Critério | Superpowers | Agent Skills | Matt Pocock Skills |
+|---|---|---|---|
+| Ideia central | Metodologia de execução para agentes | Ciclo de engenharia empacotado em skills | Toolkit diário para engenheiros |
+| Skills no snapshot | 14 | 24 | 25 ativas |
+| Organização | Brainstorm, plano, execução, review, finalização | Define, plan, build, verify, review, ship | Engineering, productivity, misc, personal |
+| Força principal | Autonomia com subagentes e worktrees | Cobertura ampla de validação e entrega | Requisito claro, TDD, debugging e arquitetura |
+| Risco principal | Pode pesar em tarefas pequenas | Pode abrir escopo demais | É mais pessoal e menos completo como sistema |
+
+## Como os fluxos se diferenciam?
+
+**Superpowers** tenta evitar que o agente pule para o código cedo demais. A skill de brainstorming vem antes da implementação. Depois disso, o agente escreve um plano, trabalha em isolamento, usa TDD e passa por revisão. A filosofia é forte: processo antes de pressa.
+
+**Agent Skills** tenta cobrir o caminho inteiro de uma entrega. O pacote tem comandos e skills para transformar uma ideia em spec, quebrar tarefas, implementar em fatias, testar, revisar, simplificar, medir performance, checar segurança e preparar lançamento. A filosofia é cobertura: cada fase tem uma skill adequada.
+
+**Matt Pocock Skills** tenta corrigir falhas comuns de agentes sem tomar o processo inteiro da sua mão. O centro é alinhamento: interrogar requisito, criar linguagem compartilhada, usar TDD, diagnosticar bugs com disciplina e melhorar design do código. A filosofia é controle: skills pequenas que você escolhe e adapta.
+
+| Momento | Superpowers | Agent Skills | Matt Pocock Skills |
+|---|---|---|---|
+| Requisito vago | Brainstorming e design aprovado | Interview, spec e plan | `/grill-me` ou `/grill-with-docs` |
+| Implementação | Plano com subagentes e reviews | Fatias incrementais | `/implement` ou `/tdd` |
+| Testes | Red-green-refactor rígido | TDD dentro de estratégia maior | `/tdd` como loop prático |
+| Debugging | Systematic debugging | Debugging and error recovery | `/diagnosing-bugs` |
+| Arquitetura | Planejamento e revisão | Design, docs e ADRs | `/codebase-design` e `/improve-codebase-architecture` |
+
+## Quais skills são equivalentes?
+
+A equivalência não é perfeita, porque cada projeto corta o processo de um jeito diferente. Mesmo assim, dá para mapear a intenção principal de cada skill.
+
+| Intenção | Superpowers | Agent Skills | Matt Pocock Skills |
+|---|---|---|---|
+| Roteamento | `using-superpowers` | `using-agent-skills` | `ask-matt` |
+| Entender requisito | `brainstorming` | `interview-me`, `idea-refine` | `grill-me`, `grill-with-docs` |
+| Escrever PRD ou spec | `brainstorming`, `writing-plans` | `spec-driven-development` | `to-prd` |
+| Quebrar trabalho | `writing-plans` | `planning-and-task-breakdown` | `to-issues` |
+| Implementar | `executing-plans`, `subagent-driven-development` | `incremental-implementation` | `implement` |
+| TDD | `test-driven-development` | `test-driven-development` | `tdd` |
+| Investigar bug | `systematic-debugging` | `debugging-and-error-recovery` | `diagnosing-bugs` |
+| Revisar código | `requesting-code-review`, `receiving-code-review` | `code-review-and-quality` | `review` ainda em progresso |
+| Verificar conclusão | `verification-before-completion` | `shipping-and-launch`, `browser-testing-with-devtools` | typecheck, testes focados e suite final via `implement` |
+| Git e worktrees | `using-git-worktrees`, `finishing-a-development-branch` | `git-workflow-and-versioning` | `git-guardrails-claude-code`, merge conflicts |
+| Arquitetura | Plano, review e debugging sistemático | `api-and-interface-design`, `documentation-and-adrs` | `codebase-design`, `domain-modeling`, `improve-codebase-architecture` |
+| Paralelismo | `dispatching-parallel-agents`, `subagent-driven-development` | agentes especialistas e orquestração | não é o foco |
+
+O ponto mais importante dessa tabela é o controle. Em Matt Pocock Skills, muitas skills de alto nível são invocadas pelo humano. Em Superpowers, o roteador e os fluxos são mais automáticos. Agent Skills fica no meio: cobre muitas fases, mas ainda organiza a entrega por checkpoints.
+
+## O que muda durante uma feature real?
+
+Em uma feature real, **Superpowers** tende a gastar mais tempo no começo. Isso é bom quando ainda existem decisões arquiteturais, riscos escondidos ou muita ambiguidade. O custo aparece quando a tarefa é pequena, porque o ritual pode pesar mais que o problema.
+
+**Agent Skills** tende a avançar mais rápido para execução quando o problema já está bem definido. A vantagem aparece na validação: UI, API, segurança, performance, testes, documentação e lançamento têm skills próprias. O risco é o agente tentar aplicar uma checklist grande demais em uma mudança pequena.
+
+**Matt Pocock Skills** tende a ser mais direto e menos cerimonial. Ele brilha quando você quer chamar uma skill específica para uma dor específica: alinhar requisito, gerar PRD, quebrar issues, rodar TDD, investigar bug ou melhorar arquitetura. O risco é esperar dele a mesma cobertura ampla de Agent Skills ou o mesmo fluxo autônomo de Superpowers.
+
+Eu escolheria assim:
+
+- Use Superpowers para refactors grandes, arquitetura, bugs difíceis, migrações com risco e features onde a pergunta ainda não está madura.
+- Use Agent Skills para features de produto, páginas, APIs, fluxos de UI, auditorias, preparação de release e mudanças que precisam de cobertura ampla.
+- Use Matt Pocock Skills para um fluxo mais manual e afiado, quando você quer escolher comandos pontuais sem entregar o processo inteiro ao framework.
+- Não rode vários meta-roteadores ativos ao mesmo tempo. Eles podem competir por comandos, gatilhos e filosofia de TDD.
+
+## O que o benchmark do Om Mishra mostrou?
+
+O teste mais concreto que encontrei comparando dois deles foi o artigo do Om Mishra, [Superpowers vs Agent-Skills: Faster Shipping, Safer Reasoning](https://www.linkedin.com/pulse/superpowers-vs-agent-skills-faster-shipping-safer-reasoning-om-mishra-dzakf/). Ele rodou uma comparação com o mesmo modelo, o mesmo repositório, o mesmo prompt, worktrees separadas e apenas um fator diferente: o framework de skills.
+
+Os números principais:
+
+| Métrica | Superpowers | Agent Skills |
+|---|---|---|
+| Primeira mudança de código | Cerca de 12 minutos | Cerca de 8 minutos |
+| Tempo total | Cerca de 22 minutos | Cerca de 22 minutos |
+| Passes de validação | 5 | 7 |
+| Testes adicionados | 7 | 8 |
+| Replanejamentos | 1 | 1 |
+| Releituras de contexto | 0 | 0 |
+
+A leitura honesta é simples: naquele cenário, Agent Skills chegou ao código mais rápido e validou mais. Superpowers investiu mais em raciocínio inicial. O teste não inclui Matt Pocock Skills, então ele não serve para ranquear os três. Ele serve para mostrar a troca central entre validação ampla e raciocínio profundo antes da execução.
+
+## Como executei um benchmark local?
+
+Para comparar os três com a mesma tarefa, criei um exercício controlado usando os arquivos de skills como estilo operacional. A tarefa foi construir um componente React chamado `TaskRadar`, com PRD, SPEC e implementação.
+
+O componente precisava:
+
+- Adicionar tarefa com título, prioridade, esforço e projeto opcional.
+- Marcar tarefa como concluída.
+- Filtrar por status e prioridade.
+- Mostrar total, concluídas, esforço restante e próxima tarefa.
+- Manter a lógica principal testável fora do React.
+
+Os artefatos ficaram em `.context/skill-framework-benchmark/`:
+
+- `shared-task.md`, com o prompt comum.
+- `superpowers/`, com PRD, SPEC e implementação no estilo Superpowers.
+- `agent-skills/`, com PRD, SPEC e implementação no estilo Agent Skills.
+- `mattpocock/`, com PRD, SPEC e implementação no estilo Matt Pocock.
+- `report.md`, com a pontuação comparativa.
+
+Este não foi um race cronometrado com três agentes independentes. Foi um tabletop benchmark: o objetivo era comparar o tipo de saída que cada sistema incentiva quando recebe a mesma tarefa.
+
+## O que saiu do benchmark local?
+
+| Critério | Superpowers | Agent Skills | Matt Pocock Skills |
+|---|---:|---:|---:|
+| Alinhamento ao requisito | 4 | 5 | 4 |
+| Human-in-the-loop | 4 | 4 | 5 |
+| Autonomia e delegação | 5 | 4 | 3 |
+| Qualidade do PRD | 3 | 5 | 5 |
+| Qualidade da SPEC | 4 | 5 | 4 |
+| Forma da implementação | 4 | 5 | 4 |
+| Testabilidade | 5 | 4 | 4 |
+| Controle de escopo | 4 | 4 | 5 |
+| Acessibilidade | 3 | 5 | 4 |
+| Disciplina de verificação | 5 | 4 | 4 |
+
+**Superpowers** produziu o loop de execução mais forte. A saída naturalmente separou a lógica pura do React e começou pela ideia de testes antes do componente.
+
+**Agent Skills** produziu o pacote mais completo. O PRD, a SPEC, a checklist de acessibilidade e a implementação ficaram mais próximos de uma entrega de produto.
+
+**Matt Pocock Skills** produziu a melhor linguagem de domínio. A saída ficou menor, mais nomeada e mais preocupada com a pergunta certa antes da implementação.
+
+## Quando escolher Superpowers?
+
+Escolha **Superpowers** quando você quer que o agente aja como um engenheiro que primeiro entende o problema, depois desenha uma solução e só então implementa. O valor aparece quando o trabalho é longo, incerto ou cheio de risco.
+
+Casos bons:
+
+- Planejar uma feature com muitas decisões de produto e arquitetura.
+- Corrigir um bug sem causa óbvia.
+- Fazer uma migração com risco de regressão.
+- Usar subagentes para executar tarefas independentes.
+- Trabalhar em worktrees isoladas com revisão por etapa.
+
+O sinal de que Superpowers encaixa bem é este: você não quer só código funcionando. Você quer uma trilha de raciocínio, plano, execução, revisão e evidência.
+
+## Quando escolher Agent Skills?
+
+Escolha **Agent Skills** quando você quer cobertura de ciclo de vida. Ele é forte quando a feature já tem um objetivo claro e precisa passar por várias lentes de qualidade.
+
+Casos bons:
+
+- Construir ou revisar uma UI.
+- Criar uma API ou contrato entre módulos.
+- Rodar review de segurança, performance ou acessibilidade.
+- Preparar uma entrega com checklist de release.
+- Padronizar um fluxo de produto do começo ao fim.
+
+O sinal de que Agent Skills encaixa bem é este: você quer que o agente lembre de tudo que um time sênior checaria antes de mandar para produção.
+
+## Quando escolher Matt Pocock Skills?
+
+Escolha **Matt Pocock Skills** quando você quer um kit menor, mais adaptável e mais próximo do trabalho diário de engenharia. Ele é menos "sistema operacional do agente" e mais "caixa de ferramentas afiada".
+
+Casos bons:
+
+- Usar `/grill-me` para evitar requisito mal entendido.
+- Usar `/grill-with-docs` para alinhar requisito e atualizar contexto do projeto.
+- Usar `/tdd` para forçar feedback real antes da implementação crescer.
+- Usar `/diagnosing-bugs` para investigar sem chutar.
+- Usar `/improve-codebase-architecture` quando o código começou a virar lama.
+
+O sinal de que Matt Pocock Skills encaixa bem é este: você quer controle humano forte, comandos pontuais e uma disciplina prática, sem instalar um processo grande demais.
+
+## Como eu testaria os três no mesmo repositório?
+
+Eu testaria os três com a mesma tarefa, em três workspaces limpas do Conductor, partindo de `origin/main`. O prompt precisa ser idêntico. As respostas para perguntas de clarificação também precisam ser idênticas, ou o teste deixa de ser justo.
+
+Eu mediria:
+
+- Tempo até a primeira mudança de código.
+- Tempo total até o agente declarar conclusão.
+- Tamanho do diff.
+- Arquivos tocados.
+- Comandos de validação executados.
+- Evidência real de `lint`, testes ou build.
+- Qualidade visual, se a tarefa envolver UI.
+- Qualidade de i18n, se a tarefa for bilíngue.
+- Se o agente seguiu as regras do repositório.
+- Onde ele exagerou, pulou etapa ou inventou validação.
+
+Para este site, uma tarefa boa é implementar uma página bilíngue `/lab/agent-skills` comparando os três projetos. Ela força rota, metadata, sitemap, i18n, layout, acessibilidade e validação, sem depender de API externa ou segredo.
+
+## Qual é a minha escolha?
+
+Minha escolha é usar **Agent Skills** quando eu quero velocidade com cobertura ampla, **Superpowers** quando eu quero autonomia com mais raciocínio antes da execução, e **Matt Pocock Skills** quando eu quero comandos menores para guiar meu próprio fluxo.
+
+Se o trabalho está claro, Agent Skills tende a ser mais completo. Se o trabalho ainda precisa ser descoberto, Superpowers tende a proteger melhor o processo. Se eu já sei o que quero e só preciso de disciplina em pontos críticos, Matt Pocock Skills tende a ser o caminho mais leve.
+
+## Quais links usei como referência?
+
+Estas foram as principais **referências** usadas para comparar os três projetos:
+
+- [Superpowers, repositório oficial](https://github.com/obra/superpowers)
+- [Agent Skills, repositório oficial](https://github.com/addyosmani/agent-skills)
+- [Matt Pocock Skills, repositório oficial](https://github.com/mattpocock/skills)
+- [Agent Skills, comparação com Superpowers e Matt Pocock Skills](https://github.com/addyosmani/agent-skills/blob/main/docs/comparison.md)
+- [Om Mishra, Superpowers vs Agent-Skills: Faster Shipping, Safer Reasoning](https://www.linkedin.com/pulse/superpowers-vs-agent-skills-faster-shipping-safer-reasoning-om-mishra-dzakf/)
+
+## Resumo
+
+**Superpowers vs Agent Skills vs Matt Pocock Skills** é uma escolha de formato de trabalho. Superpowers favorece autonomia, worktrees, subagentes, TDD rígido e revisão contínua. Agent Skills favorece ciclo de vida completo, skills especializadas, validação ampla e checkpoints por fase. Matt Pocock Skills favorece um kit menor, direto e adaptável para alinhar requisito, fazer TDD, diagnosticar bugs e melhorar arquitetura.
+
+Não escolha pelo hype. Escolha pelo risco da tarefa. Para trabalho incerto, longo e arquitetural, comece por Superpowers. Para feature clara, validação ampla e entrega de produto, comece por Agent Skills. Para controle humano com comandos pontuais, comece por Matt Pocock Skills.
