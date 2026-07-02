@@ -208,6 +208,30 @@ The minimum validation for the implementations was strict TypeScript through `bu
 
 **Matt Pocock's Skills** produced the clearest domain language. The output was smaller, better named, and more concerned with the right question before implementation.
 
+## What if the analysis focuses only on React code quality?
+
+The reading changes a bit. The benchmark above measures process, PRD, SPEC, validation, and implementation shape. A stronger review should use React, React Patterns, Next.js, and Vercel skills as **judges after implementation**, not as helpers during implementation.
+
+For this exercise, the applicable part of that rubric is React: state, types, accessibility, persistence, logic separation, and maintainability. Because the app was plain React in a Vite-style setup, the Next.js and Vercel lenses should not judge Server Components, routes, caching, images, or deployment. They are still useful because they show that this benchmark does not measure production readiness on a Next/Vercel stack.
+
+| React code criterion | Superpowers | Agent Skills | Matt Pocock's Skills |
+|---|---:|---:|---:|
+| State model | 4 | 4 | 5 |
+| Type safety and data validation | 4 | 4 | 5 |
+| Interface accessibility | 4 | 5 | 4 |
+| `localStorage` resilience | 3 | 3 | 5 |
+| Responsive visual polish | 4 | 5 | 4 |
+| Maintainability | 4 | 4 | 5 |
+| **React total** | **23** | **25** | **28** |
+
+**Superpowers** was good at pure logic and simplicity. It validated malformed JSON when reading from `localStorage`, separated helpers like `getSummary` and `isTodo`, and kept the UI understandable. Its weak point is that `localStorage` writes are not caught, and the state grows inside the component.
+
+**Agent Skills** was stronger in accessibility and visual delivery. It added a form error with `role="alert"`, `aria-live` for the count, explicit labels, CSS variables, and a more organized responsive layout. The weak point is similar: persistence writes to `localStorage` without catching failures.
+
+**Matt Pocock's Skills** was strongest as React code. The `useReducer` creates a clearer domain model, the actions make the flow predictable, filters are validated before entering state, and persistence reports invalid saved data or write failure. It is not the most visually polished output, but it is the best starting point for evolving the app.
+
+So the honest conclusion is: **Agent Skills won the delivery package**, but **Matt Pocock's Skills won internal React code quality**. Superpowers was strongest as an execution and testability loop, but not as the final UI.
+
 ## When should you choose Superpowers?
 
 Choose **Superpowers** when you want the agent to act like an engineer who first understands the problem, then designs a solution, then implements. The value appears when the work is long, uncertain, or risky.
