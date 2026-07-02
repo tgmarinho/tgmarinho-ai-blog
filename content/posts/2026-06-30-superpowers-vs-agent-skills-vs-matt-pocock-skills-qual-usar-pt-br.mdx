@@ -184,7 +184,7 @@ No exercício menor, os artefatos ficaram assim:
 
 Este não foi um benchmark científico nem um race cronometrado com três agentes independentes. Foi uma comparação controlada usando os arquivos de skills como modo operacional. O objetivo era observar diferenças de processo: onde o humano decide, onde o agente continua sozinho, como PRD e SPEC são estruturados, que tipo de validação aparece e como cada workflow traduz a mesma tarefa em código.
 
-A validação mínima das implementações foi TypeScript strict com `bunx tsc`. O comando original do brief bateu em `TS5112` porque o `tsconfig.json` raiz estava presente enquanto arquivos explícitos eram passados. A validação equivalente foi reexecutada com `--ignoreConfig` e passou para as implementações.
+A validação mínima das implementações foi TypeScript strict com `bunx tsc`. Como o repositório raiz já tinha um `tsconfig.json`, rodei a checagem com `--ignoreConfig` para validar apenas os arquivos do benchmark. As três implementações passaram nessa checagem.
 
 ## O que saiu do benchmark local?
 
@@ -200,6 +200,7 @@ A validação mínima das implementações foi TypeScript strict com `bunx tsc`.
 | Controle de escopo | 4 | 4 | 5 |
 | Acessibilidade | 3 | 5 | 4 |
 | Disciplina de verificação | 5 | 4 | 4 |
+| **Total** | **41** | **45** | **42** |
 
 **Superpowers** produziu o loop de execução mais forte. A saída naturalmente separou a lógica pura do React e começou pela ideia de testes antes do componente.
 
