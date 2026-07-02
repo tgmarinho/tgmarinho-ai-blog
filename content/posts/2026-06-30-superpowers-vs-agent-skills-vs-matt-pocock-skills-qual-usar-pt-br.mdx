@@ -14,8 +14,6 @@ image: "/images/blog/superpowers-vs-agent-skills-cover.jpg"
 
 Se eu tivesse que resumir em uma regra prática: use Superpowers quando o problema ainda precisa ser pensado com calma antes de virar código. Use Agent Skills quando o problema já está claro e você quer validação ampla. Use Matt Pocock Skills quando você quer um conjunto mais enxuto de comandos para alinhar requisito, fazer TDD, diagnosticar bugs e melhorar arquitetura sem adotar um framework inteiro.
 
-**Nota de transparência:** este artigo foi produzido com IA. O repositório de comparação e os benchmarks foram executados por agentes usando apenas as skills mencionadas neste texto, sem skills adicionais de React, React Patterns, Next.js ou Vercel como juízes durante a execução original. A revisão do autor focou em coerência, clareza, evidências citadas e consistência do texto. Ainda existe trabalho a fazer: revisar com mais rigor a qualidade dos resultados produzidos, aplicar rubricas especializadas depois da implementação e estudar com mais profundidade as skills dos autores.
-
 Essa regra vem dos próprios arquivos de skill:
 
 | Recomendação | Evidência no projeto | O que isso sugere |
@@ -214,7 +212,7 @@ A validação mínima das implementações foi TypeScript strict com `bunx tsc`.
 
 Aqui a leitura muda um pouco. O benchmark acima mede processo, PRD, SPEC, validação e formato de implementação. Uma revisão melhor deveria usar skills de React, React Patterns, Next.js e Vercel como **juízes depois da implementação**, não como auxiliares durante a implementação.
 
-Para este exercício, a parte aplicável dessa rubrica é React: estado, tipos, acessibilidade, persistência, separação de lógica e manutenção. Como o app era React puro, estilo Vite, as lentes de Next.js e Vercel não deveriam julgar Server Components, rotas, cache, imagens ou deploy. Elas ainda seriam úteis para apontar que o benchmark não mede prontidão de produção em Next/Vercel.
+Para este exercício, a lente aplicável é React: estado, tipos, acessibilidade, persistência, separação de lógica e manutenção. Como o app era React puro, estilo Vite, as lentes de Next.js e Vercel não deveriam julgar Server Components, rotas, cache, imagens ou deploy. Elas ainda seriam úteis para apontar que o benchmark não mede prontidão de produção em Next/Vercel.
 
 | Critério de código React | Superpowers | Agent Skills | Matt Pocock Skills |
 |---|---:|---:|---:|
@@ -316,3 +314,9 @@ Estas foram as principais **referências** usadas para comparar os três projeto
 **Superpowers vs Agent Skills vs Matt Pocock Skills** é uma escolha de formato de trabalho. Superpowers favorece autonomia, worktrees, subagentes, TDD rígido e revisão contínua. Agent Skills favorece ciclo de vida completo, skills especializadas, validação ampla e checkpoints por fase. Matt Pocock Skills favorece um kit menor, direto e adaptável para alinhar requisito, fazer TDD, diagnosticar bugs e melhorar arquitetura.
 
 Não escolha pelo hype. Escolha pelo risco da tarefa. Para trabalho incerto, longo e arquitetural, comece por Superpowers. Para feature clara, validação ampla e entrega de produto, comece por Agent Skills. Para controle humano com comandos pontuais, comece por Matt Pocock Skills.
+
+## Nota de transparência
+
+Este artigo foi produzido com IA. O repositório de comparação e os benchmarks foram executados por agentes usando apenas as skills mencionadas neste texto, sem skills adicionais de React, React Patterns, Next.js ou Vercel como juízes durante a execução original. A revisão do autor focou em coerência do texto, clareza, evidências citadas e consistência geral.
+
+Ainda existe trabalho a fazer: revisar melhor os resultados produzidos e estudar com mais profundidade as skills dos autores.

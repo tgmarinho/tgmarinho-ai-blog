@@ -14,8 +14,6 @@ image: "/images/blog/superpowers-vs-agent-skills-cover.jpg"
 
 My practical rule is simple: use Superpowers when the problem still needs careful thinking before code. Use Agent Skills when the problem is already clear and you want broad validation. Use Matt Pocock's Skills when you want a lighter set of commands to align requirements, do TDD, diagnose bugs, and improve architecture without adopting a whole framework.
 
-**Transparency note:** this article was produced with AI. The comparison repository and benchmarks were run by agents using only the skills mentioned in this article, without extra React, React Patterns, Next.js, or Vercel skills acting as judges during the original run. The author's review focused on coherence, clarity, cited evidence, and consistency of the text. There is still work to do: review the produced results more rigorously, apply specialized rubrics after implementation, and study the authors' skills in more depth.
-
 That rule comes from the skill files themselves:
 
 | Recommendation | Evidence in the project | What it suggests |
@@ -214,7 +212,7 @@ The minimum validation for the implementations was strict TypeScript through `bu
 
 The reading changes a bit. The benchmark above measures process, PRD, SPEC, validation, and implementation shape. A stronger review should use React, React Patterns, Next.js, and Vercel skills as **judges after implementation**, not as helpers during implementation.
 
-For this exercise, the applicable part of that rubric is React: state, types, accessibility, persistence, logic separation, and maintainability. Because the app was plain React in a Vite-style setup, the Next.js and Vercel lenses should not judge Server Components, routes, caching, images, or deployment. They are still useful because they show that this benchmark does not measure production readiness on a Next/Vercel stack.
+For this exercise, the applicable review lens is React: state, types, accessibility, persistence, logic separation, and maintainability. Because the app was plain React in a Vite-style setup, the Next.js and Vercel lenses should not judge Server Components, routes, caching, images, or deployment. They are still useful because they show that this benchmark does not measure production readiness on a Next/Vercel stack.
 
 | React code criterion | Superpowers | Agent Skills | Matt Pocock's Skills |
 |---|---:|---:|---:|
@@ -316,3 +314,9 @@ These were the main **references** used to compare the three projects:
 **Superpowers vs Agent Skills vs Matt Pocock's Skills** is a choice about work shape. Superpowers favors autonomy, worktrees, subagents, strict TDD, and continuous review. Agent Skills favors full lifecycle coverage, specialized skills, broad validation, and phase checkpoints. Matt Pocock's Skills favors a smaller, direct, adaptable kit for requirement alignment, TDD, bug diagnosis, and architecture improvement.
 
 Do not choose by hype. Choose by task risk. For uncertain, long, architectural work, start with Superpowers. For clear feature work, broad validation, and product delivery, start with Agent Skills. For human control with focused commands, start with Matt Pocock's Skills.
+
+## Transparency Note
+
+This article was produced with AI. The comparison repository and benchmarks were run by agents using only the skills mentioned in this article, without extra React, React Patterns, Next.js, or Vercel skills acting as judges during the original run. The author's review focused on text coherence, clarity, cited evidence, and general consistency.
+
+There is still work to do: review the produced results more carefully and study the authors' skills in more depth.
