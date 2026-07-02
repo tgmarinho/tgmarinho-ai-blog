@@ -10,9 +10,25 @@ categories: ["ai", "agents", "software-engineering", "tools", "pt-br"]
 image: "/images/blog/superpowers-vs-agent-skills-cover.jpg"
 ---
 
-**Superpowers vs Agent Skills vs Matt Pocock Skills** não é uma disputa sobre qual pacote é melhor em abstrato. A escolha depende do formato do trabalho: Superpowers favorece autonomia com raciocínio profundo, Agent Skills cobre o ciclo de vida inteiro da entrega, e Matt Pocock Skills funciona como um toolkit diário, pequeno e opinativo, para engenharia real.
+**Superpowers vs Agent Skills vs Matt Pocock Skills** não tem uma resposta única. A melhor escolha depende do tipo de trabalho que você quer delegar ao agente: descobrir o problema, entregar uma feature com validação ampla ou usar comandos pontuais no fluxo diário.
 
 Se eu tivesse que resumir em uma regra prática: use Superpowers quando o problema ainda precisa ser pensado com calma antes de virar código. Use Agent Skills quando o problema já está claro e você quer validação ampla. Use Matt Pocock Skills quando você quer um conjunto mais enxuto de comandos para alinhar requisito, fazer TDD, diagnosticar bugs e melhorar arquitetura sem adotar um framework inteiro.
+
+Essa regra vem dos próprios arquivos de skill:
+
+| Recomendação | Evidência no projeto | O que isso sugere |
+|---|---|---|
+| Use Superpowers quando o problema ainda precisa ser pensado antes de virar código | `brainstorming/SKILL.md` exige entender contexto, fazer perguntas, escrever design e esperar aprovação antes de implementar. O `README.md` também descreve o fluxo como design aprovado, plano, TDD, worktrees, subagentes e revisão. | Ele é mais forte quando a tarefa tem ambiguidade, risco ou decisão arquitetural. |
+| Use Agent Skills quando o problema já está claro e você quer validação ampla | `README.md` organiza o pacote em `/spec`, `/plan`, `/build`, `/test`, `/review` e `/ship`. `using-agent-skills/SKILL.md` roteia para UI, browser testing, segurança, performance, observabilidade e lançamento. | Ele é mais forte quando a feature já tem objetivo definido e precisa passar por muitas lentes de qualidade. |
+| Use Matt Pocock Skills quando você quer comandos menores e mais manuais | `README.md` apresenta o pacote como skills usadas no dia a dia para engenharia real. `docs/invocation.md` separa skills invocadas pelo humano e pelo modelo. Skills como `/grill-me`, `/to-prd`, `/to-issues`, `/tdd`, `/diagnosing-bugs` e `/improve-codebase-architecture` atacam dores específicas. | Ele é mais forte quando você quer manter controle humano e chamar ferramentas pontuais, não adotar uma metodologia inteira. |
+
+Outra forma de ler a comparação é separar o **porquê**, o **como** e o **que** cada escolha entrega.
+
+| Projeto | Por que usar | Como trabalha | O que você recebe |
+|---|---|---|---|
+| Superpowers | Porque o maior risco é implementar cedo demais sem entender o problema. | Primeiro força brainstorming, design aprovado e plano. Depois executa com TDD, worktrees, subagentes e revisão por etapa. | Uma trilha mais completa de raciocínio, plano, execução, revisão e evidência. |
+| Agent Skills | Porque o maior risco é esquecer uma lente de qualidade antes de entregar. | Organiza a entrega em spec, plano, build, teste, review e ship, com skills dedicadas para UI, API, segurança, performance, observabilidade e lançamento. | Uma entrega mais parecida com checklist de engenharia de produto, com validação ampla. |
+| Matt Pocock Skills | Porque o maior risco é o agente sair do alinhamento humano ou exagerar no processo. | O humano chama comandos pontuais para interrogar requisito, gerar PRD, quebrar issues, fazer TDD, diagnosticar bugs e revisar arquitetura. | Um kit menor e mais controlado para melhorar decisões específicas sem trocar seu fluxo inteiro. |
 
 ## O que cada projeto otimiza?
 
@@ -68,6 +84,16 @@ A equivalência não é perfeita, porque cada projeto corta o processo de um jei
 | Paralelismo | `dispatching-parallel-agents`, `subagent-driven-development` | agentes especialistas e orquestração | não é o foco |
 
 O ponto mais importante dessa tabela é o controle. Em Matt Pocock Skills, muitas skills de alto nível são invocadas pelo humano. Em Superpowers, o roteador e os fluxos são mais automáticos. Agent Skills fica no meio: cobre muitas fases, mas ainda organiza a entrega por checkpoints.
+
+## Que outras evidências sustentam essa leitura?
+
+A evidência principal está nos próprios arquivos de skill, não no benchmark. Eu documentei o rastro completo no [EVIDENCE.md do repositório de comparação](https://github.com/tgmarinho/agent-super-powers-matt-pocock-skills-comparasions/blob/main/EVIDENCE.md). A leitura fica assim:
+
+- **Matt Pocock Skills:** `docs/invocation.md` separa skills invocadas pelo humano e skills invocadas pelo modelo. As skills invocadas pelo humano só são alcançadas quando a pessoa digita o comando e usam `disable-model-invocation: true`. No snapshot, eram 25 skills ativas e 13 invocadas pelo humano. Entre elas estão `grill-me`, `grill-with-docs`, `to-prd`, `to-issues`, `triage`, `improve-codebase-architecture` e `implement`. Isso sustenta a tese de mais controle humano.
+- **Superpowers:** `brainstorming/SKILL.md` bloqueia implementação até o design ser aprovado. Depois disso, `README.md` e `subagent-driven-development/SKILL.md` mandam o agente criar plano, executar tarefas com subagentes, revisar cada etapa e não pausar entre tarefas salvo bloqueio, ambiguidade real ou fim do plano. Isso sustenta autonomia depois da aprovação.
+- **Agent Skills:** `README.md`, `using-agent-skills/SKILL.md` e `spec-driven-development/SKILL.md` organizam o pacote em define, plan, build, verify, review e ship, com 24 skills, checkpoints humanos e `/build auto` para rodar uma passada aprovada com verificação. Isso sustenta a posição intermediária.
+
+O benchmark local é evidência secundária. Ele ajuda a observar como essas instruções aparecem em uma tarefa React controlada, mas não prova desempenho geral em todos os repositórios, modelos ou prompts.
 
 ## O que muda durante uma feature real?
 

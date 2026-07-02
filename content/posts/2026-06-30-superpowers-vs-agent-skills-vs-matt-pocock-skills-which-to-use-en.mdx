@@ -10,9 +10,25 @@ categories: ["ai", "agents", "software-engineering", "tools", "en"]
 image: "/images/blog/superpowers-vs-agent-skills-cover.jpg"
 ---
 
-**Superpowers vs Agent Skills vs Matt Pocock's Skills** is not a question of which package is universally better. The right choice depends on the shape of the work: Superpowers favors autonomy with deeper reasoning, Agent Skills covers the full delivery lifecycle, and Matt Pocock's Skills works as a small, opinionated daily toolkit for real engineering.
+**Superpowers vs Agent Skills vs Matt Pocock's Skills** does not have one universal winner. The right choice depends on the work you want to delegate to the agent: discovering the problem, shipping a feature with broad validation, or using focused commands in a daily engineering flow.
 
 My practical rule is simple: use Superpowers when the problem still needs careful thinking before code. Use Agent Skills when the problem is already clear and you want broad validation. Use Matt Pocock's Skills when you want a lighter set of commands to align requirements, do TDD, diagnose bugs, and improve architecture without adopting a whole framework.
+
+That rule comes from the skill files themselves:
+
+| Recommendation | Evidence in the project | What it suggests |
+|---|---|---|
+| Use Superpowers when the problem still needs thinking before code | `brainstorming/SKILL.md` requires the agent to understand context, ask questions, write a design, and wait for approval before implementation. The `README.md` also describes the flow as approved design, planning, TDD, worktrees, subagents, and review. | It is strongest when the task has ambiguity, risk, or architecture decisions. |
+| Use Agent Skills when the problem is clear and you want broad validation | `README.md` organizes the pack around `/spec`, `/plan`, `/build`, `/test`, `/review`, and `/ship`. `using-agent-skills/SKILL.md` routes work into UI, browser testing, security, performance, observability, and launch readiness. | It is strongest when the feature has a defined goal and needs several quality lenses. |
+| Use Matt Pocock's Skills when you want smaller, more manual commands | `README.md` presents the pack as daily skills for real engineering. `docs/invocation.md` separates human-invoked and model-invoked skills. Skills like `/grill-me`, `/to-prd`, `/to-issues`, `/tdd`, `/diagnosing-bugs`, and `/improve-codebase-architecture` target specific pains. | It is strongest when you want human control and focused tools, not a whole methodology. |
+
+Another way to read the comparison is to separate the **why**, the **how**, and the **what** behind each choice.
+
+| Project | Why use it | How it works | What you get |
+|---|---|---|---|
+| Superpowers | Because the biggest risk is implementing too early without understanding the problem. | It first forces brainstorming, approved design, and a plan. Then it executes with TDD, worktrees, subagents, and review after each step. | A fuller trail of reasoning, planning, execution, review, and evidence. |
+| Agent Skills | Because the biggest risk is missing a quality lens before shipping. | It organizes delivery into spec, plan, build, test, review, and ship, with dedicated skills for UI, API, security, performance, observability, and launch. | A product-engineering checklist style delivery with broad validation. |
+| Matt Pocock's Skills | Because the biggest risk is the agent drifting away from human intent or adding too much process. | The human calls focused commands to grill requirements, generate a PRD, break issues down, do TDD, diagnose bugs, and review architecture. | A smaller and more controlled kit for improving specific decisions without replacing your whole workflow. |
 
 ## What does each project optimize for?
 
@@ -68,6 +84,16 @@ The mapping is not perfect, because each project slices the process differently.
 | Parallelism | `dispatching-parallel-agents`, `subagent-driven-development` | specialist agents and orchestration | not the focus |
 
 The most important thing in this table is control. In Matt Pocock's Skills, many high-level skills are invoked by the human. In Superpowers, the router and workflows are more automatic. Agent Skills sits in the middle: it covers many phases, but still structures delivery around checkpoints.
+
+## What other evidence supports this reading?
+
+The primary evidence is in the skill files themselves, not in the benchmark. I documented the full trail in the comparison repo's [EVIDENCE.md](https://github.com/tgmarinho/agent-super-powers-matt-pocock-skills-comparasions/blob/main/EVIDENCE.md). The reading is:
+
+- **Matt Pocock's Skills:** `docs/invocation.md` separates human-invoked skills from model-invoked skills. Human-invoked skills are only reachable when a person types the command and they use `disable-model-invocation: true`. In the snapshot, there were 25 active skills and 13 human-invoked skills. That group includes `grill-me`, `grill-with-docs`, `to-prd`, `to-issues`, `triage`, `improve-codebase-architecture`, and `implement`. This supports the claim that it keeps more control with the human.
+- **Superpowers:** `brainstorming/SKILL.md` blocks implementation until the design is approved. After that, `README.md` and `subagent-driven-development/SKILL.md` tell the agent to create a plan, execute tasks with subagents, review each step, and avoid pausing between tasks unless blocked, genuinely ambiguous, or done. This supports the claim that it becomes more autonomous after approval.
+- **Agent Skills:** `README.md`, `using-agent-skills/SKILL.md`, and `spec-driven-development/SKILL.md` organize the pack around define, plan, build, verify, review, and ship, with 24 skills, human checkpoints, and `/build auto` for one approved implementation pass with verification. This supports the middle position.
+
+The local benchmark is secondary evidence. It helps show how those instructions appear in one controlled React task, but it does not prove general performance across all repositories, models, or prompts.
 
 ## What changes during a real feature?
 
