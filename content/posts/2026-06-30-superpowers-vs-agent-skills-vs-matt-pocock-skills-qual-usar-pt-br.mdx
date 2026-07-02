@@ -103,9 +103,44 @@ A leitura honesta é simples: naquele cenário, Agent Skills chegou ao código m
 
 ## Como executei um benchmark local?
 
-Para comparar os três com a mesma tarefa, criei um exercício controlado usando os arquivos de skills como estilo operacional. A tarefa foi construir um componente React chamado `TaskRadar`, com PRD, SPEC e implementação.
+Para comparar os três com a mesma tarefa, criei dois exercícios locais. O primeiro foi um benchmark com implementação real. O segundo foi um benchmark menor, de mesa, para comparar o formato de PRD, SPEC e raciocínio que cada conjunto de skills tende a produzir.
 
-O componente precisava:
+O benchmark principal está em `.context/skill-benchmark/`. A tarefa foi construir o mesmo app React três vezes, uma vez por competidor, cada um isolado no seu diretório:
+
+- `implementations/addyosmani/`
+- `implementations/superpowers/`
+- `implementations/mattpocock/`
+
+O app implementado foi um **React Todo Decision Board**. Ele precisava ter:
+
+- Adicionar todo com título, prioridade e data opcional.
+- Mostrar lista com título, badge de prioridade, data e estado concluído.
+- Marcar como concluído.
+- Deletar todo.
+- Filtrar por todos, ativos e concluídos.
+- Filtrar por prioridade.
+- Limpar concluídos.
+- Mostrar resumo com total, ativos, concluídos e ativos de alta prioridade.
+- Persistir em `localStorage`.
+- Tratar JSON inválido no storage sem quebrar a interface.
+- Usar labels, controles acessíveis por teclado e status que não dependem só de cor.
+- Usar UI escura, responsiva e sem biblioteca externa de componentes.
+
+Cada competidor gerou os mesmos tipos de artefato:
+
+- `PRD.md`
+- `SPEC.md`
+- `IMPLEMENTATION_NOTES.md`
+- `src/App.tsx`
+- `src/styles.css`
+- `src/main.tsx`
+- `src/types.ts`
+- `index.html`
+- `package.json`
+
+O segundo exercício está em `.context/skill-framework-benchmark/`. Ele foi menor: um componente React chamado `TaskRadar`, com PRD, SPEC e implementação. O objetivo não era medir UI completa, mas observar o tipo de saída que cada framework incentiva.
+
+O `TaskRadar` precisava:
 
 - Adicionar tarefa com título, prioridade, esforço e projeto opcional.
 - Marcar tarefa como concluída.
@@ -113,7 +148,7 @@ O componente precisava:
 - Mostrar total, concluídas, esforço restante e próxima tarefa.
 - Manter a lógica principal testável fora do React.
 
-Os artefatos ficaram em `.context/skill-framework-benchmark/`:
+No exercício menor, os artefatos ficaram assim:
 
 - `shared-task.md`, com o prompt comum.
 - `superpowers/`, com PRD, SPEC e implementação no estilo Superpowers.
@@ -121,7 +156,9 @@ Os artefatos ficaram em `.context/skill-framework-benchmark/`:
 - `mattpocock/`, com PRD, SPEC e implementação no estilo Matt Pocock.
 - `report.md`, com a pontuação comparativa.
 
-Este não foi um race cronometrado com três agentes independentes. Foi um tabletop benchmark: o objetivo era comparar o tipo de saída que cada sistema incentiva quando recebe a mesma tarefa.
+Este não foi um benchmark científico nem um race cronometrado com três agentes independentes. Foi uma comparação controlada usando os arquivos de skills como modo operacional. O objetivo era observar diferenças de processo: onde o humano decide, onde o agente continua sozinho, como PRD e SPEC são estruturados, que tipo de validação aparece e como cada workflow traduz a mesma tarefa em código.
+
+A validação mínima das implementações foi TypeScript strict com `bunx tsc`. O comando original do brief bateu em `TS5112` porque o `tsconfig.json` raiz estava presente enquanto arquivos explícitos eram passados. A validação equivalente foi reexecutada com `--ignoreConfig` e passou para as implementações.
 
 ## O que saiu do benchmark local?
 

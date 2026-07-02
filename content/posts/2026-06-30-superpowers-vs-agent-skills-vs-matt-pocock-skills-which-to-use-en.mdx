@@ -103,9 +103,44 @@ The fair reading is simple: in that scenario, Agent Skills reached code faster a
 
 ## How did I run a local benchmark?
 
-To compare all three with the same task, I created a controlled exercise using the skill files as the operating style. The task was to build a React component called `TaskRadar`, with a PRD, SPEC, and implementation.
+To compare all three with the same task, I created two local exercises. The first was a real implementation benchmark. The second was a smaller tabletop benchmark to compare the PRD, SPEC, and reasoning shape each skill set tends to produce.
 
-The component had to:
+The main benchmark lives in `.context/skill-benchmark/`. The task was to build the same React app three times, once per competitor, each isolated in its own directory:
+
+- `implementations/addyosmani/`
+- `implementations/superpowers/`
+- `implementations/mattpocock/`
+
+The implemented app was a **React Todo Decision Board**. It had to support:
+
+- Add a todo with title, priority, and optional due date.
+- Show a list with title, priority badge, due date, and completed state.
+- Toggle completion.
+- Delete a todo.
+- Filter by all, active, and completed.
+- Filter by priority.
+- Clear completed todos.
+- Show summary counts for total, active, completed, and active high-priority todos.
+- Persist to `localStorage`.
+- Handle malformed stored JSON without breaking the interface.
+- Use labels, keyboard-reachable controls, and status that does not depend only on color.
+- Use a polished responsive dark UI without an external component library.
+
+Each competitor produced the same artifact types:
+
+- `PRD.md`
+- `SPEC.md`
+- `IMPLEMENTATION_NOTES.md`
+- `src/App.tsx`
+- `src/styles.css`
+- `src/main.tsx`
+- `src/types.ts`
+- `index.html`
+- `package.json`
+
+The second exercise lives in `.context/skill-framework-benchmark/`. It was smaller: a React component called `TaskRadar`, with a PRD, SPEC, and implementation. The goal was not to measure a full UI, but to observe the kind of output each framework encourages.
+
+`TaskRadar` had to:
 
 - Add a task with title, priority, effort, and optional project.
 - Mark a task as done.
@@ -113,7 +148,7 @@ The component had to:
 - Show total tasks, completed tasks, remaining effort, and next task.
 - Keep core logic testable outside React.
 
-The artifacts are in `.context/skill-framework-benchmark/`:
+In the smaller exercise, the artifacts were:
 
 - `shared-task.md`, with the common prompt.
 - `superpowers/`, with the Superpowers-style PRD, SPEC, and implementation.
@@ -121,7 +156,9 @@ The artifacts are in `.context/skill-framework-benchmark/`:
 - `mattpocock/`, with the Matt Pocock-style PRD, SPEC, and implementation.
 - `report.md`, with the comparative scoring.
 
-This was not a timed race with three independent agents. It was a tabletop benchmark: the goal was to compare the kind of output each system encourages when it receives the same task.
+This was not a scientific benchmark or a timed race with three independent agents. It was a controlled comparison using the skill files as the operating mode. The goal was to observe process differences: where the human decides, where the agent keeps going, how PRD and SPEC are structured, what validation shows up, and how each workflow turns the same task into code.
+
+The minimum validation for the implementations was strict TypeScript through `bunx tsc`. The original command from the brief hit `TS5112` because the root `tsconfig.json` was present while explicit files were passed. The equivalent validation was rerun with `--ignoreConfig` and passed for the implementations.
 
 ## What came out of the local benchmark?
 
