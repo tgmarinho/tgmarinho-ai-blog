@@ -14,6 +14,8 @@ image: "/images/blog/superpowers-vs-agent-skills-cover.jpg"
 
 My practical rule is simple: use Superpowers when the problem still needs careful thinking before code. Use Agent Skills when the problem is already clear and you want broad validation. Use Matt Pocock's Skills when you want a lighter set of commands to align requirements, do TDD, diagnose bugs, and improve architecture without adopting a whole framework.
 
+I published the benchmark and source files in the [comparison repository](https://github.com/tgmarinho/agent-super-powers-matt-pocock-skills-comparasions).
+
 That rule comes from the skill files themselves:
 
 | Recommendation | Evidence in the project | What it suggests |
@@ -38,7 +40,7 @@ Another way to read the comparison is to separate the **why**, the **how**, and 
 
 [Matt Pocock's Skills](https://github.com/mattpocock/skills) presents itself as a set of daily skills for real engineering, not vibe coding. The focus is human control, small skills, easy adaptation, and useful commands like `/grill-me`, `/grill-with-docs`, `/tdd`, `/diagnosing-bugs`, `/to-prd`, `/to-issues`, and `/improve-codebase-architecture`.
 
-I refreshed all three repositories on June 30, 2026 before writing this post. In that snapshot, Superpowers had 14 `SKILL.md` files; Agent Skills had 24; Matt Pocock's Skills had 25 active skills outside `deprecated` and `in-progress` folders (36 if you count everything).
+I used the snapshots recorded in that repository. In the source review, Superpowers had 14 `SKILL.md` files; Agent Skills had 24; Matt Pocock's Skills had 25 active skills outside `deprecated` and `in-progress` folders (36 if you count everything).
 
 | Criterion | Superpowers | Agent Skills | Matt Pocock's Skills |
 |---|---|---|---|
@@ -93,7 +95,7 @@ The primary evidence is in the skill files themselves, not in the benchmark. I d
 - **Superpowers:** `brainstorming/SKILL.md` blocks implementation until the design is approved. After that, `README.md` and `subagent-driven-development/SKILL.md` tell the agent to create a plan, execute tasks with subagents, review each step, and avoid pausing between tasks unless blocked, genuinely ambiguous, or done. This supports the claim that it becomes more autonomous after approval.
 - **Agent Skills:** `README.md`, `using-agent-skills/SKILL.md`, and `spec-driven-development/SKILL.md` organize the pack around define, plan, build, verify, review, and ship, with 24 skills, human checkpoints, and `/build auto` for one approved implementation pass with verification. This supports the middle position.
 
-The local benchmark is secondary evidence. It helps show how those instructions appear in one controlled React task, but it does not prove general performance across all repositories, models, or prompts.
+The benchmark is secondary evidence. It shows how those instructions appear in one controlled React task, but it does not prove general performance across all repositories, models, or prompts.
 
 ## What changes during a real feature?
 
@@ -127,15 +129,15 @@ The main numbers:
 
 The fair reading is simple: in that scenario, Agent Skills reached code faster and validated more. Superpowers invested more in initial reasoning. The test does not include Matt Pocock's Skills, so it should not rank all three. It does show the central trade-off between broad validation and deeper reasoning before execution.
 
-## How did I run a local benchmark?
+## How did I run the benchmark?
 
-To compare all three with the same task, I created two local exercises. The first was a real implementation benchmark. The second was a smaller tabletop benchmark to compare the PRD, SPEC, and reasoning shape each skill set tends to produce.
+To compare all three with the same task, I created two exercises. The first was a real implementation benchmark. The second was a smaller tabletop exercise to compare the PRD, SPEC, and reasoning shape each skill set tends to produce.
 
-The main benchmark lives in `.context/skill-benchmark/`. The task was to build the same React app three times, once per competitor, each isolated in its own directory:
+The main benchmark is in [`benchmarks/skill-benchmark/`](https://github.com/tgmarinho/agent-super-powers-matt-pocock-skills-comparasions/tree/main/benchmarks/skill-benchmark). The task was to build the same React app three times, once per competitor, each isolated in its own directory:
 
-- `implementations/addyosmani/`
-- `implementations/superpowers/`
-- `implementations/mattpocock/`
+- `benchmarks/skill-benchmark/implementations/addyosmani/`
+- `benchmarks/skill-benchmark/implementations/superpowers/`
+- `benchmarks/skill-benchmark/implementations/mattpocock/`
 
 The implemented app was a **React Todo Decision Board**. It had to support:
 
@@ -164,7 +166,7 @@ Each competitor produced the same artifact types:
 - `index.html`
 - `package.json`
 
-The second exercise lives in `.context/skill-framework-benchmark/`. It was smaller: a React component called `TaskRadar`, with a PRD, SPEC, and implementation. The goal was not to measure a full UI, but to observe the kind of output each framework encourages.
+The second exercise is in [`benchmarks/skill-framework-benchmark/`](https://github.com/tgmarinho/agent-super-powers-matt-pocock-skills-comparasions/tree/main/benchmarks/skill-framework-benchmark). It was smaller: a React component called `TaskRadar`, with a PRD, SPEC, and implementation. The goal was not to measure a full UI, but to observe the kind of output each framework encourages.
 
 `TaskRadar` had to:
 
@@ -176,17 +178,21 @@ The second exercise lives in `.context/skill-framework-benchmark/`. It was small
 
 In the smaller exercise, the artifacts were:
 
-- `shared-task.md`, with the common prompt.
-- `superpowers/`, with the Superpowers-style PRD, SPEC, and implementation.
-- `agent-skills/`, with the Agent Skills-style PRD, SPEC, and implementation.
-- `mattpocock/`, with the Matt Pocock-style PRD, SPEC, and implementation.
-- `report.md`, with the comparative scoring.
+- `benchmarks/skill-framework-benchmark/shared-task.md`, with the common prompt.
+- `benchmarks/skill-framework-benchmark/superpowers/`, with the Superpowers-style PRD, SPEC, and implementation.
+- `benchmarks/skill-framework-benchmark/agent-skills/`, with the Agent Skills-style PRD, SPEC, and implementation.
+- `benchmarks/skill-framework-benchmark/mattpocock/`, with the Matt Pocock-style PRD, SPEC, and implementation.
+- `benchmarks/skill-framework-benchmark/report.md`, with the comparative scoring.
+
+Important scope detail: the React code-quality section below refers only to the Todo Decision Board in `benchmarks/skill-benchmark/`, not to the smaller `TaskRadar` exercise. In `TaskRadar`, the Agent Skills implementation uses `useReducer`, while the Matt Pocock implementation uses `useState` with small domain helpers.
+
+For that reason, the `TaskRadar` exercise does not support the `useReducer` or `localStorage` claims in the React code analysis. It is only used to compare PRD, SPEC, and process shape.
 
 This was not a scientific benchmark or a timed race with three independent agents. It was a controlled comparison using the skill files as the operating mode. The goal was to observe process differences: where the human decides, where the agent keeps going, how PRD and SPEC are structured, what validation shows up, and how each workflow turns the same task into code.
 
 The minimum validation for the implementations was strict TypeScript through `bunx tsc`. Because the root repository already had a `tsconfig.json`, I ran the check with `--ignoreConfig` so it validated only the benchmark files. All three implementations passed that check.
 
-## What came out of the local benchmark?
+## What came out of the benchmark?
 
 | Criterion | Superpowers | Agent Skills | Matt Pocock's Skills |
 |---|---:|---:|---:|
@@ -212,7 +218,7 @@ The minimum validation for the implementations was strict TypeScript through `bu
 
 The reading changes a bit. The benchmark above measures process, PRD, SPEC, validation, and implementation shape. A stronger review should use React, React Patterns, Next.js, and Vercel skills as **judges after implementation**, not as helpers during implementation.
 
-For this exercise, the applicable review lens is React: state, types, accessibility, persistence, logic separation, and maintainability. Because the app was plain React in a Vite-style setup, the Next.js and Vercel lenses should not judge Server Components, routes, caching, images, or deployment. They are still useful because they show that this benchmark does not measure production readiness on a Next/Vercel stack.
+For the Todo Decision Board exercise, the applicable review lens is React: state, types, accessibility, persistence, logic separation, and maintainability. Because the app was plain React in a Vite-style setup, the Next.js and Vercel lenses should not judge Server Components, routes, caching, images, or deployment. They are still useful because they show that this benchmark does not measure production readiness on a Next/Vercel stack.
 
 | React code criterion | Superpowers | Agent Skills | Matt Pocock's Skills |
 |---|---:|---:|---:|
@@ -317,6 +323,6 @@ Do not choose by hype. Choose by task risk. For uncertain, long, architectural w
 
 ## Transparency Note
 
-This article was produced with AI. The comparison repository and benchmarks were run by agents using only the skills mentioned in this article, without extra React, React Patterns, Next.js, or Vercel skills acting as judges during the original run. The author's review focused on text coherence, clarity, cited evidence, and general consistency.
+This article was produced with AI. The comparison repository and benchmarks were run by agents using only the skills mentioned in this article, without extra React, React Patterns, Next.js, or Vercel skills acting as judges during the original run. The React code-quality section refers to `benchmarks/skill-benchmark/`. The smaller `benchmarks/skill-framework-benchmark/` exercise is used only for PRD, SPEC, and process-shape comparison. The author's review focused on text coherence, clarity, cited evidence, and general consistency.
 
 There is still work to do: review the produced results more carefully and study the authors' skills in more depth.

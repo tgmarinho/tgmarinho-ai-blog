@@ -14,6 +14,8 @@ image: "/images/blog/superpowers-vs-agent-skills-cover.jpg"
 
 Se eu tivesse que resumir em uma regra prática: use Superpowers quando o problema ainda precisa ser pensado com calma antes de virar código. Use Agent Skills quando o problema já está claro e você quer validação ampla. Use Matt Pocock Skills quando você quer um conjunto mais enxuto de comandos para alinhar requisito, fazer TDD, diagnosticar bugs e melhorar arquitetura sem adotar um framework inteiro.
 
+Publiquei o benchmark e os arquivos de referência no [repositório de comparação](https://github.com/tgmarinho/agent-super-powers-matt-pocock-skills-comparasions).
+
 Essa regra vem dos próprios arquivos de skill:
 
 | Recomendação | Evidência no projeto | O que isso sugere |
@@ -38,7 +40,7 @@ Outra forma de ler a comparação é separar o **porquê**, o **como** e o **que
 
 [Matt Pocock Skills](https://github.com/mattpocock/skills) se apresenta como um conjunto de skills usadas no dia a dia para engenharia real, não vibe coding. O foco é controle humano, skills pequenas, adaptação fácil e comandos úteis como `/grill-me`, `/grill-with-docs`, `/tdd`, `/diagnosing-bugs`, `/to-prd`, `/to-issues` e `/improve-codebase-architecture`.
 
-Eu atualizei os três repositórios em 30 de junho de 2026 antes de escrever este post. Neste snapshot, Superpowers tinha 14 arquivos `SKILL.md`; Agent Skills tinha 24; Matt Pocock Skills tinha 25 skills ativas fora das pastas `deprecated` e `in-progress` (36 se contar tudo).
+Usei os snapshots registrados nesse repositório. Na revisão das fontes, Superpowers tinha 14 arquivos `SKILL.md`; Agent Skills tinha 24; Matt Pocock Skills tinha 25 skills ativas fora das pastas `deprecated` e `in-progress` (36 se contar tudo).
 
 | Critério | Superpowers | Agent Skills | Matt Pocock Skills |
 |---|---|---|---|
@@ -93,7 +95,7 @@ A evidência principal está nos próprios arquivos de skill, não no benchmark.
 - **Superpowers:** `brainstorming/SKILL.md` bloqueia implementação até o design ser aprovado. Depois disso, `README.md` e `subagent-driven-development/SKILL.md` mandam o agente criar plano, executar tarefas com subagentes, revisar cada etapa e não pausar entre tarefas salvo bloqueio, ambiguidade real ou fim do plano. Isso sustenta autonomia depois da aprovação.
 - **Agent Skills:** `README.md`, `using-agent-skills/SKILL.md` e `spec-driven-development/SKILL.md` organizam o pacote em define, plan, build, verify, review e ship, com 24 skills, checkpoints humanos e `/build auto` para rodar uma passada aprovada com verificação. Isso sustenta a posição intermediária.
 
-O benchmark local é evidência secundária. Ele ajuda a observar como essas instruções aparecem em uma tarefa React controlada, mas não prova desempenho geral em todos os repositórios, modelos ou prompts.
+O benchmark é evidência secundária. Ele mostra como essas instruções aparecem em uma tarefa React controlada, mas não prova desempenho geral em todos os repositórios, modelos ou prompts.
 
 ## O que muda durante uma feature real?
 
@@ -127,15 +129,15 @@ Os números principais:
 
 A leitura honesta é simples: naquele cenário, Agent Skills chegou ao código mais rápido e validou mais. Superpowers investiu mais em raciocínio inicial. O teste não inclui Matt Pocock Skills, então ele não serve para ranquear os três. Ele serve para mostrar a troca central entre validação ampla e raciocínio profundo antes da execução.
 
-## Como executei um benchmark local?
+## Como executei o benchmark?
 
-Para comparar os três com a mesma tarefa, criei dois exercícios locais. O primeiro foi um benchmark com implementação real. O segundo foi um benchmark menor, de mesa, para comparar o formato de PRD, SPEC e raciocínio que cada conjunto de skills tende a produzir.
+Para comparar os três com a mesma tarefa, criei dois exercícios. O primeiro foi um benchmark com implementação real. O segundo foi um exercício menor, de mesa, para comparar o formato de PRD, SPEC e raciocínio que cada conjunto de skills tende a produzir.
 
-O benchmark principal está em `.context/skill-benchmark/`. A tarefa foi construir o mesmo app React três vezes, uma vez por competidor, cada um isolado no seu diretório:
+O benchmark principal está em [`benchmarks/skill-benchmark/`](https://github.com/tgmarinho/agent-super-powers-matt-pocock-skills-comparasions/tree/main/benchmarks/skill-benchmark). A tarefa foi construir o mesmo app React três vezes, uma vez por competidor, cada um isolado no seu diretório:
 
-- `implementations/addyosmani/`
-- `implementations/superpowers/`
-- `implementations/mattpocock/`
+- `benchmarks/skill-benchmark/implementations/addyosmani/`
+- `benchmarks/skill-benchmark/implementations/superpowers/`
+- `benchmarks/skill-benchmark/implementations/mattpocock/`
 
 O app implementado foi um **React Todo Decision Board**. Ele precisava ter:
 
@@ -164,7 +166,7 @@ Cada competidor gerou os mesmos tipos de artefato:
 - `index.html`
 - `package.json`
 
-O segundo exercício está em `.context/skill-framework-benchmark/`. Ele foi menor: um componente React chamado `TaskRadar`, com PRD, SPEC e implementação. O objetivo não era medir UI completa, mas observar o tipo de saída que cada framework incentiva.
+O segundo exercício está em [`benchmarks/skill-framework-benchmark/`](https://github.com/tgmarinho/agent-super-powers-matt-pocock-skills-comparasions/tree/main/benchmarks/skill-framework-benchmark). Ele foi menor: um componente React chamado `TaskRadar`, com PRD, SPEC e implementação. O objetivo não era medir UI completa, mas observar o tipo de saída que cada framework incentiva.
 
 O `TaskRadar` precisava:
 
@@ -176,17 +178,21 @@ O `TaskRadar` precisava:
 
 No exercício menor, os artefatos ficaram assim:
 
-- `shared-task.md`, com o prompt comum.
-- `superpowers/`, com PRD, SPEC e implementação no estilo Superpowers.
-- `agent-skills/`, com PRD, SPEC e implementação no estilo Agent Skills.
-- `mattpocock/`, com PRD, SPEC e implementação no estilo Matt Pocock.
-- `report.md`, com a pontuação comparativa.
+- `benchmarks/skill-framework-benchmark/shared-task.md`, com o prompt comum.
+- `benchmarks/skill-framework-benchmark/superpowers/`, com PRD, SPEC e implementação no estilo Superpowers.
+- `benchmarks/skill-framework-benchmark/agent-skills/`, com PRD, SPEC e implementação no estilo Agent Skills.
+- `benchmarks/skill-framework-benchmark/mattpocock/`, com PRD, SPEC e implementação no estilo Matt Pocock.
+- `benchmarks/skill-framework-benchmark/report.md`, com a pontuação comparativa.
+
+Escopo importante: a seção de qualidade de código React abaixo se refere apenas ao Todo Decision Board em `benchmarks/skill-benchmark/`, não ao exercício menor `TaskRadar`. No `TaskRadar`, a implementação de Agent Skills usa `useReducer`, enquanto a implementação de Matt Pocock usa `useState` com pequenos helpers de domínio.
+
+Por isso, o exercício `TaskRadar` não sustenta as afirmações sobre `useReducer` ou `localStorage` na análise de código React. Ele serve apenas para comparar PRD, SPEC e formato de processo.
 
 Este não foi um benchmark científico nem um race cronometrado com três agentes independentes. Foi uma comparação controlada usando os arquivos de skills como modo operacional. O objetivo era observar diferenças de processo: onde o humano decide, onde o agente continua sozinho, como PRD e SPEC são estruturados, que tipo de validação aparece e como cada workflow traduz a mesma tarefa em código.
 
 A validação mínima das implementações foi TypeScript strict com `bunx tsc`. Como o repositório raiz já tinha um `tsconfig.json`, rodei a checagem com `--ignoreConfig` para validar apenas os arquivos do benchmark. As três implementações passaram nessa checagem.
 
-## O que saiu do benchmark local?
+## O que saiu do benchmark?
 
 | Critério | Superpowers | Agent Skills | Matt Pocock Skills |
 |---|---:|---:|---:|
@@ -212,7 +218,7 @@ A validação mínima das implementações foi TypeScript strict com `bunx tsc`.
 
 Aqui a leitura muda um pouco. O benchmark acima mede processo, PRD, SPEC, validação e formato de implementação. Uma revisão melhor deveria usar skills de React, React Patterns, Next.js e Vercel como **juízes depois da implementação**, não como auxiliares durante a implementação.
 
-Para este exercício, a lente aplicável é React: estado, tipos, acessibilidade, persistência, separação de lógica e manutenção. Como o app era React puro, estilo Vite, as lentes de Next.js e Vercel não deveriam julgar Server Components, rotas, cache, imagens ou deploy. Elas ainda seriam úteis para apontar que o benchmark não mede prontidão de produção em Next/Vercel.
+Para o exercício Todo Decision Board, a lente aplicável é React: estado, tipos, acessibilidade, persistência, separação de lógica e manutenção. Como o app era React puro, estilo Vite, as lentes de Next.js e Vercel não deveriam julgar Server Components, rotas, cache, imagens ou deploy. Elas ainda seriam úteis para apontar que o benchmark não mede prontidão de produção em Next/Vercel.
 
 | Critério de código React | Superpowers | Agent Skills | Matt Pocock Skills |
 |---|---:|---:|---:|
@@ -317,6 +323,6 @@ Não escolha pelo hype. Escolha pelo risco da tarefa. Para trabalho incerto, lon
 
 ## Nota de transparência
 
-Este artigo foi produzido com IA. O repositório de comparação e os benchmarks foram executados por agentes usando apenas as skills mencionadas neste texto, sem skills adicionais de React, React Patterns, Next.js ou Vercel como juízes durante a execução original. A revisão do autor focou em coerência do texto, clareza, evidências citadas e consistência geral.
+Este artigo foi produzido com IA. O repositório de comparação e os benchmarks foram executados por agentes usando apenas as skills mencionadas neste texto, sem skills adicionais de React, React Patterns, Next.js ou Vercel como juízes durante a execução original. A seção de qualidade de código React se refere a `benchmarks/skill-benchmark/`. O exercício menor `benchmarks/skill-framework-benchmark/` é usado apenas para comparar PRD, SPEC e formato de processo. A revisão do autor focou em coerência do texto, clareza, evidências citadas e consistência geral.
 
 Ainda existe trabalho a fazer: revisar melhor os resultados produzidos e estudar com mais profundidade as skills dos autores.
