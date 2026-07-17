@@ -1,0 +1,128 @@
+---
+title: "How to use the Domain-Driven Design starter modelling process"
+description: "Domain-Driven Design gets clearer when a team turns business goals, domain knowledge, architecture, team design and code into one process it can repeat."
+date: "2026-07-17"
+published: true
+slug: "how-to-use-ddd-starter-modelling-process-en"
+language: "en"
+translationKey: "ddd-starter-modelling-process"
+categories: ["ddd", "architecture", "software-engineering", "en"]
+image: "/images/blog/ddd-starter-process-cover.jpg"
+---
+
+The **Domain-Driven Design** starter modelling process helps a team move from loose business talk to clearer software boundaries. Use it as a learning sequence, not a fixed recipe. Its value is in repeating the cycle until the model fits the domain, the product and the teams that will operate the system.
+
+This post is based on the [DDD Starter Modelling Process](https://github.com/ddd-crew/ddd-starter-modelling-process), by DDD Crew, licensed under [Creative Commons Attribution 4.0](http://creativecommons.org/licenses/by/4.0/). The goal here is not to replace the original guide. It is to turn the process into a practical map for teams that need to start without turning DDD into ceremony.
+
+## When should you use this process?
+
+Use the process when architecture talk is still too abstract. It helps at the start of a new product, during a legacy migration, inside a multi-team initiative, or whenever the system no longer reflects the business.
+
+**DDD** means Domain-Driven Design: a way to design software from the business domain, the language used by domain experts and the decisions that change over time. If the team is still aligning concepts like domain, model, ubiquitous language, subdomain and bounded context, DDD Crew's [Welcome to Domain-Driven Design](https://github.com/ddd-crew/welcome-to-ddd) is a good reference.
+
+The warning is simple: do not turn the process into heavy governance. It is a guide for better conversations, not an approval checklist.
+
+## What are you really modelling?
+
+In DDD, you do not start by modelling tables, services or microservices. You start by modelling the **problem space**: what happens in the business, which decisions matter, which words people use, where rules change and where misunderstandings appear.
+
+Then you move into the **solution space**: bounded contexts, APIs, databases, aggregates, events, tests and code. This order matters because a technical boundary only makes sense when it protects a real difference in the domain.
+
+These concepts hold the process together:
+
+| Concept | Question it answers |
+|---|---|
+| **Domain** | Which area of the business do we need to understand? |
+| **Model** | Which simplification helps us act without copying all of reality? |
+| **Ubiquitous language** | Which language do experts and developers share? |
+| **Subdomain** | Which cohesive part exists inside the broader domain? |
+| **Core domain** | Which part creates strategic advantage for the business? |
+| **Bounded context** | Where is one model and one language valid? |
+
+Without this distinction, the team jumps into solution design too early. Then DDD becomes a nicer name for an architecture nobody can explain.
+
+## What are the eight steps in the process?
+
+The process organizes modelling into eight steps. The order helps beginners, but in a real project you will go back, skip and repeat parts as you learn.
+
+| Step | What must become clear |
+|---|---|
+| **Understand** | Goals, users, constraints and business model |
+| **Discover** | Events, journeys, rules, conflicts and shared language |
+| **Decompose** | Subdomains and candidate boundaries |
+| **Strategize** | Core domains and build, buy or outsource choices |
+| **Connect** | End-to-end flows, messages, dependencies and coupling |
+| **Organise** | Teams aligned to contexts, flow and real constraints |
+| **Define** | Responsibilities, contracts and models for each bounded context |
+| **Code** | Aggregates, entities, use cases, tests and model feedback |
+
+The point is not to produce every artifact. The point is to expose decisions that often stay implicit: what is central to the business, where coupling is acceptable, which team should own each part and which concepts deserve to become code.
+
+## How do you start without getting stuck?
+
+Start with the smallest slice that still creates real learning. An important business flow is usually better than a complete map of the company. If the domain is large, pick a journey with friction, risk or high value.
+
+A first cycle can look like this:
+
+1. Align on the business goal and affected user.
+2. Run visual discovery with experts and developers.
+3. Group events, rules and concepts into possible subdomains.
+4. Mark what looks like core domain, supporting domain or generic domain.
+5. Run one real use case through the proposed boundaries.
+6. List open questions that block a safe decision.
+7. Define only the contexts needed for the next increment.
+8. Write enough code to test whether the model holds.
+
+In practice, this can start with physical sticky notes on a wall, a whiteboard or a simple Kanban board. The physical format works well when the team is in the same room: everyone can see the flow, stand up, point, move notes and discuss without the tool getting in the way.
+
+When the team is remote or hybrid, move the same dynamic to an online tool. [Miro](https://miro.com/) works well for hosted collaboration and has paid plans for teams that need more features. If you prefer to run the board locally, a self-hosted setup like [`tldraw-docker`](https://github.com/tgmarinho/tldraw-docker) is a good path; for production or enterprise use, check the [tldraw](https://tldraw.dev/pricing) commercial license.
+
+## How does EventStorming help here?
+
+**EventStorming** is not about producing a pretty diagram. It is about making disagreement visible: different names for the same thing, hidden rules, unclear ownership, missing events and places where the current system fights the real workflow.
+
+The value is in the conversation the board forces. An orange sticky note may reveal a domain event. A command may expose a decision. A question may show that nobody knows who owns a rule. A hotspot may show risk before it becomes architecture.
+
+To go deeper, [Awesome EventStorming](https://github.com/RenatoAugustoFS/awesome-eventstorming) collects books, articles, videos, slides, remote tools and communities.
+
+## How should you adapt the order in a real project?
+
+Adapt the order to the kind of uncertainty you have. If the team lacks shared language, start with discovery. If the legacy system limits everything, start with the current technical landscape. If the organization is the main constraint, discuss teams before drawing ideal contexts.
+
+Some shortcuts are healthy:
+
+- Repeat discovery, decomposition and strategy before defining bounded contexts.
+- Write code early when the domain only becomes clear through executable examples.
+- Return to the map when code contradicts the drawing.
+- Drop artifacts that do not change a decision.
+
+The process does not lose value when the order changes. It loses value when the team pretends a step is complete without learning anything new.
+
+## Which resources help without becoming bureaucracy?
+
+Good tools reduce ambiguity. Bad tools become theater. Use the smallest tool that answers the question for the step.
+
+| Need | Useful resources |
+|---|---|
+| Understand DDD concepts | [Welcome to Domain-Driven Design](https://github.com/ddd-crew/welcome-to-ddd), DDD Reference Guide |
+| Discover the domain | EventStorming, [Awesome EventStorming](https://github.com/RenatoAugustoFS/awesome-eventstorming), Domain Storytelling, Example Mapping |
+| Decompose and prioritize | Context Maps, Core Domain Charts, Wardley Mapping, DDD heuristics |
+| Connect flows | Domain Message Flow, BPMN, sequence diagrams |
+| Organize teams | Team Topologies, Dynamic Reteaming, Context Maps |
+| Bring it to code | Bounded Context Canvas, Aggregate Design Canvas, hexagonal architecture, behavior tests |
+
+The practical rule: if the artifact does not change a decision, simplify it or drop it.
+
+## What is the practical rule?
+
+Use the DDD Starter Process to speed up shared learning. Do not use it to pretend the future is predictable. The domain changes, the business changes and the team's understanding changes.
+
+My rule:
+
+> Model to discover. Define only enough to act. Code early enough to test the model. Return to the map whenever code or business contradicts the drawing.
+
+The best sign that the process worked is not a complete board. It is a team that can explain why a boundary exists, which decision it protects and which part of the domain deserves more care.
+
+---
+
+**TL;DR:** the DDD Starter Modelling Process organizes modelling into eight steps: understand, discover, decompose, strategize, connect, organise, define and code. Use the sequence as a learning path, not a rigid rule. The goal is to align business, domain, architecture, teams and code in short discovery cycles.

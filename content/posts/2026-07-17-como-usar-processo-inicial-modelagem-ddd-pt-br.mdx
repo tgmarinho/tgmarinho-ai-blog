@@ -1,0 +1,128 @@
+---
+title: "Como usar o processo inicial de modelagem em Domain-Driven Design"
+description: "Domain-Driven Design fica mais claro quando o time transforma negócio, domínio, arquitetura, times e código em uma sequência iterativa de decisões reais."
+date: "2026-07-17"
+published: true
+slug: "como-usar-processo-inicial-modelagem-ddd-pt-br"
+language: "pt-BR"
+translationKey: "ddd-starter-modelling-process"
+categories: ["ddd", "architecture", "software-engineering", "pt-br"]
+image: "/images/blog/ddd-starter-process-cover.jpg"
+---
+
+O processo inicial de modelagem em **Domain-Driven Design** ajuda um time a sair de conversas soltas sobre negócio e chegar a limites de software mais claros. Use-o como uma sequência de aprendizado, não como uma receita fixa. O valor está em repetir o ciclo até o modelo ficar alinhado ao domínio, ao produto e aos times que vão operar o sistema.
+
+Este texto parte do [DDD Starter Modelling Process](https://github.com/ddd-crew/ddd-starter-modelling-process), da DDD Crew, licenciado sob [Creative Commons Attribution 4.0](http://creativecommons.org/licenses/by/4.0/). A ideia aqui não é substituir o guia original. É transformar o processo em um mapa prático para começar sem tratar DDD como cerimônia.
+
+## Quando faz sentido usar esse processo?
+
+Use o processo quando a conversa sobre arquitetura ainda está abstrata demais. Ele é útil no começo de um produto novo, em uma modernização de legado, em uma iniciativa com vários times ou quando o sistema parou de refletir o negócio.
+
+**DDD** significa Domain-Driven Design: uma forma de desenhar software a partir do domínio do negócio, da linguagem usada por especialistas e das decisões que mudam com o tempo. Se o time ainda está alinhando conceitos como domain, model, ubiquitous language, subdomain e bounded context, o guia [Welcome to Domain-Driven Design](https://github.com/ddd-crew/welcome-to-ddd) da DDD Crew é um bom ponto de apoio.
+
+O cuidado é simples: não transforme o processo em governança pesada. Ele é um roteiro de conversa, não uma checklist para aprovar arquitetura.
+
+## O que está sendo modelado de verdade?
+
+Em DDD, você não começa modelando tabelas, serviços ou microserviços. Você começa modelando o **problem space**: o que acontece no negócio, quais decisões importam, quais palavras as pessoas usam, onde as regras mudam e onde os mal-entendidos aparecem.
+
+Depois você vai para o **solution space**: bounded contexts, APIs, bancos de dados, aggregates, eventos, testes e código. Essa ordem importa porque um limite técnico só faz sentido quando protege uma diferença real no domínio.
+
+Alguns conceitos seguram o processo inteiro:
+
+| Conceito | Pergunta que ele responde |
+|---|---|
+| **Domain** | Qual área do negócio precisamos entender? |
+| **Model** | Que simplificação nos ajuda a agir sem copiar a realidade inteira? |
+| **Ubiquitous language** | Que linguagem especialistas e desenvolvedores usam juntos? |
+| **Subdomain** | Que parte coesa existe dentro do domínio maior? |
+| **Core domain** | Que parte cria vantagem estratégica para o negócio? |
+| **Bounded context** | Onde um modelo e uma linguagem são válidos? |
+
+Sem essa distinção, o time pula cedo demais para desenho de solução. Aí DDD vira nome bonito para uma arquitetura que ninguém consegue explicar.
+
+## Quais são os oito passos do processo?
+
+O processo organiza a modelagem em oito passos. A ordem ajuda iniciantes, mas em um projeto real você volta, pula e refaz partes conforme aprende.
+
+| Passo | O que precisa ficar claro |
+|---|---|
+| **Understand** | Objetivos, usuários, restrições e modelo de negócio |
+| **Discover** | Eventos, jornadas, regras, conflitos e linguagem comum |
+| **Decompose** | Subdomínios e candidatos a limites |
+| **Strategize** | Core domains e decisões de build, buy ou outsource |
+| **Connect** | Fluxos ponta a ponta, mensagens, dependências e acoplamento |
+| **Organise** | Times alinhados a contextos, fluxo e restrições reais |
+| **Define** | Responsabilidades, contratos e modelos de cada bounded context |
+| **Code** | Agregados, entidades, casos de uso, testes e feedback do modelo |
+
+O ponto não é produzir todos os artefatos. O ponto é revelar decisões que costumam ficar implícitas: o que é central para o negócio, onde o acoplamento é aceitável, qual time deveria possuir cada parte e quais conceitos merecem virar código.
+
+## Como começar sem travar no processo?
+
+Comece pelo menor recorte que ainda gera aprendizado real. Um fluxo de negócio importante costuma ser melhor do que um mapa completo da empresa. Se o domínio for grande, escolha uma jornada com fricção, risco ou alto valor.
+
+Um primeiro ciclo pode ser assim:
+
+1. Alinhe o objetivo de negócio e o usuário afetado.
+2. Faça discovery visual com especialistas e desenvolvedores.
+3. Agrupe eventos, regras e conceitos em possíveis subdomínios.
+4. Marque o que parece core domain, supporting domain ou generic domain.
+5. Passe um caso de uso real pelos limites propostos.
+6. Liste dúvidas que impedem uma decisão segura.
+7. Defina apenas os contextos necessários para o próximo incremento.
+8. Escreva código suficiente para testar se o modelo se sustenta.
+
+Na prática, isso pode começar com post-its físicos em uma parede, um quadro branco ou um Kanban simples. O formato físico funciona bem quando o time está na mesma sala: todo mundo enxerga o fluxo, levanta, aponta, move notas e discute sem mediação da ferramenta.
+
+Quando o time é remoto ou híbrido, leve a mesma dinâmica para uma ferramenta online. [Miro](https://miro.com/) funciona bem para colaboração hospedada e tem planos pagos para times que precisam de mais recursos. Se a preferência for rodar localmente, um caminho é usar um setup self-hosted como [`tldraw-docker`](https://github.com/tgmarinho/tldraw-docker); para uso em produção ou enterprise, vale checar a licença comercial do [tldraw](https://tldraw.dev/pricing).
+
+## Como EventStorming ajuda nessa etapa?
+
+**EventStorming** não serve para produzir um diagrama bonito. Ele serve para tornar discordâncias visíveis: nomes diferentes para a mesma coisa, regras escondidas, ownership confuso, eventos ausentes e pontos onde o sistema atual briga com o fluxo real.
+
+O valor está na conversa que o quadro força. Um post-it laranja pode revelar um evento de domínio. Um comando pode expor uma decisão. Uma dúvida pode mostrar que ninguém sabe quem decide uma regra. Um hotspot pode mostrar risco antes de ele virar arquitetura.
+
+Para aprofundar, a lista [Awesome EventStorming](https://github.com/RenatoAugustoFS/awesome-eventstorming) reúne livros, artigos, vídeos, slides, ferramentas remotas e comunidades.
+
+## Como adaptar a ordem em um projeto real?
+
+Adapte a ordem ao tipo de incerteza que você tem. Se falta linguagem comum, comece por discovery. Se o legado limita tudo, comece pela paisagem técnica atual. Se a estrutura organizacional é a maior restrição, discuta times antes de desenhar contextos ideais.
+
+Alguns atalhos são saudáveis:
+
+- Repita discovery, decomposição e estratégia antes de definir bounded contexts.
+- Escreva código cedo quando o domínio só fica claro com exemplos executáveis.
+- Volte ao mapa quando o código contradisser o desenho.
+- Descarte artefatos que não mudam uma decisão.
+
+O processo não perde valor quando a ordem muda. Ele perde valor quando o time finge que completou uma etapa sem aprender nada novo.
+
+## Quais recursos ajudam sem virar burocracia?
+
+Ferramentas boas reduzem ambiguidade. Ferramentas ruins viram teatro. Use o mínimo necessário para responder à pergunta da etapa.
+
+| Necessidade | Recursos úteis |
+|---|---|
+| Entender conceitos de DDD | [Welcome to Domain-Driven Design](https://github.com/ddd-crew/welcome-to-ddd), DDD Reference Guide |
+| Descobrir domínio | EventStorming, [Awesome EventStorming](https://github.com/RenatoAugustoFS/awesome-eventstorming), Domain Storytelling, Example Mapping |
+| Decompor e priorizar | Context Maps, Core Domain Charts, Wardley Mapping, DDD heuristics |
+| Conectar fluxos | Domain Message Flow, BPMN, diagramas de sequência |
+| Organizar times | Team Topologies, Dynamic Reteaming, Context Maps |
+| Levar ao código | Bounded Context Canvas, Aggregate Design Canvas, arquitetura hexagonal, testes de comportamento |
+
+A regra prática: se o artefato não muda uma decisão, simplifique ou descarte.
+
+## Qual é a regra prática?
+
+Use o DDD Starter Process para acelerar aprendizado compartilhado. Não use para fingir previsibilidade. O domínio muda, o negócio muda e o entendimento do time muda.
+
+Minha regra:
+
+> Modele para descobrir. Defina apenas o suficiente para agir. Codifique cedo o bastante para testar o modelo. Volte ao mapa sempre que o código ou o negócio contradisserem o desenho.
+
+O melhor sinal de que o processo funcionou não é um mural completo. É um time que consegue explicar por que um limite existe, que decisão ele protege e que parte do domínio merece mais cuidado.
+
+---
+
+**Resumo:** o DDD Starter Modelling Process organiza a modelagem em oito passos: entender, descobrir, decompor, estrategizar, conectar, organizar, definir e codar. Use a sequência como trilha de aprendizado, não como regra rígida. O objetivo é alinhar negócio, domínio, arquitetura, times e código em ciclos curtos de descoberta.
