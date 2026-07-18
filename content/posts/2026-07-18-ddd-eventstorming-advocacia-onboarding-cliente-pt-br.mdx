@@ -1,0 +1,422 @@
+---
+title: "DDD na prática com EventStorming: do cliente ao primeiro processo"
+description: "Entenda DDD em um domínio de advocacia: domínio, subdomínios, contexto delimitado, agregado, regras de negócio, EventStorming e código TypeScript simples."
+date: "2026-07-18"
+published: true
+slug: "ddd-eventstorming-advocacia-onboarding-cliente-pt-br"
+language: "pt-BR"
+translationKey: "ddd-eventstorming-legal-client-onboarding"
+categories: ["ddd", "eventstorming", "software-architecture", "pt-br"]
+image: "/images/blog/ddd-eventstorming-legal-onboarding-cover.jpg"
+---
+
+**Domain-Driven Design** fica prático quando o time começa pelo negócio, conversa com especialistas e transforma eventos reais em modelo e código. Neste tutorial, vamos modelar um sistema simples de advocacia, do onboarding do cliente até o primeiro processo instaurado com uma petição inicial.
+
+A ideia não é criar uma arquitetura perfeita. A ideia é mostrar o fluxo: domínio, subdomínios, EventStorming, contexto delimitado, regras básicas, modelo e um código TypeScript pequeno o bastante para explicar a decisão.
+
+## Qual é o vocabulário básico de DDD e EventStorming?
+
+Antes de modelar, alinhe os nomes. **Linguagem ubíqua** é a linguagem comum que especialistas do domínio e desenvolvedores usam para falar do negócio sem tradução mental.
+
+Este de-para ajuda o time a não misturar termo técnico com termo de negócio:
+
+| English | PT-BR |
+|---|---|
+| Domain | Domínio |
+| Domain-Driven Design | Design orientado ao domínio |
+| Domain Expert | Especialista do domínio |
+| Domain Knowledge | Conhecimento do domínio |
+| Ubiquitous Language | Linguagem ubíqua / linguagem comum |
+| Bounded Context | Contexto delimitado |
+| Context Map | Mapa de contextos |
+| Subdomain | Subdomínio |
+| Core Domain | Domínio central / domínio estratégico |
+| Supporting Domain | Domínio de suporte |
+| Generic Domain | Domínio genérico |
+| Problem Space | Espaço do problema |
+| Solution Space | Espaço da solução |
+| Domain Event | Evento de domínio |
+| Command | Comando |
+| Action | Ação |
+| Policy | Política / regra de reação |
+| Constraint | Restrição |
+| Aggregate | Agregado |
+| Entity | Entidade |
+| Value Object | Objeto de valor |
+| Repository | Repositório |
+| Application Service | Serviço de aplicação |
+| Processor | Processador |
+| Adapter | Adaptador |
+| Port | Porta |
+| Hexagonal Architecture | Arquitetura hexagonal |
+| EventStorming | EventStorming / tempestade de eventos |
+| Timeline | Linha do tempo |
+| HotSpot | Ponto quente / ponto de atenção |
+| Opportunity | Oportunidade |
+| Actor / Agent | Ator / agente |
+| System | Sistema |
+| Query Model | Modelo de consulta |
+| Information | Informação |
+| Pivotal Event | Evento pivotal / evento-chave |
+| Swimlane | Raia |
+| Emerging Bounded Context | Contexto delimitado emergente |
+| Big Picture EventStorming | EventStorming de visão ampla |
+| Process Modelling EventStorming | EventStorming de modelagem de processo |
+| Software Design EventStorming | EventStorming de design de software |
+| Domain Message Flow | Fluxo de mensagens do domínio |
+| Aggregate Design Canvas | Canvas de design de agregado |
+| Bounded Context Canvas | Canvas de contexto delimitado |
+| Event-Driven | Orientado a eventos |
+| Shared Language | Linguagem compartilhada |
+| Shared Model | Modelo compartilhado |
+| Cognitive Load | Carga cognitiva |
+| Loose Coupling | Baixo acoplamento / acoplamento fraco |
+| High Cohesion | Alta coesão |
+| Fast Flow | Fluxo rápido |
+| Team Topologies | Topologias de time |
+| Conway's Law | Lei de Conway |
+| Greenfield | Projeto novo / do zero |
+| Brownfield | Sistema existente / legado |
+| MVP | Produto mínimo viável |
+| Build vs Buy vs Outsource | Construir vs comprar vs terceirizar |
+
+## O que é domínio em DDD?
+
+**Domínio é o negócio.** Não é a pasta `domain/`, não é uma camada da aplicação e não é um conjunto de classes bonitas. É a área de atuação que o software precisa entender para resolver um problema real.
+
+No nosso exemplo, o domínio é a operação de um escritório de advocacia que recebe um cliente, qualifica a demanda, cria um caso, prepara documentos e protocola a primeira petição.
+
+O domínio tem regras, palavras, conflitos, exceções e decisões. Quem conhece isso em profundidade são os **especialistas do domínio**: advogados, paralegais, secretários jurídicos, pessoas do atendimento, financeiro, controladoria jurídica e qualquer pessoa que opere o fluxo real.
+
+## Quais subdomínios existem em um sistema de advocacia?
+
+Um **subdomínio** é uma parte coerente dentro do domínio maior. Ele ajuda o time a dividir o negócio sem começar por banco de dados, telas ou microserviços.
+
+Para um sistema simples de advocacia, podemos começar assim:
+
+| Tipo | Subdomínio | Por que existe |
+|---|---|---|
+| Core Domain | Gestão jurídica do caso | Onde mora o diferencial: entender a demanda, abrir o caso, preparar a estratégia e acompanhar o processo |
+| Supporting Domain | Onboarding do cliente | Coleta dados, documentos, conflito de interesses, aceite de contrato e procuração |
+| Supporting Domain | Documentos e petições | Organiza modelos, evidências, versões e validações mínimas da petição |
+| Supporting Domain | Prazos e agenda | Controla prazos, audiências, intimações e tarefas internas |
+| Generic Domain | Autenticação | Pode usar solução pronta |
+| Generic Domain | Financeiro | Pode integrar com ERP, emissão de boleto ou plataforma contábil |
+| Generic Domain | Assinatura digital | Pode integrar com um fornecedor externo |
+
+A regra prática: construa com mais cuidado o que diferencia o escritório. Compre ou integre o que é genérico, desde que a integração não destrua o fluxo principal.
+
+Um mapa mental ajuda a separar os níveis:
+
+```txt
+Domínio
+└── Operação jurídica do escritório
+
+Subdomínio
+└── Gestão jurídica do caso
+    └── Contexto delimitado: Legal Case Management
+        └── Agregado: LegalCase
+            ├── Objeto de valor: CaseArea
+            ├── Objeto de valor: CourtReceipt
+            └── Evento de domínio: LegalCaseOpened
+
+Integração
+└── Porta: CourtFilingGateway
+    └── Adapter: CourtPortalAdapter
+```
+
+Leia de cima para baixo. **Domínio** é o negócio inteiro do escritório. **Subdomínio** é uma fatia desse negócio, como gestão do caso, onboarding ou petições. **Contexto delimitado** é onde palavras como `Caso`, `Cliente`, `Peticao` e `Protocolo` têm significado preciso. **Agregado** protege uma regra forte. **Objeto de valor** dá nome a um conceito pequeno. **Porta** descreve uma necessidade externa. **Adapter** traduz essa necessidade para um sistema concreto, como o portal do tribunal.
+
+## Como montar o EventStorming com post-its?
+
+**EventStorming** é uma técnica colaborativa para descobrir como o negócio funciona por meio de eventos. O time coloca na parede o que aconteceu no passado, em ordem de tempo, e usa cores para separar eventos, comandos, políticas, sistemas e dúvidas.
+
+Um desenho simples para este caso:
+
+| Cor do post-it | Significado | Exemplo |
+|---|---|---|
+| Laranja | Evento de domínio, algo que aconteceu | `Cliente cadastrado`, `Caso aberto`, `Peticao protocolada` |
+| Azul | Comando, algo que alguém pede ao sistema | `Cadastrar cliente`, `Abrir caso`, `Protocolar peticao` |
+| Rosa | Política, regra de reação | `Se documentos obrigatorios chegaram, liberar analise` |
+| Amarelo claro | Informação necessária | `CPF`, `OAB do advogado`, `numero do processo` |
+| Roxo | Sistema externo | `Assinatura digital`, `Portal do tribunal` |
+| Vermelho | HotSpot, ponto de risco ou dúvida | `Quem valida conflito de interesses?` |
+
+Visualmente, o quadro pode ficar assim:
+
+![Quadro de EventStorming com fluxo de onboarding jurídico, abertura de caso e protocolo de petição](/images/blog/ddd-eventstorming-legal-onboarding-cover.jpg)
+
+O quadro inicial pode ficar assim:
+
+```txt
+[Comando] Cadastrar cliente
+    |
+    v
+[Evento] Cliente cadastrado
+    |
+    v
+[Politica] Verificar conflito de interesses
+    |
+    v
+[Evento] Conflito verificado
+    |
+    v
+[Comando] Abrir caso juridico
+    |
+    v
+[Evento] Caso aberto
+    |
+    v
+[Comando] Anexar documentos iniciais
+    |
+    v
+[Evento] Documentos iniciais recebidos
+    |
+    v
+[Politica] Se contrato e procuracao foram assinados, liberar peticao
+    |
+    v
+[Comando] Preparar peticao inicial
+    |
+    v
+[Evento] Peticao inicial preparada
+    |
+    v
+[Comando] Protocolar peticao
+    |
+    v
+[Evento] Primeiro processo instaurado
+```
+
+Esse desenho não é documentação final. Ele é uma ferramenta para fazer o time conversar.
+
+## Quais regras básicas aparecem no fluxo?
+
+As regras mais úteis são as que bloqueiam decisões erradas. Neste exemplo, podemos começar com regras simples:
+
+| Regra | Motivo |
+|---|---|
+| Um cliente precisa ter nome, documento e contato antes de virar parte de um caso | O caso precisa identificar quem será representado |
+| Um caso não pode ser aberto se existir conflito de interesses pendente | O escritório não pode atuar contra cliente atual ou restrição ética |
+| A petição inicial exige pelo menos uma parte, um advogado responsável, uma tese inicial e documentos obrigatórios | Sem isso, o protocolo fica frágil |
+| A petição não pode ser protocolada antes da procuração estar assinada | O advogado precisa de poderes para representar o cliente |
+| O primeiro processo só é considerado instaurado depois do protocolo retornar número ou recibo | O evento depende de confirmação externa |
+
+Observe que as regras saem do negócio. O código só deveria expressar essas regras depois que elas aparecem na conversa com os especialistas.
+
+## Qual contexto delimitado devemos criar primeiro?
+
+Um **contexto delimitado** é o limite onde um modelo e uma linguagem são válidos. A palavra `Caso` pode significar uma coisa no atendimento, outra no jurídico e outra no financeiro. O contexto delimita esse sentido.
+
+Para um produto mínimo viável, eu começaria com três contextos:
+
+| Contexto delimitado | Responsabilidade |
+|---|---|
+| Client Intake | Receber cliente, dados, documentos e consentimentos |
+| Legal Case Management | Abrir caso, definir área jurídica, responsável, partes e estado do caso |
+| Petition Filing | Preparar petição inicial, validar pré-requisitos e protocolar no tribunal |
+
+O primeiro recorte de código pode ficar dentro de `Legal Case Management`, com portas para buscar cliente, salvar caso e chamar o protocolo da petição. Não precisa nascer como microserviço. O limite pode começar como módulos dentro do mesmo monólito.
+
+## Como transformar eventos em modelo?
+
+Agora passamos do espaço do problema para o **espaço da solução**. Não copie todos os post-its para classes. Procure decisões que precisam ser protegidas.
+
+No nosso fluxo, `Caso` parece um bom **agregado** porque concentra invariantes importantes: um caso tem cliente, área jurídica, advogado responsável, status e regra para permitir ou bloquear o protocolo da primeira petição.
+
+Um modelo inicial:
+
+| Elemento | Exemplo no nosso domínio |
+|---|---|
+| Aggregate | `LegalCase` |
+| Entity | `Client`, `Lawyer`, `Petition` |
+| Value Object | `DocumentNumber`, `CaseArea`, `CourtReceipt` |
+| Domain Event | `ClientOnboarded`, `LegalCaseOpened`, `InitialPetitionFiled` |
+| Repository | `LegalCaseRepository` |
+| Application Service | `OpenLegalCaseService`, `FileInitialPetitionService` |
+| Port | `CourtFilingGateway` |
+| Adapter | Integração HTTP com portal do tribunal |
+
+O ponto é manter **alta coesão**: regras do caso ficam perto do caso. Integrações externas ficam fora do núcleo do domínio.
+
+## Como ficaria o código em TypeScript?
+
+Comece pequeno. Este exemplo usa classes simples para mostrar intenção, não para defender um framework.
+
+```ts
+type CaseStatus = "draft" | "open" | "petition_filed";
+
+type DomainEvent =
+  | {
+      type: "LegalCaseOpened";
+      payload: { caseId: string; clientId: string; area: string };
+    }
+  | {
+      type: "InitialPetitionFiled";
+      payload: { caseId: string; receiptNumber: string };
+    };
+
+class LegalCase {
+  private events: DomainEvent[] = [];
+
+  private constructor(
+    public readonly id: string,
+    public readonly clientId: string,
+    public readonly area: string,
+    public readonly responsibleLawyerId: string,
+    private status: CaseStatus,
+    private requiredDocumentsReceived: boolean,
+    private powerOfAttorneySigned: boolean,
+  ) {}
+
+  static open(input: {
+    id: string;
+    clientId: string;
+    area: string;
+    responsibleLawyerId: string;
+    conflictChecked: boolean;
+  }) {
+    if (!input.conflictChecked) {
+      throw new Error("Conflict check is required before opening a legal case.");
+    }
+
+    const legalCase = new LegalCase(
+      input.id,
+      input.clientId,
+      input.area,
+      input.responsibleLawyerId,
+      "open",
+      false,
+      false,
+    );
+
+    legalCase.record({
+      type: "LegalCaseOpened",
+      payload: {
+        caseId: input.id,
+        clientId: input.clientId,
+        area: input.area,
+      },
+    });
+
+    return legalCase;
+  }
+
+  receiveRequiredDocuments() {
+    this.requiredDocumentsReceived = true;
+  }
+
+  signPowerOfAttorney() {
+    this.powerOfAttorneySigned = true;
+  }
+
+  fileInitialPetition(receiptNumber: string) {
+    if (this.status !== "open") {
+      throw new Error("Only an open legal case can receive an initial petition.");
+    }
+
+    if (!this.requiredDocumentsReceived) {
+      throw new Error("Required documents must be received before filing.");
+    }
+
+    if (!this.powerOfAttorneySigned) {
+      throw new Error("Power of attorney must be signed before filing.");
+    }
+
+    this.status = "petition_filed";
+    this.record({
+      type: "InitialPetitionFiled",
+      payload: { caseId: this.id, receiptNumber },
+    });
+  }
+
+  pullEvents() {
+    const events = [...this.events];
+    this.events = [];
+    return events;
+  }
+
+  private record(event: DomainEvent) {
+    this.events.push(event);
+  }
+}
+```
+
+O agregado protege as regras. Ele não sabe HTTP, banco de dados, fila, portal do tribunal ou framework web.
+
+## Como conectar o domínio com aplicação e adapters?
+
+O **serviço de aplicação** orquestra o caso de uso. Ele busca dados, chama o domínio, persiste o resultado e conversa com portas externas.
+
+```ts
+interface LegalCaseRepository {
+  save(legalCase: LegalCase): Promise<void>;
+}
+
+interface CourtFilingGateway {
+  fileInitialPetition(input: {
+    caseId: string;
+    clientId: string;
+    lawyerId: string;
+  }): Promise<{ receiptNumber: string }>;
+}
+
+class FileInitialPetitionService {
+  constructor(
+    private readonly cases: LegalCaseRepository,
+    private readonly court: CourtFilingGateway,
+  ) {}
+
+  async execute(legalCase: LegalCase) {
+    const receipt = await this.court.fileInitialPetition({
+      caseId: legalCase.id,
+      clientId: legalCase.clientId,
+      lawyerId: legalCase.responsibleLawyerId,
+    });
+
+    legalCase.fileInitialPetition(receipt.receiptNumber);
+
+    await this.cases.save(legalCase);
+
+    return {
+      receiptNumber: receipt.receiptNumber,
+      events: legalCase.pullEvents(),
+    };
+  }
+}
+```
+
+Em uma arquitetura hexagonal, `CourtFilingGateway` é a porta. O adapter concreto pode usar HTTP, robô de automação, API do tribunal ou fila. O domínio não precisa saber.
+
+## Como saber se a modelagem está boa?
+
+Uma modelagem inicial está boa quando ela ajuda o time a decidir melhor. Não procure perfeição. Procure clareza.
+
+Use estes sinais:
+
+| Sinal | Interpretação |
+|---|---|
+| Especialistas entendem os nomes do modelo | A linguagem está próxima do negócio |
+| Desenvolvedores conseguem explicar as regras sem olhar para a tela | O modelo ficou expressivo |
+| Integrações externas aparecem como portas | O domínio não está preso a fornecedor |
+| HotSpots viram perguntas explícitas | O risco ficou visível |
+| O código impede estados inválidos | O modelo protege decisões importantes |
+
+Se o modelo exige muita tradução mental, volte ao quadro. Se o código aceita qualquer estado, volte às regras.
+
+## Qual é o fluxo completo do começo ao código?
+
+O ciclo simples é este:
+
+1. Defina o domínio como o negócio que precisa ser entendido.
+2. Liste os subdomínios e marque core, supporting e generic.
+3. Chame especialistas do domínio para uma sessão de EventStorming.
+4. Coloque eventos na linha do tempo.
+5. Adicione comandos, políticas, informações, sistemas externos e HotSpots.
+6. Agrupe eventos que parecem pertencer ao mesmo contexto delimitado.
+7. Escolha um caso de uso pequeno, como protocolar a primeira petição.
+8. Modele agregado, entidades, objetos de valor, eventos e repositórios.
+9. Escreva o código mínimo que protege as regras.
+10. Volte ao quadro quando o código mostrar que o modelo está errado ou incompleto.
+
+**Resumo:** DDD começa no negócio. No sistema de advocacia, o domínio é o trabalho jurídico do escritório, e os subdomínios separam onboarding, gestão do caso, documentos, prazos e integrações genéricas. EventStorming revela o fluxo real. O contexto delimitado protege uma linguagem. O agregado protege regras. O código vem depois da conversa, não antes.

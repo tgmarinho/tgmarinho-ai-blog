@@ -1,0 +1,483 @@
+---
+title: "DDD with EventStorming in iTOP: from ticket sale to check-in"
+description: "Learn DDD in a familiar ticketing domain: events, orders, payments, ticket issuance, check-in, subdomains, bounded contexts, rules and TypeScript."
+date: "2026-07-19"
+published: true
+slug: "ddd-eventstorming-itop-ticketing-en"
+language: "en"
+translationKey: "ddd-eventstorming-itop-ticketing"
+categories: ["ddd", "eventstorming", "software-architecture", "en"]
+image: "/images/blog/ddd-eventstorming-itop-ticketing-cover.jpg"
+---
+
+**Domain-Driven Design** is easier when the domain is familiar. In iTOP, the domain is the business of event management and ticket sales: organizers create events, participants register, orders are paid, tickets are issued and check-in confirms attendance.
+
+In this tutorial, we will move from first principles to practice: domain, subdomains, domain experts, EventStorming, bounded context, basic rules, modelling and a small TypeScript example inspired by the real iTOP flow.
+
+## What is the domain in iTOP?
+
+**Domain is the business.** In iTOP, the domain is not Next.js, tRPC, MongoDB, Asaas or Inngest. Those are solution technologies. The domain is the event operation with registration, payment, ticket issuance and entrance on event day.
+
+A simple way to describe it:
+
+> iTOP helps organizers sell event registrations and helps participants buy, receive and validate their tickets.
+
+This sentence already gives us the main actors: organizer, participant, platform, payment gateway and check-in team.
+
+## Who are the domain experts?
+
+**Domain experts** are the people who know the real business. In iTOP, they are not only developers.
+
+| Expert | What they know |
+|---|---|
+| Event organizer | How to create batches, prices, rules, forms and communication |
+| Finance person | How fees, split, payout and refund must work |
+| Check-in crew | How entrance works at the gate, including offline operation |
+| Support | Where buyers get confused, duplicate orders or lose tickets |
+| Product | Which flows must stay simple to sell more |
+| Developer | How to turn rules into model, code and integration |
+
+DDD starts when these people sit together to align language. If each person uses a different word for `registration`, `order`, `ticket` and `participant`, the code will become confused too.
+
+## Which subdomains appear in this platform?
+
+A **subdomain** is a coherent part inside the business. It helps split what is central, what supports it and what can be bought or integrated.
+
+In iTOP, I would model it like this:
+
+| Type | Subdomain | Examples |
+|---|---|---|
+| Core Domain | Registration sales and management | Event, ticket type, registration, order, ticket, availability |
+| Supporting Domain | Check-in | QR Code, validation, entrance, offline operation |
+| Supporting Domain | Communication | Email, WhatsApp, order confirmation, automatic messages |
+| Supporting Domain | Participant form | Dynamic fields, terms, buyer data, participant data |
+| Supporting Domain | Event finance | Platform fee, organizer payout, payment method |
+| Generic Domain | Authentication | Login, magic link, session, basic permissions |
+| Generic Domain | File upload | Logo, banner, event images |
+| Generic Domain | External payment | Gateway, PIX, card, webhook, tokenization |
+
+The core is not "payment". Payment is essential, but it is an integration. The core is selling event registrations with the right rules: availability, capacity, sales window, coupon, order, ticket and entrance.
+
+A mental map helps separate the levels:
+
+```txt
+Domain
+└── Event registration management and ticket sales
+
+Subdomain
+└── Ticket sales
+    └── Bounded context: Ticket Sales
+        └── Aggregate: Order
+            ├── Value object: Money
+            ├── Value object: SalesWindow
+            └── Domain event: OrderPlaced
+
+Integration
+└── Port: PaymentGateway
+    └── Adapter: AsaasPaymentGateway
+```
+
+Read it from top to bottom. **Domain** is the whole business. **Subdomain** is one slice of that business. **Bounded context** is where that slice gets a precise language. **Aggregate** protects a strong rule. **Value object** names a small concept. **Port** describes what the application needs from the outside. **Adapter** translates that need into concrete technology.
+
+For a larger domain, the board starts to separate subdomains and sticky-note types:
+
+![Realistic DDD and EventStorming board separating iTOP subdomains on a glass wall with sticky notes](/images/blog/ddd-eventstorming-itop-subdomains-board.jpg)
+
+## How do you start EventStorming?
+
+**EventStorming** starts with events, because an event is something that happened in the business. Do not start from screens. Start by asking: "what must happen for a participant to enter the event with a valid ticket?"
+
+Use a simple legend:
+
+| Color | Type | iTOP example |
+|---|---|---|
+| Orange | Domain event | `Event published`, `Order created`, `Payment confirmed`, `Ticket issued` |
+| Blue | Command | `Create event`, `Open ticket type`, `Register participant`, `Confirm check-in` |
+| Pink | Policy | `When payment is confirmed, issue ticket` |
+| Light yellow | Information | `CPF`, `email`, `ticketTypeId`, `qrCode` |
+| Purple | External system | `Asaas`, `Meta WhatsApp`, `Resend`, `UploadThing` |
+| Red | HotSpot | `What if payment confirms after the sales window ends?` |
+
+Visually, the board can look like this:
+
+![Realistic EventStorming board on a glass wall with sticky notes for ticket sales, payment, ticket issuance and check-in flow](/images/blog/ddd-eventstorming-itop-workshop-board.jpg)
+
+A first big-picture flow can be:
+
+```txt
+[Command] Create organization
+    |
+[Event] Organization created
+    |
+[Command] Create event
+    |
+[Event] Event created
+    |
+[Command] Open ticket type
+    |
+[Event] Ticket type opened for sale
+    |
+[Command] Register participant
+    |
+[Event] Order created
+    |
+[Command] Pay order
+    |
+[Event] Payment confirmed
+    |
+[Policy] When payment confirms, issue ticket and send confirmation
+    |
+[Event] Ticket issued
+    |
+[Event] Confirmation sent
+    |
+[Command] Check in by QR Code
+    |
+[Event] Check-in completed
+```
+
+This board helps separate business talk from technical detail. `Asaas` enters as an external system. `Inngest` enters later as an asynchronous execution mechanism, not as the core domain concept.
+
+## Which HotSpots are worth discussing?
+
+A **HotSpot** is a point of doubt, risk or poorly understood rule. In iTOP, some HotSpots are very useful for learning DDD:
+
+| HotSpot | Domain question |
+|---|---|
+| Sales window | Can a ticket be bought exactly at the final second of `salesEnd`? |
+| Pending order | If the window closes after order creation but before the webhook, do we honor payment? |
+| Capacity | Does `sold` increase on order creation or on payment confirmation? |
+| Coupon | Does a coupon reduce the platform fee, the organizer amount or only the ticket subtotal? |
+| Secret link | Does a secret link bypass capacity, sales window or both? |
+| Offline check-in | Who wins if two operators scan the same ticket offline? |
+| Participant vs buyer | When `buyerName` differs from `customerName`, who receives the ticket? |
+
+These questions are more valuable than debating whether a folder should be named `domain`, `core` or `modules`.
+
+## Which bounded contexts make sense?
+
+A **bounded context** is the boundary where a language and a model are valid. In a ticketing platform, the same word can change meaning. `Ticket` in checkout is a purchase intent. In check-in, it is an entrance credential. In support, it is something that may need to be resent.
+
+I would start with these contexts:
+
+| Bounded context | Main language | Responsibility |
+|---|---|---|
+| Organization Management | organization, member, invite, permission | Account ownership, teams and access |
+| Event Publishing | event, landing, form, terms, ticket type | Public event configuration |
+| Ticket Sales | ticket type, availability, order, coupon | Sales, price, capacity and order creation |
+| Payment Processing | payment, webhook, split, payout, refund | Gateway integration and financial confirmation |
+| Ticket Delivery | ticket, QR Code, email, WhatsApp | Ticket issuance and delivery |
+| Check-in | scan, validation, entrance, operator | Event entrance and duplicate-use prevention |
+
+This does not force microservices. iTOP can stay a modular monolith. The point is that each context has clear language, rules and ownership.
+
+## How do you separate problem space and solution space?
+
+**Problem space** is the business side. It talks about event, registration, ticket type, coupon, participant, order, payment and entrance.
+
+**Solution space** is the implementation side. It chooses Next.js, tRPC, Prisma, MongoDB, Inngest, Asaas, Resend, Meta WhatsApp and UploadThing.
+
+Mixing both too early leads to weak decisions:
+
+| Question | Correct space |
+|---|---|
+| What does a confirmed order mean? | Problem space |
+| When should a ticket be issued? | Problem space |
+| Should the Asaas webhook be idempotent? | Solution space |
+| Does Inngest send email or WhatsApp first? | Solution space |
+| Does a secret link ignore the sales window? | Problem space |
+| Where do we persist `pixPayload`? | Solution space |
+
+DDD does not ignore technology. It only prevents technology from becoming the first language of the conversation.
+
+## Which basic rules appear in iTOP?
+
+These rules come naturally from the domain:
+
+| Rule | Why it matters |
+|---|---|
+| An event must be active to sell | A draft event should not accept public orders |
+| A ticket type must be on sale | `isActive`, capacity and sales window define availability |
+| An order cannot be empty | It needs a ticket type and participant |
+| The total includes the platform fee | The buyer pays ticket plus fee when the event rule says so |
+| The organizer receives total minus fee | The financial model must preserve payout and platform revenue |
+| Ticket is issued only after confirmed payment | Pending order does not grant entrance |
+| Check-in can happen only once | The first operator who validates the ticket wins |
+| Webhook must be idempotent | Gateway can resend the same event |
+
+These rules should appear in the domain before they appear in a handler, router or React component.
+
+## How do you turn this into a model?
+
+Now we move into modelling. The goal is not to copy the database. The goal is to protect important decisions.
+
+An initial model:
+
+| Element | iTOP example |
+|---|---|
+| Aggregate | `Order`, `Event`, `TicketType`, `Ticket` |
+| Entity | `Organization`, `Member`, `Participant`, `Coupon` |
+| Value Object | `Money`, `Cpf`, `Email`, `QrCode`, `SalesWindow` |
+| Domain Event | `OrderPlaced`, `PaymentConfirmed`, `TicketIssued`, `CheckInCompleted` |
+| Policy | `IssueTicketWhenPaymentIsConfirmed` |
+| Repository | `OrderRepository`, `TicketRepository` |
+| Port | `PaymentGateway`, `MessageSender`, `QrCodeScanner` |
+| Adapter | Asaas, Resend, Meta WhatsApp, browser scanner |
+
+The most important point: `Order` should not be only a database row. It owns a business transition: from `PENDING` to `CONFIRMED`, with fee, payout, payment method and ticket issuance.
+
+## How do you model ticket availability?
+
+Availability is a great DDD example because it looks simple, but it carries business rules.
+
+A ticket type is on sale when:
+
+1. It is active.
+2. It is not sold out.
+3. The sales window has started, if `salesStart` exists.
+4. The sales window has not ended, if `salesEnd` exists.
+
+In TypeScript, this can be a **Value Object** or a pure domain function:
+
+```ts
+type SalesStatus =
+  | "INACTIVE"
+  | "SOLD_OUT"
+  | "NOT_STARTED"
+  | "ENDED"
+  | "ON_SALE";
+
+type TicketAvailability = {
+  isActive: boolean;
+  salesStart: Date | null;
+  salesEnd: Date | null;
+  maxCapacity: number | null;
+  sold: number;
+};
+
+function getSalesStatus(ticket: TicketAvailability, now: Date): SalesStatus {
+  if (!ticket.isActive) return "INACTIVE";
+
+  if (ticket.maxCapacity !== null && ticket.sold >= ticket.maxCapacity) {
+    return "SOLD_OUT";
+  }
+
+  if (ticket.salesStart && now < ticket.salesStart) {
+    return "NOT_STARTED";
+  }
+
+  if (ticket.salesEnd && now > ticket.salesEnd) {
+    return "ENDED";
+  }
+
+  return "ON_SALE";
+}
+```
+
+This rule must be the single source of truth. The public page can show a badge from it. The server must block purchases with it. The organizer dashboard can explain the real state with it.
+
+## How do you model order and ticket issuance?
+
+Now let us create a simple `Order` aggregate. It protects the rule: a ticket is created only after confirmed payment.
+
+```ts
+type PaymentMethod = "PIX" | "CREDIT_CARD";
+type OrderStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "REFUNDED";
+
+type DomainEvent =
+  | {
+      type: "OrderPlaced";
+      payload: { orderId: string; eventId: string; ticketTypeId: string };
+    }
+  | {
+      type: "PaymentConfirmed";
+      payload: { orderId: string; paymentProviderId: string };
+    }
+  | {
+      type: "TicketIssued";
+      payload: { orderId: string; qrCode: string };
+    };
+
+class Order {
+  private events: DomainEvent[] = [];
+  private ticketQrCode: string | null = null;
+
+  private constructor(
+    public readonly id: string,
+    public readonly eventId: string,
+    public readonly ticketTypeId: string,
+    public readonly customerEmail: string,
+    public readonly paymentMethod: PaymentMethod,
+    public readonly totalCents: number,
+    public readonly platformFeeCents: number,
+    public readonly organizerReceivedCents: number,
+    private status: OrderStatus,
+  ) {}
+
+  static place(input: {
+    id: string;
+    eventId: string;
+    ticketTypeId: string;
+    customerEmail: string;
+    paymentMethod: PaymentMethod;
+    totalCents: number;
+    platformFeeCents: number;
+    organizerReceivedCents: number;
+    ticketIsOnSale: boolean;
+  }) {
+    if (!input.ticketIsOnSale) {
+      throw new Error("Ticket type is not available for sale.");
+    }
+
+    if (input.totalCents < 0) {
+      throw new Error("Order total cannot be negative.");
+    }
+
+    const order = new Order(
+      input.id,
+      input.eventId,
+      input.ticketTypeId,
+      input.customerEmail,
+      input.paymentMethod,
+      input.totalCents,
+      input.platformFeeCents,
+      input.organizerReceivedCents,
+      "PENDING",
+    );
+
+    order.record({
+      type: "OrderPlaced",
+      payload: {
+        orderId: input.id,
+        eventId: input.eventId,
+        ticketTypeId: input.ticketTypeId,
+      },
+    });
+
+    return order;
+  }
+
+  confirmPayment(paymentProviderId: string) {
+    if (this.status === "CONFIRMED") return;
+
+    if (this.status !== "PENDING") {
+      throw new Error("Only a pending order can be confirmed.");
+    }
+
+    this.status = "CONFIRMED";
+    this.record({
+      type: "PaymentConfirmed",
+      payload: { orderId: this.id, paymentProviderId },
+    });
+  }
+
+  issueTicket(qrCode: string) {
+    if (this.status !== "CONFIRMED") {
+      throw new Error("Payment must be confirmed before issuing a ticket.");
+    }
+
+    if (this.ticketQrCode) {
+      throw new Error("Ticket was already issued.");
+    }
+
+    this.ticketQrCode = qrCode;
+    this.record({
+      type: "TicketIssued",
+      payload: { orderId: this.id, qrCode },
+    });
+  }
+
+  pullEvents() {
+    const events = [...this.events];
+    this.events = [];
+    return events;
+  }
+
+  private record(event: DomainEvent) {
+    this.events.push(event);
+  }
+}
+```
+
+This code knows nothing about Asaas, Prisma, webhooks or Inngest. It knows order, confirmed payment and issued ticket.
+
+## Where do Application Service, Port and Adapter fit?
+
+The **Application Service** orchestrates the use case. It uses the domain and calls external ports. The port defines the contract. The adapter implements that contract with real technology.
+
+```ts
+interface OrderRepository {
+  save(order: Order): Promise<void>;
+}
+
+interface PaymentGateway {
+  createPixCharge(input: {
+    orderId: string;
+    totalCents: number;
+    customerEmail: string;
+  }): Promise<{ providerPaymentId: string; qrCodePayload: string }>;
+}
+
+class PlaceOrderService {
+  constructor(
+    private readonly orders: OrderRepository,
+    private readonly payments: PaymentGateway,
+  ) {}
+
+  async execute(input: {
+    order: Order;
+  }) {
+    const charge = await this.payments.createPixCharge({
+      orderId: input.order.id,
+      totalCents: input.order.totalCents,
+      customerEmail: input.order.customerEmail,
+    });
+
+    await this.orders.save(input.order);
+
+    return {
+      providerPaymentId: charge.providerPaymentId,
+      qrCodePayload: charge.qrCodePayload,
+      events: input.order.pullEvents(),
+    };
+  }
+}
+```
+
+In the real iTOP app, the adapter can be Asaas. The async job can be Inngest. The email can be Resend. WhatsApp can be Meta. But the domain does not need to depend on those names.
+
+## What is the full iTOP flow?
+
+The cycle from first principles to practice is:
+
+1. Define the domain as event registration management and ticket sales.
+2. Split subdomains: sales, payment, check-in, communication, forms, finance.
+3. Bring experts: organizer, finance, check-in, support, product and engineering.
+4. Run EventStorming with real events: `Order created`, `Payment confirmed`, `Ticket issued`, `Check-in completed`.
+5. Mark HotSpots: sales window, capacity, secret link, webhook, offline check-in.
+6. Group events into bounded contexts.
+7. Pick a small flow: buy a PIX ticket and receive a QR Code.
+8. Model `TicketType`, `Order`, `Ticket`, `SalesWindow`, `Money` and domain events.
+9. Write code that protects rules, not just CRUD.
+10. Only then connect adapters: Prisma, Asaas, Inngest, Resend and WhatsApp.
+
+## What is the mental rule for learning DDD in this domain?
+
+Use this sentence:
+
+> DDD in iTOP is turning the real operation of selling and validating tickets into a language that product, business and code can share.
+
+When you know the domain, DDD stops feeling theoretical. Each concept has a place:
+
+| Concept | In iTOP |
+|---|---|
+| Domain | Event registration management and ticket sales |
+| Subdomain | Sales, payment, check-in, communication, forms |
+| Domain event | `PaymentConfirmed`, `TicketIssued`, `CheckInCompleted` |
+| Bounded context | Ticket Sales, Payment Processing, Check-in |
+| Aggregate | `Order` protecting status, payment and issuance |
+| Value object | `Money`, `SalesWindow`, `QrCode` |
+| Port | `PaymentGateway`, `MessageSender` |
+| Adapter | Asaas, Resend, Meta WhatsApp |
+
+**TL;DR:** DDD starts from the business. In iTOP, the business is selling registrations and validating entrance at events. EventStorming reveals the real flow. Subdomains show different responsibilities. Bounded contexts protect language. Aggregates protect rules. Good code comes after this understanding.

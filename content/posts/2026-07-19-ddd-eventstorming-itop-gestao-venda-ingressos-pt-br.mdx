@@ -1,0 +1,483 @@
+---
+title: "DDD com EventStorming no iTOP: da venda ao check-in do ingresso"
+description: "Entenda DDD na prática usando o iTOP: eventos, pedidos, pagamentos, emissão de ingressos, check-in, subdomínios, contextos delimitados, regras e TypeScript."
+date: "2026-07-19"
+published: true
+slug: "ddd-eventstorming-itop-gestao-venda-ingressos-pt-br"
+language: "pt-BR"
+translationKey: "ddd-eventstorming-itop-ticketing"
+categories: ["ddd", "eventstorming", "software-architecture", "pt-br"]
+image: "/images/blog/ddd-eventstorming-itop-ticketing-cover.jpg"
+---
+
+**Domain-Driven Design** fica mais fácil quando o domínio já é familiar. No iTOP, o domínio é o negócio de gestão e venda de ingressos para eventos: organizadores criam eventos, participantes se inscrevem, pedidos são pagos, tickets são emitidos e o check-in confirma presença.
+
+Neste tutorial, vamos sair do começo e chegar na prática: domínio, subdomínios, especialistas do domínio, EventStorming, contexto delimitado, regras básicas, modelagem e um código TypeScript pequeno inspirado no fluxo real do iTOP.
+
+## O que é o domínio no iTOP?
+
+**Domínio é o negócio.** No iTOP, o domínio não é Next.js, tRPC, MongoDB, Asaas ou Inngest. Essas são tecnologias da solução. O domínio é a operação de eventos com inscrição, pagamento, emissão de ingresso e entrada no dia do evento.
+
+Um jeito simples de descrever:
+
+> O iTOP ajuda organizadores a vender inscrições para eventos e ajuda participantes a comprar, receber e validar seus ingressos.
+
+Essa frase já traz os atores principais: organizador, participante, plataforma, gateway de pagamento e equipe de check-in.
+
+## Quem são os especialistas do domínio?
+
+**Especialistas do domínio** são as pessoas que conhecem o negócio real. No iTOP, eles não são apenas desenvolvedores.
+
+| Especialista | O que ele sabe |
+|---|---|
+| Organizador do evento | Como cria lotes, preços, regras, formulários e comunicação |
+| Pessoa do financeiro | Como taxas, split, repasse e reembolso precisam funcionar |
+| Equipe de credenciamento | Como o check-in acontece no portão, inclusive offline |
+| Suporte | Onde compradores se confundem, duplicam pedido ou perdem o ticket |
+| Produto | Quais fluxos precisam ser simples para vender mais |
+| Desenvolvedor | Como transformar regras em modelo, código e integração |
+
+DDD começa quando essas pessoas sentam juntas para alinhar a linguagem. Se cada pessoa usa uma palavra diferente para `inscrição`, `pedido`, `ticket` e `participante`, o código também vai ficar confuso.
+
+## Quais subdomínios aparecem nessa plataforma?
+
+Um **subdomínio** é uma parte coerente dentro do negócio. Ele ajuda a separar o que é central, o que dá suporte e o que pode ser comprado ou integrado.
+
+No iTOP, eu modelaria assim:
+
+| Tipo | Subdomínio | Exemplos |
+|---|---|---|
+| Core Domain | Venda e gestão de inscrições | Evento, lote, inscrição, pedido, ticket, disponibilidade |
+| Supporting Domain | Check-in | QR Code, validação, entrada, operação offline |
+| Supporting Domain | Comunicação | Email, WhatsApp, confirmação de pedido, mensagens automáticas |
+| Supporting Domain | Formulário do participante | Campos dinâmicos, termos, dados do comprador, dados do participante |
+| Supporting Domain | Gestão financeira do evento | Taxa da plataforma, repasse ao organizador, método de pagamento |
+| Generic Domain | Autenticação | Login, magic link, sessão, permissões básicas |
+| Generic Domain | Upload de arquivos | Logo, banner, imagens do evento |
+| Generic Domain | Pagamento externo | Gateway, PIX, cartão, webhook, tokenização |
+
+O core não é "pagamento". O pagamento é essencial, mas é uma integração. O core é vender inscrição de evento com as regras certas: disponibilidade, capacidade, janela de vendas, cupom, pedido, ticket e entrada.
+
+Um mapa mental ajuda a separar os níveis:
+
+```txt
+Domínio
+└── Gestão e venda de inscrições para eventos
+
+Subdomínio
+└── Venda de ingressos
+    └── Contexto delimitado: Ticket Sales
+        └── Agregado: Order
+            ├── Objeto de valor: Money
+            ├── Objeto de valor: SalesWindow
+            └── Evento de domínio: OrderPlaced
+
+Integração
+└── Porta: PaymentGateway
+    └── Adapter: AsaasPaymentGateway
+```
+
+Leia de cima para baixo. **Domínio** é o negócio inteiro. **Subdomínio** é uma fatia desse negócio. **Contexto delimitado** é onde a linguagem daquela fatia fica precisa. **Agregado** é quem protege uma regra forte. **Objeto de valor** dá nome a um conceito pequeno. **Porta** descreve o que a aplicação precisa de fora. **Adapter** traduz isso para uma tecnologia concreta.
+
+Para um domínio maior, o quadro começa a separar subdomínios e tipos de post-it:
+
+![Quadro realista de DDD e EventStorming separando subdomínios do iTOP em uma parede de vidro com post-its](/images/blog/ddd-eventstorming-itop-subdomains-board.jpg)
+
+## Como começar o EventStorming?
+
+**EventStorming** começa com eventos, porque evento é algo que aconteceu no negócio. Não comece por telas. Comece perguntando: "o que precisa acontecer para um participante entrar no evento com um ingresso válido?"
+
+Use uma legenda simples:
+
+| Cor | Tipo | Exemplo no iTOP |
+|---|---|---|
+| Laranja | Evento de domínio | `Evento publicado`, `Pedido criado`, `Pagamento confirmado`, `Ticket emitido` |
+| Azul | Comando | `Criar evento`, `Abrir lote`, `Realizar inscrição`, `Confirmar check-in` |
+| Rosa | Política | `Quando pagamento confirmar, emitir ticket` |
+| Amarelo claro | Informação | `CPF`, `email`, `ticketTypeId`, `qrCode` |
+| Roxo | Sistema externo | `Asaas`, `Meta WhatsApp`, `Resend`, `UploadThing` |
+| Vermelho | HotSpot | `E se o pagamento confirmar depois da janela de vendas?` |
+
+Visualmente, o quadro pode ficar assim:
+
+![Quadro realista de EventStorming em parede de vidro com post-its para fluxo de venda de ingressos, pagamento, emissão de ticket e check-in](/images/blog/ddd-eventstorming-itop-workshop-board.jpg)
+
+Um primeiro fluxo de visão ampla pode ser:
+
+```txt
+[Comando] Criar organizacao
+    |
+[Evento] Organizacao criada
+    |
+[Comando] Criar evento
+    |
+[Evento] Evento criado
+    |
+[Comando] Abrir tipo de ingresso
+    |
+[Evento] Tipo de ingresso aberto para venda
+    |
+[Comando] Realizar inscricao
+    |
+[Evento] Pedido criado
+    |
+[Comando] Pagar pedido
+    |
+[Evento] Pagamento confirmado
+    |
+[Politica] Quando pagamento confirmar, emitir ticket e enviar confirmacao
+    |
+[Evento] Ticket emitido
+    |
+[Evento] Confirmacao enviada
+    |
+[Comando] Fazer check-in por QR Code
+    |
+[Evento] Check-in realizado
+```
+
+Esse desenho ajuda a separar conversa de negócio de detalhe técnico. `Asaas` entra como sistema externo. `Inngest` entra depois como mecanismo de execução assíncrona, não como conceito central do domínio.
+
+## Quais HotSpots valem discussão?
+
+**HotSpot** é ponto de dúvida, risco ou regra mal entendida. No iTOP, alguns HotSpots são muito bons para aprender DDD:
+
+| HotSpot | Pergunta de domínio |
+|---|---|
+| Janela de vendas | Um ticket pode ser comprado exatamente no segundo final de `salesEnd`? |
+| Pedido pendente | Se a janela fecha depois do pedido criado, mas antes do webhook, honramos o pagamento? |
+| Capacidade | O contador `sold` aumenta na criação do pedido ou na confirmação do pagamento? |
+| Cupom | Cupom reduz taxa da plataforma, valor do organizador ou só subtotal do ingresso? |
+| Link secreto | Link secreto bypassa capacidade, janela ou ambos? |
+| Check-in offline | Quem vence se dois operadores escaneiam o mesmo ticket offline? |
+| Participante vs comprador | Quando `buyerName` é diferente de `customerName`, quem recebe o ticket? |
+
+Essas perguntas são mais valiosas do que discutir se a pasta se chama `domain`, `core` ou `modules`.
+
+## Quais contextos delimitados fazem sentido?
+
+Um **contexto delimitado** é o limite onde uma linguagem e um modelo são válidos. Em uma plataforma de ingressos, a mesma palavra pode mudar de sentido. `Ticket` no checkout é uma intenção de compra. No check-in, é uma credencial de entrada. No suporte, é algo que precisa ser reenviado.
+
+Eu começaria com estes contextos:
+
+| Contexto delimitado | Linguagem principal | Responsabilidade |
+|---|---|---|
+| Organization Management | organização, membro, convite, permissão | Dono da conta, times e acesso |
+| Event Publishing | evento, landing, formulário, termos, lote | Configuração pública do evento |
+| Ticket Sales | tipo de ingresso, disponibilidade, pedido, cupom | Venda, preço, capacidade e criação de pedido |
+| Payment Processing | pagamento, webhook, split, repasse, reembolso | Integração com gateway e confirmação financeira |
+| Ticket Delivery | ticket, QR Code, email, WhatsApp | Emissão e envio do ingresso |
+| Check-in | leitura, validação, entrada, operador | Entrada no evento e prevenção de uso duplicado |
+
+Isso não obriga microserviços. O iTOP pode continuar como monólito modular. O ponto é que cada contexto tenha linguagem, regras e ownership claros.
+
+## Como separar problem space e solution space?
+
+**Problem space** é o lado do negócio. Nele você fala de evento, inscrição, lote, cupom, participante, pedido, pagamento e entrada.
+
+**Solution space** é o lado da implementação. Nele você escolhe Next.js, tRPC, Prisma, MongoDB, Inngest, Asaas, Resend, Meta WhatsApp e UploadThing.
+
+Misturar os dois cedo demais gera decisões ruins:
+
+| Pergunta | Espaço correto |
+|---|---|
+| O que significa um pedido confirmado? | Problem space |
+| Quando o ticket deve ser emitido? | Problem space |
+| O webhook do Asaas deve ser idempotente? | Solution space |
+| Inngest envia email ou WhatsApp primeiro? | Solution space |
+| Link secreto ignora janela de vendas? | Problem space |
+| Onde persistimos `pixPayload`? | Solution space |
+
+DDD não ignora tecnologia. Ele só impede que a tecnologia vire a primeira linguagem da conversa.
+
+## Quais regras básicas aparecem no iTOP?
+
+Aqui estão regras que saem naturalmente do domínio:
+
+| Regra | Por que importa |
+|---|---|
+| Um evento precisa estar ativo para vender | Evento em rascunho não deveria aceitar pedido público |
+| Um tipo de ingresso precisa estar em venda | `isActive`, capacidade e janela de vendas definem disponibilidade |
+| Um pedido não pode ser vazio | Precisa existir tipo de ingresso e participante |
+| O total inclui taxa da plataforma | O comprador paga ingresso mais taxa quando a regra do evento define isso |
+| O organizador recebe total menos taxa | O modelo financeiro precisa preservar repasse e receita da plataforma |
+| Ticket só é emitido depois do pagamento confirmado | Pedido pendente não libera entrada |
+| Check-in só pode acontecer uma vez | O primeiro operador que valida o ticket vence |
+| Webhook precisa ser idempotente | Gateway pode reenviar o mesmo evento |
+
+Essas regras devem aparecer no domínio antes de aparecerem em handler, router ou componente React.
+
+## Como transformar isso em modelo?
+
+Agora passamos para modelagem. O objetivo não é copiar o banco. O objetivo é proteger decisões importantes.
+
+Um modelo inicial:
+
+| Elemento | Exemplo no iTOP |
+|---|---|
+| Aggregate | `Order`, `Event`, `TicketType`, `Ticket` |
+| Entity | `Organization`, `Member`, `Participant`, `Coupon` |
+| Value Object | `Money`, `Cpf`, `Email`, `QrCode`, `SalesWindow` |
+| Domain Event | `OrderPlaced`, `PaymentConfirmed`, `TicketIssued`, `CheckInCompleted` |
+| Policy | `IssueTicketWhenPaymentIsConfirmed` |
+| Repository | `OrderRepository`, `TicketRepository` |
+| Port | `PaymentGateway`, `MessageSender`, `QrCodeScanner` |
+| Adapter | Asaas, Resend, Meta WhatsApp, scanner do navegador |
+
+O ponto mais importante: `Order` não deveria ser só uma linha no banco. Ele concentra uma transição de negócio: de `PENDING` para `CONFIRMED`, com taxa, repasse, método de pagamento e emissão de ticket.
+
+## Como modelar disponibilidade de ingresso?
+
+Disponibilidade é um ótimo exemplo de DDD porque parece simples, mas carrega regras de negócio.
+
+Um tipo de ingresso está em venda quando:
+
+1. Está ativo.
+2. Não esgotou.
+3. A janela de vendas começou, se existir `salesStart`.
+4. A janela de vendas não terminou, se existir `salesEnd`.
+
+Em TypeScript, isso pode ser um **Value Object** ou uma função pura do domínio:
+
+```ts
+type SalesStatus =
+  | "INACTIVE"
+  | "SOLD_OUT"
+  | "NOT_STARTED"
+  | "ENDED"
+  | "ON_SALE";
+
+type TicketAvailability = {
+  isActive: boolean;
+  salesStart: Date | null;
+  salesEnd: Date | null;
+  maxCapacity: number | null;
+  sold: number;
+};
+
+function getSalesStatus(ticket: TicketAvailability, now: Date): SalesStatus {
+  if (!ticket.isActive) return "INACTIVE";
+
+  if (ticket.maxCapacity !== null && ticket.sold >= ticket.maxCapacity) {
+    return "SOLD_OUT";
+  }
+
+  if (ticket.salesStart && now < ticket.salesStart) {
+    return "NOT_STARTED";
+  }
+
+  if (ticket.salesEnd && now > ticket.salesEnd) {
+    return "ENDED";
+  }
+
+  return "ON_SALE";
+}
+```
+
+Essa regra precisa ser fonte única de verdade. A página pública pode mostrar badge com ela. O servidor deve barrar compra com ela. O painel do organizador pode explicar o estado real com ela.
+
+## Como modelar pedido e emissão de ticket?
+
+Agora vamos criar um aggregate simples para `Order`. Ele protege a regra: ticket só nasce depois de pagamento confirmado.
+
+```ts
+type PaymentMethod = "PIX" | "CREDIT_CARD";
+type OrderStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "REFUNDED";
+
+type DomainEvent =
+  | {
+      type: "OrderPlaced";
+      payload: { orderId: string; eventId: string; ticketTypeId: string };
+    }
+  | {
+      type: "PaymentConfirmed";
+      payload: { orderId: string; paymentProviderId: string };
+    }
+  | {
+      type: "TicketIssued";
+      payload: { orderId: string; qrCode: string };
+    };
+
+class Order {
+  private events: DomainEvent[] = [];
+  private ticketQrCode: string | null = null;
+
+  private constructor(
+    public readonly id: string,
+    public readonly eventId: string,
+    public readonly ticketTypeId: string,
+    public readonly customerEmail: string,
+    public readonly paymentMethod: PaymentMethod,
+    public readonly totalCents: number,
+    public readonly platformFeeCents: number,
+    public readonly organizerReceivedCents: number,
+    private status: OrderStatus,
+  ) {}
+
+  static place(input: {
+    id: string;
+    eventId: string;
+    ticketTypeId: string;
+    customerEmail: string;
+    paymentMethod: PaymentMethod;
+    totalCents: number;
+    platformFeeCents: number;
+    organizerReceivedCents: number;
+    ticketIsOnSale: boolean;
+  }) {
+    if (!input.ticketIsOnSale) {
+      throw new Error("Ticket type is not available for sale.");
+    }
+
+    if (input.totalCents < 0) {
+      throw new Error("Order total cannot be negative.");
+    }
+
+    const order = new Order(
+      input.id,
+      input.eventId,
+      input.ticketTypeId,
+      input.customerEmail,
+      input.paymentMethod,
+      input.totalCents,
+      input.platformFeeCents,
+      input.organizerReceivedCents,
+      "PENDING",
+    );
+
+    order.record({
+      type: "OrderPlaced",
+      payload: {
+        orderId: input.id,
+        eventId: input.eventId,
+        ticketTypeId: input.ticketTypeId,
+      },
+    });
+
+    return order;
+  }
+
+  confirmPayment(paymentProviderId: string) {
+    if (this.status === "CONFIRMED") return;
+
+    if (this.status !== "PENDING") {
+      throw new Error("Only a pending order can be confirmed.");
+    }
+
+    this.status = "CONFIRMED";
+    this.record({
+      type: "PaymentConfirmed",
+      payload: { orderId: this.id, paymentProviderId },
+    });
+  }
+
+  issueTicket(qrCode: string) {
+    if (this.status !== "CONFIRMED") {
+      throw new Error("Payment must be confirmed before issuing a ticket.");
+    }
+
+    if (this.ticketQrCode) {
+      throw new Error("Ticket was already issued.");
+    }
+
+    this.ticketQrCode = qrCode;
+    this.record({
+      type: "TicketIssued",
+      payload: { orderId: this.id, qrCode },
+    });
+  }
+
+  pullEvents() {
+    const events = [...this.events];
+    this.events = [];
+    return events;
+  }
+
+  private record(event: DomainEvent) {
+    this.events.push(event);
+  }
+}
+```
+
+Esse código não sabe o que é Asaas, Prisma, webhook ou Inngest. Ele sabe o que é pedido, pagamento confirmado e ticket emitido.
+
+## Onde entram Application Service, Port e Adapter?
+
+O **Application Service** orquestra o caso de uso. Ele usa o domínio e chama portas externas. A porta define o contrato. O adapter implementa esse contrato com tecnologia real.
+
+```ts
+interface OrderRepository {
+  save(order: Order): Promise<void>;
+}
+
+interface PaymentGateway {
+  createPixCharge(input: {
+    orderId: string;
+    totalCents: number;
+    customerEmail: string;
+  }): Promise<{ providerPaymentId: string; qrCodePayload: string }>;
+}
+
+class PlaceOrderService {
+  constructor(
+    private readonly orders: OrderRepository,
+    private readonly payments: PaymentGateway,
+  ) {}
+
+  async execute(input: {
+    order: Order;
+  }) {
+    const charge = await this.payments.createPixCharge({
+      orderId: input.order.id,
+      totalCents: input.order.totalCents,
+      customerEmail: input.order.customerEmail,
+    });
+
+    await this.orders.save(input.order);
+
+    return {
+      providerPaymentId: charge.providerPaymentId,
+      qrCodePayload: charge.qrCodePayload,
+      events: input.order.pullEvents(),
+    };
+  }
+}
+```
+
+No iTOP real, o adapter pode ser Asaas. O job assíncrono pode ser Inngest. O email pode ser Resend. O WhatsApp pode ser Meta. Mas o domínio não precisa depender desses nomes.
+
+## Como o fluxo completo fica no iTOP?
+
+O ciclo do começo à prática fica assim:
+
+1. Defina o domínio como gestão e venda de inscrições para eventos.
+2. Separe subdomínios: vendas, pagamento, check-in, comunicação, formulário, financeiro.
+3. Traga especialistas: organizador, financeiro, check-in, suporte, produto e engenharia.
+4. Faça EventStorming com eventos reais: `Pedido criado`, `Pagamento confirmado`, `Ticket emitido`, `Check-in realizado`.
+5. Marque HotSpots: janela de vendas, capacidade, link secreto, webhook, check-in offline.
+6. Agrupe eventos em contextos delimitados.
+7. Escolha um fluxo pequeno: comprar ingresso com PIX e receber QR Code.
+8. Modele `TicketType`, `Order`, `Ticket`, `SalesWindow`, `Money` e eventos de domínio.
+9. Escreva código que proteja regras, não apenas CRUD.
+10. Só depois conecte adapters: Prisma, Asaas, Inngest, Resend e WhatsApp.
+
+## Qual é a regra mental para aprender DDD nesse domínio?
+
+Use esta frase:
+
+> DDD no iTOP é transformar a operação real de vender e validar ingressos em uma linguagem que produto, negócio e código conseguem compartilhar.
+
+Quando você domina o domínio, DDD deixa de parecer teoria. Você percebe que cada conceito tem um lugar:
+
+| Conceito | No iTOP |
+|---|---|
+| Domínio | Gestão e venda de inscrições para eventos |
+| Subdomínio | Vendas, pagamento, check-in, comunicação, formulário |
+| Evento de domínio | `PaymentConfirmed`, `TicketIssued`, `CheckInCompleted` |
+| Contexto delimitado | Ticket Sales, Payment Processing, Check-in |
+| Agregado | `Order` protegendo status, pagamento e emissão |
+| Objeto de valor | `Money`, `SalesWindow`, `QrCode` |
+| Porta | `PaymentGateway`, `MessageSender` |
+| Adapter | Asaas, Resend, Meta WhatsApp |
+
+**Resumo:** DDD começa pelo negócio. No iTOP, o negócio é vender inscrições e validar entrada em eventos. EventStorming revela o fluxo real. Subdomínios mostram onde existe diferença de responsabilidade. Contextos delimitados protegem linguagem. Agregados protegem regras. Código bom vem depois desse entendimento.
