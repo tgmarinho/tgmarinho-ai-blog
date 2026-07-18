@@ -1,0 +1,356 @@
+---
+title: "DDD in practice with EventStorming: from client intake to the first lawsuit"
+description: "Understand DDD through a legal domain: domain, subdomains, bounded context, aggregate, business rules, EventStorming and simple TypeScript code."
+date: "2026-07-18"
+published: true
+slug: "ddd-eventstorming-legal-client-onboarding-en"
+language: "en"
+translationKey: "ddd-eventstorming-legal-client-onboarding"
+categories: ["ddd", "eventstorming", "software-architecture", "en"]
+image: "/images/blog/ddd-eventstorming-legal-onboarding-cover.jpg"
+---
+
+**Domain-Driven Design** becomes practical when the team starts from the business, talks to domain experts and turns real events into a model and code. In this tutorial, we will model a simple legal case system, from client onboarding to the first lawsuit filed with an initial petition.
+
+The goal is not to create a perfect architecture. The goal is to show the flow: domain, subdomains, EventStorming, bounded context, basic rules, model and a small TypeScript implementation that explains the decision.
+
+## What is domain in DDD?
+
+**Domain is the business.** It is not the `domain/` folder, not an application layer and not a set of polished classes. It is the business area the software must understand to solve a real problem.
+
+In our example, the domain is the operation of a law office that receives a client, qualifies the legal demand, creates a case, prepares documents and files the first petition.
+
+The domain has rules, words, conflicts, exceptions and decisions. The people who know this deeply are the **domain experts**: lawyers, paralegals, legal assistants, intake staff, finance staff, legal operations people and anyone who runs the real workflow.
+
+## Which subdomains exist in a legal case system?
+
+A **subdomain** is a coherent part inside the larger domain. It helps the team split the business without starting from databases, screens or microservices.
+
+For a simple legal case system, we can start like this:
+
+| Type | Subdomain | Why it exists |
+|---|---|---|
+| Core Domain | Legal case management | This is where the business differentiates: understanding the demand, opening the case, preparing the strategy and following the lawsuit |
+| Supporting Domain | Client onboarding | Collects data, documents, conflict checks, contract acceptance and power of attorney |
+| Supporting Domain | Documents and petitions | Organizes templates, evidence, versions and minimum petition validation |
+| Supporting Domain | Deadlines and calendar | Controls deadlines, hearings, court notices and internal tasks |
+| Generic Domain | Authentication | Can use an off-the-shelf solution |
+| Generic Domain | Finance | Can integrate with ERP, billing or accounting tools |
+| Generic Domain | Digital signature | Can integrate with an external provider |
+
+Rule of thumb: build carefully what differentiates the law office. Buy or integrate what is generic, as long as the integration does not break the main flow.
+
+A mental map helps separate the levels:
+
+```txt
+Domain
+└── Law office legal operation
+
+Subdomain
+└── Legal case management
+    └── Bounded context: Legal Case Management
+        └── Aggregate: LegalCase
+            ├── Value object: CaseArea
+            ├── Value object: CourtReceipt
+            └── Domain event: LegalCaseOpened
+
+Integration
+└── Port: CourtFilingGateway
+    └── Adapter: CourtPortalAdapter
+```
+
+Read it from top to bottom. **Domain** is the whole law office business. **Subdomain** is one slice of that business, such as case management, client intake or petitions. **Bounded context** is where words like `Case`, `Client`, `Petition` and `Filing` have precise meaning. **Aggregate** protects a strong rule. **Value object** names a small concept. **Port** describes an external need. **Adapter** translates that need into a concrete system, such as the court portal.
+
+## How do you build the EventStorming board with sticky notes?
+
+**EventStorming** is a collaborative technique for discovering how the business works through events. The team puts what happened in the past on a wall, ordered by time, and uses colors to separate events, commands, policies, systems and questions.
+
+A simple legend for this case:
+
+| Sticky note color | Meaning | Example |
+|---|---|---|
+| Orange | Domain event, something that happened | `Client registered`, `Case opened`, `Petition filed` |
+| Blue | Command, something someone asks the system to do | `Register client`, `Open case`, `File petition` |
+| Pink | Policy, reaction rule | `If required documents arrived, release review` |
+| Light yellow | Needed information | `Tax ID`, `Lawyer bar number`, `court case number` |
+| Purple | External system | `Digital signature`, `Court portal` |
+| Red | HotSpot, risk or open question | `Who validates conflict of interest?` |
+
+Visually, the board can look like this:
+
+![EventStorming board with legal onboarding, case opening and petition filing flow](/images/blog/ddd-eventstorming-legal-onboarding-cover.jpg)
+
+The initial board can look like this:
+
+```txt
+[Command] Register client
+    |
+    v
+[Event] Client registered
+    |
+    v
+[Policy] Check conflict of interest
+    |
+    v
+[Event] Conflict checked
+    |
+    v
+[Command] Open legal case
+    |
+    v
+[Event] Legal case opened
+    |
+    v
+[Command] Attach initial documents
+    |
+    v
+[Event] Initial documents received
+    |
+    v
+[Policy] If contract and power of attorney were signed, release petition
+    |
+    v
+[Command] Prepare initial petition
+    |
+    v
+[Event] Initial petition prepared
+    |
+    v
+[Command] File petition
+    |
+    v
+[Event] First lawsuit filed
+```
+
+This board is not final documentation. It is a tool that forces the team to talk.
+
+## Which basic rules appear in the flow?
+
+The most useful rules are the ones that block wrong decisions. In this example, we can start with simple rules:
+
+| Rule | Reason |
+|---|---|
+| A client needs name, document and contact data before becoming a party in a case | The case must identify who will be represented |
+| A case cannot be opened while conflict of interest is pending | The law office cannot act against a current client or ethical restriction |
+| The initial petition requires at least one party, a responsible lawyer, an initial legal thesis and required documents | Without that, filing is weak |
+| The petition cannot be filed before the power of attorney is signed | The lawyer needs authority to represent the client |
+| The first lawsuit is only considered filed after the court returns a number or receipt | The event depends on external confirmation |
+
+Notice that the rules come from the business. Code should express these rules only after they appear in the conversation with experts.
+
+## Which bounded context should we create first?
+
+A **bounded context** is the boundary where a model and a language are valid. The word `Case` may mean one thing in intake, another in legal work and another in finance. The context limits that meaning.
+
+For a minimum viable product, I would start with three contexts:
+
+| Bounded context | Responsibility |
+|---|---|
+| Client Intake | Receive client data, documents and consent |
+| Legal Case Management | Open the case, define legal area, responsible lawyer, parties and case status |
+| Petition Filing | Prepare the initial petition, validate prerequisites and file it with the court |
+
+The first code slice can live inside `Legal Case Management`, with ports to fetch the client, save the case and call petition filing. It does not need to start as a microservice. The boundary can start as modules inside the same monolith.
+
+## How do you turn events into a model?
+
+Now we move from the problem space to the **solution space**. Do not copy every sticky note into classes. Look for decisions that must be protected.
+
+In our flow, `LegalCase` looks like a good **aggregate** because it owns important invariants: a case has a client, legal area, responsible lawyer, status and rules that allow or block the first petition filing.
+
+An initial model:
+
+| Element | Example in our domain |
+|---|---|
+| Aggregate | `LegalCase` |
+| Entity | `Client`, `Lawyer`, `Petition` |
+| Value Object | `DocumentNumber`, `CaseArea`, `CourtReceipt` |
+| Domain Event | `ClientOnboarded`, `LegalCaseOpened`, `InitialPetitionFiled` |
+| Repository | `LegalCaseRepository` |
+| Application Service | `OpenLegalCaseService`, `FileInitialPetitionService` |
+| Port | `CourtFilingGateway` |
+| Adapter | HTTP integration with the court portal |
+
+The point is to keep **high cohesion**: case rules stay close to the case. External integrations stay outside the domain core.
+
+## What would the TypeScript code look like?
+
+Start small. This example uses simple classes to show intent, not to defend a framework.
+
+```ts
+type CaseStatus = "draft" | "open" | "petition_filed";
+
+type DomainEvent =
+  | {
+      type: "LegalCaseOpened";
+      payload: { caseId: string; clientId: string; area: string };
+    }
+  | {
+      type: "InitialPetitionFiled";
+      payload: { caseId: string; receiptNumber: string };
+    };
+
+class LegalCase {
+  private events: DomainEvent[] = [];
+
+  private constructor(
+    public readonly id: string,
+    public readonly clientId: string,
+    public readonly area: string,
+    public readonly responsibleLawyerId: string,
+    private status: CaseStatus,
+    private requiredDocumentsReceived: boolean,
+    private powerOfAttorneySigned: boolean,
+  ) {}
+
+  static open(input: {
+    id: string;
+    clientId: string;
+    area: string;
+    responsibleLawyerId: string;
+    conflictChecked: boolean;
+  }) {
+    if (!input.conflictChecked) {
+      throw new Error("Conflict check is required before opening a legal case.");
+    }
+
+    const legalCase = new LegalCase(
+      input.id,
+      input.clientId,
+      input.area,
+      input.responsibleLawyerId,
+      "open",
+      false,
+      false,
+    );
+
+    legalCase.record({
+      type: "LegalCaseOpened",
+      payload: {
+        caseId: input.id,
+        clientId: input.clientId,
+        area: input.area,
+      },
+    });
+
+    return legalCase;
+  }
+
+  receiveRequiredDocuments() {
+    this.requiredDocumentsReceived = true;
+  }
+
+  signPowerOfAttorney() {
+    this.powerOfAttorneySigned = true;
+  }
+
+  fileInitialPetition(receiptNumber: string) {
+    if (this.status !== "open") {
+      throw new Error("Only an open legal case can receive an initial petition.");
+    }
+
+    if (!this.requiredDocumentsReceived) {
+      throw new Error("Required documents must be received before filing.");
+    }
+
+    if (!this.powerOfAttorneySigned) {
+      throw new Error("Power of attorney must be signed before filing.");
+    }
+
+    this.status = "petition_filed";
+    this.record({
+      type: "InitialPetitionFiled",
+      payload: { caseId: this.id, receiptNumber },
+    });
+  }
+
+  pullEvents() {
+    const events = [...this.events];
+    this.events = [];
+    return events;
+  }
+
+  private record(event: DomainEvent) {
+    this.events.push(event);
+  }
+}
+```
+
+The aggregate protects the rules. It knows nothing about HTTP, databases, queues, court portals or web frameworks.
+
+## How do you connect domain code to application services and adapters?
+
+The **application service** orchestrates the use case. It fetches data, calls the domain, persists the result and talks to external ports.
+
+```ts
+interface LegalCaseRepository {
+  save(legalCase: LegalCase): Promise<void>;
+}
+
+interface CourtFilingGateway {
+  fileInitialPetition(input: {
+    caseId: string;
+    clientId: string;
+    lawyerId: string;
+  }): Promise<{ receiptNumber: string }>;
+}
+
+class FileInitialPetitionService {
+  constructor(
+    private readonly cases: LegalCaseRepository,
+    private readonly court: CourtFilingGateway,
+  ) {}
+
+  async execute(legalCase: LegalCase) {
+    const receipt = await this.court.fileInitialPetition({
+      caseId: legalCase.id,
+      clientId: legalCase.clientId,
+      lawyerId: legalCase.responsibleLawyerId,
+    });
+
+    legalCase.fileInitialPetition(receipt.receiptNumber);
+
+    await this.cases.save(legalCase);
+
+    return {
+      receiptNumber: receipt.receiptNumber,
+      events: legalCase.pullEvents(),
+    };
+  }
+}
+```
+
+In hexagonal architecture, `CourtFilingGateway` is the port. The concrete adapter can use HTTP, automation, a court API or a queue. The domain does not need to know.
+
+## How do you know if the model is good enough?
+
+An initial model is good enough when it helps the team make better decisions. Do not chase perfection. Look for clarity.
+
+Use these signals:
+
+| Signal | Meaning |
+|---|---|
+| Domain experts understand the model names | The language is close to the business |
+| Developers can explain the rules without looking at the UI | The model became expressive |
+| External integrations appear as ports | The domain is not locked to a vendor |
+| HotSpots become explicit questions | Risk became visible |
+| The code blocks invalid states | The model protects important decisions |
+
+If the model needs too much mental translation, go back to the board. If the code accepts any state, go back to the rules.
+
+## What is the full flow from start to code?
+
+The simple cycle is this:
+
+1. Define the domain as the business that must be understood.
+2. List the subdomains and mark core, supporting and generic.
+3. Bring domain experts into an EventStorming session.
+4. Place events on the timeline.
+5. Add commands, policies, information, external systems and HotSpots.
+6. Group events that seem to belong to the same bounded context.
+7. Pick a small use case, such as filing the first petition.
+8. Model aggregate, entities, value objects, events and repositories.
+9. Write the minimum code that protects the rules.
+10. Return to the board when the code shows the model is wrong or incomplete.
+
+**TL;DR:** DDD starts from the business. In the legal case system, the domain is the law office's legal work, and subdomains split onboarding, case management, documents, deadlines and generic integrations. EventStorming reveals the real flow. The bounded context protects a language. The aggregate protects rules. Code comes after the conversation, not before it.
