@@ -317,14 +317,14 @@ export default async function PostPage({ params }: PostPageProps) {
 
       {post.image && (
         <figure className="mx-auto mt-12 max-w-[920px]">
-          <div className="relative aspect-[3/2] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+          <div className="relative aspect-[40/21] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
             <Image
               src={post.image}
               alt={post.title}
               fill
               priority
               sizes="(max-width: 920px) 100vw, 920px"
-              className="object-cover"
+              className="object-contain"
             />
           </div>
         </figure>
