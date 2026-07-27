@@ -1,0 +1,277 @@
+---
+title: "Git e GitHub para iniciantes: do clone à sua primeira Pull Request"
+description: "Guia prático de Git e GitHub para iniciantes: clone (ou fork) um projeto, crie sua branch, faça commits, abra sua primeira Pull Request, peça review e mescle."
+date: "2026-07-27"
+published: true
+slug: "git-github-para-iniciantes-primeira-pull-request-pt-br"
+language: "pt-BR"
+translationKey: "git-github-team-collaboration"
+categories: ["git", "github", "software-engineering", "workflow", "pt-br"]
+image: "/images/blog/git-github-team-collaboration-cover.jpg"
+---
+
+Este guia leva você do zero até a sua primeira **Pull Request** em um projeto real. No fim, você vai ter clonado (ou feito o fork de) um repositório, criado uma branch, feito commits, aberto uma Pull Request, pedido review e mesclado. O **Git** guarda o histórico do código na sua máquina. O **GitHub** hospeda esse histórico na nuvem e adiciona a colaboração: Pull Requests, revisão e merge. Siga os passos na ordem e você faz a sua primeira contribuição sem quebrar nada.
+
+Como exemplo, vamos usar um repositório público real: [`github.com/tgmarinho/investidor-calc`](https://github.com/tgmarinho/investidor-calc). Troque pela URL do projeto do seu time quando for valer.
+
+## O que você precisa antes de começar?
+
+Três coisas: uma conta no [GitHub](https://github.com), o Git instalado e sua identidade configurada. Confirme o Git e diga a ele quem é você (aparece nos seus commits):
+
+```bash
+git --version                              # confirma que o Git está instalado
+git config --global user.name "Seu Nome"
+git config --global user.email "voce@email.com"
+```
+
+Para autenticar sem lidar com senha e token na mão, instale o [GitHub CLI](https://cli.github.com/) e rode `gh auth login`. Ele resolve o login do Git com o GitHub de uma vez.
+
+## Qual a diferença entre Git e GitHub?
+
+**Git** é o controle de versão que roda na sua máquina. Ele registra cada alteração em commits, permite voltar no tempo e criar linhas de trabalho paralelas com branches. Funciona sozinho, sem internet.
+
+**GitHub** hospeda repositórios Git na nuvem e adiciona colaboração em cima: Pull Requests, code review, issues e permissões. GitLab e Bitbucket são alternativas com o mesmo conceito. Resumindo: Git é a ferramenta, GitHub é onde o time se encontra em volta dela.
+
+## Qual o vocabulário mínimo de Git?
+
+Fixe estas oito palavras e você entende quase toda conversa sobre Git.
+
+| Termo | O que é |
+|---|---|
+| **Repositório** | A pasta do projeto versionada pelo Git, com todo o histórico. O "repo". |
+| **Commit** | Uma fotografia do código em um momento, com uma mensagem que explica a mudança. |
+| **Branch** | Uma linha de trabalho isolada. Uma cópia paralela do código onde você mexe sem afetar a `main`. |
+| **main** | A branch principal, estável e pronta para produção. Antes se chamava `master`. |
+| **Remote (origin)** | A cópia do repositório na nuvem (no GitHub). `origin` é o apelido padrão dela. |
+| **Clone** | Baixar o repositório remoto para a sua máquina pela primeira vez (`git clone`). |
+| **Push / Pull** | Enviar seus commits para o remoto (`push`) e trazer os dos outros (`pull`). |
+| **Merge** | Juntar o código de uma branch em outra. |
+
+O conceito central é a **branch**. Pense numa árvore: a `main` é o tronco e cada branch é um ramo que cresce a partir dele. Para uma tarefa você cria um ramo que sai do tronco, trabalha nele e, ao terminar, junta (merge) o ramo de volta na `main`. Enquanto o ramo existe, a `main` fica intacta para o resto do time.
+
+![Diagrama de branches como uma árvore: o tronco main em ciano, com um ramo feat/login e um ramo fix/bug que saem do tronco e depois são mesclados de volta.](/images/blog/git-branch-tree-diagram.jpg)
+
+## Quais são os comandos Git essenciais?
+
+São poucos comandos e você repete quase todos toda hora. O commit tem duas etapas: você seleciona o que entra (o "stage", com `git add`) e depois grava (`git commit`). Estes cobrem o dia a dia:
+
+| Comando | O que faz |
+|---|---|
+| `git clone <url>` | Baixa um repositório remoto para a sua máquina pela primeira vez. |
+| `git status` | Mostra o que mudou: arquivos modificados, quais estão no stage e em que branch você está. É o comando que você mais roda. |
+| `git add <arquivo>` | Coloca um arquivo no stage, selecionando ele para o próximo commit. `git add .` seleciona tudo que mudou. |
+| `git commit -m "mensagem"` | Grava um commit com os arquivos do stage. O `-m` passa a mensagem direto na linha de comando. |
+| `git switch <branch>` | Troca para uma branch existente. `git switch -c <nome>` cria uma nova e já entra nela. |
+| `git checkout <branch>` | Versão antiga do `switch` para trocar de branch (`checkout -b` cria). Também descarta mudanças em um arquivo: `git checkout -- <arquivo>`. |
+| `git pull` | Traz os commits do remoto para a sua branch e junta com o que você tem. |
+| `git push` | Envia seus commits locais para o remoto (o GitHub). |
+| `git branch -d <nome>` | Apaga uma branch local que já foi mesclada. |
+| `git log --oneline` | Lista o histórico de commits, um por linha. |
+
+## O que é o .gitignore e por que ele importa?
+
+O **.gitignore** é um arquivo de texto na raiz do repositório que lista o que o Git deve ignorar. O que está listado ali não aparece no `git status`, não entra em commits e nunca vai para o GitHub. Cada linha é um padrão de nome de arquivo ou pasta.
+
+Ele importa por três motivos:
+
+- **Segurança.** Mantém segredos fora do repositório: arquivos `.env`, chaves de API, tokens e credenciais. Um segredo commitado fica no histórico para sempre, mesmo que você apague o arquivo depois.
+- **Repositório limpo.** Evita subir o que é gerado ou baixado: `node_modules/`, pastas de build (`dist/`, `.next/`), logs e caches. Isso se recria com um comando, não precisa versionar.
+- **Menos ruído.** Ignora arquivos de sistema e de editor (`.DS_Store`, `.vscode/`) que só interessam à sua máquina.
+
+Exemplo de `.gitignore` de um projeto Node:
+
+```gitignore
+node_modules/
+.env
+.env.local
+dist/
+.next/
+*.log
+.DS_Store
+```
+
+Um detalhe importante: o `.gitignore` só vale para arquivos que o Git ainda não rastreia. Se você já commitou um arquivo antes de ignorá-lo, adicioná-lo ao `.gitignore` não o remove. Tire do rastreio com:
+
+```bash
+git rm --cached .env      # para de rastrear, mas mantém o arquivo na sua máquina
+```
+
+Regra prática: crie o `.gitignore` no começo do projeto, antes do primeiro commit. A maioria dos projetos já vem com um pronto para a stack, e o [gitignore.io](https://www.toptal.com/developers/gitignore) gera um para a sua.
+
+## Clone ou fork: como pegar o código?
+
+Existem dois cenários, e a diferença define os primeiros passos:
+
+| Situação | O que fazer |
+|---|---|
+| **Você tem acesso ao repositório** (é colaborador, caso normal no seu time) | Clone direto, crie a branch nesse mesmo repo e abra a PR ali. |
+| **Você não tem acesso** (um repo público de outra pessoa) | Faça o **fork** primeiro (uma cópia sua do projeto), clone o fork e abra a PR do seu fork para o repositório original. |
+
+**Fork** é uma cópia do repositório na sua própria conta. Você precisa dele quando não pode enviar código direto para o projeto original. Como estamos praticando em um repo público que não é seu, o passo a passo abaixo usa o fluxo com fork. Se você já é colaborador do repo do time, pule os passos de fork e clone o repositório direto.
+
+## Passo a passo: sua primeira Pull Request
+
+1. **Faça o fork.** Em [`github.com/tgmarinho/investidor-calc`](https://github.com/tgmarinho/investidor-calc), clique em "Fork". O GitHub cria uma cópia em `github.com/SEU-USUARIO/investidor-calc`.
+
+2. **Clone o seu fork** para a máquina e entre na pasta:
+
+   ```bash
+   git clone https://github.com/SEU-USUARIO/investidor-calc.git
+   cd investidor-calc
+   ```
+
+3. **Aponte o repositório original como `upstream`.** Isso permite sincronizar depois. Seu fork continua sendo o `origin`.
+
+   ```bash
+   git remote add upstream https://github.com/tgmarinho/investidor-calc.git
+   ```
+
+4. **Crie a sua branch** a partir da `main`. Use um nome descritivo:
+
+   ```bash
+   git switch -c docs/corrige-typo-readme
+   ```
+
+5. **Faça uma mudança pequena.** Para a primeira PR, algo simples resolve, como corrigir um erro de digitação no `README.md`. Mudanças pequenas são mais fáceis de revisar.
+
+6. **Confira, selecione e grave** a mudança:
+
+   ```bash
+   git status                            # veja o que mudou
+   git add README.md                     # selecione o arquivo
+   git commit -m "Corrige typo no README"
+   ```
+
+7. **Envie a branch** para o seu fork (`origin`):
+
+   ```bash
+   git push -u origin docs/corrige-typo-readme
+   ```
+
+8. **Abra a Pull Request.** Depois do push, o GitHub mostra o botão "Compare & pull request". A base é a `main` do repositório original (`tgmarinho/investidor-calc`) e o compare é a sua branch. Pela linha de comando com o GitHub CLI:
+
+   ```bash
+   gh pr create --repo tgmarinho/investidor-calc --base main \
+     --title "Corrige typo no README" \
+     --body "Corrige um erro de digitação na seção de instalação do README."
+   ```
+
+9. **Escreva um bom título e descrição.** A descrição responde: o que muda, por que muda e como testar. Se a PR resolve uma issue, use `Closes #123` para o GitHub fechar a issue no merge.
+
+Pronto: essa é a sua primeira Pull Request. No repo do seu time, o fluxo é o mesmo sem os passos de fork: você clona o repo direto, cria a branch, dá push no `origin` e abre a PR no próprio repositório.
+
+## Como pedir e responder a um review?
+
+Na página da PR, use o campo **Reviewers** para pedir a revisão de um colega (no seu time, geralmente há um responsável ou um code owner). O **code review** é a leitura do seu código por outra pessoa antes do merge: ela lê o diff, comenta trechos, faz perguntas e sugere mudanças. É a principal barreira de qualidade do time. O revisor pode:
+
+- **Comentar** uma linha com uma dúvida ou sugestão.
+- **Aprovar** (`Approve`) quando está tudo certo.
+- **Pedir mudanças** (`Request changes`) quando algo precisa de ajuste.
+
+Quando pedem mudanças, você não abre uma PR nova. Faz mais commits na mesma branch e dá push; a PR se atualiza sozinha:
+
+```bash
+git add .
+git commit -m "Ajusta texto conforme review"
+git push
+```
+
+## Como mesclar (merge) a Pull Request?
+
+Com a PR aprovada e a automação (testes, lint, build) verde, alguém clica em "Merge" no GitHub. A mudança entra na `main` e a branch da tarefa pode ser apagada. O GitHub oferece três estratégias, e a escolha muda o histórico:
+
+| Estratégia | O que faz | Quando usar |
+|---|---|---|
+| **Merge commit** | Preserva todos os commits da branch e cria um commit de junção | Quando o time quer o histórico completo da branch |
+| **Squash and merge** | Junta todos os commits da PR em um só na `main` | O padrão mais comum: histórico limpo, um commit por PR |
+| **Rebase and merge** | Reaplica os commits na `main` sem commit de junção | Quando o time quer histórico linear |
+
+Muitos times usam **squash and merge**: cada PR vira um único commit limpo na `main`. Depois do merge, atualize a sua `main` local e apague a branch antiga. Com fork, você puxa do `upstream`; como colaborador, um `git pull` basta:
+
+```bash
+git switch main
+git pull upstream main                # fork: traz a main original atualizada
+git branch -d docs/corrige-typo-readme
+```
+
+## Por que nunca comitar direto na main ou staging?
+
+A regra mais importante de qualquer time: **ninguém comita direto na `main` ou na `staging`**. Toda mudança entra por uma Pull Request. Essas branches são compartilhadas por todo mundo, então um commit direto ali pode quebrar o ambiente de todos os colegas sem nada ter sido revisado.
+
+Abrir uma PR garante quatro coisas que o commit direto não dá:
+
+- **Revisão.** Outra pessoa olha a mudança antes dela virar oficial.
+- **Automação.** Testes, lint e build rodam na PR e barram o merge se algo quebra.
+- **Histórico.** Cada mudança na `main` tem contexto, discussão e autor claro.
+- **Reversão fácil.** Se a PR causou problema, você reverte aquele merge inteiro de uma vez.
+
+Times fecham essa porta com uma **branch protection rule** no GitHub: a `main` e a `staging` passam a exigir PR aprovado e checks verdes, e o commit direto deixa de ser possível. Mesmo sem essa proteção, trate a regra como inegociável.
+
+## Como um time trabalha junto no GitHub?
+
+O fluxo mais comum é o **feature branch workflow**: a `main` fica sempre estável e todo trabalho novo nasce numa branch curta que vira PR. O ciclo diário de cada pessoa é:
+
+1. Atualizar a `main` local (`git pull`).
+2. Criar uma branch para a tarefa (`git switch -c`).
+3. Trabalhar em commits pequenos.
+4. Enviar a branch (`git push`) e abrir a PR.
+5. Passar pelo code review e ajustar.
+6. Fazer o merge quando aprovado e a automação passar.
+7. Apagar a branch e recomeçar.
+
+O problema mais comum é o **conflito de merge**: quando duas pessoas mudam a mesma linha do mesmo arquivo (você mexe na linha 1 do `App.tsx` e um colega também), quem envia primeiro entra sem problema; o segundo recebe um conflito, porque o Git não sabe qual versão manter e pede que você decida. É mais um motivo para não comitar direto na `main`: com PRs, o conflito aparece num lugar isolado e revisável. Como resolver está na próxima seção.
+
+A regra que sustenta o time: branches curtas, PRs pequenos e merges frequentes. Quanto menor o intervalo entre criar a branch e mesclar, menos conflito e review mais rápido.
+
+## Como simular e resolver seu primeiro conflito?
+
+A melhor forma de perder o medo de conflito é provocar um de propósito, numa pasta de teste. Crie um arquivo na `main`, edite a mesma linha em duas branches e mande uma encontrar a outra:
+
+```bash
+git switch main
+echo "Bem-vindo ao projeto" > saudacao.txt
+git add saudacao.txt && git commit -m "Adiciona saudacao"
+
+git switch -c feat/saudacao          # nesta branch, mude a linha para: Bem-vindo ao nosso projeto
+git commit -am "Muda saudacao na branch"
+
+git switch main                      # na main, mude a MESMA linha para: Bem-vindo ao projeto incrivel
+git commit -am "Muda saudacao na main"
+
+git merge feat/saudacao              # aqui o conflito estoura
+```
+
+O Git para e avisa: `CONFLICT (content): Merge conflict in saudacao.txt`. Abra o arquivo no seu editor e você vê os marcadores que o Git colocou:
+
+```text
+<<<<<<< HEAD
+Bem-vindo ao projeto incrivel
+=======
+Bem-vindo ao nosso projeto
+>>>>>>> feat/saudacao
+```
+
+Ler isso é simples: entre `<<<<<<< HEAD` e `=======` está o código da sua branch atual (a `main`); entre `=======` e `>>>>>>>` está o código que vem da outra branch (`feat/saudacao`). Você decide qual fica. No VS Code aparecem botões acima do bloco: **Accept Current Change**, **Accept Incoming Change** ou **Accept Both Changes**. Você também pode editar na mão e deixar o texto final que quiser.
+
+Depois de escolher, apague os três marcadores (`<<<<<<<`, `=======`, `>>>>>>>`), deixe só o código certo e finalize:
+
+```bash
+git add saudacao.txt
+git commit                           # conclui o merge
+```
+
+Se quiser desistir no meio e voltar ao estado anterior, use `git merge --abort`. Conflito não é erro seu nem sinal de que algo quebrou: é só o Git pedindo uma decisão que ele não pode tomar sozinho.
+
+## A IA já escreve o Git por você (e resolve conflito)
+
+Não é mais preciso decorar comandos. Agentes de código como Claude Code e Cursor escrevem o Git para você: criam a branch, fazem os commits com mensagens claras, abrem a Pull Request e resolvem conflitos. Você descreve a intenção ("crie uma branch, comite isso e abra uma PR") e a IA faz o trabalho mecânico.
+
+Isso não muda o conceito, muda quem digita. O ciclo continua o mesmo: clone, branch, commit, PR, review, merge. Mas entender o fluxo ainda importa, porque é você que aprova a PR e assume a mudança na `main`. Saber o que é uma branch, uma PR e um conflito é o que te deixa revisar o que a IA fez em vez de aceitar no escuro.
+
+## Qual é a regra prática?
+
+Sua primeira PR não é sobre decorar comandos, é sobre completar o ciclo uma vez com atenção: clone, branch, commit, push, PR, review, merge. Depois disso, tudo o mais (conflitos, estratégias de merge, automações) é variação sobre a mesma base. Isole cada mudança em uma branch, explique a intenção em commits claros, peça revisão em PRs pequenos e mescle rápido.
+
+---
+
+**Resumo:** para fazer sua primeira Pull Request, você faz o fork (ou clona o repo do time), cria uma branch com `git switch -c`, faz uma mudança pequena, grava com `git add` e `git commit -m`, envia com `git push` e abre a PR na `main`. O time faz code review, você ajusta com novos commits, e a PR é mesclada (normalmente com squash) na `main`. Nunca comite direto na `main` ou `staging`: sempre abra uma PR. Branches curtas, PRs pequenos e merges frequentes mantêm o time rápido e sem conflitos.
