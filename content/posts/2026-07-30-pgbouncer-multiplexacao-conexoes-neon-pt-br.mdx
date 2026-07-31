@@ -1,0 +1,147 @@
+---
+title: "PgBouncer multiplexando conexões, e como o Neon faz isso"
+description: "Como a multiplexação do PgBouncer deixa milhares de clientes dividirem poucas conexões Postgres no modo transação, e como o Neon embute isso com driver serverless."
+date: "2026-07-30"
+published: true
+slug: "pgbouncer-multiplexacao-conexoes-neon-pt-br"
+language: "pt-BR"
+translationKey: "pgbouncer-neon-connection-multiplexing"
+categories: ["postgresql", "pgbouncer", "neon", "serverless", "pt-br"]
+image: "/images/blog/pgbouncer-neon-multiplexing-cover.jpg"
+---
+
+**Multiplexação de conexões** é como um pooler tipo PgBouncer deixa milhares de clientes dividirem um punhado de conexões reais com o Postgres, emprestando uma conexão real só pela duração de cada transação.
+É o truque que mantém o Postgres de pé sob serverless e autoscaling, onde pools ingênuos por instância estourariam o limite de conexões.
+O Neon embute a mesma ideia na plataforma, com um PgBouncer gerenciado e um driver serverless.
+
+Este post parte de [Como funciona o pool de conexões de banco de dados](/blog/como-funciona-pool-de-conexoes-de-banco-pt-br).
+Leia aquele primeiro se termos como pool, sessão e empréstimo por query forem novos.
+Aqui a gente desce um nível: o mapeamento entre conexões de cliente e conexões de servidor, e o que você troca por isso.
+
+## O que é multiplexação de conexões?
+
+**Multiplexação** significa muitos clientes lógicos dividindo um recurso físico ao longo do tempo.
+Um pooler mantém dois conjuntos separados de conexões: as viradas para o seu app (conexões de cliente) e as viradas para o Postgres (conexões de servidor).
+A ideia toda é que o primeiro conjunto seja grande e barato, e o segundo pequeno e precioso.
+
+```txt
+  clientes (muitos, baratos)     PgBouncer          servidores (poucos, preciosos)
+  app conn 1 ─┐
+  app conn 2 ─┤                ┌───────────┐          conn real A ── backend Postgres
+  app conn 3 ─┼──────────────► │ mapeia N:1│ ───────► conn real B ── backend Postgres
+     ...      │                └───────────┘          conn real C ── backend Postgres
+  app conn N ─┘
+```
+
+Uma conexão de cliente é quase de graça: é só um socket até o PgBouncer, que é um processo leve.
+Uma conexão de servidor é cara: é um processo backend real do Postgres, com memória própria.
+A multiplexação gasta o recurso barato à vontade e raciona o caro.
+
+## Como o modo transação mapeia clientes para conexões?
+
+No **modo transação**, o PgBouncer atribui uma conexão real de servidor a um cliente só enquanto uma transação está aberta, e a recupera no instante em que a transação termina.
+
+Acompanhe dois clientes dividindo uma conexão de servidor:
+
+```txt
+t0  cliente 1: BEGIN         -> pega a conn de servidor A
+t1  cliente 1: INSERT ...       (segura A)
+t2  cliente 1: COMMIT        -> libera A
+t3  cliente 2: BEGIN         -> pega a conn de servidor A   (a mesma, agora livre)
+t4  cliente 2: SELECT ...       (segura A)
+t5  cliente 2: COMMIT        -> libera A
+```
+
+Entre o `COMMIT` e o próximo `BEGIN`, o cliente não segura nenhuma conexão de servidor.
+Um cliente ocioso, que abriu conexão mas não está numa transação, custa um socket no PgBouncer e nada no Postgres.
+É essa a multiplicação: 5.000 clientes quase ociosos rodam em 20 conexões reais, porque num dado instante só uns poucos estão dentro de uma transação.
+
+Um único comando em autocommit é tratado como uma transação de um comando, então ele pega uma conexão de servidor, roda e libera em milissegundos.
+
+## Qual é a matemática por trás da multiplicação?
+
+Dois parâmetros definem a proporção:
+
+| Parâmetro | Significado | Valor típico |
+|---|---|---|
+| **max_client_conn** | quantos clientes podem conectar no PgBouncer | 5.000 |
+| **default_pool_size** | conexões reais com o Postgres por usuário e banco | 20 |
+
+O primeiro é gigante, o segundo é pequeno.
+A capacidade segura é a mesma Lei de Little dos fundamentos de pool: `conexoes_reais = transacoes_por_segundo × duracao_media_da_transacao`.
+Se as transações são curtas (poucos milissegundos), 20 conexões reais vazam milhares de transações por segundo, então os 5.000 clientes quase nunca esperam.
+Se as transações são longas, a proporção desaba, porque cada uma prende uma conexão real pela duração inteira.
+É por isso que uma transação aberta esperando código de aplicação (`idle in transaction`) é tão nociva aqui: ela segura uma conexão de servidor escassa sem fazer trabalho de banco.
+
+## O que a multiplexação te custa?
+
+Como o cliente não mantém a mesma conexão de servidor entre transações, tudo que vive em **estado de sessão** pode quebrar:
+
+- Prepared statements no nível do driver. O PgBouncer 1.21+ suporta eles no modo transação, mas setups antigos não, então talvez você precise desligar.
+- `SET` de escopo de sessão, variáveis de sessão e ajustes de `search_path` que deveriam persistir.
+- `LISTEN` / `NOTIFY`.
+- Advisory locks pensados para durar entre transações.
+- Tabelas temporárias que deveriam sobreviver a uma transação.
+
+Regras práticas:
+
+1. Desligue os prepared statements do driver se aparecer erro (por exemplo `statement_cache_size=0`, ou a opção de simple-query do driver).
+2. Mantenha o que é de escopo de sessão dentro de uma transação.
+3. Use a conexão direta (sem pool) para migrations, workers de `LISTEN`/`NOTIFY` e sessões de admin.
+
+## Como o Neon faz o pooling diferente?
+
+O **Neon** é Postgres serverless, então o pooling não é um extra, é parte da plataforma.
+O Neon roda um PgBouncer gerenciado em modo transação na frente de cada banco.
+Você adere usando o host com pool: o Neon te dá duas connection strings, e a com pool tem o sufixo `-pooler` no host.
+
+```txt
+direta   : postgres://user:pass@ep-cool-name.us-east-2.aws.neon.tech/db
+com pool : postgres://user:pass@ep-cool-name-pooler.us-east-2.aws.neon.tech/db
+```
+
+O endpoint com pool aceita muito mais conexões que o Postgres cru (o Neon documenta até 10.000 no endpoint com pool), que é exatamente o que o serverless precisa.
+Use a string com pool para o app, e a direta para migrations e qualquer coisa que precise de sessão estável.
+O Neon também escala o compute para zero quando ocioso, então o pooler ajuda a absorver a tempestade de reconexões quando um banco suspenso acorda na próxima requisição.
+
+## O que é o driver serverless do Neon?
+
+O pooling por transação ainda pressupõe uma conexão TCP normal.
+Alguns ambientes, como runtimes de edge, não oferecem TCP cru.
+O **driver serverless** do Neon (`@neondatabase/serverless`) resolve isso falando Postgres sobre HTTP e WebSocket em vez de um socket cru:
+
+- **HTTP (fetch):** para uma query única e avulsa, o driver a envia por uma requisição HTTP. Nenhuma conexão para manter, ideal para funções de edge sem estado.
+- **WebSocket:** para transações e sessões, ele abre um WebSocket, que se comporta como uma conexão pela duração da interação.
+
+```txt
+função edge / serverless
+        │  query por HTTP (avulsa)      ┌─────────────┐   ┌──────────┐
+        └──────────────────────────────►│ proxy Neon   │──►│ Postgres │
+        │  transação por WebSocket       │ + PgBouncer  │   └──────────┘
+        └──────────────────────────────►└─────────────┘
+```
+
+O modelo mental continua o mesmo: multiplexar sobre um conjunto pequeno de conexões reais.
+O driver só troca o transporte para funcionar onde um pool TCP não consegue viver.
+
+## E no Railway, Render e Supabase?
+
+O padrão é idêntico entre plataformas gerenciadas, só muda a chave:
+
+| Plataforma | Como obter pooling |
+|---|---|
+| **Railway** | adicione o plugin ou serviço PgBouncer e aponte o app para a URL dele |
+| **Render** | habilite o connection pooler na instância Postgres gerenciada |
+| **Supabase** | use a connection string com pool (Supavisor, modo transação) na porta 6543 |
+| **Neon** | use o host `-pooler`, ou o driver serverless no edge |
+
+Em todos os casos a regra vale: tráfego do app vai para a URL do pooler, e migrations mais trabalho preso à sessão vão para a URL direta.
+
+## Resumo
+
+- **Multiplexação de conexões** deixa muitas conexões de cliente dividirem poucas conexões reais do Postgres, emprestando uma por transação.
+- O **modo transação** é o que faz funcionar: uma conexão real fica presa só do `BEGIN` ao `COMMIT`, então clientes ociosos não custam nada no Postgres.
+- A proporção vem de `max_client_conn` (grande) sobre `default_pool_size` (pequeno), e só se mantém enquanto as transações forem curtas.
+- O custo é o estado de sessão: prepared statements, `LISTEN`/`NOTIFY`, advisory locks e temp tables podem quebrar, então mantenha o de escopo de sessão numa transação e use a conexão direta para migrations.
+- O **Neon** entrega um PgBouncer gerenciado (use o host `-pooler`) e um driver serverless que fala Postgres sobre HTTP e WebSocket para runtimes de edge.
+- Railway, Render e Supabase expõem o mesmo pooling com uma chave diferente. App para o pooler, migrations para a direta.
