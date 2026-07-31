@@ -223,6 +223,51 @@ The most common problem is the **merge conflict**: when two people change the sa
 
 The rule that holds a team together: short branches, small PRs, frequent merges. The smaller the gap between creating a branch and merging it, the fewer conflicts and the faster the review.
 
+## How do you keep your branch up to date (and avoid conflicts)?
+
+The most common cause of big conflicts is working on a stale branch for too long. While you develop, other PRs keep landing on `main` and the gap between your code and `main` grows. The bigger that gap, the higher the chance of a conflict at merge time.
+
+Prevention is simple: **always start a new task from an updated `main`** and, if your branch lasts more than a day or two, pull the latest `main` into it regularly.
+
+### Before creating a new branch
+
+Update your local `main` before creating the task branch. This makes sure you start from the latest code:
+
+```bash
+git switch main
+git pull                              # brings in everything that landed on main since your last pull
+git switch -c feat/new-task           # creates the branch from the current state
+```
+
+If your team uses `staging` as the base instead of `main`, swap `main` for `staging` in the commands.
+
+### When the branch has been open for a while
+
+If your branch has been open for days and `main` moved forward (other PRs were merged), bring those changes into your branch before you keep working. The safest way for beginners is a merge:
+
+```bash
+git switch feat/new-task              # make sure you are on your branch
+git pull origin main                  # brings the new main commits and merges them into your branch
+```
+
+If there is a conflict, Git tells you and you resolve it as shown in the section below. But if you do this often (every day or two), the conflicts stay small and easy to fix.
+
+### The practical rule
+
+Start every new task by pulling `main`. Before opening the PR, pull `main` again to make sure your branch is compatible. This habit alone eliminates most of the conflicts that scare beginners.
+
+### Asking an AI agent to do it
+
+If you use a coding agent (Claude Code, Cursor, Copilot), you do not need to remember the commands. Just describe what you want before starting the task:
+
+> "Before we start, update the branch with main so we have the latest code."
+
+Or, if the branch has been open for a few days:
+
+> "Pull main into my branch before we continue, and resolve any conflicts."
+
+The agent runs `git pull origin main`, resolves simple conflicts on its own, and asks you when it needs your decision. The important thing is to build the habit of asking for this at the start of every task, whether you type the command yourself or tell the agent.
+
 ## How do you simulate and resolve your first conflict?
 
 The best way to lose the fear of conflicts is to cause one on purpose, in a test folder. Create a file on `main`, edit the same line on two branches, and have one meet the other:
@@ -274,4 +319,4 @@ Your first PR is not about memorizing commands, it is about completing the cycle
 
 ---
 
-**Summary:** to make your first Pull Request, you fork (or clone your team's repo), create a branch with `git switch -c`, make a small change, record it with `git add` and `git commit -m`, push with `git push`, and open the PR against `main`. The team reviews the code, you adjust with new commits, and the PR is merged (usually with squash) into `main`. Never commit straight to `main` or `staging`: always open a PR. Short branches, small PRs, and frequent merges keep a team fast and conflict-free.
+**Summary:** to make your first Pull Request, you fork (or clone your team's repo), create a branch with `git switch -c`, make a small change, record it with `git add` and `git commit -m`, push with `git push`, and open the PR against `main`. The team reviews the code, you adjust with new commits, and the PR is merged (usually with squash) into `main`. Never commit straight to `main` or `staging`: always open a PR. Before creating each new branch, update `main` with `git pull` so you start from the latest code and reduce conflicts. Short branches, small PRs, and frequent merges keep a team fast and conflict-free.
