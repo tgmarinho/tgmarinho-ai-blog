@@ -1,0 +1,183 @@
+---
+title: "Agentic Git: como usar IA para trabalhar com Git e GitHub (sem gastar tokens à toa)"
+description: "Guia de Agentic Git para vibe coders e devs juniores: deixe o agente de IA criar branch, commit, PR e resolver conflitos usando o git CLI (não o MCP) para economizar tokens."
+date: "2026-07-31"
+published: true
+slug: "agentic-git-como-usar-ia-com-git-github-pt-br"
+language: "pt-BR"
+translationKey: "agentic-git-ai-workflow"
+categories: ["git", "github", "ai-agents", "workflow", "pt-br"]
+image: "/images/blog/agentic-git-cover.jpg"
+---
+
+**Agentic Git** é usar um agente de IA (Claude Code, Cursor, Copilot) para executar o trabalho de Git e GitHub por você: criar a branch, gravar os commits, abrir a Pull Request e resolver conflitos. Você descreve a intenção em linguagem natural e o agente digita os comandos. A regra de ouro: peça para o agente usar o **git CLI** (os comandos `git` e `gh` no terminal), e não um servidor **MCP** de Git, porque o MCP infla o contexto com dezenas de definições de ferramentas e queima tokens em toda requisição. Este guia mostra o fluxo completo e como configurar isso.
+
+Este post é a continuação prática do [Git e GitHub para iniciantes](/blog/git-github-para-iniciantes-primeira-pull-request-pt-br). Lá você aprende os conceitos (branch, commit, PR, merge); aqui você aprende a delegar tudo isso para a IA sem perder o controle.
+
+## O que é Agentic Git?
+
+**Agentic Git** é o padrão de deixar o agente de código operar o Git enquanto você fica na direção. Em vez de decorar comandos, você fala o que quer:
+
+> "Cria uma branch para o ajuste do header, comita essa mudança com uma mensagem clara e abre uma PR para a main."
+
+O agente traduz isso em `git switch -c`, `git add`, `git commit -m` e `gh pr create`, mostra o que fez e espera sua aprovação. O conceito não muda: o ciclo continua sendo clone, branch, commit, PR, review, merge. O que muda é quem digita. Você deixa de ser o operador e passa a ser o revisor.
+
+Isso não dispensa entender Git. Você é quem aprova a PR e assume a mudança na `main`. Saber o que é uma branch e um conflito é o que te permite revisar o trabalho do agente em vez de aceitar no escuro.
+
+## Por que usar o git CLI no agente e não o MCP? (a dica de ouro)
+
+Essa é a decisão que mais economiza dinheiro e mais melhora a qualidade das respostas, e quase ninguém fala dela.
+
+Um servidor **MCP** (Model Context Protocol) injeta as definições das suas ferramentas no contexto do modelo em **toda requisição**. Um MCP de Git costuma expor de 20 a 40 ferramentas (`git_status`, `git_commit`, `git_push`, `git_log` e por aí vai), e cada uma carrega um schema JSON com nome, descrição e parâmetros. Isso são milhares de tokens ocupando a janela de contexto o tempo inteiro, mesmo quando você nem está mexendo em Git. Você paga por eles em cada mensagem da sessão.
+
+O **git CLI** não tem esse custo. O agente já tem uma ferramenta de shell (Bash/terminal), e o `git` já está instalado na máquina. Rodar `git status` custa só a string do comando mais a saída (que é curta). Nada fica pendurado no contexto entre uma tarefa e outra.
+
+| Critério | Git via CLI (`git` + `gh`) | Git via MCP |
+|---|---|---|
+| **Custo de tokens** | Baixo: só o comando e a saída | Alto: schemas de todas as ferramentas em todo request |
+| **Contexto ocupado** | Zero entre tarefas | Fixo a sessão inteira, mesmo sem usar Git |
+| **Conhecimento do modelo** | Enorme: os LLMs foram treinados em milhões de exemplos de `git` | Depende do wrapper e da qualidade das descrições |
+| **Flexibilidade** | Total: qualquer flag, pipe ou combinação | Limitada ao que o MCP expôs |
+| **Quando compensa** | Git e GitHub (têm CLIs excelentes) | Serviços sem bom CLI ou que exigem dados estruturados/auth complexa |
+
+O ponto central: **MCP é ótimo para serviços que não têm um bom CLI.** Git e GitHub têm CLIs maduros e completos (`git` e `gh`), e os modelos os dominam com fluência. Envolver isso num MCP só adiciona uma camada de indireção e um imposto de tokens sem entregar nada em troca.
+
+### Como forçar o agente a usar o CLI
+
+Não basta pedir uma vez. Coloque a regra no arquivo de instruções do agente para valer a sessão inteira (`CLAUDE.md`, `AGENTS.md` ou `.cursorrules`):
+
+```md
+## Git
+
+- Use os CLIs `git` e `gh` direto pelo shell para todo trabalho de Git e GitHub.
+- Não use nenhum MCP de Git. O CLI é mais barato em tokens e mais flexível.
+```
+
+Se você já tem um MCP de Git instalado, desative-o. Você vai gastar menos e o agente vai responder melhor, porque a janela de contexto fica livre para o código de verdade.
+
+## Como instruir o agente para cada tarefa de Git?
+
+O segredo é descrever a **intenção**, não o comando. O agente escolhe a sintaxe. Alguns exemplos de pedido e o que o agente faz por baixo:
+
+| Você pede | O agente roda |
+|---|---|
+| "Cria uma branch para o login" | `git switch -c feat/login` |
+| "O que mudou até agora?" | `git status` e `git diff` |
+| "Comita isso com uma boa mensagem" | `git add` + `git commit -m "..."` |
+| "Sobe a branch e abre a PR" | `git push -u origin ...` + `gh pr create` |
+| "Atualiza minha branch com a main" | `git pull origin main` |
+| "Resolve os conflitos" | edita os arquivos, `git add`, conclui o merge |
+| "Mostra os últimos 5 commits" | `git log --oneline -5` |
+
+Peça mensagens de commit claras: "comita em commits pequenos e com mensagens descritivas" gera um histórico melhor do que um único commit gigante chamado "changes".
+
+## Qual é o ciclo completo com IA, da branch ao merge?
+
+Um fluxo real de uma tarefa, do início ao fim, conduzido por prompts:
+
+1. **Começar do zero atualizado.** Antes de qualquer coisa:
+
+   > "Atualiza a main e cria uma branch nova para a tarefa X."
+
+   O agente roda `git switch main`, `git pull` e `git switch -c feat/x`. Começar de uma `main` atualizada é o que mais evita conflito depois.
+
+2. **Trabalhar e revisar.** Você e o agente editam o código. A qualquer momento:
+
+   > "Me mostra o diff do que mudou antes de comitar."
+
+3. **Comitar com intenção.** Em vez de deixar tudo para o fim:
+
+   > "Comita essa parte com uma mensagem clara, depois seguimos."
+
+4. **Abrir a PR.** Com a branch pronta:
+
+   > "Sobe a branch e abre uma PR para a main com título e descrição explicando o que muda e por quê."
+
+   O agente usa `gh pr create` e escreve o corpo da PR sozinho, baseado no diff.
+
+5. **Ajustar após o review.** Quando o revisor pede mudanças:
+
+   > "Aplica o feedback do review, comita e dá push na mesma branch."
+
+   A PR se atualiza sozinha. Você nunca abre uma PR nova para isso.
+
+O ciclo é idêntico ao manual. A diferença é que você passa o tempo pensando na mudança, não lembrando de sintaxe.
+
+## Como abrir a Pull Request pelo agente?
+
+O agente usa o **GitHub CLI** (`gh`), então nem precisa abrir o navegador. Um pedido como:
+
+> "Abre uma PR para a main. No corpo, explica o que muda, por quê e como testar."
+
+vira algo assim:
+
+```bash
+gh pr create --base main \
+  --title "Adiciona validação no formulário de login" \
+  --body "Valida email e senha no cliente antes do submit. Testar: enviar o form vazio e ver as mensagens de erro."
+```
+
+Se o `gh` não estiver autenticado, o agente vai avisar. Rode `gh auth login` uma vez e nunca mais precisa mexer nisso. Uma boa PR responde três perguntas: o que muda, por que muda e como testar. Peça isso explicitamente e a descrição sai pronta.
+
+## Como resolver conflitos com o agente?
+
+Conflito assusta iniciante, mas é onde o agente mais ajuda. Quando o Git para com `CONFLICT (content): Merge conflict`, basta pedir:
+
+> "Deu conflito no merge. Analisa os dois lados, resolve mantendo as duas intenções quando fizer sentido, e me explica o que você decidiu."
+
+O agente lê os marcadores (`<<<<<<<`, `=======`, `>>>>>>>`), entende o código dos dois lados e propõe uma resolução. Para conflitos simples ele resolve sozinho. Para os ambíguos, ele te explica o trade-off e pede sua decisão, que é exatamente o que deve acontecer: a decisão de qual lógica fica é sua, não dele.
+
+Se quiser desistir do merge no meio, peça "aborta o merge" e ele roda `git merge --abort`, voltando tudo ao estado anterior.
+
+## Quais ferramentas agênticas deixam isso em cliques?
+
+Até aqui você conduziu tudo digitando prompts no terminal. Dá para subir um nível: ferramentas agênticas transformam o fluxo de Git em pontos e cliques e ainda deixam você rodar vários agentes ao mesmo tempo, cada um na sua branch. Vale separar duas camadas.
+
+**Os agentes são o motor.** O **Claude Code** e o **Codex** são os agentes que de fato escrevem o código e rodam o `git` e o `gh` no terminal. São eles que executam a dica de ouro deste post.
+
+**Os orquestradores são a cabine.** O **Conductor** e o **Orca** são apps de desktop que rodam esses agentes por cima do Git, cada tarefa em uma **git worktree** isolada (branch, arquivos e terminal próprios), e transformam o ciclo em uma interface visual. O que vira clique neles:
+
+- **Uma branch por tarefa, isoladas.** Cada agente trabalha em uma worktree separada, sem pisar no trabalho do outro. Você toca várias tarefas em paralelo e compara as soluções lado a lado.
+- **Review visual do diff.** Um diff viewer embutido: você lê e comenta a mudança antes de mesclar, sem sair da ferramenta.
+- **Abrir a PR e mesclar no clique.** Criar a Pull Request, ver os checks (testes, lint, build) e fazer o merge viram botões.
+- **Arquivar a workspace.** Depois do merge, a tarefa é encerrada e a worktree é limpa.
+
+Documentação: [Conductor](https://www.conductor.build/docs) e [Orca](https://www.onorca.dev/docs). Nos dois, o agente por baixo continua usando o `git` e o `gh` no shell, então a dica de ouro (CLI, não MCP) continua valendo e você continua economizando tokens. A base disso é o [git worktree para fluxo paralelo](/blog/git-worktree-fluxo-paralelo-pt-br): o mecanismo que dá a cada agente uma cópia isolada do repositório.
+
+## Por que as git worktrees ficaram populares com agentes de IA?
+
+**Worktree** não é um recurso novo do Git, mas o uso explodiu agora por um motivo simples: o gargalo do desenvolvimento mudou de lugar. Antes, escrever código era a parte lenta e cada dev tocava uma tarefa por vez, então um único diretório de trabalho bastava. Com agentes de IA escrevendo código rápido e trabalhando sozinhos por vários minutos, uma pessoa passa a supervisionar vários agentes ao mesmo tempo. O gargalo deixou de ser digitar e virou revisar.
+
+Aí aparece o limite do Git tradicional: um `git checkout` normal tem um único diretório de trabalho, então você só fica em uma branch por vez. Se dois agentes mexem nos mesmos arquivos na mesma branch, eles se atropelam. A **git worktree** resolve isso ao permitir vários diretórios de trabalho para o mesmo repositório, cada um na sua própria branch, compartilhando o mesmo histórico (`.git`). Cada agente ganha um espaço isolado, com arquivos, branch e terminal próprios.
+
+Os ganhos que fazem isso valer a pena:
+
+- **Paralelismo real, sem colisão.** Cada agente tem seu próprio sistema de arquivos. Um agente refatorando não encosta nos arquivos de outro corrigindo um bug.
+- **Zero custo de troca de contexto.** Acabou a dança de `git stash` e `git switch`. Cada tarefa mantém seu estado: arquivos abertos, dev server rodando, teste no meio.
+- **Comparar soluções.** Rode a mesma tarefa com dois agentes (ou dois modelos) em duas worktrees, compare os diffs e fique com a melhor. Escolher entre tentativas ficou barato.
+- **Criação instantânea e barata.** Worktrees compartilham o mesmo banco de objetos do Git, então criar uma é quase imediato e ocupa pouco disco, diferente de clonar o repo inteiro. Criar e descartar por tarefa é trivial.
+- **Ambientes isolados.** Cada worktree roda seu próprio dev server na sua porta e sua própria bateria de testes, sem conflitar com as outras.
+- **Raio de dano controlado.** Um agente que quebra algo quebra só a própria worktree. A `main` e as outras tarefas continuam limpas.
+
+É por isso que os orquestradores chamam cada tarefa de **workspace**: no fundo é uma worktree embrulhada com uma sessão de agente, um terminal e uma aba de navegador. Um conceito antigo do Git virou a unidade de trabalho da era dos agentes.
+
+## O que você ainda precisa entender (mesmo delegando tudo)?
+
+Delegar a digitação não é delegar a responsabilidade. Três coisas continuam sendo suas:
+
+- **Revisar o diff antes do merge.** Leia o que o agente mudou. "Me mostra o diff" é o comando mais importante do Agentic Git. Você aprova, você assume.
+- **Nunca comitar direto na `main` ou `staging`.** Toda mudança entra por PR, mesmo com IA. Isso garante review, automação (testes, lint, build) e reversão fácil. Peça sempre uma branch, nunca deixe o agente comitar na `main`.
+- **Entender o conceito, não a sintaxe.** Saber o que é branch, PR e conflito é o que te deixa revisar o trabalho do agente. Sem isso, você aceita no escuro, e aí a IA vira um risco em vez de uma alavanca.
+
+## Quais são as regras de ouro do Agentic Git?
+
+- **Use o git CLI, não o MCP.** Economiza tokens e melhora as respostas. Coloque a regra no arquivo de instruções do agente.
+- **Descreva a intenção, não o comando.** "Cria uma branch e abre a PR" em vez de tentar lembrar a sintaxe.
+- **Sempre parta de uma `main` atualizada.** É o que mais evita conflito.
+- **Peça commits pequenos e mensagens claras.** Histórico limpo é histórico útil.
+- **Sempre revise o diff antes do merge.** Você é o dono da mudança.
+- **Nunca comite direto na `main`.** Toda mudança por PR, com ou sem IA.
+
+---
+
+**Resumo:** Agentic Git é deixar o agente de IA operar o Git e o GitHub (branch, commit, PR, conflito) enquanto você dirige por linguagem natural e revisa o resultado. A dica de ouro é instruir o agente a usar o **git CLI** (`git` e `gh`) em vez de um MCP de Git: o MCP injeta dezenas de schemas de ferramentas no contexto e queima tokens em toda requisição, enquanto o CLI é praticamente de graça e os modelos o dominam. Fixe essa regra no `CLAUDE.md`/`AGENTS.md`, descreva a intenção em vez do comando, sempre parta de uma `main` atualizada, peça commits pequenos e, acima de tudo, revise o diff antes do merge. Ferramentas como Conductor e Orca transformam esse ciclo em cliques e rodam vários agentes em paralelo, cada um na sua worktree, mas por baixo continuam usando o CLI. Você delega a digitação, não a responsabilidade.
