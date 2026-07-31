@@ -18,6 +18,33 @@ This post builds on [How database connection pooling works](/en/blog/how-databas
 Read that first if terms like pool, session, and per-query borrowing are new.
 Here we go one level deeper: the mapping between client connections and server connections, and what you trade for it.
 
+## Why use a pooler at all?
+
+Postgres has a hard connection ceiling set by `max_connections`, typically around 100.
+Every open connection is a backend process on the server, consuming around 3-5 MB of RAM even when idle.
+
+Without a pooler, horizontal scaling hits this wall fast:
+
+```txt
+500 app instances × 10 connections each = 5,000 connections
+Postgres: "too many clients already" → refuses new connections
+```
+
+With PgBouncer in front:
+
+```txt
+500 app instances → 5,000 connections to PgBouncer (cheap)
+PgBouncer → only 20 real connections to Postgres
+Postgres: fine, RAM preserved
+```
+
+PgBouncer multiplexes N clients onto a few real connections, so you can scale app instances horizontally without hitting the database ceiling.
+
+**Neon solves a different problem.** Serverless functions (Vercel, Lambda, Cloudflare Workers) are ephemeral: each invocation can open and close a connection, and thousands of concurrent functions would overwhelm any Postgres.
+Neon addresses this three ways: a managed PgBouncer built into the platform, a serverless driver that speaks Postgres over HTTP and WebSocket (no TCP required), and scale-to-zero compute so you only pay while the database is active.
+
+The rest of this post shows exactly how each works.
+
 ## What is connection multiplexing?
 
 **Multiplexing** means many logical clients sharing one physical resource over time.
@@ -124,6 +151,30 @@ edge / serverless function
 The mental model stays the same: multiplexing onto a small set of real connections.
 The driver just changes the transport so it works where a TCP pool cannot live.
 
+```js
+// HTTP: one-shot query on the edge, no connection to keep
+import { neon } from '@neondatabase/serverless'
+const sql = neon(process.env.DATABASE_URL)
+const rows = await sql`SELECT * FROM events WHERE id = ${id}`
+```
+
+## Why does Neon price only on compute?
+
+Because storage and compute are physically separate.
+Storage lives on an object store (similar to S3), which is cheap and billed per GB: almost negligible.
+What is expensive is the compute: the CPU and RAM of the running Postgres process.
+
+Traditional managed Postgres charges for 24 hours of compute even if you use the database for 2.
+Neon charges only for the hours the compute is actually active.
+
+```txt
+traditional Postgres:  paid 24 h/day  ──  you used 2 h/day  →  wasted 22 h
+Neon:                  paid 2 h/day   ──  compute slept the rest
+```
+
+For projects with uneven traffic (staging environments, MVPs, apps with nights and weekends idle), the savings are significant.
+For production with constant traffic, the models converge and the difference shrinks.
+
 ## What about Railway, Render, and Supabase?
 
 The pattern is identical across managed platforms, only the switch differs:
@@ -136,6 +187,30 @@ The pattern is identical across managed platforms, only the switch differs:
 | **Neon** | use the `-pooler` host, or the serverless driver on the edge |
 
 In every case the rule holds: app traffic goes to the pooler URL, and migrations plus session-bound work go to the direct URL.
+
+## PgBouncer vs Neon: what each one solves
+
+They are complementary, not competing:
+
+| | PgBouncer | Neon |
+|---|---|---|
+| **What it is** | Open-source proxy and pooler | Managed serverless Postgres |
+| **Solves** | Postgres connection limit under many app instances | Connections in serverless and edge, plus infrastructure cost |
+| **You install** | Yes, on your own infrastructure | No, built in |
+| **Scale-to-zero** | No | Yes |
+| **HTTP/WebSocket driver** | No | Yes, for edge runtimes without TCP |
+| **When to use** | Traditional app (VPS, Railway, Render) with many instances | Serverless, edge, pay-per-use projects |
+
+In practice: Neon includes a managed PgBouncer.
+If you use Neon, you already get pooling without installing anything.
+If you run Postgres yourself on Railway, Render, or a VPS, you consider adding PgBouncer separately.
+
+**Is Railway with PgBouncer the same as Neon?**
+
+Almost. Railway with PgBouncer solves the connection limit problem the same way Neon does.
+What is missing is scale-to-zero (Railway keeps Postgres running 24 hours regardless of traffic) and the HTTP/WebSocket driver for edge runtimes.
+For a traditional always-on app, Railway with PgBouncer gets you most of the way there.
+For serverless, irregular traffic, or edge, the gap matters.
 
 ## TL;DR
 
