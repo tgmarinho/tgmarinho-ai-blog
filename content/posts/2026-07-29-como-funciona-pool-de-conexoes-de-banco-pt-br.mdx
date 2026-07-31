@@ -1,0 +1,307 @@
+---
+title: "Como funciona o pool de conexões de banco de dados"
+description: "Como funciona o pool de conexões de banco: um pool mantém poucas conexões abertas e empresta uma por query, evitando o custo de abrir conexão a cada requisição."
+date: "2026-07-29"
+published: true
+slug: "como-funciona-pool-de-conexoes-de-banco-pt-br"
+language: "pt-BR"
+translationKey: "database-connection-pooling"
+categories: ["banco-de-dados", "pool-de-conexoes", "postgresql", "backend", "pt-br"]
+image: "/images/blog/database-connection-pooling-cover.jpg"
+---
+
+Um **pool de conexões** é um conjunto pequeno de conexões de banco que o seu backend abre uma vez e mantém vivas, para emprestar uma a cada query e recebê-la de volta poucos milissegundos depois.
+Ele existe porque abrir uma conexão nova a cada requisição é lento e desperdiça recurso.
+Em vez de pagar esse custo milhares de vezes, o pool paga poucas vezes e reaproveita as mesmas conexões durante toda a vida do processo.
+
+Para deixar concreto, este post usa um exemplo único do começo ao fim: o **iTOP**, um SaaS de gestão de eventos e venda de ingressos.
+As pessoas navegam por eventos, compram ingressos e os organizadores puxam relatórios, tudo batendo no mesmo banco PostgreSQL.
+
+## Por que abrir uma conexão a cada requisição é lento?
+
+Abrir uma conexão de banco não é de graça.
+Ela exige um handshake TCP, uma ida e volta de autenticação e memória alocada tanto no cliente quanto no servidor Postgres.
+Na prática, são uns 20 a 50 ms antes de você rodar uma única query.
+
+Se cada requisição abrisse e fechasse a própria conexão, o custo domina o trabalho real:
+
+```txt
+Requisição 1  ->  abre (50ms)  ->  query (5ms)  ->  fecha
+Requisição 2  ->  abre (50ms)  ->  query (5ms)  ->  fecha
+Requisição 3  ->  abre (50ms)  ->  query (5ms)  ->  fecha
+```
+
+São 150 ms de preparação para 15 ms de consulta de verdade.
+O Postgres também tem um limite rígido de conexões simultâneas (em geral perto de 100), e cada conexão ociosa ainda custa memória, então abrir uma por requisição não escala.
+
+## Como o pool funciona na prática?
+
+Pense no pool como um estacionamento com um número fixo de vagas.
+Quando o backend sobe, ele abre um punhado de conexões e as deixa estacionadas e prontas.
+Uma query não abre uma conexão, ela **pega uma emprestada** do pool, usa e devolve:
+
+```txt
+Backend sobe  ->  abre 10 conexões e deixa prontas
+
+Requisição 1  ->  pega conn #1  ->  query (5ms)  ->  devolve #1
+Requisição 2  ->  pega conn #2  ->  query (5ms)  ->  devolve #2
+Requisição 3  ->  pega conn #1  ->  query (5ms)  ->  devolve #1   (reusou)
+```
+
+Nenhum tempo é gasto abrindo conexão.
+As mesmas dez conexões atendem milhares de requisições.
+O truque central é que devolver a conexão não a fecha de verdade, apenas marca ela como livre para a próxima query.
+
+## Onde o pool de conexões vive?
+
+O pool vive na **memória do processo da sua aplicação**, não no banco.
+É uma estrutura de dados que o app segura na RAM: um array de objetos de conexão abertos.
+Cada um deles é um socket TCP real, já aberto e autenticado, do processo da sua API até o servidor Postgres, mantido aberto para você reusar.
+Quando o seu código chama `pool.query(...)`, o pool devolve um desses sockets já abertos, então você não está reconectando, está reusando uma conexão viva.
+
+```txt
+  Container da API                       Container do Postgres
+ ┌───────────────────────┐             ┌───────────────────────┐
+ │ processo do app (RAM)  │  sockets    │ servidor postgres      │
+ │  CONNECTION POOL       │  TCP        │  backend proc #1       │
+ │  [ sock1 sock2 sock3 ] │◄──rede─────►│  backend proc #2       │
+ │  abertos + autenticados│             │  backend proc #3       │
+ └───────────────────────┘             └───────────────────────┘
+```
+
+O pool segura a ponta cliente de cada socket.
+O Postgres segura a outra ponta como um processo backend por socket, e é por isso que conexões abertas também custam memória no servidor.
+Se a API e o Postgres são containers ou máquinas separadas, toda query ainda cruza a rede, mas o setup caro da conexão já foi pago uma vez na inicialização, então você paga só um round trip rápido por query.
+
+## A conexão acontece ao conectar ou ao consultar?
+
+A conexão é criada quando a sua aplicação **conecta** no Postgres, não quando ela roda uma query.
+Conectar é a parte cara: abre um socket TCP, autentica e o Postgres cria um processo backend dedicado àquela sessão.
+Isso tudo é uma conexão.
+Uma query não abre uma conexão nova.
+Ela trafega por um socket que já está aberto, roda dentro daquele mesmo processo backend, e o socket continua aberto depois que a query termina.
+
+Ou seja, o pool paga o conectar adiantado.
+Na inicialização ele abre N conexões inteiras (N sockets, N processos backend do Postgres) e as mantém abertas.
+Daí em diante, uma query só pega emprestado um desses sockets já abertos, manda o SQL, lê o resultado e devolve o socket.
+
+Isso resolve a confusão mais comum: conectar no banco e consultar o banco não são duas conexões separadas.
+A conexão é a sessão aberta (socket mais processo backend).
+A query é o trabalho que você manda por essa sessão.
+Leitura e escrita usam a mesma conexão: um `SELECT` e um `INSERT` são só SQL diferente sobre o mesmo socket aberto, então não existe "conexão de leitura" ou "conexão de escrita", só uma sessão full duplex que carrega os dois.
+Enquanto uma query roda, aquela conexão fica marcada como ativa e não pode ser emprestada para mais ninguém.
+Uma escrita longa dentro de uma transação segura a conexão por mais tempo que uma leitura rápida, por isso escritas lentas esvaziam o pool mais rápido que leituras lentas de mesma duração.
+
+## É uma conexão por usuário ou por query?
+
+Essa é a parte que quase todo mundo entende errado.
+A conexão é **emprestada por query, não por usuário nem por requisição**.
+Ela fica presa só pelos milissegundos em que a query roda, e depois é liberada.
+
+Acompanhe uma única requisição no iTOP:
+
+```txt
+Usuário clica em "Comprar ingresso"
+  -> requisição chega no backend
+  -> código roda: db.insert(pedidos)...
+  -> pool empresta a conexão #3       (emprestada)
+  -> Postgres confirma o pedido
+  -> pool recebe a conexão #3 de volta (liberada)
+  -> backend responde a confirmação
+```
+
+A conexão #3 ficou ocupada por uns 5 ms.
+Em um segundo, essa mesma conexão pode atender centenas de requisições diferentes.
+Não existe "conexão por usuário", porque a conexão está amarrada à query, e a query dura milissegundos.
+
+Quantos usuários compartilham a mesma conexão? Ao longo do tempo, ilimitados, mas nunca no mesmo instante.
+O compartilhamento é no tempo: a conexão #3 atende um usuário, depois o próximo, depois o próximo, cada um por poucos milissegundos.
+Em um único instante, uma conexão roda no máximo uma query.
+
+Com três usuários batendo no iTOP no mesmo instante:
+
+```txt
+0ms:  Ana compra um ingresso  -> pega conn #1
+2ms:  Bruno lista eventos     -> pega conn #2
+3ms:  Carla puxa relatório    -> pega conn #3
+5ms:  Ana terminou            -> devolve #1 (livre de novo)
+6ms:  Bruno terminou          -> devolve #2
+8ms:  Carla terminou          -> devolve #3
+```
+
+Três conexões ficaram ocupadas ao mesmo tempo por poucos milissegundos.
+Um pool de dez mal sentiu.
+
+## O que acontece quando o pool enche?
+
+O pool tem um tamanho máximo, e esse teto é um recurso, não um defeito.
+Quando todas as conexões estão ocupadas, a próxima query **espera numa fila** até alguém devolver:
+
+```txt
+Requisições 1-10  ->  cada uma pega uma conexão (pool cheio)
+Requisição 11     ->  espera na fila
+conn #3 libera    ->  requisição 11 pega a #3
+```
+
+Para queries rápidas isso é invisível, porque as conexões liberam em milissegundos.
+O pool só vira gargalo quando muitas queries lentas rodam ao mesmo tempo.
+Se dez relatórios pesados demoram 200 ms cada, as dez conexões ficam presas e a requisição onze espera.
+A correção costuma ser deixar as queries lentas mais rápidas (índices, menos trabalho por query), não aumentar o pool no chute.
+Um pool grande demais só empurra a disputa para o Postgres, que tem o próprio limite de conexões.
+
+## Como dimensionar o pool?
+
+O driver clássico do PostgreSQL JDBC expõe as duas alavancas que todo pool tem, descritas na [documentação de DataSource do PostgreSQL](https://www.postgresql.org/docs/7.4/jdbc-datasource.html):
+
+| Configuração | O que controla |
+|---|---|
+| **initialConnections** | Quantas conexões abrir na inicialização |
+| **maxConnections** | O teto rígido; quem chega além disso espera até liberar |
+
+O exemplo em Java daquela documentação é a mesma ideia que toda linguagem repete:
+
+```java
+Jdbc3PoolingDataSource source = new Jdbc3PoolingDataSource();
+source.setServerName("localhost");
+source.setDatabaseName("itop");
+source.setMaxConnections(10);
+
+Connection con = source.getConnection();
+try {
+    // usa a conexão
+} finally {
+    con.close(); // volta para o pool, não fecha de verdade
+}
+```
+
+Esse `con.close()` no bloco `finally` é toda a disciplina do pooling: você sempre devolve a conexão, mesmo em erro, para o pool nunca vazar.
+Os pools modernos (HikariCP em Java, `pg`/`node-postgres` em Node, SQLAlchemy em Python) usam as mesmas duas alavancas, mais timeouts.
+
+Um ponto de partida grosseiro para o tamanho do pool é `conexoes = ((num_cores * 2) + discos_efetivos)`.
+Para a maioria das aplicações web, um número pequeno como 10 a 20 por instância já sobra.
+Lembre de multiplicar pelo número de instâncias rodando, porque cada uma tem o próprio pool, e o total precisa ficar abaixo do limite do Postgres.
+
+## Como ler métricas de pool como "2/100"?
+
+Painéis costumam mostrar algo como `2/100 conexões`.
+Isso quer dizer que 2 conexões estão abertas no momento (seguradas pelo seu pool) e 98 vagas ainda estão livres no servidor.
+Essas 2 conexões abertas geralmente estão **ociosas**, estacionadas pelo pool, esperando a próxima query.
+
+Ajuda acompanhar dois números separados:
+
+- **Ativas (em uso):** conexões rodando uma query agora. Sobe com o tráfego.
+- **Ociosas (no pool):** conexões abertas mas sem rodar nada, prontas para serem emprestadas na hora.
+
+Ver um número baixo e estável em repouso é saudável.
+Significa que o pool segura algumas conexões quentes para a próxima requisição ser instantânea.
+Um número que sobe rumo ao teto e fica lá é o sinal de alerta: as queries estão lentas, ou há vazamento porque algum caminho de código esqueceu de devolver a conexão.
+
+## Por quanto tempo uma conexão ociosa fica viva?
+
+Primeiro, uma correção que confunde muita gente: as conexões **não são criadas a cada requisição**.
+O pool abre algumas no startup e cria mais só quando a concorrência precisa, até o `maxConnections`.
+Depois disso ele reusa e mantém elas vivas.
+Uma requisição não cria uma conexão, ela pega emprestada uma que já existe.
+
+Quanto tempo uma conexão ociosa vive depende de três configurações do pool:
+
+| Config | O que faz | Default típico |
+|---|---|---|
+| **min / minimumIdle** | conexões mantidas quentes mesmo ociosas, nunca fechadas só por estarem paradas | às vezes = max, ou 0 |
+| **idleTimeout** | uma conexão ociosa acima do mínimo é fechada após esse tempo | node-postgres 10s, HikariCP 10min |
+| **maxLifetime** | qualquer conexão é aposentada e recriada após essa idade total, mesmo saudável | HikariCP 30min |
+
+Então uma conexão ociosa fica viva até cruzar o idle timeout (com o pool acima do mínimo) ou bater o max lifetime.
+As conexões dentro do mínimo ficam quentes enquanto o processo estiver de pé.
+
+Os defaults variam bastante, então leia a doc do seu pool.
+O `node-postgres` (`pg.Pool`) fecha clientes ociosos após 10 segundos por padrão, então em repouso o pool pode cair para zero e pagar uma reconexão no próximo pico.
+O HikariCP mantém o `minimumIdle` quente e só corta os extras depois de 10 minutos.
+O `PoolingDataSource` antigo do PostgreSQL JDBC daquela documentação não tinha idle timeout nenhum: ele nunca encolhe, e as conexões ficam abertas até o próprio pool fechar.
+A alavanca `maxLifetime` existe para uma conexão não sobreviver a timeouts do servidor ou da rede e ficar obsoleta enquanto ainda está estacionada no pool.
+
+## E em serverless com muitas instâncias?
+
+O pooling parte do princípio de um processo de vida longa que mantém as conexões quentes.
+Funções serverless quebram essa premissa, porque cada instância pode abrir o próprio pool e elas se multiplicam além do limite do Postgres rápido.
+A resposta padrão é um **pooler externo** entre a sua aplicação e o Postgres: PgBouncer, ou o pooler embutido que provedores gerenciados como Neon e Supabase oferecem.
+
+A aplicação conecta no pooler, o pooler mantém um conjunto pequeno e compartilhado de conexões reais com o Postgres, e centenas de instâncias de função dividem elas.
+
+```txt
+  função inst 1 ┐
+  função inst 2 ├─ muitas conns curtas ─►┌──────────────┐ pool pequeno ┌──────────┐
+  função inst 3 ┤                         │ PgBouncer /   │─────────────►│ Postgres │
+  função inst N ┘                         │ Neon pooler   │ (ex: 20)     │  max 100 │
+                                          └──────────────┘              └──────────┘
+   milhares de clientes efêmeros            multiplexa             fica sob o limite
+```
+
+No **modo transação**, o pooler atribui uma conexão real por transação em vez de por cliente, então milhares de funções de vida curta dividem um punhado de conexões reais.
+Nesse arranjo, use a connection string com pool para queries normais e a string direta só para coisas que precisam de sessão dedicada, como migrations.
+
+## Indo além: como o PgBouncer funciona?
+
+O **PgBouncer** é um pooler de conexões leve que roda como um processo separado entre a sua aplicação e o Postgres.
+Ele não é um banco, é um proxy fino que fala o protocolo de rede do Postgres, então o seu app conecta nele exatamente como conecta no Postgres, só que em outro host e porta.
+Ele segura um conjunto pequeno de conexões reais com o Postgres e deixa milhares de clientes dividirem elas.
+
+Por que adicionar ele se o seu app já tem pool? Porque o pool do app só agrupa dentro de um processo.
+Com autoscaling, serverless ou vários containers, cada instância tem o próprio pool e o total estoura o `max_connections`.
+O PgBouncer agrupa todos eles, num ponto central.
+Plataformas gerenciadas deixam isso trivial: Railway, Render, Neon, Supabase e AWS RDS oferecem um PgBouncer ou pooler embutido que você liga, e aí aponta o app para a URL do pooler em vez da URL direta do banco.
+
+### Quais são os três modos de pool?
+
+| Modo | Uma conexão real fica presa... | Compartilhamento | Use quando |
+|---|---|---|---|
+| **session** | pela conexão inteira do cliente | baixo | precisa de recursos de sessão, poucos clientes |
+| **transaction** | só durante cada transação | alto | apps web, serverless, muitas transações curtas |
+| **statement** | só durante cada comando | máximo | cargas só com autocommit, sem transação multi-comando |
+
+O **modo transação** é o que destrava o serverless.
+Uma conexão real do Postgres é atribuída quando a transação começa e devolvida no instante em que faz commit, então entre transações o cliente não segura nada.
+Milhares de clientes ociosos mapeiam para um punhado de conexões reais.
+
+### O que o modo transação quebra?
+
+Como o cliente não mantém a mesma conexão real entre transações, tudo que depende de **estado de sessão** pode quebrar:
+
+- Prepared statements (os clássicos, no nível do driver). O PgBouncer novo (1.21+) suporta eles no modo transação, mas confira a sua versão e o driver.
+- `SET` no escopo de sessão e variáveis de sessão.
+- `LISTEN` / `NOTIFY`.
+- Advisory locks pensados para durar entre transações.
+- Tabelas temporárias que deveriam sobreviver a uma transação.
+
+Regra prática: no modo transação, desligue os prepared statements do driver se aparecer erro (por exemplo `statement_cache_size=0`, ou a opção de simple-query do driver), e mantenha o que é de escopo de sessão dentro de uma única transação.
+
+### Quais parâmetros importam?
+
+| Parâmetro | O que faz |
+|---|---|
+| **pool_mode** | session, transaction ou statement |
+| **max_client_conn** | quantos clientes podem conectar no PgBouncer (pode ser milhares) |
+| **default_pool_size** | conexões reais com o Postgres por par usuário e banco |
+| **min_pool_size** | mantém essa quantidade de conexões reais quentes |
+| **reserve_pool_size** | conexões extras para picos curtos |
+
+O formato é: `max_client_conn` gigante (digamos 5000) e `default_pool_size` pequeno (digamos 20).
+O PgBouncer absorve 5000 clientes em 20 conexões reais com o Postgres, e essas 20 ficam sob o limite do servidor.
+
+### Você ainda precisa de pool no app?
+
+Sim, um pequeno.
+Com o PgBouncer na frente, mantenha o pool do app pequeno (max 3 a 5), porque o PgBouncer é quem faz o pooling pesado agora.
+O pool do app só evita ficar abrindo e fechando socket com o próprio PgBouncer.
+Mande o tráfego normal para a URL do PgBouncer e guarde a URL direta do banco para migrations e tarefas de admin que precisam de sessão estável.
+
+Para um mergulho em como o PgBouncer multiplexa clientes sobre conexões reais e como o Neon embute isso, veja [PgBouncer multiplexando conexões, e como o Neon faz isso](/blog/pgbouncer-multiplexacao-conexoes-neon-pt-br).
+
+## Resumo
+
+- Um **pool de conexões** abre poucas conexões de banco uma vez e reaproveita, em vez de abrir uma por requisição.
+- Abrir conexão custa 20 a 50 ms (TCP, autenticação, memória), então reaproveitar é um ganho grande e barato.
+- A conexão é emprestada **por query**, fica presa por milissegundos e volta. Não existe conexão por usuário.
+- Quando o pool enche, as queries extras esperam numa fila. Corrija as queries lentas antes de aumentar o `maxConnections`.
+- Dimensione com `initialConnections` e `maxConnections`, mantenha o total abaixo do limite do Postgres e sempre devolva a conexão num `finally`.
+- Para serverless ou muitas instâncias, coloque um pooler externo (PgBouncer, Neon, Supabase) na frente do Postgres.
