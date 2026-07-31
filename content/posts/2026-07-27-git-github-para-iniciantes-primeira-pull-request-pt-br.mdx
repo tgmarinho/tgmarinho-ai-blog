@@ -223,6 +223,51 @@ O problema mais comum é o **conflito de merge**: quando duas pessoas mudam a me
 
 A regra que sustenta o time: branches curtas, PRs pequenos e merges frequentes. Quanto menor o intervalo entre criar a branch e mesclar, menos conflito e review mais rápido.
 
+## Como manter sua branch atualizada (e evitar conflitos)?
+
+A causa mais comum de conflitos grandes é trabalhar em uma branch desatualizada por muito tempo. Enquanto você desenvolve, outras PRs vão entrando na `main` e a diferença entre o seu código e o da `main` cresce. Quanto maior essa diferença, mais chance de conflito na hora do merge.
+
+A prevenção é simples: **sempre comece uma tarefa nova a partir de uma `main` atualizada** e, se a branch durar mais de um ou dois dias, traga as novidades da `main` para ela periodicamente.
+
+### Antes de criar uma branch nova
+
+Atualize a `main` local antes de criar a branch da tarefa. Isso garante que você parte do código mais recente:
+
+```bash
+git switch main
+git pull                              # traz tudo que entrou na main desde o seu último pull
+git switch -c feat/nova-tarefa        # cria a branch já a partir do estado atual
+```
+
+Se o seu time usa `staging` como base em vez de `main`, troque `main` por `staging` nos comandos.
+
+### Quando a branch já está aberta há algum tempo
+
+Se a sua branch existe há dias e a `main` avançou (outras PRs foram mescladas), traga as mudanças para a sua branch antes de continuar trabalhando. A forma mais segura para iniciantes é o merge:
+
+```bash
+git switch feat/nova-tarefa           # garanta que está na sua branch
+git pull origin main                  # traz os commits novos da main e junta com a sua branch
+```
+
+Se houver conflito, o Git avisa e você resolve como na seção abaixo. Mas se fizer isso com frequência (a cada um ou dois dias), os conflitos são pequenos e fáceis de resolver.
+
+### A regra prática
+
+Comece cada tarefa nova puxando a `main`. Antes de abrir a PR, puxe a `main` de novo para garantir que sua branch está compatível. Esse hábito sozinho elimina a maioria dos conflitos que assustam iniciantes.
+
+### Pedindo para um agente de IA
+
+Se você usa um agente de código (Claude Code, Cursor, Copilot), não precisa lembrar dos comandos. Basta descrever a intenção antes de começar a tarefa:
+
+> "Antes de começar, atualize a branch com a main para garantir que estamos com o código mais recente."
+
+Ou, se a branch já existe há alguns dias:
+
+> "Puxa a main para dentro da minha branch antes de continuar, e resolve os conflitos se tiver."
+
+O agente roda o `git pull origin main`, resolve conflitos simples automaticamente e avisa se precisar da sua decisão. O importante é criar o hábito de pedir isso no começo de cada tarefa, seja digitando o comando ou falando para o agente.
+
 ## Como simular e resolver seu primeiro conflito?
 
 A melhor forma de perder o medo de conflito é provocar um de propósito, numa pasta de teste. Crie um arquivo na `main`, edite a mesma linha em duas branches e mande uma encontrar a outra:
@@ -274,4 +319,4 @@ Sua primeira PR não é sobre decorar comandos, é sobre completar o ciclo uma v
 
 ---
 
-**Resumo:** para fazer sua primeira Pull Request, você faz o fork (ou clona o repo do time), cria uma branch com `git switch -c`, faz uma mudança pequena, grava com `git add` e `git commit -m`, envia com `git push` e abre a PR na `main`. O time faz code review, você ajusta com novos commits, e a PR é mesclada (normalmente com squash) na `main`. Nunca comite direto na `main` ou `staging`: sempre abra uma PR. Branches curtas, PRs pequenos e merges frequentes mantêm o time rápido e sem conflitos.
+**Resumo:** para fazer sua primeira Pull Request, você faz o fork (ou clona o repo do time), cria uma branch com `git switch -c`, faz uma mudança pequena, grava com `git add` e `git commit -m`, envia com `git push` e abre a PR na `main`. O time faz code review, você ajusta com novos commits, e a PR é mesclada (normalmente com squash) na `main`. Nunca comite direto na `main` ou `staging`: sempre abra uma PR. Antes de criar cada branch nova, atualize a `main` com `git pull` para partir do código mais recente e reduzir conflitos. Branches curtas, PRs pequenos e merges frequentes mantêm o time rápido e sem conflitos.
