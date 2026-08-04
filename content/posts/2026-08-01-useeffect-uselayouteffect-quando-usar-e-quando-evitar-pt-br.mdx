@@ -1,0 +1,280 @@
+---
+title: "useEffect vs useLayoutEffect: quando usar e quando apagar o Effect"
+description: "useEffect vs useLayoutEffect no React: entenda quando sincronizar sistemas externos, medir layout antes do paint e remover Effects desnecessários."
+date: "2026-08-01"
+published: true
+slug: "useeffect-uselayouteffect-quando-usar-e-quando-evitar-pt-br"
+language: "pt-BR"
+translationKey: "react-effects-render-timing"
+categories: ["react", "javascript", "frontend", "performance", "pt-br"]
+image: "/images/blog/react-effects-render-timing-cover.jpg"
+---
+
+**useEffect** serve para sincronizar um componente React com algo fora do React. **useLayoutEffect** é a versão que roda antes do browser pintar a tela, útil quando você precisa medir ou ajustar layout sem mostrar um frame errado. Se a lógica só calcula dados para renderizar ou responde a um clique, você provavelmente não precisa de Effect nenhum.
+
+Essa é a regra prática por trás das páginas mais importantes da documentação do React sobre o tema: [`useEffect`](https://react.dev/reference/react/useEffect), [`useLayoutEffect`](https://react.dev/reference/react/useLayoutEffect), [`Synchronizing with Effects`](https://react.dev/learn/synchronizing-with-effects), [`Lifecycle of Reactive Effects`](https://react.dev/learn/lifecycle-of-reactive-effects), [`Separating Events from Effects`](https://react.dev/learn/separating-events-from-effects), [`Reusing Logic with Custom Hooks`](https://react.dev/learn/reusing-logic-with-custom-hooks) e [`You Might Not Need an Effect`](https://react.dev/learn/you-might-not-need-an-effect). O erro comum é tratar Effect como "lugar para rodar código depois do render". Esse atalho cria render extra, estado duplicado, dependências instáveis e bugs de hidratação.
+
+## Qual é a regra de decisão?
+
+Antes de escrever um Effect, responda a uma pergunta: esta lógica sincroniza o componente com um sistema externo?
+
+| Caso | Escolha |
+|---|---|
+| Calcular valor a partir de props ou state | Calcule durante o render |
+| Rodar lógica causada por clique, submit ou input | Coloque no event handler |
+| Resetar toda a state quando um identificador muda | Use `key` |
+| Conectar WebSocket, API do browser, timer ou biblioteca externa | Use `useEffect` |
+| Medir DOM antes do browser pintar | Use `useLayoutEffect` |
+
+**Sistema externo** é algo que React não controla: rede, timer, DOM imperativo, storage, analytics, WebSocket, biblioteca de mapa, player de vídeo, widget de terceiros. Se não existe sistema externo, o Effect quase sempre está escondendo uma modelagem ruim de state.
+
+## Quando usar useEffect?
+
+Use `useEffect` quando o componente precisa ficar sincronizado com algo fora da árvore React enquanto ele está na tela.
+
+Exemplos bons:
+
+- Conectar e desconectar de um WebSocket.
+- Assinar e remover um listener do `window`.
+- Enviar um evento de analytics quando a tela aparece.
+- Controlar uma biblioteca imperativa que não é React.
+- Atualizar `document.title`.
+
+```tsx
+import { useEffect } from "react";
+
+function ChatRoom({ roomId }: { roomId: string }) {
+  useEffect(() => {
+    const connection = createConnection(roomId);
+    connection.connect();
+
+    return () => {
+      connection.disconnect();
+    };
+  }, [roomId]);
+
+  return <ChatMessages roomId={roomId} />;
+}
+```
+
+Aqui o Effect tem uma razão clara: a conexão existe fora do React. A função de cleanup também é parte do contrato. Em Strict Mode, React pode rodar setup e cleanup uma vez a mais em desenvolvimento para testar se eles se espelham corretamente.
+
+**useEffect** roda apenas no cliente. Ele não roda durante server rendering. Em Next.js, isso importa: se o dado pode ser carregado no servidor, em um Server Component, loader ou action, esse caminho costuma ser melhor do que buscar tudo no Effect depois da hidratação.
+
+## Como pensar no ciclo de vida de um Effect?
+
+Não pense em Effect como parte do ciclo de vida do componente. O componente monta, atualiza e desmonta. O Effect tem outro modelo: começar a sincronizar e parar de sincronizar.
+
+```tsx
+useEffect(() => {
+  const connection = createConnection(roomId);
+  connection.connect();
+
+  return () => {
+    connection.disconnect();
+  };
+}, [roomId]);
+```
+
+Quando `roomId` muda, React não está "atualizando o Effect". Ele está parando uma sincronização antiga e começando outra. Essa leitura deixa as dependências mais honestas: se o Effect usa `roomId`, a sincronização depende de `roomId`.
+
+**Cleanup** não é detalhe opcional quando você assina, conecta, agenda ou observa algo. Ele é metade do Effect. Se o setup começa uma sincronização, o cleanup precisa encerrar a mesma sincronização.
+
+## Quando usar useLayoutEffect?
+
+Use `useLayoutEffect` quando a renderização final depende de uma medida real do DOM e o usuário não deve ver a posição intermediária.
+
+O caso clássico é tooltip:
+
+1. Renderize o tooltip.
+2. Meça sua altura com `getBoundingClientRect()`.
+3. Re-renderize acima ou abaixo do alvo.
+4. Só então deixe o browser pintar.
+
+```tsx
+import { useLayoutEffect, useRef, useState } from "react";
+
+function Tooltip() {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [height, setHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    const rect = ref.current?.getBoundingClientRect();
+    setHeight(rect?.height ?? 0);
+  }, []);
+
+  return <div ref={ref}>Tooltip height: {height}</div>;
+}
+```
+
+**useLayoutEffect** bloqueia o paint. Isso evita flicker, mas também atrasa a tela. Por isso ele deve ser raro. Se `useEffect` funciona sem salto visual, use `useEffect`. Se existe salto visual perceptível, e ele vem de medição ou ajuste de layout, aí `useLayoutEffect` faz sentido.
+
+Também existe uma consequência importante em server rendering: no servidor não há layout. Um componente que depende de `useLayoutEffect` para decidir o que renderizar não consegue produzir HTML final correto no servidor. Nesses casos, prefira `useEffect`, torne o trecho client-only, ou renderize o componente apenas depois da hidratação.
+
+## Por que talvez você não precise de um Effect?
+
+Muitos Effects aparecem porque o componente guarda state derivada. Isso força React a renderizar uma vez com valor antigo, rodar o Effect, chamar `setState` e renderizar de novo.
+
+Evite isto:
+
+```tsx
+function Invoice({ items }: { items: Item[] }) {
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    setTotal(items.reduce((sum, item) => sum + item.price, 0));
+  }, [items]);
+
+  return <strong>{total}</strong>;
+}
+```
+
+Prefira calcular durante o render:
+
+```tsx
+function Invoice({ items }: { items: Item[] }) {
+  const total = items.reduce((sum, item) => sum + item.price, 0);
+
+  return <strong>{total}</strong>;
+}
+```
+
+**State derivada** é state que pode ser calculada a partir de props ou de outra state. Não guarde isso em `useState` só para sincronizar depois com `useEffect`. Calcule direto. Se o cálculo for caro de verdade, use `useMemo` medido em produção, não por hábito.
+
+```tsx
+const visibleItems = useMemo(() => {
+  return filterItems(items, query);
+}, [items, query]);
+```
+
+`useMemo` não torna o primeiro render mais rápido. Ele só evita refazer trabalho em renders seguintes quando as dependências não mudaram.
+
+## Como separar Effect de event handler?
+
+Pergunte de onde a lógica veio, do ponto de vista do usuário.
+
+Se ela acontece porque o usuário viu a tela, pode ser Effect:
+
+```tsx
+useEffect(() => {
+  post("/analytics/event", { name: "visit_checkout" });
+}, []);
+```
+
+Se ela acontece porque o usuário clicou em um botão, submeter formulário ou escolheu um item, coloque no handler:
+
+```tsx
+function handleSubmit(event: FormEvent) {
+  event.preventDefault();
+  post("/api/orders", { cartId });
+}
+```
+
+**Event handler** conhece a ação que aconteceu. Um Effect costuma perder esse contexto e tenta reconstruir a intenção observando state depois do fato. Isso é mais frágil e mais difícil de debugar.
+
+Essa separação é o básico, não a arquitetura inteira. Conforme o frontend cresce, você precisa de mecanismos mais fortes para manter a lógica legível: custom hooks para encapsular sincronização, bibliotecas de query para cache e concorrência de dados, stores externas quando várias partes da tela compartilham estado, validação com schema para formulários complexos e, em fluxos com muitas transições, até state machines. A regra continua útil porque ela limpa o primeiro nível de ruído: antes de escolher uma ferramenta maior, você precisa saber se a lógica pertence ao render, ao evento ou a uma sincronização externa.
+
+## Quando extrair um custom Hook?
+
+Quando um Effect é legítimo e começa a carregar estado, cleanup, refs e regras de dependência, extraia um **custom Hook**. Isso não torna um Effect desnecessário por si só. Torna a fronteira explícita e reutilizável.
+
+Antes:
+
+```tsx
+function ChatRoom({ roomId }: { roomId: string }) {
+  useEffect(() => {
+    const connection = createConnection(roomId);
+    connection.connect();
+
+    return () => {
+      connection.disconnect();
+    };
+  }, [roomId]);
+
+  return <ChatMessages roomId={roomId} />;
+}
+```
+
+Depois:
+
+```tsx
+function useChatConnection(roomId: string) {
+  useEffect(() => {
+    const connection = createConnection(roomId);
+    connection.connect();
+
+    return () => {
+      connection.disconnect();
+    };
+  }, [roomId]);
+}
+
+function ChatRoom({ roomId }: { roomId: string }) {
+  useChatConnection(roomId);
+
+  return <ChatMessages roomId={roomId} />;
+}
+```
+
+O componente volta a dizer o que quer: manter uma conexão de chat para aquela sala. O hook esconde como sincronizar. Esse padrão é bom para WebSocket, `matchMedia`, `IntersectionObserver`, storage, player de vídeo e integrações com bibliotecas imperativas.
+
+## Como resetar state sem useEffect?
+
+Quando toda a state de uma tela deve resetar ao trocar um identificador, use `key`.
+
+Evite:
+
+```tsx
+function ProfilePage({ userId }: { userId: string }) {
+  const [comment, setComment] = useState("");
+
+  useEffect(() => {
+    setComment("");
+  }, [userId]);
+
+  return <textarea value={comment} onChange={(e) => setComment(e.target.value)} />;
+}
+```
+
+Prefira separar o componente e trocar a key:
+
+```tsx
+function ProfilePage({ userId }: { userId: string }) {
+  return <Profile key={userId} userId={userId} />;
+}
+
+function Profile({ userId }: { userId: string }) {
+  const [comment, setComment] = useState("");
+
+  return <textarea value={comment} onChange={(e) => setComment(e.target.value)} />;
+}
+```
+
+**key** diz ao React que aquele perfil é outra instância conceitual. Quando `userId` muda, React recria o componente e limpa a state interna. Você evita render com valor velho e evita um Effect só para apagar state depois.
+
+## Qual é o checklist antes de escrever um Effect?
+
+Use este checklist curto:
+
+1. Existe sistema externo? Se não, tente render, `key`, event handler ou `useMemo`.
+2. A lógica foi causada por uma interação específica? Coloque no handler.
+3. Você está copiando props para state? Provavelmente é state derivada.
+4. Você está resetando tudo quando um ID muda? Use `key`.
+5. Você precisa medir layout antes do paint? Use `useLayoutEffect`.
+6. O Effect tem cleanup simétrico? Se conecta, desconecta. Se assina, desassina.
+7. As dependências são estáveis e completas? Se não são, repense a estrutura.
+8. O Effect é legítimo, mas repetido ou verboso? Extraia um custom Hook.
+
+O ponto não é ter medo de Effects. O ponto é usá-los para o que eles fazem bem: sincronizar fronteiras.
+
+## Resumo
+
+- **useEffect** sincroniza o componente com sistemas externos depois do commit.
+- **useLayoutEffect** roda antes do paint e deve ficar restrito a medição ou ajuste visual que não pode piscar.
+- Se a lógica calcula dados para renderizar, calcule durante o render.
+- Se a lógica responde a uma ação do usuário, coloque no event handler.
+- Se a state inteira precisa resetar quando um ID muda, use `key`.
+- Se o Effect sincroniza algo real e ficou verboso, extraia um custom Hook.
+- Effects desnecessários custam render extra, dependências frágeis e bugs de hidratação.
+
+O melhor Effect é o que deixa uma fronteira explícita: React de um lado, mundo externo do outro. Se tudo está dentro do React, comece removendo o Effect.
