@@ -1,0 +1,730 @@
+---
+title: "Idempotência: como evitar operações duplicadas em APIs e sistemas distribuídos"
+description: "Idempotência em APIs: evite operações duplicadas por clique repetido, fila offline, webhook duplicado, retries e eventos em sistemas distribuídos reais."
+date: "2026-08-05"
+published: true
+slug: "idempotencia-apis-sistemas-distribuidos-offline-first-pt-br"
+language: "pt-BR"
+translationKey: "idempotency-apis-distributed-systems-offline-first"
+categories: ["api-design", "distributed-systems", "backend", "offline-first", "pt-br"]
+image: "/images/blog/idempotency-distributed-systems-cover.jpg"
+---
+
+**Idempotência** é a propriedade de uma operação que pode ser executada várias vezes e ainda deixar o sistema no mesmo estado final. Em APIs, isso evita que a mesma intenção de negócio seja aplicada duas vezes por clique repetido, tentativa manual insistente, fila offline, webhook duplicado, timeout ou queda de rede.
+
+A regra prática é: se repetir a ação pode duplicar dinheiro, pedido, estoque, evento, crédito ou comunicação, a operação precisa ser idempotente ou precisa de uma chave de idempotência.
+
+## O que é idempotência?
+
+**Idempotência** não significa que toda resposta precisa ser byte a byte igual. Significa que o efeito pretendido no estado do sistema é o mesmo depois de uma ou várias execuções com a mesma intenção.
+
+Exemplos simples:
+
+| Operação | É idempotente? | Por quê |
+| --- | --- | --- |
+| `GET /orders/123` | Sim | Ler não deve alterar o pedido |
+| `PUT /users/7/email` com o mesmo e-mail | Sim | O e-mail final continua igual |
+| `DELETE /orders/123` | Sim | O pedido continua removido |
+| `POST /payments` sem proteção | Não | Cada chamada pode criar uma nova cobrança |
+| `POST /payments` com `Idempotency-Key` | Pode ser | O servidor reconhece a repetição e reaproveita o primeiro resultado |
+
+O [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2) define métodos HTTP idempotentes pelo efeito pretendido no servidor. `PUT`, `DELETE` e métodos seguros entram nessa categoria. `POST` e `PATCH` exigem mais cuidado porque muitas vezes representam comandos de negócio.
+
+Mas o método HTTP sozinho não salva o sistema. Um `PUT` pode ser implementado de forma errada e deixar de ser idempotente. Um `POST` pode ser implementado com chave de idempotência e ficar seguro contra repetição. Um `PATCH` que substitui `address = "Germany"` tende a convergir, mas um `PATCH` que executa `incrementLoginCount` muda o estado a cada chamada.
+
+Em produção, a pergunta certa não é "qual método eu usei?". É: repetir a mesma requisição aplica o mesmo efeito de negócio ou cria um efeito novo?
+
+## Por que idempotência é necessária?
+
+**Operações duplicadas** são inevitáveis. Às vezes vêm de retry automático. Às vezes vêm do usuário apertando o botão de pagar várias vezes porque a tela travou. Às vezes vêm de uma fila offline tentando sincronizar uma operação que já foi processada. Às vezes vêm de um webhook que o provedor reenviou depois de já ter sido salvo.
+
+Sem idempotência, repetir a mesma intenção muda de significado:
+
+1. O cliente envia `POST /payments`.
+2. O servidor cobra o cartão.
+3. A tela não atualiza, a resposta se perde ou o app fica offline.
+4. O usuário clica de novo, o cliente sincroniza de novo ou a fila processa de novo.
+5. O servidor cobra de novo.
+
+O sistema nem sempre sabe, na borda, se a primeira tentativa falhou antes ou depois do efeito colateral. Esse é o ponto central: idempotência não existe para o caminho feliz. Ela existe para o momento em que a intenção aparece de novo, mas o efeito pode já ter acontecido.
+
+Isso aparece em quase todo sistema real:
+
+| Cenário | Risco sem idempotência |
+| --- | --- |
+| Pagamento | Cobrança duplicada |
+| Criação de pedido | Dois pedidos para a mesma compra |
+| Clique repetido | Usuário força a mesma ação sensível várias vezes |
+| Webhook | Mesmo evento salvo ou aplicado duas vezes |
+| Mensageria | Worker processa de novo uma mensagem já processada |
+| Offline-first | Fila local sincroniza de novo uma operação já concluída |
+| Infraestrutura como código | Script cria recursos duplicados |
+
+O [guia do Google Cloud](https://cloud.google.com/discover/idempotency?hl=pt-BR) resume bem a relação com sistemas distribuídos: redes instáveis e timeouts fazem clientes reenviar mensagens. Mas a mesma ideia vale para ações humanas repetidas, filas locais, filas remotas e webhooks. O sistema precisa continuar correto mesmo quando a mesma intenção chega mais de uma vez.
+
+## Quando usar idempotência?
+
+Use **idempotência** em toda operação que tenha efeito colateral importante e possa ser repetida por acidente, insistência do usuário, reconexão offline, webhook duplicado ou política de retry.
+
+Bons candidatos:
+
+1. Criar pagamento, cobrança, pedido, assinatura ou reserva.
+2. Processar webhook de provedor externo.
+3. Consumir evento de fila com entrega pelo menos uma vez.
+4. Sincronizar operações feitas offline.
+5. Enviar e-mail, nota fiscal, push notification ou comando para outro serviço.
+6. Executar job que pode ser reiniciado.
+7. Aplicar migração, provisionamento ou configuração de infraestrutura.
+
+Nem tudo precisa de chave. Mas não confunda especificação REST com garantia real. `PUT /profile` só é idempotente se a implementação do servidor realmente substituir o estado por um valor determinístico, sem criar efeitos colaterais repetidos. O método HTTP comunica uma intenção. A garantia vem do código, das constraints e dos testes.
+
+Use `Idempotency-Key` quando a operação é um comando que cria algo novo, mas precisa aceitar repetição segura. O [rascunho expirado da IETF para o header `Idempotency-Key`](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/) descreve esse padrão para tornar métodos como `POST` e `PATCH` mais tolerantes a falhas.
+
+O nome pode variar. Algumas APIs usam header. Outras usam um campo no body, como `correlationID`, padrão citado no [artigo da Woovi sobre idempotência](https://dev.to/woovi/idempotence-what-is-and-how-to-implement-4bmc). O ponto não é o nome. O ponto é existir um identificador estável para a intenção da operação.
+
+## UUID, sessão ou chave composta?
+
+Existem três formas comuns de criar a **chave de idempotência**. A escolha depende de quem conhece a intenção da operação e de quanto controle o backend precisa ter.
+
+| Estratégia | Como funciona | Quando usar | Cuidado |
+| --- | --- | --- | --- |
+| UUID no cliente | O frontend cria um `crypto.randomUUID()` para a operação e reenvia o mesmo valor em toda tentativa | Apps web, mobile e offline-first em que o cliente precisa persistir a operação local | Esse UUID é uma chave de operação, não o ID interno da transação no banco |
+| Chave emitida pelo servidor | O cliente inicia uma operação, como uma sessão de checkout ou transferência, e o backend devolve uma chave | Pagamentos, transferências e fluxos sensíveis em que o backend quer controlar o ciclo de vida | Exige uma etapa a mais antes da confirmação |
+| Chave composta | O backend deriva a chave de campos como usuário, destino, valor, moeda, tipo e janela de tempo | Detecção de duplicatas em integrações legadas ou sistemas sem chave explícita | Pode bloquear duas operações legítimas parecidas se a regra for ampla demais |
+
+UUID gerado no frontend é tecnicamente seguro contra colisão para esse uso. O problema não é colisão. O problema é desenho: o frontend não deveria escolher o ID final da transação financeira no banco. Ele pode escolher o identificador da tentativa de negócio. O servidor continua criando seu próprio `payment_id`, `transfer_id` ou `order_id`.
+
+Chave composta é útil como proteção adicional, mas não deve ser tratada como verdade universal. Um formato possível seria `ikey-{valor}-{cliente}-{tipo}-{data}`, por exemplo `ikey-10000-cus_123-pix-2026-08-05T10:30`. Essa chave diz: para este cliente, neste tipo de operação, com este valor, dentro desta janela, trate como a mesma intenção.
+
+O cuidado é a janela e os campos escolhidos. Uma pessoa pode fazer dois Pix iguais para o mesmo destino no mesmo dia. Se a janela for grande demais, você bloqueia uma operação legítima. Se a janela for pequena demais, você deixa passar uma duplicata tardia.
+
+Para webhooks, prefira o identificador explícito do provedor, como `event.id`, `webhook_event_id` ou `provider_event_id`. Use chave composta só quando a integração realmente não entrega um identificador confiável.
+
+## Onde salvar a Idempotency-Key?
+
+A **Idempotency-Key** deve existir onde a intenção da operação é criada e deve ser salva no servidor que executa o efeito colateral.
+
+Na maioria dos fluxos, o cliente cria a chave e a salva junto com a operação local. Em um app offline-first, isso costuma ficar em IndexedDB, SQLite local, AsyncStorage ou outra outbox persistente. Em fluxos mais sensíveis, o servidor pode emitir uma chave de operação ou sessão antes da confirmação. Nos dois casos, a chave não muda quando o usuário insiste, quando a rede volta ou quando a fila tenta de novo. Ela muda apenas quando existe uma nova intenção.
+
+No servidor, salve a chave em um repositório durável e escopado:
+
+| Campo | Por que existe |
+| --- | --- |
+| `tenant_id` ou `user_id` | A mesma chave pode existir para clientes diferentes |
+| `idempotency_key` | Identifica a intenção única |
+| `method` e `route` | Evita reutilizar a chave em outra operação |
+| `request_hash` | Detecta mesma chave com payload diferente |
+| `status` | Controla `processing`, `completed` ou `failed` |
+| `locked_until` | Evita que uma operação travada fique `processing` para sempre |
+| `response_status` e `response_body` | Permite devolver o primeiro resultado |
+| `resource_id` | Liga a chave ao recurso criado |
+| `expires_at` | Define por quanto tempo a repetição ainda é reconhecida |
+
+Para operações críticas, prefira Postgres ou outro banco transacional. Redis funciona bem para janelas curtas e alto volume, mas você precisa aceitar a semântica de expiração e pensar no que acontece se a chave sumir antes de uma repetição tardia. Para pagamento, pedido e saldo, eu começaria por Postgres.
+
+A chave não deve ser só o hash do payload. Duas compras legítimas podem ter o mesmo valor, os mesmos itens e o mesmo endereço. O payload pode ser igual, mas a intenção é nova. A chave correta representa a operação, não apenas os bytes do corpo.
+
+## A chave fica na entidade ou em uma tabela separada?
+
+Existem dois lugares para guardar a chave, e o trade-off é entre reuso e localidade.
+
+- **Tabela dedicada (`api_idempotency_keys`).** A chave, o status e a resposta gravada ficam em um lugar genérico, separado do domínio.
+- **Coluna na entidade (`orders.idempotency_key` com índice único).** A chave fica ao lado da linha que ela protege.
+
+| Critério | Tabela dedicada | Coluna na entidade |
+| --- | --- | --- |
+| Replay de resposta | Guarda `response_status`/`response_body` e devolve o primeiro resultado | Não guarda a resposta; você reconsulta e remonta |
+| Estado em andamento | Tem `status` e `locked_until` para `processing` e recuperação de crash | A linha só existe depois que a entidade é criada, então não há estado `processing` |
+| Cobertura | Qualquer operação, inclusive as que não criam uma linha única, como e-mail, comando externo ou débito de saldo | Só a criação daquela entidade |
+| Simplicidade | Tabela extra e uma consulta a mais | Uma coluna e um índice único, sem join |
+| Acoplamento | Idempotência centralizada na borda da API | Lógica espalhada pelas tabelas de domínio |
+| Papel | Protege a operação | É a invariante de domínio: o banco rejeita uma segunda linha |
+
+Leia assim. A tabela dedicada ganha quando você precisa de replay de resposta, estado de andamento e crash, ou cobertura para operações que não mapeiam para uma linha única. A coluna ganha na simplicidade quando a operação e a entidade são praticamente a mesma coisa, como uma tentativa de pagamento que sempre cria exatamente um `payment`, e você não precisa reproduzir a resposta HTTP.
+
+As duas não são exclusivas, e o arranjo mais forte usa ambas, porque elas protegem camadas diferentes e falham em situações diferentes.
+É defesa em profundidade.
+
+**Camada 1, a tabela de idempotência (a borda da API).**
+Reconhece a repetição da mesma requisição pela `Idempotency-Key`, guarda o estado (`processing`/`completed`) e faz replay da resposta.
+É o caminho normal, esperto: o cliente reenviou, então devolvo o mesmo resultado.
+
+**Camada 2, a unique constraint na entidade (o núcleo do domínio).**
+É uma regra burra e absoluta gravada no schema, como `unique (tenant_id, checkout_session_id)` em `orders`.
+O banco simplesmente recusa uma segunda linha, não importa quem tentou nem por qual caminho.
+
+Por que precisar das duas? A Camada 1 só funciona se a `Idempotency-Key` chegar corretamente. Algumas duplicatas não trazem a mesma chave:
+
+- Dois cliques geraram chaves diferentes por um bug no cliente, como chamar `crypto.randomUUID()` de novo em vez de reusar o da outbox.
+- Uma segunda origem cria o mesmo pedido: um retry de job, um webhook, um script de migração ou uma chamada interna de outro serviço que não passa pela mesma borda.
+- Alguém chama o banco ou o serviço por fora da rota que valida a chave.
+
+Nesses casos a Camada 1 não vê repetição nenhuma, porque as chaves ou rotas diferem, e sem a Camada 2 o pedido duplicado é criado.
+A unique constraint é o que de fato impede o estado inválido, mesmo quando a borda foi contornada.
+
+A Camada 2 sozinha também não basta. A constraint só grita "violação de unicidade" no momento do insert.
+Ela não guarda a resposta original, não tem estado `processing` e não faz replay.
+Então, numa repetição legítima, uma resposta perdida reenviada com a mesma chave, o cliente pega uma exceção de banco em vez do `201` limpo com o `orderId`.
+A Camada 1 é quem transforma isso numa experiência boa.
+
+Juntas, na prática:
+
+```ts
+try {
+  // Camada 1: reserva ou reconhece a intenção pela Idempotency-Key
+  const reserved = await reserveIdempotencyKey(key, requestHash);
+  if (reserved.status === "completed") {
+    return reserved.storedResponse; // replay, nem toca no domínio
+  }
+
+  // Camada 2: o insert do domínio tem unique (tenant_id, checkout_session_id)
+  const order = await insertOrder(...); // o banco recusa duplicata
+
+  await storeResponse(key, 201, { orderId: order.id });
+  return { status: 201, body: { orderId: order.id } };
+} catch (e) {
+  if (isUniqueViolation(e)) {
+    // a Camada 1 não pegou (chave ou rota diferente), mas a Camada 2 segurou
+    const existing = await findOrderByCheckoutSession(...);
+    return { status: 200, body: { orderId: existing.id } };
+  }
+  throw e;
+}
+```
+
+A tabela de idempotência impede repetir a mesma operação. A constraint impede o domínio de entrar em estado inválido.
+Uma cuida do contrato de repetição, a outra cuida da regra de negócio. Por isso o arranjo mais forte usa ambas.
+
+## Quais estratégias de implementação existem?
+
+Na prática, existem quatro estratégias comuns para implementar **idempotência**. Elas não competem sempre entre si. Sistemas críticos geralmente combinam mais de uma.
+
+| Estratégia | Como funciona | Quando usar | Limite |
+| --- | --- | --- | --- |
+| Constraint única no banco | O banco rejeita duplicatas por uma chave natural, como `provider_event_id` ou `checkout_session_id` | Invariantes de domínio e dedupe de eventos com ID confiável | Não guarda resposta HTTP nem estado de requisição em andamento |
+| Tabela de idempotência | A API registra chave, hash, status e resposta da operação | Criação de recursos e comandos sensíveis via API | Exige política de expiração e limpeza |
+| Cache distribuído | Redis ou similar guarda a chave por uma janela curta | Alto volume, baixa criticidade, proteção complementar | Se a chave expira cedo ou o cache falha, a duplicata pode passar |
+| Dedupe de mensagens | Consumer registra `message_id`, `operation_id` ou versão antes de aplicar efeito | Filas, Kafka, workers e webhooks | Precisa ser atômico com o efeito ou virar outra fonte de falha |
+| Get-or-create com constraint | A aplicação tenta encontrar ou criar um recurso por uma chave natural | Recursos com identidade natural clara, como conta por `customer_id + bank_id` | Sem unique constraint, vira check-then-insert sujeito a race condition |
+
+Eu evitaria **in-memory tracking** puro para qualquer coisa financeira. Ele pode servir para reduzir cliques duplicados numa instância específica, mas morre no restart, não funciona bem com múltiplas réplicas e não protege contra reentrega tardia. Para pagamento, pedido, saldo e webhook, use armazenamento durável.
+
+## Como fica a arquitetura?
+
+Uma arquitetura idempotente separa intenção, execução e replay.
+
+```txt
+client/offline outbox
+  -> POST /orders
+     Idempotency-Key: op_01J8...
+
+api boundary
+  -> validate key
+  -> hash method + route + body
+  -> insert idempotency row atomically
+
+transactional core
+  -> create order
+  -> write outbox event
+  -> store first response
+
+repeat path
+  -> same key + same hash
+  -> return stored response
+  -> do not create another order
+```
+
+O detalhe importante é a atomicidade. O registro da chave e o efeito principal precisam estar na mesma transação quando o efeito é local. Se o efeito é externo, como chamar uma adquirente de pagamento, o desenho mais robusto é gravar uma outbox transacional e deixar um worker idempotente fazer a integração.
+
+Nesse caso, a idempotência também precisa existir na chamada externa. O worker deve enviar uma chave aceita pela adquirente, salvar o ID retornado pelo provedor e ter uma constraint local que impeça a mesma operação de chamar o provedor duas vezes. Sem isso, uma queda depois da cobrança externa e antes do `done` local ainda pode duplicar o efeito.
+
+Para chamadas concorrentes com a mesma chave, o servidor não deve executar duas vezes. Ele pode bloquear, retornar `409 Conflict` com `Retry-After`, ou devolver a resposta já gravada se a primeira tentativa terminou.
+
+## Como implementar em TypeScript e Postgres?
+
+Este exemplo cobre uma API que cria pedido localmente. A ideia é guardar a primeira resposta e reaproveitá-la quando a mesma intenção aparecer de novo.
+
+```sql
+create table api_idempotency_keys (
+  tenant_id uuid not null,
+  idempotency_key text not null,
+  method text not null,
+  route text not null,
+  request_hash text not null,
+  status text not null check (status in ('processing', 'completed', 'failed')),
+  locked_until timestamptz,
+  response_status integer,
+  response_body jsonb,
+  resource_id uuid,
+  created_at timestamptz not null default now(),
+  completed_at timestamptz,
+  expires_at timestamptz not null,
+  primary key (tenant_id, idempotency_key)
+);
+```
+
+```ts
+import { createHash } from "node:crypto";
+import type { PoolClient } from "pg";
+
+type StoredResponse = {
+  status: number;
+  body: unknown;
+};
+
+function sortJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortJson);
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nested]) => [key, sortJson(nested)]),
+    );
+  }
+
+  return value;
+}
+
+function stableHash(input: unknown) {
+  return createHash("sha256").update(JSON.stringify(sortJson(input))).digest("hex");
+}
+
+export async function createOrder(
+  client: PoolClient,
+  tenantId: string,
+  idempotencyKey: string,
+  body: { cartId: string; customerId: string },
+): Promise<StoredResponse> {
+  const method = "POST";
+  const route = "/api/orders";
+  const requestHash = stableHash({ method, route, body });
+
+  await client.query("begin");
+
+  try {
+    const inserted = await client.query(
+      `
+        insert into api_idempotency_keys (
+          tenant_id,
+          idempotency_key,
+          method,
+          route,
+          request_hash,
+          status,
+          locked_until,
+          expires_at
+        )
+        values (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          'processing',
+          now() + interval '2 minutes',
+          now() + interval '24 hours'
+        )
+        on conflict do nothing
+        returning idempotency_key
+      `,
+      [tenantId, idempotencyKey, method, route, requestHash],
+    );
+
+    if (inserted.rowCount === 0) {
+      const existing = await client.query(
+        `
+          select request_hash, status, locked_until, response_status, response_body
+          from api_idempotency_keys
+          where tenant_id = $1 and idempotency_key = $2
+          for update
+        `,
+        [tenantId, idempotencyKey],
+      );
+
+      const row = existing.rows[0];
+
+      if (row.request_hash !== requestHash) {
+        await client.query("commit");
+        return {
+          status: 422,
+          body: { error: "Idempotency-Key reused with a different request" },
+        };
+      }
+
+      if (row.status === "completed") {
+        await client.query("commit");
+        return { status: row.response_status, body: row.response_body };
+      }
+
+      if (row.status === "processing" && row.locked_until < new Date()) {
+        await client.query("commit");
+        return {
+          status: 409,
+          body: {
+            error: "Request lease expired. Check the operation before retrying.",
+          },
+        };
+      }
+
+      await client.query("rollback");
+      return {
+        status: 409,
+        body: { error: "Request is still processing. Send the same key again later." },
+      };
+    }
+
+    const order = await client.query(
+      `
+        insert into orders (tenant_id, cart_id, customer_id)
+        values ($1, $2, $3)
+        returning id
+      `,
+      [tenantId, body.cartId, body.customerId],
+    );
+
+    const response = {
+      orderId: order.rows[0].id,
+      status: "created",
+    };
+
+    await client.query(
+      `
+        update api_idempotency_keys
+        set status = 'completed',
+            response_status = 201,
+            response_body = $3,
+            resource_id = $4,
+            locked_until = null,
+            completed_at = now()
+        where tenant_id = $1 and idempotency_key = $2
+      `,
+      [tenantId, idempotencyKey, response, order.rows[0].id],
+    );
+
+    await client.query("commit");
+    return { status: 201, body: response };
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  }
+}
+```
+
+Em produção, esses detalhes existem para fechar abuso e ambiguidade: `expires_at` permite limpar chaves antigas, limite de tamanho evita payload gigante no header, autenticação impede consultar chave de outro usuário, e métricas mostram quantas chamadas foram replay. A canonicalização antes do hash garante que o mesmo JSON com campos em outra ordem não pareça uma requisição diferente.
+
+A limpeza em si costuma ser um reaper em background: um job agendado que apaga as chaves além do `expires_at`. A Stripe reconhece uma chave por 24 horas; o desenho em Postgres do Brandur Leach faz o reaper após 72 horas, tempo suficiente para absorver retries tardios sem guardar chaves para sempre.
+
+O `locked_until` é uma lease. Ele evita que uma chave fique presa em `processing` para sempre se o servidor cair no meio. Não retome automaticamente uma operação expirada se ela pode ter chamado um provedor externo. Primeiro consulte o recurso local ou o provedor para descobrir se o efeito já aconteceu.
+
+## O que é replay de resposta?
+
+**Replay de resposta** é o servidor devolver exatamente a mesma resposta da primeira vez quando a requisição repetida chega com a mesma `Idempotency-Key`, sem executar a operação de novo.
+Para isso, ele precisa ter guardado o `response_status` e o `response_body` daquela primeira execução.
+A [Stripe](https://docs.stripe.com/api/idempotent_requests), que popularizou o header `Idempotency-Key`, funciona assim: ela salva o status code e o corpo da primeira requisição e devolve o mesmo resultado nas chamadas seguintes com a mesma chave.
+
+Um cenário concreto:
+
+1. O cliente manda `POST /orders` com `Idempotency-Key: abc`.
+2. O servidor cria o pedido e responde `201 { "orderId": "order_789", "status": "created" }`.
+3. A resposta se perde: um timeout, uma queda de rede ou o app fechou antes de receber.
+4. O cliente, sem saber se deu certo, reenvia `POST /orders` com a mesma `Idempotency-Key: abc`.
+
+O que o servidor responde nessa segunda chamada?
+
+- **Sem replay:** ele sabe que não pode criar outro pedido, porque a chave já existe, mas ainda precisa devolver algo. Sem a resposta gravada, o melhor que consegue é um `409 "já existe"` genérico, ou reconsultar o banco para remontar `{ "orderId": "order_789", ... }` na mão.
+- **Com replay:** ele lê a linha da tabela de idempotência, encontra `response_status = 201` e `response_body = { orderId: "order_789", ... }` que gravou lá atrás, e devolve idêntico. Para o cliente, é como se a primeira resposta nunca tivesse se perdido.
+
+Esse é o objetivo real da idempotência. Não é só "não duplicar o efeito". É fazer a repetição ser transparente: o cliente que reenvia por causa de um erro de rede recebe o mesmo resultado que receberia no caminho feliz, e continua o fluxo normalmente, como pegar o `orderId` e navegar para a tela de confirmação.
+
+É por isso que o replay aparece no código acima:
+
+```ts
+if (row.status === "completed") {
+  await client.query("commit");
+  return { status: row.response_status, body: row.response_body }; // replay
+}
+```
+
+Isso também conecta com o trade-off de armazenamento. A tabela dedicada tem colunas `response_status`/`response_body`, então faz replay de graça. A coluna na entidade só te diz que o pedido já existe. Ela não guardou a resposta HTTP, então para responder igual você teria que reconsultar a entidade e remontar o corpo na mão, e a resposta original nem sempre é reconstruível só a partir da linha: imagine uma resposta que agregava dados de várias tabelas, ou incluía um token de pagamento que você não persistiu.
+
+## Como idempotência ajuda no offline-first?
+
+**Offline-first** muda o problema porque o cliente continua criando intenções sem rede. O app não deve depender de um clique único nem de uma conexão perfeita. Ele precisa persistir uma fila local de operações e sincronizar depois.
+
+Um fluxo comum:
+
+```ts
+type OutboxOperation = {
+  localOperationId: string;
+  idempotencyKey: string;
+  endpoint: "/api/orders";
+  body: { cartId: string; customerId: string };
+  status: "queued" | "syncing" | "done";
+};
+
+async function queueOrder(body: OutboxOperation["body"]) {
+  const operation: OutboxOperation = {
+    localOperationId: crypto.randomUUID(),
+    idempotencyKey: crypto.randomUUID(),
+    endpoint: "/api/orders",
+    body,
+    status: "queued",
+  };
+
+  await saveToLocalOutbox(operation);
+  return operation;
+}
+
+async function syncOperation(operation: OutboxOperation) {
+  await fetch(operation.endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": operation.idempotencyKey,
+    },
+    body: JSON.stringify(operation.body),
+  });
+}
+```
+
+`localOperationId` é só o identificador local do item na outbox do cliente. Ele não é o `order_id`, `payment_id` ou `transfer_id` do banco de dados. Esses IDs continuam sendo criados no servidor, normalmente por sequência, identidade, UUID default ou outro mecanismo controlado pelo banco.
+
+Se o app cair depois de enviar a chamada, ele reabre, lê a outbox local e envia de novo com a mesma chave. Se o usuário insistir manualmente, a interface também pode reaproveitar a mesma operação pendente. O servidor entende que é a mesma intenção. Isso transforma reconexão e repetição em replay seguro.
+
+Sem esse padrão, o app offline-first vira uma fábrica de duplicatas: o usuário toca duas vezes, o sistema agenda duas sincronizações, o service worker tenta de novo, e o backend não sabe o que é uma repetição da mesma compra e o que é uma compra nova.
+
+## Como repetir do lado do cliente?
+
+A idempotência deixa o servidor seguro, mas o cliente ainda decide como repetir, e um retry ingênuo pode piorar uma instabilidade.
+Reenvie com a **mesma** `Idempotency-Key` e espace as tentativas com **backoff exponencial mais jitter**.
+
+- **Backoff exponencial:** espere cada vez mais depois de cada falha, como 1s, 2s, 4s, 8s, em vez de martelar o servidor na hora.
+- **Jitter:** adicione aleatoriedade em cada espera, para que muitos clientes que falharam no mesmo momento não repitam todos no mesmo instante.
+
+O problema que o jitter resolve é o thundering herd. Se o servidor engasga e mil clientes falham ao mesmo tempo, o backoff puro faz todos esperarem os mesmos 2s e repetirem juntos, o que pode derrubar o servidor de novo. O jitter espalha essas tentativas por uma janela em vez de um pico.
+
+A [biblioteca Ruby da Stripe](https://github.com/stripe/stripe-ruby/blob/1bb9ac48b916b1c60591795cdb7ba6d18495e82d/lib/stripe/stripe_client.rb#L78-L92) faz exatamente isso: backoff exponencial limitado por um teto, e então multiplica o atraso por um fator aleatório entre `0.5` e `1.0`, então cada cliente espera entre metade e o total do tempo calculado.
+
+```ts
+async function sendWithRetry(operation: OutboxOperation, maxAttempts = 5) {
+  const baseDelay = 500; // ms
+  const maxDelay = 8000;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await syncOperation(operation); // mesma Idempotency-Key em toda tentativa
+    } catch (error) {
+      if (attempt === maxAttempts) throw error;
+
+      const backoff = Math.min(baseDelay * 2 ** (attempt - 1), maxDelay);
+      const withJitter = backoff * (0.5 + Math.random() * 0.5); // 50% a 100% do backoff
+      await sleep(withJitter);
+    }
+  }
+}
+```
+
+A chave nunca muda entre as tentativas. É isso que permite ao servidor tratar todo retry como a mesma intenção e devolver o resultado guardado.
+
+## Como tratar webhooks idempotentes?
+
+**Webhooks** normalmente seguem entrega pelo menos uma vez. Isso significa que o provedor pode enviar o mesmo evento mais de uma vez, especialmente quando não recebe uma resposta clara do seu endpoint.
+
+A documentação da [Asaas sobre idempotência em webhooks](https://docs.asaas.com/docs/como-implementar-idempotencia-em-webhooks) recomenda duas ideias importantes:
+
+1. Use o `id` do evento enviado pelo provedor como chave única.
+2. Responda `HTTP 200` apenas depois de persistir o evento com sucesso.
+
+O desenho mais robusto é receber rápido, persistir e processar depois:
+
+```sql
+create table webhook_events (
+  provider text not null,
+  provider_event_id text not null,
+  event_type text not null,
+  payload jsonb not null,
+  status text not null check (status in ('pending', 'done', 'failed')),
+  created_at timestamptz not null default now(),
+  processed_at timestamptz,
+  primary key (provider, provider_event_id)
+);
+```
+
+```ts
+import type { Pool } from "pg";
+
+type WebhookBody = {
+  id?: unknown;
+  event?: unknown;
+  [key: string]: unknown;
+};
+
+type ValidWebhookBody = WebhookBody & {
+  id: string;
+  event: string;
+};
+
+function isValidWebhookBody(body: WebhookBody): body is ValidWebhookBody {
+  return (
+    typeof body.id === "string" &&
+    body.id.length > 0 &&
+    typeof body.event === "string" &&
+    body.event.length > 0
+  );
+}
+
+export async function receiveWebhook(
+  db: Pool,
+  provider: "asaas",
+  body: WebhookBody,
+) {
+  if (!isValidWebhookBody(body)) {
+    return { status: 400, body: { error: "Invalid webhook payload" } };
+  }
+
+  await db.query(
+    `
+      insert into webhook_events (
+        provider,
+        provider_event_id,
+        event_type,
+        payload,
+        status
+      )
+      values ($1, $2, $3, $4::jsonb, 'pending')
+      on conflict (provider, provider_event_id) do nothing
+    `,
+    [provider, body.id, body.event, JSON.stringify(body)],
+  );
+
+  return { status: 200, body: { received: true } };
+}
+```
+
+Se o `insert` não grava nada por conflito, isso significa que o evento já entrou antes. A resposta continua sendo `200`, porque a duplicata foi reconhecida e não precisa ser aplicada de novo.
+
+Depois disso, um worker busca `status = 'pending'`, aplica a regra de negócio e marca como `done`. Se a ordem importar, processe em ordem cronológica. Se o volume for alto, coloque uma fila de verdade no meio, como RabbitMQ, Amazon SQS ou Kafka.
+
+O ponto sutil é: não comece debitando saldo, liberando acesso ou enviando e-mail antes de registrar que aquele `provider_event_id` já entrou no sistema. A persistência do evento é a cerca. O processamento vem depois.
+
+Depois que você responde `200`, o provedor pode considerar o evento entregue. A partir daí, retry, alerta, dead-letter e reprocessamento passam a ser responsabilidade do seu sistema.
+
+## Como idempotência e atomicidade entram em filas e Kafka?
+
+**Atomicidade** e idempotência resolvem problemas diferentes. Idempotência evita aplicar o mesmo efeito duas vezes. Atomicidade evita que duas partes de uma operação fiquem separadas por uma falha.
+
+Em um consumer de Kafka, o problema clássico é decidir quando commitar o offset. O artigo [Idempotency vs. Atomicity: Designing Reliable Kafka Consumers](https://medium.com/@omriamitay/idempotency-vs-atomicity-designing-reliable-kafka-consumers-ad57d82835dd) resume bem o risco: se o consumer grava no banco e cai antes de commitar o offset, a mensagem pode ser entregue de novo. Sem idempotência, o efeito duplica.
+
+Um fluxo seguro, sem depender de exatamente uma vez, costuma ser:
+
+```txt
+consume message
+  -> claim message_id or operation_id in the database
+  -> apply business effect only if claim succeeded
+  -> publish downstream event or write outbox event
+  -> commit offset after durable work is done
+```
+
+Se o consumer cair antes do offset, a mensagem volta. O `message_id` já registrado faz a segunda execução virar no-op. Isso transforma entrega pelo menos uma vez em efeito de negócio exatamente uma vez.
+
+Kafka transactions ajudam quando você precisa publicar mensagens e commitar offsets de forma atômica dentro do Kafka. Mas elas não incluem automaticamente um Postgres externo, uma API de pagamento ou um e-mail. Se existe efeito fora do Kafka, você ainda precisa de idempotência no banco, outbox transacional, constraints e dedupe downstream.
+
+## Como durable execution muda o problema?
+
+**Durable execution** ajuda quando o processo de negócio tem várias etapas longas, retries, timers e chamadas externas. O ponto do [artigo da Temporal sobre idempotência e durable execution](https://temporal.io/blog/idempotency-and-durable-execution) é que o runtime pode manter o histórico do workflow e retomar a execução depois de falhas, mas as atividades que tocam o mundo externo ainda precisam ser idempotentes.
+
+Isso muda onde você coloca parte da complexidade, não elimina a necessidade do contrato. Um workflow pode lembrar que uma etapa já completou. Mas uma activity que cobra cartão, cria pedido em uma API externa ou envia e-mail ainda precisa de uma chave estável, uma constraint, uma operação de consulta antes da escrita ou uma política explícita de compensação.
+
+Uma boa regra é: gere a chave o mais perto possível da origem da intenção e reaproveite essa chave em todas as camadas. Em Temporal, por exemplo, `workflowId`, `activityId` ou uma chave de checkout podem virar parte do identificador idempotente da activity. Em uma API comum, esse papel fica no `Idempotency-Key`.
+
+## Seu sistema precisa de tudo isso?
+
+Ajuste o esforço ao sistema. A maior parte desse padrão é básico que qualquer sistema com efeito colateral deveria aplicar hoje. Uma parte menor só compensa quando você tem distribuição de verdade.
+
+Aplique hoje, em quase qualquer sistema:
+
+| Regra | Por quê |
+| --- | --- |
+| Cliente envia uma `Idempotency-Key` estável por intenção | O jeito mais barato de tornar um retry seguro |
+| Tabela de idempotência com `request_hash` e resposta guardada | Reconhece a repetição e faz replay do primeiro resultado |
+| Unique constraint na entidade de domínio | A última linha de defesa, sempre garantida pelo banco |
+| Dedupe de webhook pelo id do evento do provedor | Provedores repetem por padrão |
+| Retry no cliente com backoff e jitter | Impede que uma instabilidade vire uma queda |
+
+Avalie, só quando a escala ou o risco justificam o custo:
+
+| Regra | Quando compensa | Custo |
+| --- | --- | --- |
+| Cache distribuído (Redis) para chaves | Volume muito alto com janelas curtas | Semântica de expiração e mais uma peça móvel |
+| Fila de mensagens de verdade (Kafka, SQS, RabbitMQ) | Muitos produtores e consumidores, ordem, backpressure | Infraestrutura e complexidade operacional |
+| Fases atômicas e recovery points | Operações de vários passos que chamam provedores externos | Código mais complexo e uma máquina de estados |
+| Durable execution (Temporal, Workflow) | Orquestrações longas que precisam sobreviver a quedas | Um novo runtime e modelo mental |
+| Chaves emitidas pelo servidor e ciclo de vida | Fluxos muito sensíveis, como transferências | Um round trip a mais antes da confirmação |
+
+Regra de bolso: um sistema pequeno com um banco e alguns efeitos colaterais está totalmente protegido pela primeira lista. Você recorre à segunda lista quando tem distribuição de verdade, como múltiplos serviços, filas, volume alto ou orquestração que precisa sobreviver a quedas. Colocar Kafka ou Temporal num CRUD pequeno é custo sem retorno. Pular a tabela de idempotência num endpoint de pagamento é retorno que você deixou na mesa.
+
+## Quais erros evitar?
+
+O erro mais comum é confundir **deduplicação** com idempotência completa. Deduplicar mensagem ajuda, mas o contrato real inclui payload, escopo, status, replay de resposta e concorrência.
+
+Checklist de implementação:
+
+1. Gere a chave no cliente para cada intenção nova.
+2. Reuse a mesma chave em toda repetição da mesma intenção.
+3. Restrinja o escopo da chave por usuário, tenant ou conta.
+4. Salve um hash da requisição para bloquear reutilização indevida.
+5. Grave a primeira resposta ou o identificador do recurso criado.
+6. Trate concorrência com lock, transação ou resposta `409`.
+7. Defina uma janela de retenção compatível com o negócio.
+8. Faça handlers de webhook e consumers de fila também serem idempotentes.
+9. Registre `webhook_event_id`, `message_id` ou `operation_id` antes de aplicar efeito irreversível.
+10. Não guarde segredo na chave. Ela é identificador, não credencial.
+11. Não use timestamp ou payload puro como identidade da operação.
+
+Idempotência também não substitui constraint de banco. Se um pedido não pode duplicar por `checkout_session_id`, coloque uma unique constraint. Se um webhook não pode ser salvo duas vezes, crie uma constraint em `provider_event_id`. Se uma mensagem não pode ser aplicada duas vezes, registre o `event_id` antes do efeito. A chave de idempotência protege a borda da API. As invariantes do domínio protegem o coração do sistema.
+
+## Como pensar em sistemas distribuídos?
+
+Em **sistemas distribuídos**, entrega exatamente uma vez é mais exceção do que regra prática. A forma comum de construir confiabilidade é aceitar que mensagens podem chegar zero, uma ou várias vezes, e fazer cada etapa convergir para o mesmo estado.
+
+Isso muda a pergunta de arquitetura:
+
+| Pergunta fraca | Pergunta melhor |
+| --- | --- |
+| Como impedir toda repetição? | Como tornar repetição segura? |
+| Como garantir que o webhook chega uma vez? | Como processar o mesmo webhook sem duplicar efeito? |
+| Como saber se o cliente recebeu a resposta? | Como devolver o mesmo resultado se ele perguntar de novo? |
+| Como evitar que o worker caia? | Como retomar depois de cair sem repetir o efeito? |
+| Como impedir o usuário de clicar duas vezes? | Como garantir que clique repetido não duplica pagamento? |
+
+Esse é o motivo de idempotência aparecer em APIs, filas, webhooks, jobs, pagamentos, sincronização offline e infraestrutura como código. Ela é menos sobre elegância conceitual e mais sobre uma verdade operacional: em produção, a mesma intenção pode bater na sua porta mais de uma vez.
+
+## Referências úteis
+
+1. [RFC 9110: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2)
+2. [Expired IETF draft: The Idempotency-Key HTTP Header Field](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/)
+3. [Google Cloud: O que é idempotência?](https://cloud.google.com/discover/idempotency?hl=pt-BR)
+4. [OpenPix Developers: Idempotência](https://developers.openpix.com.br/docs/concepts/idempotence)
+5. [Asaas: Como implementar idempotência em Webhooks](https://docs.asaas.com/docs/como-implementar-idempotencia-em-webhooks)
+6. [Medium: Idempotency vs. Atomicity: Designing Reliable Kafka Consumers](https://medium.com/@omriamitay/idempotency-vs-atomicity-designing-reliable-kafka-consumers-ad57d82835dd)
+7. [Temporal: What is idempotency? And why it matters for durable systems](https://temporal.io/blog/idempotency-and-durable-execution)
+8. [ByteByteGo: Mastering Idempotency: Building Reliable APIs](https://blog.bytebytego.com/p/mastering-idempotency-building-reliable)
+9. [Woovi: Idempotence, what is and how to implement](https://dev.to/woovi/idempotence-what-is-and-how-to-implement-4bmc)
+10. [AlgoMaster: Idempotency](https://algomaster.io/learn/system-design/idempotency)
+11. [CNCF Glossary: Idempotência](https://glossary.cncf.io/pt-br/idempotence/)
+12. [freeCodeCamp: What is Idempotence?](https://www.freecodecamp.org/news/idempotence-explained/)
+13. [Splunk: Idempotent Design](https://www.splunk.com/en_us/blog/learn/idempotent-design.html)
+14. [TabNews: API Idempotente](https://www.tabnews.com.br/iamferraz/api-idempotente-garanta-operacoes-sem-duplicacao-entenda-a-importancia-da-idempotencia-em-apis)
+15. [Reddit r/brdev: Como simplificar o termo idempotência?](https://www.reddit.com/r/brdev/comments/1t23t3f/como_simplificar_na_cabe%C3%A7a_o_termo_idempot%C3%AAncia/)
+16. [Augusto Galego (YouTube): Todo DEV precisa entender isso: IDEMPOTÊNCIA](https://www.youtube.com/watch?v=YNHKO_74sLU)
+17. [Stripe API: Idempotent requests](https://docs.stripe.com/api/idempotent_requests)
+18. [Stripe Blog: Designing robust and predictable APIs with idempotency](https://stripe.com/blog/idempotency)
+19. [Brandur Leach: Implementing Stripe-like Idempotency Keys in Postgres](https://brandur.org/idempotency-keys)
+20. [stripe-ruby: retry com backoff e jitter (`sleep_time`)](https://github.com/stripe/stripe-ruby/blob/1bb9ac48b916b1c60591795cdb7ba6d18495e82d/lib/stripe/stripe_client.rb#L78-L92)
+
+## Resumo
+
+**Idempotência** é o contrato que impede uma intenção repetida de virar efeito duplicado. O cliente cria uma chave para uma intenção, o servidor salva essa chave com escopo e hash da requisição, executa o efeito uma vez e retorna o mesmo resultado quando a chamada aparece de novo.
+
+Em API simples, isso evita clique duplo em pagamento. Em offline-first, isso impede uma fila de sincronizar de novo algo já concluído. Em webhooks e filas, isso evita salvar ou processar o mesmo evento duas vezes.
