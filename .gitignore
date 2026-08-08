@@ -39,6 +39,9 @@ yarn-error.log*
 # local scratch (journal raw markdown, etc.)
 /tmp/
 
+# visual QA gauntlet screenshots
+/.gauntlet/
+
 # vercel
 .vercel
 
