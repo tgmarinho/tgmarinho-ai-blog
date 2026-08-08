@@ -7,6 +7,7 @@ import { CVViewer } from "@/components/cv/cv-viewer";
 import { Recommendations } from "@/components/cv/recommendations";
 import { Download, Printer, Quote } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
+import { trackEvent } from "@/lib/analytics";
 
 export default function CVPage() {
   const t = useTranslations("cv");
@@ -40,7 +41,11 @@ export default function CVPage() {
     loadCV();
   }, [language]);
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = (
+    source: "download_button" | "print_link" = "download_button"
+  ) => {
+    trackEvent("cv_download", { source, language });
+
     const content = document.getElementById("cv-content");
     if (!content) return;
 
@@ -126,12 +131,18 @@ export default function CVPage() {
             <div className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.025] p-0.5 backdrop-blur-md">
               <LangButton
                 active={language === "en"}
-                onClick={() => setLanguage("en")}
+                onClick={() => {
+                  trackEvent("cv_language_switch", { to: "en" });
+                  setLanguage("en");
+                }}
                 label="EN"
               />
               <LangButton
                 active={language === "pt"}
-                onClick={() => setLanguage("pt")}
+                onClick={() => {
+                  trackEvent("cv_language_switch", { to: "pt" });
+                  setLanguage("pt");
+                }}
                 label="PT-BR"
               />
             </div>
@@ -139,7 +150,7 @@ export default function CVPage() {
             {/* Download */}
             <button
               type="button"
-              onClick={handleDownloadPDF}
+              onClick={() => handleDownloadPDF("download_button")}
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-cyan-300 px-4 py-2 font-mono text-[10.5px] uppercase tracking-[0.22em] text-[#05060a] transition-transform hover:scale-[1.02]"
               style={{
                 boxShadow:
@@ -171,7 +182,7 @@ export default function CVPage() {
           <span className="text-white/15">·</span>
           <button
             type="button"
-            onClick={handleDownloadPDF}
+            onClick={() => handleDownloadPDF("print_link")}
             className="inline-flex items-center gap-1.5 transition-colors hover:text-cyan-300"
           >
             <Printer className="h-3 w-3" />

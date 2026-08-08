@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Atmospheric } from "@/components/fx/atmospheric";
 import { SmoothScroll } from "@/components/fx/smooth-scroll";
+import { Analytics } from "@/components/analytics";
 import { getEnabledNavLinks, siteConfig } from "@/lib/constants";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import { routing, type Locale } from "@/i18n/routing";
@@ -149,6 +150,7 @@ export default async function LocaleLayout({
             <Footer />
           </SmoothScroll>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   );

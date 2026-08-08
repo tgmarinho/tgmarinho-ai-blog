@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Loader2, Check } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
@@ -27,6 +28,7 @@ export function NewsletterForm() {
         setStatus("success");
         setMessage("Thanks for subscribing!");
         setEmail("");
+        trackEvent("newsletter_signup", { location: "newsletter_form" });
       } else {
         setStatus("error");
         setMessage(data.error || "Something went wrong");

@@ -17,6 +17,8 @@ export const siteConfig = {
   role: "AI Product Engineer",
   location: "Brazil",
   yearsOfExperience: 12,
+  /** Google Analytics 4 measurement ID (loaded only in production) */
+  gaId: "G-TQ5YYYZN87",
   links: {
     github: "https://github.com/tgmarinho",
     twitter: "https://twitter.com/tgmarinho",
