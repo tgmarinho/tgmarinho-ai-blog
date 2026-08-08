@@ -1,0 +1,173 @@
+---
+title: "IndexedDB vs localStorage: onde guardar dados em um app offline-first"
+description: "IndexedDB vs localStorage no offline-first: veja quando usar Dexie, onde localStorage cabe e por que dados operacionais devem ir para o localDB do app."
+date: "2026-08-06"
+published: true
+slug: "indexeddb-vs-localstorage-offline-first-pt-br"
+language: "pt-BR"
+translationKey: "indexeddb-vs-localstorage-offline-first"
+categories: ["frontend", "offline-first", "indexeddb", "web-storage", "pt-br"]
+image: "/images/blog/indexeddb-localstorage-offline-first-cover.jpg"
+---
+
+**IndexedDB** é o armazenamento certo para dados estruturados, duráveis e operacionais em um app offline-first. **localStorage** é útil para preferências pequenas, mas é frágil para sessão, rascunhos, filas de sincronização, caches relacionais, relatórios pendentes ou fotos.
+
+Em um app offline-first, a regra prática é simples: se o dado precisa sobreviver offline e participar do fluxo operacional, ele vai para IndexedDB via `localDB`. `localStorage` fica reservado para flags pequenas e não críticas.
+
+## O que muda na prática entre IndexedDB e localStorage?
+
+**IndexedDB** é um banco local do navegador. Ele guarda objetos estruturados, suporta índices, transações e operações assíncronas. Isso combina com dados que fazem parte do fluxo do produto: sessão local, rascunhos, filas de sincronização, cadastros em cache, relatórios pendentes e anexos que podem crescer.
+
+**localStorage** é uma API simples de chave/valor em string. Ela é síncrona, não tem consulta estruturada, não modela listas bem, não tem transações e bloqueia a thread principal enquanto lê ou escreve. Isso é aceitável para uma preferência pequena. Não é aceitável para o banco local de um app operacional.
+
+| Critério | IndexedDB com Dexie | localStorage |
+| --- | --- | --- |
+| Modelo | Objetos, tabelas, índices e transações | Chave/valor em string |
+| Execução | Assíncrona | Síncrona |
+| Volume | Adequado para mais dados | Adequado para poucos bytes ou poucos KB |
+| Consulta | Busca por índices e coleções | Leitura manual por chave |
+| Uso saudável | Fluxo offline do app | Preferências pequenas |
+| Risco principal | Modelagem e migração exigem cuidado | Bloqueio da UI, serialização frágil e excesso de escopo |
+
+## Por que usar Dexie em cima do IndexedDB?
+
+**Dexie** é uma camada mais ergonômica sobre IndexedDB. IndexedDB puro é poderoso, mas verboso. Dexie dá uma API mais simples para versionar schema, consultar coleções, trabalhar com índices e manter o código do app perto de uma modelagem de banco local.
+
+Num app offline-first, isso importa porque o offline não é um detalhe visual. O app precisa continuar útil quando a conexão cai. O usuário pode criar rascunhos, registrar relatórios, manter dados de apoio em cache e depois sincronizar tudo com o backend.
+
+Uma modelagem saudável tende a separar os dados por papel:
+
+| Dado local | Onde guardar | Por quê |
+| --- | --- | --- |
+| Rascunhos de relatório | IndexedDB via `localDB` | São estruturados, editáveis e precisam sobreviver offline |
+| Fila de sincronização | IndexedDB via `localDB` | Precisa de status, tentativas, ordem e payload |
+| Cache de cadastros | IndexedDB via `localDB` | Precisa de listas, índices e atualização incremental |
+| Relatórios pendentes | IndexedDB via `localDB` | Fazem parte do fluxo operacional |
+| Fotos ou base64 temporário | IndexedDB via `localDB` | Podem crescer e não cabem bem em chave/valor |
+| Tema ou flag simples | localStorage | Pequeno, não crítico e fácil de recompor |
+
+## Quando localStorage ainda faz sentido?
+
+**localStorage** faz sentido quando o dado é pequeno, não crítico e fácil de recriar. Ele é bom para uma flag simples, o último tema escolhido, um toggle de interface, uma preferência local ou um pequeno estado que não quebra o fluxo se desaparecer.
+
+Use localStorage quando todas estas frases forem verdadeiras:
+
+1. O dado cabe naturalmente em uma string.
+2. O dado não precisa de consulta, índice, ordenação ou filtro.
+3. O dado não participa de sincronização offline.
+4. O dado pode ser apagado sem perder uma operação do usuário.
+5. A escrita acontece raramente e não em lote.
+
+Exemplos saudáveis:
+
+```ts
+localStorage.setItem("theme", "dark");
+localStorage.setItem("hasSeenInstallPrompt", "true");
+```
+
+Mesmo nesses casos, mantenha o uso pequeno. Se começar a virar uma lista, cache, fila ou documento, já deixou de ser preferência e virou dado de aplicação.
+
+## O que não deve ir para localStorage?
+
+**Dados operacionais** não devem ir para localStorage. O problema não é só limite de tamanho. O problema é a combinação de string manual, falta de transação, execução síncrona e tendência de crescer sem modelo.
+
+Num app operacional, eu evitaria localStorage para:
+
+1. Sessão ou token.
+2. Relatórios.
+3. Fila de sincronização.
+4. Rascunhos.
+5. Cache de cadastros.
+6. Fotos, base64 ou anexos.
+7. Qualquer dado que precise de status, retry ou reconciliação.
+
+Sessão e token merecem uma atenção separada. `localStorage` não é cofre. Em caso de Cross-Site Scripting (XSS), um script malicioso na página consegue ler o que está ali. A estratégia de autenticação deve ser desenhada com o backend e o modelo de ameaça do produto, não jogada no mesmo lugar das preferências de UI.
+
+## Como decidir onde guardar cada dado?
+
+Use esta pergunta: **o dado participa do fluxo operacional offline?**
+
+Se a resposta for sim, ele pertence ao `localDB` em IndexedDB. Se a resposta for não, pergunte se ele é pequeno, simples e não crítico. Só nesse caso localStorage entra.
+
+Um checklist prático:
+
+| Pergunta | Se sim |
+| --- | --- |
+| Precisa sobreviver sem internet? | IndexedDB |
+| Precisa sincronizar depois? | IndexedDB |
+| Tem status como `pending`, `synced` ou `failed`? | IndexedDB |
+| Precisa de retry, ordenação ou dedupe? | IndexedDB |
+| É lista, mapa, relatório ou objeto grande? | IndexedDB |
+| É uma preferência pequena e descartável? | localStorage |
+
+Essa regra também evita um erro comum: começar com localStorage porque parece mais rápido e depois tentar transformar um saco de strings em banco de dados. O custo vem depois, em migração, parsing defensivo, bugs de concorrência e travamentos de UI.
+
+## Como essa regra aparece no código?
+
+**localDB** deve ser a porta de entrada para qualquer dado local relevante do app. O restante do código não precisa saber os detalhes de IndexedDB. Ele precisa chamar uma API local clara para criar rascunho, enfileirar sync, buscar cache e marcar uma operação como sincronizada.
+
+Um desenho simples:
+
+```ts
+// localDB owns offline operational data.
+await localDB.drafts.put(reportDraft);
+await localDB.syncQueue.add({
+  id: operationId,
+  type: "report:create",
+  payload,
+  status: "pending",
+  createdAt: new Date().toISOString(),
+});
+
+// localStorage only owns tiny, non-critical UI preferences.
+localStorage.setItem("theme", "dark");
+```
+
+A diferença de intenção fica explícita. O que é fluxo de negócio vai para o banco local. O que é preferência pequena fica em chave/valor.
+
+## Como organizar IndexedDB por ambiente?
+
+**IndexedDB por ambiente** evita que dados de teste, staging, produção e desenvolvimento local se misturem no mesmo navegador. Mesmo que domínios diferentes já tenham storages separados por origem, a aplicação deve nomear o banco local com intenção explícita.
+
+Uma regra simples é colocar o ambiente no nome do banco:
+
+```ts
+const indexedDBNameByEnv = {
+  production: "app-prod-localdb",
+  staging: "app-staging-localdb",
+  test: "app-test-localdb",
+  development: "app-dev-localdb",
+} as const;
+
+const localDB = new Dexie(indexedDBNameByEnv[appEnv]);
+```
+
+Isso protege três coisas:
+
+1. Testes automatizados podem limpar `app-test-localdb` sem tocar nos dados reais.
+2. Staging pode testar migrações e schemas antes de produção.
+3. Dev local pode quebrar, resetar e recriar dados sem contaminar outros ambientes.
+
+Para testes end-to-end, prefira ainda um sufixo por execução quando o runner roda em paralelo:
+
+```ts
+const localDB = new Dexie(`app-test-localdb-${testRunId}`);
+```
+
+O ponto não é o nome exato. O ponto é que cada ambiente tenha seu próprio banco IndexedDB, sua própria política de limpeza e seu próprio caminho de migração.
+
+## Qual é a regra saudável para o projeto?
+
+**IndexedDB/Dexie** é o banco local do app. Ele guarda o que precisa continuar existindo offline, ser consultado, versionado, sincronizado ou recuperado depois.
+
+**localStorage** é um detalhe de conveniência. Ele guarda preferências pequenas e não críticas, como tema, flag simples ou toggle local. Nada ali deve ser necessário para concluir uma operação do usuário.
+
+Resumo:
+
+| Use | Para |
+| --- | --- |
+| IndexedDB via `localDB` | Sessão local não sensível, rascunhos, caches relacionais, filas de sync, relatórios pendentes, anexos e dados offline reais |
+| localStorage | Preferências pequenas, flags simples, último tema e toggles não críticos |
+| Não use localStorage | Sessão/token, relatórios, fila de sincronização, rascunhos, cache de cadastros ou fotos |
+
+O limite mental é este: se perder o dado quebra o trabalho do usuário, não é preferência. É estado operacional. Num app offline-first, estado operacional vai para IndexedDB via `localDB`, separado por ambiente para produção, staging, testes e dev local.
