@@ -49,6 +49,13 @@
         "latencyLabel": "LATENCY",
         "stateLabel": "STATE",
         "stateValue": "streaming"
+      },
+      "hud": {
+        "reposLabel": "REPOS",
+        "followersLabel": "FOLLOWERS",
+        "pushLabel": "LAST PUSH",
+        "liveLabel": "LIVE",
+        "offlineLabel": "CACHED"
       }
     },
     "recent": {

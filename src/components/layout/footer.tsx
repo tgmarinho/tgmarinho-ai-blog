@@ -135,7 +135,23 @@ export async function Footer() {
           </div>
         </div>
 
-        <div className="mesh-divider mt-14" />
+        <a
+          href="/api/mcp"
+          className="group mt-10 inline-flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 font-mono text-[11.5px] text-muted-foreground transition-colors hover:border-cyan-300/30 hover:text-foreground"
+          title="This site is agent-readable. Try it in your terminal, or explore the MCP server."
+        >
+          <span className="select-none text-cyan-300/70 group-hover:text-cyan-300">
+            $
+          </span>
+          <span className="tracking-tight">
+            curl {siteConfig.url.replace("https://", "")}
+          </span>
+          <span className="ml-1 hidden text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 sm:inline">
+            · agent-ready · mcp ↗
+          </span>
+        </a>
+
+        <div className="mesh-divider mt-8" />
 
         <div className="mt-6 flex flex-col items-start gap-3 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>{t("copyright", { year: new Date().getFullYear() })}</p>

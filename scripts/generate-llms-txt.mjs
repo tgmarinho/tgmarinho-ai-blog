@@ -54,6 +54,11 @@ This site contains a bilingual technical blog (English and Brazilian Portuguese)
 - [RSS feed](${SITE_URL}/rss.xml)
 - [Sitemap](${SITE_URL}/sitemap.xml)
 
+## For agents
+
+- [MCP server](${SITE_URL}/api/mcp) — JSON-RPC 2.0 endpoint (POST). Tools: \`search_thiago\`, \`ask_thiago\`, \`get_cv\`, \`list_projects\`, \`get_recommendations\`. \`GET\` returns the tool manifest.
+- [Plain-text resume](${SITE_URL}/api/resume) — the CV as \`text/plain\` (also served to \`curl ${SITE_URL.replace("https://", "")}\`).
+
 ## Recent posts (English)
 
 ${formatList(byLang.en, 20)}
