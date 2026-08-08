@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 import type { NavLink } from "@/lib/constants";
 import { useState } from "react";
 
@@ -48,7 +49,14 @@ export function MobileNav({ navLinks }: MobileNavProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  trackEvent("nav_click", {
+                    label: link.key,
+                    destination: link.href,
+                    location: "mobile",
+                  });
+                  setOpen(false);
+                }}
                 className={cn(
                   "group flex items-center justify-between rounded-xl border px-4 py-3 transition-all",
                   active

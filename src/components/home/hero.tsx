@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
+import { trackEvent } from "@/lib/analytics";
 import { ParticleField } from "@/components/fx/particle-field";
 import { HeroPortrait } from "@/components/fx/hero-portrait";
 import { RocketLaunch } from "@/components/fx/rocket-launch";
@@ -69,6 +70,12 @@ export function Hero({ postCount }: HeroProps) {
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href="/blog"
+              onClick={() =>
+                trackEvent("cta_click", {
+                  location: "hero_primary",
+                  destination: "/blog",
+                })
+              }
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-cyan-300 px-5 py-2.5 text-[13px] font-medium tracking-wide text-[#05060a] transition-transform hover:scale-[1.02]"
               style={{
                 boxShadow:
@@ -81,6 +88,12 @@ export function Hero({ postCount }: HeroProps) {
             </Link>
             <Link
               href="/about"
+              onClick={() =>
+                trackEvent("cta_click", {
+                  location: "hero_secondary",
+                  destination: "/about",
+                })
+              }
               className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.025] px-5 py-2.5 text-[13px] tracking-wide text-foreground/90 backdrop-blur-md transition-colors hover:border-white/20 hover:bg-white/[0.05]"
             >
               {t("ctaSecondary")}

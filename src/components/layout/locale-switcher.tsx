@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 export function LocaleSwitcher() {
   const locale = useLocale() as Locale;
@@ -15,6 +16,7 @@ export function LocaleSwitcher() {
 
   const onSelect = (next: Locale) => {
     if (next === locale) return;
+    trackEvent("locale_switch", { from: locale, to: next });
     startTransition(() => {
       router.replace(pathname, { locale: next });
     });

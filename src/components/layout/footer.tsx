@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { siteConfig } from "@/lib/constants";
+import { TrackedExternalLink } from "@/components/analytics-link";
 import {
   FaGithub,
   FaXTwitter,
@@ -104,27 +105,31 @@ export async function Footer() {
             <p className="mt-4 text-[13px] text-muted-foreground">
               {t("signalsDescription")}
             </p>
-            <a
+            <TrackedExternalLink
               href={siteConfig.newsletter.url}
               target="_blank"
               rel="noopener noreferrer"
+              event="newsletter_subscribe_click"
+              eventParams={{ location: "footer" }}
               className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.025] px-4 py-2 text-[12.5px] tracking-wide text-foreground/90 backdrop-blur-md transition-colors hover:border-cyan-300/40 hover:text-cyan-200"
             >
               {t("subscribe")}
               <span className="text-muted-foreground">↗</span>
-            </a>
+            </TrackedExternalLink>
             <div className="mt-6 flex items-center gap-1">
               {socialLinks.map((link) => (
-                <a
+                <TrackedExternalLink
                   key={link.label}
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={link.label}
+                  event="social_click"
+                  eventParams={{ network: link.label, location: "footer" }}
                   className="grid h-9 w-9 place-items-center rounded-lg border border-transparent text-muted-foreground transition-all hover:border-white/10 hover:bg-white/[0.04] hover:text-foreground"
                 >
                   <link.icon className="h-4 w-4" />
-                </a>
+                </TrackedExternalLink>
               ))}
             </div>
           </div>

@@ -13,6 +13,7 @@
     "audit:i18n-seo": "node scripts/validate-i18n-seo.mjs"
   },
   "dependencies": {
+    "@next/third-parties": "^16.3.0",
     "@upstash/redis": "^1.36.2",
     "ai": "^6.0.207",
     "class-variance-authority": "^0.7.1",

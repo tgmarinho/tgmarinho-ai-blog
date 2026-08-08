@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 import type { NavLink } from "@/lib/constants";
 import { MobileNav } from "./mobile-nav";
 import { LocaleSwitcher } from "./locale-switcher";
@@ -37,6 +38,7 @@ export function Header({ navLinks }: HeaderProps) {
         <Link
           href="/"
           aria-label="Thiago Marinho, home"
+          onClick={() => trackEvent("logo_click", { location: "header" })}
           className="group flex items-center gap-2.5"
         >
           <span className="relative grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/[0.03] backdrop-blur-md transition-colors group-hover:border-cyan-300/40">
@@ -60,6 +62,13 @@ export function Header({ navLinks }: HeaderProps) {
                 <li key={link.href}>
                   <Link
                     href={link.href}
+                    onClick={() =>
+                      trackEvent("nav_click", {
+                        label: link.key,
+                        destination: link.href,
+                        location: "header",
+                      })
+                    }
                     className={cn(
                       "relative block rounded-full px-3.5 py-1.5 text-[13px] tracking-wide transition-colors",
                       active
