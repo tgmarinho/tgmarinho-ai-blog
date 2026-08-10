@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -10,7 +10,18 @@ import { SmoothScroll } from "@/components/fx/smooth-scroll";
 import { Analytics } from "@/components/analytics";
 import { getEnabledNavLinks, siteConfig } from "@/lib/constants";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
+import {
+  jsonLdGraph,
+  personNode,
+  organizationNode,
+  websiteNode,
+} from "@/lib/structured-data";
 import { routing, type Locale } from "@/i18n/routing";
+
+export const viewport: Viewport = {
+  themeColor: "#05060a",
+  colorScheme: "dark",
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,8 +65,23 @@ export async function generateMetadata({
       template: `%s · ${siteConfig.name}`,
     },
     description: t("subtitle"),
-    authors: [{ name: siteConfig.author }],
+    authors: [{ name: siteConfig.author, url: siteConfig.url }],
     creator: siteConfig.author,
+    publisher: siteConfig.author,
+    keywords: [
+      "AI Product Engineer",
+      "AI agents",
+      "RAG",
+      "LLMs",
+      "Next.js",
+      "TypeScript",
+      "React",
+      "React Native",
+      "Node.js",
+      "full-stack developer",
+      "spec-driven development",
+      "Thiago Marinho",
+    ],
     alternates: {
       ...buildAlternates(locale, "/"),
       types: {
@@ -64,9 +90,21 @@ export async function generateMetadata({
         ],
       },
     },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
     openGraph: {
       type: "website",
       locale: ogLocale(locale),
+      alternateLocale: locale === "en" ? "pt_BR" : "en_US",
       url: localizedUrl(locale, "/"),
       title: siteConfig.shareTitle,
       description: siteConfig.shareDescription,
@@ -92,42 +130,12 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
-  const homeUrl = localizedUrl(locale as Locale, "/");
   const enabledNavLinks = getEnabledNavLinks();
-  const personJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    name: siteConfig.author,
-    alternateName: siteConfig.username,
-    url: siteConfig.url,
-    email: `mailto:${siteConfig.email}`,
-    jobTitle: siteConfig.role,
-    description: siteConfig.description,
-    image: `${siteConfig.url}${siteConfig.defaultOgImage}`,
-    sameAs: [
-      siteConfig.links.github,
-      siteConfig.links.twitter,
-      siteConfig.links.linkedin,
-      siteConfig.links.youtube,
-    ],
-  };
-  const websiteJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: siteConfig.name,
-    url: homeUrl,
-    description: siteConfig.shareDescription,
-    inLanguage: locale,
-    publisher: { "@type": "Person", name: siteConfig.author, url: siteConfig.url },
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${localizedUrl(locale as Locale, "/blog")}?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
-  };
+  const siteJsonLd = jsonLdGraph([
+    personNode(),
+    organizationNode(),
+    websiteNode(locale as Locale),
+  ]);
 
   return (
     <html lang={locale} className="dark">
@@ -136,11 +144,7 @@ export default async function LocaleLayout({
       >
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
         <NextIntlClientProvider>
           <SmoothScroll>

@@ -488,5 +488,168 @@
       "badCut": "corte ruim",
       "document": "# Política de suporte da loja\n\n## Reembolso\nClientes podem pedir reembolso em até 7 dias após a compra. O produto precisa estar sem uso e com a embalagem original.\n\n## Troca de produto\nTrocas são aceitas por defeito de fabricação ou tamanho incorreto. O cliente deve enviar o número do pedido e uma foto do produto.\n\n## Prazo de entrega\nPedidos para capitais chegam em até 5 dias úteis. Para cidades do interior, o prazo pode chegar a 10 dias úteis."
     }
+  },
+  "lp": {
+    "metaTitle": "Thiago Marinho · AI Product Engineer para contratar",
+    "metaDescription": "AI Product Engineer full-stack. Construo produtos com IA que chegam à produção: agentes, RAG, Next.js, TypeScript e React Native. Disponível para novos projetos.",
+    "status": "Disponível para novos projetos e oportunidades sênior",
+    "heroKicker": "AI Product Engineer · Full-Stack",
+    "heroName": "Thiago Marinho",
+    "heroLead": "Eu construo produtos com IA que chegam à produção e continuam funcionando. Agentes, RAG e engenharia full-stack de ponta a ponta.",
+    "facts": {
+      "years": "12+ anos de experiência",
+      "ai": "Agentes de IA, RAG e LLMs",
+      "stack": "Next.js · TypeScript · Node · React Native"
+    },
+    "ctaPrimary": "Vamos conversar",
+    "ctaSecondary": "Ver meu trabalho",
+    "servicesKicker": "O que eu construo",
+    "servicesTitle": "Do problema ao produto em produção",
+    "servicesLead": "Trabalho de ponta a ponta: descubro o problema, escrevo a spec e entrego software que faz o trabalho.",
+    "services": {
+      "agents": {
+        "title": "Agentes de IA",
+        "description": "Agentes que orquestram ferramentas e pessoas, com controle, observabilidade e segurança em produção."
+      },
+      "rag": {
+        "title": "RAG e busca semântica",
+        "description": "Pipelines de RAG do ingest ao ranking: chunking, embeddings, vector DB e avaliação."
+      },
+      "fullstack": {
+        "title": "Produtos full-stack",
+        "description": "Aplicações Next.js completas: frontend, API, banco de dados e deploy na Vercel."
+      },
+      "mobile": {
+        "title": "Apps mobile",
+        "description": "Apps React Native prontos pra loja, com deep linking e foco em retenção."
+      },
+      "spec": {
+        "title": "Spec-driven engineering",
+        "description": "Especificação antes do código: menos retrabalho, mais previsibilidade e qualidade."
+      },
+      "payments": {
+        "title": "Pagamentos e fintech",
+        "description": "Integrações de pagamento (PIX, cartão) e fluxos de cobrança que aguentam escala."
+      }
+    },
+    "proofKicker": "Números, sem alarde",
+    "proofTitle": "Resultado que já entreguei",
+    "proof": {
+      "revenue": "em receita processada numa plataforma de eventos",
+      "dropoff": "de redução no drop-off mobile",
+      "sdk": "mais rápido na integração de SDK",
+      "indexer": "de acurácia no indexer on-chain",
+      "devs": "devs alcançados com conteúdo técnico",
+      "years": "anos entregando software em produção"
+    },
+    "experienceKicker": "Trajetória",
+    "experienceTitle": "Onde eu construí isso",
+    "experience": {
+      "popstand": {
+        "role": "Software Engineer · Popstand",
+        "detail": "Plataforma de saúde completa (API, web e mobile) atendendo milhares de pacientes."
+      },
+      "unicrow": {
+        "role": "Full-Stack Developer · Unicrow",
+        "detail": "SDK em TypeScript para escrow Web3 e indexer on-chain em tempo real."
+      },
+      "rocketseat": {
+        "role": "Dev & Tech Writer · Rocketseat",
+        "detail": "Conteúdo técnico que alcançou mais de 50 mil devs na comunidade JS do Brasil."
+      }
+    },
+    "processKicker": "Como trabalho",
+    "processTitle": "Simples, direto e em produção",
+    "process": {
+      "discovery": {
+        "step": "01",
+        "title": "Discovery",
+        "description": "Entendo o problema, o usuário e o resultado esperado. Escrevo a spec antes de tocar no código."
+      },
+      "build": {
+        "step": "02",
+        "title": "Build",
+        "description": "Construo em ciclos curtos, com IA no loop, testes e entregas visíveis a cada passo."
+      },
+      "ship": {
+        "step": "03",
+        "title": "Ship & iterate",
+        "description": "Coloco em produção, meço o que importa e itero com base em dados reais."
+      }
+    },
+    "finalTitle": "Tem um projeto ou vaga em mente?",
+    "finalSubtitle": "Me conta o que você precisa construir. Respondo rápido.",
+    "finalCta": "Falar comigo",
+    "emailCta": "Enviar e-mail",
+    "faq": {
+      "faqKicker": "Perguntas frequentes",
+      "faqTitle": "O que você precisa saber",
+      "items": {
+        "build": {
+          "q": "O que você constrói?",
+          "a": "Produtos com IA de ponta a ponta: agentes, pipelines de RAG e apps full-stack com Next.js e TypeScript, da primeira spec até a produção."
+        },
+        "availability": {
+          "q": "Você está disponível para freelance ou contrato?",
+          "a": "Sim. Pego projetos, vagas sênior/lead e consultoria. O jeito mais rápido de falar comigo é o formulário de contato ou e-mail."
+        },
+        "stack": {
+          "q": "Qual é a sua stack principal?",
+          "a": "Next.js, React, React Native, TypeScript e Node.js, com LLMs, RAG e bancos vetoriais na camada de IA."
+        },
+        "remote": {
+          "q": "Você trabalha remoto?",
+          "a": "Sim. Trabalho remoto com times nos EUA, Suíça e Brasil há mais de uma década."
+        },
+        "pricing": {
+          "q": "Como você cobra?",
+          "a": "Depende do escopo. Me conta o que você precisa e eu sugiro o melhor formato: projeto fechado, retainer ou por hora."
+        }
+      }
+    }
+  },
+  "links": {
+    "metaTitle": "Links · Thiago Marinho",
+    "metaDescription": "Todos os meus links em um lugar: portfólio, blog, currículo, GitHub, LinkedIn e contato.",
+    "eyebrow": "AI Product Engineer · Brasil",
+    "name": "Thiago Marinho",
+    "role": "AI Product Engineer · Full-Stack",
+    "status": "Disponível para novos projetos",
+    "summary": "Construo produtos com IA que chegam à produção. Agentes, RAG e engenharia full-stack com Next.js e TypeScript.",
+    "socialKicker": "Redes",
+    "siteCtaSmall": "Conheça meu trabalho",
+    "siteCtaStrong": "Acessar o site completo",
+    "sectionKicker": "Comece por aqui",
+    "sectionTitle": "Escolha seu próximo passo",
+    "items": {
+      "hire": {
+        "title": "Vamos trabalhar juntos",
+        "subtitle": "Me chame para um projeto, vaga ou consultoria"
+      },
+      "about": {
+        "title": "Sobre mim",
+        "subtitle": "Trajetória, stack e como eu trabalho"
+      },
+      "projects": {
+        "title": "Projetos",
+        "subtitle": "O que já construí e entreguei"
+      },
+      "cv": {
+        "title": "Currículo",
+        "subtitle": "Experiência completa em uma página"
+      },
+      "blog": {
+        "title": "Blog",
+        "subtitle": "Notas técnicas sobre IA e engenharia"
+      },
+      "newsletter": {
+        "title": "Newsletter",
+        "subtitle": "Receba os próximos textos por e-mail"
+      }
+    },
+    "contactKicker": "Fale comigo",
+    "contactTitle": "Vamos conversar?",
+    "contactText": "Terei prazer em entender seu projeto e ver como posso ajudar.",
+    "contactCta": "Enviar e-mail"
   }
 }
