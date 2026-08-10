@@ -488,5 +488,168 @@
       "badCut": "bad cut",
       "document": "# Store support policy\n\n## Refunds\nCustomers can request a refund up to 7 days after purchase. The product must be unused and still in the original packaging.\n\n## Product exchanges\nExchanges are accepted for manufacturing defects or incorrect size. The customer must send the order number and a product photo.\n\n## Delivery time\nOrders to capital cities arrive within 5 business days. For smaller cities, delivery can take up to 10 business days."
     }
+  },
+  "lp": {
+    "metaTitle": "Thiago Marinho · AI Product Engineer for hire",
+    "metaDescription": "Full-stack AI Product Engineer. I build AI products that reach production: agents, RAG, Next.js, TypeScript, and React Native. Available for new projects.",
+    "status": "Available for new projects and senior roles",
+    "heroKicker": "AI Product Engineer · Full-Stack",
+    "heroName": "Thiago Marinho",
+    "heroLead": "I build AI products that reach production and keep working. Agents, RAG, and full-stack engineering, end to end.",
+    "facts": {
+      "years": "12+ years of experience",
+      "ai": "AI agents, RAG, and LLMs",
+      "stack": "Next.js · TypeScript · Node · React Native"
+    },
+    "ctaPrimary": "Let's talk",
+    "ctaSecondary": "See my work",
+    "servicesKicker": "What I build",
+    "servicesTitle": "From problem to product in production",
+    "servicesLead": "I work end to end: I find the problem, write the spec, and ship software that does the work.",
+    "services": {
+      "agents": {
+        "title": "AI agents",
+        "description": "Agents that orchestrate tools and people, with control, observability, and safety in production."
+      },
+      "rag": {
+        "title": "RAG and semantic search",
+        "description": "RAG pipelines from ingest to ranking: chunking, embeddings, vector DB, and evaluation."
+      },
+      "fullstack": {
+        "title": "Full-stack products",
+        "description": "Complete Next.js apps: frontend, API, database, and deploy on Vercel."
+      },
+      "mobile": {
+        "title": "Mobile apps",
+        "description": "Store-ready React Native apps, with deep linking and a focus on retention."
+      },
+      "spec": {
+        "title": "Spec-driven engineering",
+        "description": "Spec before code: less rework, more predictability, better quality."
+      },
+      "payments": {
+        "title": "Payments and fintech",
+        "description": "Payment integrations (PIX, cards) and billing flows that hold up at scale."
+      }
+    },
+    "proofKicker": "Numbers, quietly",
+    "proofTitle": "Results I've shipped",
+    "proof": {
+      "revenue": "in revenue processed on an event platform",
+      "dropoff": "mobile drop-off reduction",
+      "sdk": "faster SDK integration",
+      "indexer": "on-chain indexer accuracy",
+      "devs": "devs reached with technical content",
+      "years": "years shipping software in production"
+    },
+    "experienceKicker": "Track record",
+    "experienceTitle": "Where I built this",
+    "experience": {
+      "popstand": {
+        "role": "Software Engineer · Popstand",
+        "detail": "Complete healthcare platform (API, web, and mobile) serving thousands of patients."
+      },
+      "unicrow": {
+        "role": "Full-Stack Developer · Unicrow",
+        "detail": "TypeScript SDK for Web3 escrow and a real-time on-chain indexer."
+      },
+      "rocketseat": {
+        "role": "Dev & Tech Writer · Rocketseat",
+        "detail": "Technical content that reached more than 50,000 devs in the BR JS community."
+      }
+    },
+    "processKicker": "How I work",
+    "processTitle": "Simple, direct, and in production",
+    "process": {
+      "discovery": {
+        "step": "01",
+        "title": "Discovery",
+        "description": "I learn the problem, the user, and the expected outcome. I write the spec before I touch the code."
+      },
+      "build": {
+        "step": "02",
+        "title": "Build",
+        "description": "I build in short cycles, with AI in the loop, tests, and visible progress at every step."
+      },
+      "ship": {
+        "step": "03",
+        "title": "Ship & iterate",
+        "description": "I ship to production, measure what matters, and iterate on real data."
+      }
+    },
+    "finalTitle": "Have a project or role in mind?",
+    "finalSubtitle": "Tell me what you need to build. I reply fast.",
+    "finalCta": "Get in touch",
+    "emailCta": "Send an email",
+    "faq": {
+      "faqKicker": "Frequently asked",
+      "faqTitle": "What you need to know",
+      "items": {
+        "build": {
+          "q": "What do you build?",
+          "a": "AI products end to end: agents, RAG pipelines, and full-stack apps with Next.js and TypeScript, from the first spec to production."
+        },
+        "availability": {
+          "q": "Are you available for freelance or contract work?",
+          "a": "Yes. I take on projects, senior/lead roles, and consulting. The fastest way to reach me is the contact form or email."
+        },
+        "stack": {
+          "q": "What is your main stack?",
+          "a": "Next.js, React, React Native, TypeScript, and Node.js, with LLMs, RAG, and vector databases for the AI layer."
+        },
+        "remote": {
+          "q": "Do you work remotely?",
+          "a": "Yes. I've worked remotely with teams in the US, Switzerland, and Brazil for over a decade."
+        },
+        "pricing": {
+          "q": "How do you charge?",
+          "a": "It depends on scope. Tell me what you need and I'll suggest the best format: fixed project, retainer, or hourly."
+        }
+      }
+    }
+  },
+  "links": {
+    "metaTitle": "Links · Thiago Marinho",
+    "metaDescription": "All my links in one place: portfolio, blog, resume, GitHub, LinkedIn, and contact.",
+    "eyebrow": "AI Product Engineer · Brazil",
+    "name": "Thiago Marinho",
+    "role": "AI Product Engineer · Full-Stack",
+    "status": "Available for new projects",
+    "summary": "I build AI products that reach production. Agents, RAG, and full-stack engineering with Next.js and TypeScript.",
+    "socialKicker": "Social",
+    "siteCtaSmall": "Explore my work",
+    "siteCtaStrong": "Visit the full website",
+    "sectionKicker": "Start here",
+    "sectionTitle": "Pick your next step",
+    "items": {
+      "hire": {
+        "title": "Let's work together",
+        "subtitle": "Reach out for a project, role, or consulting"
+      },
+      "about": {
+        "title": "About me",
+        "subtitle": "Background, stack, and how I work"
+      },
+      "projects": {
+        "title": "Projects",
+        "subtitle": "What I've built and shipped"
+      },
+      "cv": {
+        "title": "Resume",
+        "subtitle": "Full experience on one page"
+      },
+      "blog": {
+        "title": "Blog",
+        "subtitle": "Technical notes on AI and engineering"
+      },
+      "newsletter": {
+        "title": "Newsletter",
+        "subtitle": "Get my next posts by email"
+      }
+    },
+    "contactKicker": "Let's talk",
+    "contactTitle": "Shall we talk?",
+    "contactText": "I'll be glad to understand your project and see how I can help.",
+    "contactCta": "Send an email"
   }
 }

@@ -1,0 +1,13 @@
+/* TEAM */
+  Engineer: Thiago Marinho
+  Role: AI Product Engineer
+  Site: https://tgmarinhopro.com
+  GitHub: https://github.com/tgmarinho
+  LinkedIn: https://linkedin.com/in/tgmarinho
+  X: https://twitter.com/tgmarinho
+  Location: Brazil
+
+/* SITE */
+  Stack: Next.js, TypeScript, React, Tailwind CSS, next-intl, Velite
+  Hosting: Vercel
+  Language: pt-BR, en

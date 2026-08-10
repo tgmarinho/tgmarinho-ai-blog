@@ -45,6 +45,8 @@ This site contains a bilingual technical blog (English and Brazilian Portuguese)
 ## Site map
 
 - [Home](${SITE_URL}/)
+- [Landing / hire me](${SITE_URL}/lp)
+- [Links / social hub](${SITE_URL}/links)
 - [Blog](${SITE_URL}/blog)
 - [Projects](${SITE_URL}/projects)
 - [About](${SITE_URL}/about)
@@ -53,6 +55,29 @@ This site contains a bilingual technical blog (English and Brazilian Portuguese)
 - [Contact](${SITE_URL}/contact)
 - [RSS feed](${SITE_URL}/rss.xml)
 - [Sitemap](${SITE_URL}/sitemap.xml)
+
+## About ${AUTHOR}
+
+- Role: AI Product Engineer, full-stack, with 12+ years shipping production software.
+- Focus: AI agents, RAG pipelines, LLM-powered products, and spec-driven engineering.
+- Stack: Next.js, React, React Native, TypeScript, Node.js; LLMs, RAG, vector databases; deployed on Vercel.
+- Domains: healthcare, fintech, Web3, and event platforms (one platform processed R$6M in revenue).
+- Languages: English and Brazilian Portuguese. Works remotely.
+- Available for: senior/lead roles, contract projects, and consulting.
+
+## Work with me
+
+- Hire / landing page: ${SITE_URL}/lp
+- Links hub: ${SITE_URL}/links
+- Contact: ${SITE_URL}/contact
+- Email: tgmarinho@gmail.com
+
+## Direct answers
+
+- What does ${AUTHOR} build? AI products end to end: agents, RAG pipelines, and full-stack apps with Next.js and TypeScript, from the first spec to production.
+- Is he available for freelance or contract work? Yes. Projects, senior/lead roles, and consulting. Reach him via the contact page or email.
+- What is his main stack? Next.js, React, React Native, TypeScript, and Node.js, with LLMs, RAG, and vector databases for the AI layer.
+- Does he work remotely? Yes, with teams in the US, Switzerland, and Brazil for over a decade.
 
 ## Recent posts (English)
 

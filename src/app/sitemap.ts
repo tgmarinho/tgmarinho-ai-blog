@@ -8,6 +8,7 @@ import { featureFlags } from "@/lib/feature-flags";
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPaths = [
     "/",
+    "/lp",
     "/blog",
     "/about",
     "/projects",
@@ -15,6 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/contact",
     "/community",
     "/cv",
+    "/links",
   ];
 
   const staticEntries: MetadataRoute.Sitemap = staticPaths.flatMap((path) =>
