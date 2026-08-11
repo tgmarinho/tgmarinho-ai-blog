@@ -1,0 +1,183 @@
+---
+title: "DDL vs DML: database structure and database data"
+description: "DDL vs DML: learn the difference between SQL commands that define database structure and commands that read, insert, update, or delete data with examples."
+date: "2026-08-12"
+published: true
+slug: "ddl-vs-dml-sql-difference-en"
+language: "en"
+translationKey: "ddl-vs-dml-sql-difference"
+categories: ["sql", "database", "backend", "data-modeling", "en"]
+image: "/images/blog/ddl-vs-dml-database-commands-cover.jpg"
+---
+
+In databases, the correct comparison is **DDL vs DML**. DDL defines or changes database structure. DML reads or changes the data inside that structure.
+
+In SQL, this is one of the most useful daily distinctions: creating the container or changing the content.
+
+## What is DDL?
+
+**DDL** means Data Definition Language. It is the group of SQL commands used to define database objects: tables, columns, indexes, views, constraints, schemas, and other structural parts.
+
+In practice, when someone asks you for the **DDL**, they are asking for the script that describes the database structure, not a copy of the data.
+
+Common examples:
+
+```sql
+create table users (
+  id uuid primary key,
+  email text not null unique,
+  created_at timestamptz not null default now()
+);
+
+alter table users add column age integer;
+
+create index users_email_idx on users (email);
+
+drop table users;
+```
+
+Use DDL when the question is: "does the database shape need to change?".
+
+| Command | What it does |
+| --- | --- |
+| `create` | Creates an object, such as a table, index, or view |
+| `alter` | Changes the structure of an existing object |
+| `drop` | Removes an object |
+| `truncate` | Removes all rows from a table, with its own structural behavior and permissions |
+| `create index` | Creates an index to speed up queries |
+
+The PostgreSQL documentation lists these in the [SQL Commands](https://www.postgresql.org/docs/current/sql-commands.html) reference, and the [ALTER TABLE](https://www.postgresql.org/docs/current/sql-altertable.html) page shows the kind of structural change that belongs in this category.
+
+## What is DML?
+
+**DML** means Data Manipulation Language. It is the group of SQL commands used to manipulate rows inside tables: insert, query, update, and delete data.
+
+Common examples:
+
+```sql
+insert into users (id, email)
+values ('7f76f8c2-98f5-4f7f-86c4-4ebaf1d9f5bd', 'ana@example.com');
+
+select id, email
+from users
+where email = 'ana@example.com';
+
+update users
+set age = 32
+where email = 'ana@example.com';
+
+delete from users
+where email = 'ana@example.com';
+```
+
+Use DML when the question is: "does data inside the database need to be read or changed?".
+
+| Command | What it does |
+| --- | --- |
+| `insert` | Inserts new rows |
+| `select` | Queries rows |
+| `update` | Updates existing rows |
+| `delete` | Removes rows |
+| `merge` | Combines insert, update, and delete based on a condition |
+
+PostgreSQL's [INSERT](https://www.postgresql.org/docs/current/sql-insert.html) and [UPDATE](https://www.postgresql.org/docs/current/sql-update.html) pages are useful references for seeing how these commands manipulate records.
+
+## How do you remember the difference?
+
+The simple rule is:
+
+| Language | Changes | Mental model |
+| --- | --- | --- |
+| DDL | Structure | The container |
+| DML | Data | The content |
+
+Example:
+
+```sql
+create table tasks (
+  id uuid primary key,
+  title text not null,
+  done boolean not null default false
+);
+```
+
+This command is DDL because it creates the shape of the `tasks` table.
+
+```sql
+insert into tasks (id, title)
+values ('75f6641e-74e1-44d6-b040-39f0b5c0c8aa', 'Study SQL');
+```
+
+This command is DML because it puts a row inside the table.
+
+## Why does the difference matter?
+
+The difference matters because **DDL** and **DML** carry different production risks.
+
+DDL changes the structure that the application expects to find. A `drop column`, a new constraint, or a type change can break deploys, jobs, reports, APIs, and external integrations. That is why DDL usually goes through migrations, review, and rollback planning.
+
+DML changes business state. An `update` without a `where`, a broad `delete`, or a duplicated `insert` can corrupt data. That is why DML needs a transaction, explicit filters, backups, audit, or batch execution when it touches production.
+
+Compare:
+
+| Situation | Type | Main care |
+| --- | --- | --- |
+| Create `orders` table | DDL | migration, name, types, constraints |
+| Add `status` column | DDL | default value, compatibility, gradual deploy |
+| Insert an order | DML | validation, idempotency, transaction |
+| Update payment status | DML | correct filter, audit, concurrency |
+| Drop an old table | DDL | backup, dependencies, rollback |
+| Delete duplicated rows | DML | precise selection, log, pre-commit check |
+
+## How does this show up in migrations?
+
+A **migration** often mixes DDL and sometimes DML. The DDL part changes the schema. The DML part fills, fixes, or transforms existing data.
+
+Example:
+
+```sql
+alter table users add column full_name text;
+
+update users
+set full_name = trim(first_name || ' ' || last_name)
+where full_name is null;
+```
+
+The first command is DDL. It creates the column.
+
+The second command is DML. It updates existing rows.
+
+In real systems, this distinction helps you review deploys with more care:
+
+1. First make the compatible schema change.
+2. Then deploy the application that uses the new field.
+3. Next run the data backfill.
+4. Only then remove old fields, if that still makes sense.
+
+## How do you review a SQL command quickly?
+
+Before running any SQL in production, classify the command.
+
+| Question | If the answer is yes |
+| --- | --- |
+| Does it create, change, or remove a table, column, index, view, or constraint? | It is DDL |
+| Does it insert, query, update, or remove rows? | It is DML |
+| Can it break code that expects the old schema? | Treat it as a critical migration |
+| Can it change many records? | Treat it as a critical data operation |
+| Does it need to preserve history? | Use audit, snapshot, or backup |
+
+Short checklist:
+
+1. Does the command have a `where` clause when it should?
+2. Does it run inside a transaction when that makes sense?
+3. Is there a backup or snapshot before the change?
+4. Do the current and next application versions understand the schema?
+5. Is the migration reversible or at least recoverable?
+
+## What is the practical rule?
+
+DDL defines the container. DML changes the content.
+
+Use **DDL** to create, change, or remove database structure. Use **DML** to insert, query, update, or delete records. In production, review DDL as a contract change and review DML as a state change.
+
+**TL;DR:** DDL changes schema. DML changes data. In production, treat DDL as a contract change and DML as a state change.
