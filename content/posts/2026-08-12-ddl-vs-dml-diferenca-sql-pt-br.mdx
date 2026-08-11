@@ -1,0 +1,183 @@
+---
+title: "DDL vs DML: estrutura do banco e dados do banco"
+description: "DDL vs DML: entenda a diferença entre comandos que definem a estrutura do banco e comandos que leem, inserem, atualizam ou removem dados com exemplos SQL."
+date: "2026-08-12"
+published: true
+slug: "ddl-vs-dml-diferenca-sql-pt-br"
+language: "pt-BR"
+translationKey: "ddl-vs-dml-sql-difference"
+categories: ["sql", "database", "backend", "data-modeling", "pt-br"]
+image: "/images/blog/ddl-vs-dml-database-commands-cover.jpg"
+---
+
+Em banco de dados, a comparação correta é **DDL vs DML**. DDL define ou altera a estrutura do banco. DML lê ou altera os dados que vivem dentro dessa estrutura.
+
+Em SQL, esse é um dos cortes mais úteis para o dia a dia: criar o recipiente ou mexer no conteúdo.
+
+## O que é DDL?
+
+**DDL** significa Data Definition Language. É o grupo de comandos SQL usado para definir objetos do banco: tabelas, colunas, índices, views, constraints, schemas e outros elementos estruturais.
+
+Na prática, quando alguém te pede o **DDL**, está pedindo o script que descreve a estrutura do banco, não uma cópia dos dados.
+
+Exemplos comuns:
+
+```sql
+create table users (
+  id uuid primary key,
+  email text not null unique,
+  created_at timestamptz not null default now()
+);
+
+alter table users add column age integer;
+
+create index users_email_idx on users (email);
+
+drop table users;
+```
+
+Use DDL quando a pergunta for: "a forma do banco precisa mudar?".
+
+| Comando | O que faz |
+| --- | --- |
+| `create` | Cria um objeto, como tabela, índice ou view |
+| `alter` | Altera a estrutura de um objeto existente |
+| `drop` | Remove um objeto |
+| `truncate` | Remove todos os registros de uma tabela, com comportamento estrutural e permissões próprias |
+| `create index` | Cria um índice para acelerar consultas |
+
+A documentação do PostgreSQL lista esses comandos na referência de [SQL Commands](https://www.postgresql.org/docs/current/sql-commands.html), e a página de [ALTER TABLE](https://www.postgresql.org/docs/current/sql-altertable.html) mostra bem o tipo de mudança estrutural que entra nessa categoria.
+
+## O que é DML?
+
+**DML** significa Data Manipulation Language. É o grupo de comandos SQL usado para manipular linhas dentro das tabelas: inserir, consultar, atualizar e remover dados.
+
+Exemplos comuns:
+
+```sql
+insert into users (id, email)
+values ('7f76f8c2-98f5-4f7f-86c4-4ebaf1d9f5bd', 'ana@example.com');
+
+select id, email
+from users
+where email = 'ana@example.com';
+
+update users
+set age = 32
+where email = 'ana@example.com';
+
+delete from users
+where email = 'ana@example.com';
+```
+
+Use DML quando a pergunta for: "os dados dentro do banco precisam mudar ou ser lidos?".
+
+| Comando | O que faz |
+| --- | --- |
+| `insert` | Insere novas linhas |
+| `select` | Consulta linhas |
+| `update` | Atualiza linhas existentes |
+| `delete` | Remove linhas |
+| `merge` | Combina insert, update e delete conforme uma condição |
+
+As páginas de [INSERT](https://www.postgresql.org/docs/current/sql-insert.html) e [UPDATE](https://www.postgresql.org/docs/current/sql-update.html) do PostgreSQL são boas referências para ver como esses comandos manipulam registros.
+
+## Como lembrar a diferença?
+
+A regra simples é:
+
+| Linguagem | Mexe em | Imagem mental |
+| --- | --- | --- |
+| DDL | Estrutura | O recipiente |
+| DML | Dados | O conteúdo |
+
+Exemplo:
+
+```sql
+create table tasks (
+  id uuid primary key,
+  title text not null,
+  done boolean not null default false
+);
+```
+
+Esse comando é DDL porque cria a forma da tabela `tasks`.
+
+```sql
+insert into tasks (id, title)
+values ('75f6641e-74e1-44d6-b040-39f0b5c0c8aa', 'Estudar SQL');
+```
+
+Esse comando é DML porque coloca uma linha dentro da tabela.
+
+## Por que essa diferença importa?
+
+A diferença importa porque **DDL** e **DML** têm riscos diferentes em produção.
+
+DDL muda a estrutura que a aplicação espera encontrar. Um `drop column`, uma constraint nova ou uma mudança de tipo pode quebrar deploy, job, relatório, API e integração externa. Por isso DDL costuma passar por migration, revisão e plano de rollback.
+
+DML muda o estado do negócio. Um `update` sem `where`, um `delete` amplo demais ou um `insert` duplicado pode corromper dados. Por isso DML precisa de transação, filtro explícito, backup, auditoria ou execução em lote quando mexe em produção.
+
+Compare:
+
+| Situação | Tipo | Cuidado principal |
+| --- | --- | --- |
+| Criar tabela `orders` | DDL | migration, nome, tipos, constraints |
+| Adicionar coluna `status` | DDL | valor padrão, compatibilidade, deploy gradual |
+| Inserir um pedido | DML | validação, idempotência, transação |
+| Atualizar status de pagamento | DML | filtro correto, auditoria, concorrência |
+| Apagar tabela antiga | DDL | backup, dependências, rollback |
+| Apagar registros duplicados | DML | seleção precisa, log, conferência antes do commit |
+
+## Como isso aparece em migrations?
+
+Uma **migration** normalmente mistura DDL e, às vezes, DML. A parte DDL altera o schema. A parte DML preenche, corrige ou transforma dados existentes.
+
+Exemplo:
+
+```sql
+alter table users add column full_name text;
+
+update users
+set full_name = trim(first_name || ' ' || last_name)
+where full_name is null;
+```
+
+O primeiro comando é DDL. Ele cria a coluna.
+
+O segundo comando é DML. Ele atualiza linhas já existentes.
+
+Em sistemas reais, essa distinção ajuda a revisar deploys com mais cuidado:
+
+1. Primeiro faça a mudança compatível no schema.
+2. Depois publique a aplicação que usa o novo campo.
+3. Em seguida rode o backfill dos dados.
+4. Só depois remova campos antigos, se ainda fizer sentido.
+
+## Como revisar um comando SQL rapidamente?
+
+Antes de rodar qualquer SQL em produção, classifique o comando.
+
+| Pergunta | Se a resposta for sim |
+| --- | --- |
+| Cria, altera ou remove uma tabela, coluna, índice, view ou constraint? | É DDL |
+| Insere, consulta, atualiza ou remove linhas? | É DML |
+| Pode quebrar código que espera um schema antigo? | Trate como migration crítica |
+| Pode mudar muitos registros? | Trate como operação de dados crítica |
+| Precisa preservar histórico? | Use auditoria, snapshot ou backup |
+
+Checklist curto:
+
+1. O comando tem `where` quando deveria ter?
+2. O comando roda dentro de uma transação quando faz sentido?
+3. Existe backup ou snapshot antes da mudança?
+4. A aplicação atual e a próxima versão entendem o schema?
+5. A migration é reversível ou pelo menos recuperável?
+
+## Qual é a regra prática?
+
+DDL define o recipiente. DML mexe no conteúdo.
+
+Use **DDL** para criar, alterar ou remover a estrutura do banco. Use **DML** para inserir, consultar, atualizar ou apagar registros. Em produção, revise DDL como mudança de contrato e revise DML como mudança de estado.
+
+**Resumo:** DDL muda schema. DML muda dados. Em produção, DDL deve ser tratado como mudança de contrato, e DML deve ser tratado como mudança de estado.
