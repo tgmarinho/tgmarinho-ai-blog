@@ -1,0 +1,154 @@
+---
+title: "AXI: 10 principles for agent interfaces"
+description: "AXI changes how developer tools should talk to agents: apply 10 principles to reduce tokens, avoid rework, and make CLIs reliable in real projects."
+date: "2026-08-11"
+published: true
+slug: "agent-experience-interface-axi-principles-for-agents"
+categories: ["ai", "software-engineering", "agents", "developer-tools", "en"]
+image: "/images/blog/agent-experience-interface-axi-cover.jpg"
+language: "en"
+translationKey: "agent-experience-interface-axi"
+---
+
+**AXI** means Agent eXperience Interface. The idea is simple: if agents now use developer tools, those tools need interfaces designed for agents, not only for humans. CLI and MCP are still useful, but their raw defaults are not enough when token cost, ambiguous state, and repeated calls become the bottleneck.
+
+The idea comes from [kunchenguid/axi](https://github.com/kunchenguid/axi), which defines 10 principles for building agent-friendly tools. The point is not to replace every tool with one more protocol. The point is to treat agent experience as a product surface.
+
+## Why do CLI and MCP start to feel old?
+
+The problem with a **traditional CLI** is not the terminal. It is the human legacy. Many tools print pretty tables, loose messages, interactive prompts, and generic help. That works for a person watching the screen. For an agent, every ambiguous line becomes reasoning cost.
+
+The problem with the **Model Context Protocol (MCP)** is the other extreme. It gives agents structured tools, but it can load large schemas, require tool discovery, and force extra turns. When the agent must discover how to act before acting, the interface became work.
+
+AXI moves the discussion to a more practical place: use the shell as the transport, but add an output contract, predictable errors, minimal context, and clear next steps.
+
+## What did the benchmark show?
+
+The [published GitHub benchmark study](https://github.com/kunchenguid/axi/blob/main/bench-github/published-results/STUDY.md) compared five interfaces across 425 runs, using Claude Sonnet 4.6 as both agent and judge. In that test set, `gh-axi` reached 100% success, US$0.050 average cost per task, and 15.7 seconds average duration. Raw `gh` reached 86% success. The MCP conditions landed between 82% and 87% success, with average cost from US$0.101 to US$0.148 per task.
+
+That does not prove AXI wins everywhere. The study covers one repository, one model family, and a fixed task set. But it shows a useful signal: the right interface reduces errors and round trips. For agents, **fewer calls** often matter more than a response that tries to include everything.
+
+## What does TOON have to do with AXI?
+
+AXI recommends [TOON](https://toonformat.dev/) as the output format. **TOON** means Token-Oriented Object Notation, a compact notation that keeps the JSON data model but removes repetition from lists and tabular structures.
+
+The current [TOON specification](https://toonformat.dev/reference/spec) defines syntax, normalization, decoding rules, and strict validation. For an agent, the gain is not only token savings. The header declares count and fields before the rows:
+
+```toon
+tasks[2]{id,title,status}:
+  1,Fix auth bug,open
+  2,Add pagination,closed
+```
+
+The agent knows there are 2 items, knows the field names, and does not need to infer shape from a visual table or repetitive JSON.
+
+## What are AXI's 10 principles?
+
+These are the 10 principles, translated into decisions an Agentic Engineer can apply inside a real project.
+
+| # | Principle | Practical rule |
+| - | - | - |
+| 1 | Token-efficient output | Use TOON or another compact structured format on `stdout`. |
+| 2 | Minimal default schemas | Lists should return 3 to 4 useful fields, not every possible field. |
+| 3 | Content truncation | Show a preview, total size, and a flag like `--full` for large text. |
+| 4 | Pre-computed aggregates | Include totals, counts, and derived status to avoid a second call. |
+| 5 | Definitive empty states | Return contextual "0 results" instead of ambiguous empty output. |
+| 6 | Structured errors and exit codes | Fail loud, without prompts, with a readable error and fix command. |
+| 7 | Ambient context | Inject a compact session dashboard after the user opts in. |
+| 8 | Content first | Running with no arguments should show live state, not a manual. |
+| 9 | Contextual disclosure | Include useful next commands when they reduce discovery. |
+| 10 | Consistent help | Per-subcommand `--help` should be short, complete, and actionable. |
+
+## How do you apply principle 1?
+
+Do not send raw JSON to the agent only because JSON is structured. In collections, JSON repeats field names on every item. That repetition gets expensive when the result has dozens or hundreds of rows.
+
+The rule is simple: keep your internal logic in JSON if that makes the code easier, then convert the final output to **TOON** at the boundary. The tool boundary is where the agent pays the cost.
+
+## How do you apply principles 2, 3, and 4?
+
+Think of list, detail, and summary as three different products.
+
+A list should help the agent choose the next item. It needs `id`, `title`, `state`, and maybe `updatedAt`. Full body text, comments, logs, and large payloads belong in the detail view.
+
+In the detail view, do not hide large text. Truncate honestly:
+
+```toon
+issue:
+  number: 42
+  title: Fix auth bug
+  state: open
+  body: First 800 chars...
+    ... (truncated, 8432 chars total)
+help[1]:
+  Run `issues view 42 --full` to see the complete body
+```
+
+And whenever the backend already knows an aggregate answer, include it. `checks: 3/3 passed`, `comments: 7`, `count: 30 of 847 total`. This prevents the agent from running three more commands just to orient itself.
+
+## How do you apply principles 5 and 6?
+
+For humans, empty output can feel clean. For agents, it feels suspicious. Did the tool fail? Was the filter wrong? Was the page empty? AXI asks for a definitive answer:
+
+```toon
+issues: 0 open issues found in this repository
+```
+
+Errors follow the same logic. An agent needs structure and a next action, not a stack trace. Validate flags before calling dependencies. Reject unknown flags. Do not open an interactive prompt. Use exit code `0` for success and idempotent no-op, `1` for a real error, and `2` for usage error.
+
+This detail changes behavior. If the agent runs `task close 42` and the task is already closed, that should be idempotent success. The desired state already exists.
+
+## How do you apply principles 7, 8, 9, and 10?
+
+The ideal interface does not start with documentation. It starts with live state.
+
+If the user installed a session integration, the agent should receive a compact dashboard when it opens the project: open specs, relevant PRs, blocked tasks, likely commands. Keep it small. Ambient context loads in every session, so every token must earn its place.
+
+Running the tool with no arguments should show that state. Then each output can suggest 1 to 3 next commands, only when the suggestion reduces discovery. A list suggests `view <id>`. An open item may suggest `close <id>`. An error suggests the specific fix.
+
+Help still exists, but it should be scoped to the subcommand:
+
+```sh
+mytool issues list --help
+```
+
+The agent does not want the whole manual. It wants the short reference for the current operation.
+
+## What changes for Agentic Engineers?
+
+The new checklist for an internal tool looks like this:
+
+1. Does the default output fit in context without waste?
+2. Does the agent know how many items exist?
+3. Does the agent know when nothing exists?
+4. Can the agent fix an error in one turn?
+5. Is a repeated mutation safe?
+6. Does the tool never ask for interactive input?
+7. Does the no-argument command show useful state?
+8. Does the likely next step appear without opening docs?
+9. Does `--help` answer only what this subcommand needs?
+10. Is `--version` fast enough to run at every session start?
+
+Notice that this is product engineering, not only DX. The user is now partly non-human. The tool must be clear for a person and operational for an agent.
+
+## Does AXI replace MCP?
+
+Not necessarily. **AXI** is an interface experience. MCP is a protocol. They compete in some cases, but they are not the same layer.
+
+If you need to expose capabilities to many tool clients, MCP can make sense. If you need agents to work well inside a repository, the shell with an AXI contract may be cheaper, simpler, and easier to audit. In many projects, the mature answer will be hybrid: MCP for external integration, AXI for local routines and agentic automation inside the workspace.
+
+The mistake is thinking that "having a tool" solves the experience. It does not. The agent still pays for schema, discovery, ambiguity, and rework.
+
+## What is the bet?
+
+My bet: every serious project will need an AXI layer, even if it does not use that name.
+
+Today, a lot of agent automation still runs through human CLIs, verbose MCPs, and docs that assume a patient reader. That will get expensive. The next generation of internal tools will ship with compact output, explicit empty states, self-correcting errors, ambient context, and contextual suggestions.
+
+The future is not "more tools for agents". It is less friction per tool.
+
+## TL;DR
+
+**AXI** turns tools into agent-native interfaces. Use TOON for compact output, reduce default schemas, truncate large content with an escape hatch, include aggregates, make empty states definitive, structure errors, inject minimal context, show content before help, suggest next steps, and keep `--help` short per subcommand.
+
+CLI and MCP are not dead. But the era of interfaces built only for humans is over.
