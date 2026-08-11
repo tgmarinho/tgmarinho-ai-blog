@@ -1,0 +1,206 @@
+---
+title: "Modelagem de dados: quando normalizar e quando deixar flexível"
+description: "Modelagem de dados: decida quando apertar o schema, deixar campos flexíveis e separar CRUD, dashboards e relatórios usando cardinalidade e acessos reais."
+date: "2026-08-10"
+published: true
+slug: "modelagem-de-dados-cardinalidade-schema-flexivel-pt-br"
+language: "pt-BR"
+translationKey: "data-modeling-cardinality-schema-flexibility"
+categories: ["data-modeling", "database", "software-architecture", "backend", "pt-br"]
+image: "/images/blog/data-modeling-cardinality-tradeoffs-cover.jpg"
+---
+
+**Modelagem de dados** começa por duas perguntas: que regra não pode quebrar e como esse dado será lido. Normalize quando a regra protege dinheiro, estoque, permissão, auditoria, contrato ou consistência entre módulos. Deixe flexível quando a forma ainda muda, o dado é local, a cardinalidade é limitada e existe validação clara.
+
+Não escolha banco antes de entender a regra. Postgres, MongoDB e Firestore resolvem problemas diferentes. O erro é usar flexibilidade onde você precisava de integridade, ou usar rigidez onde o produto ainda está descobrindo o formato.
+
+## Como decidir o que vira schema?
+
+Comece pelas **invariantes**. Uma invariante é uma regra que o sistema deve impedir mesmo quando a aplicação erra: pedido sem cliente, item com quantidade negativa, nota fiscal duplicada, permissão sem usuário, pagamento sem estado auditável.
+
+Depois classifique o dado:
+
+| Tipo de dado | Modelo mais seguro |
+| --- | --- |
+| Dinheiro, estoque, imposto, permissão, contrato | Tabela explícita, constraint, transação e auditoria |
+| Entidade usada em vários fluxos de CRUD | Tabela ou coleção própria com identidade estável |
+| Relação com filho ilimitado | Tabela filha, coleção separada ou subcoleção |
+| Dados pequenos sempre lidos juntos | Embutir no documento ou usar composição |
+| Campo experimental ou customizado por cliente | Metadata ou JSON versionado com validação |
+| Métrica de dashboard ou relatório | Projeção, materialized view, tabela de resumo ou modelo dimensional |
+
+Flexível não significa sem regra. Significa que a regra está em outro lugar: validação de entrada, `schema_version`, limite de tamanho, índice planejado e política para promover o campo quando ele virar parte do negócio.
+
+## Como a cardinalidade muda o modelo?
+
+**Cardinalidade** é a quantidade possível de relações entre entidades. O desenho muda quando uma relação cresce, quando o filho tem vida própria ou quando a aplicação deixa de ler tudo junto.
+
+Use este guia:
+
+| Relação | Exemplo | Decisão comum |
+| --- | --- | --- |
+| `1:1` | perfil e preferências pequenas | Mesma tabela, tabela separada ou documento embutido |
+| `1:N` pequeno e lido junto | pedido e poucos itens | Embutir em documento ou usar tabela filha |
+| `1:N` sem limite | usuário e logs, post e comentários | Separar o filho |
+| `N:N` | produtos e categorias | Tabela de junção ou coleção de relação |
+| Filho sem vida própria | item de pedido | Composição ou tabela filha com cascade |
+| Filho consultado sozinho | pagamento, evento, ticket | Entidade própria |
+
+Em Postgres, pedido e itens normalmente viram tabelas explícitas:
+
+```sql
+create table sales_orders (
+  id uuid primary key,
+  customer_id uuid not null references customers (id),
+  status text not null check (status in ('draft', 'confirmed', 'cancelled'))
+);
+
+create table sales_order_items (
+  order_id uuid not null references sales_orders (id) on delete cascade,
+  line_number integer not null,
+  product_id uuid not null,
+  quantity numeric(12, 3) not null check (quantity > 0),
+  primary key (order_id, line_number)
+);
+```
+
+O ponto não é escrever mais SQL. O ponto é fazer o banco recusar um estado inválido. A documentação de [constraints do PostgreSQL](https://www.postgresql.org/docs/current/ddl-constraints.html) cobre essas garantias: primary key, foreign key, unique, not null e check.
+
+Em MongoDB, o mesmo pedido pode embutir itens quando o conjunto é pequeno e sempre lido junto. A própria documentação compara [documentos embutidos](https://www.mongodb.com/docs/manual/tutorial/model-embedded-one-to-many-relationships-between-documents/) com [referências](https://www.mongodb.com/docs/manual/tutorial/model-referenced-one-to-many-relationships-between-documents/). O limite aparece quando o array cresce sem controle. MongoDB trata [unbounded arrays](https://www.mongodb.com/docs/manual/data-modeling/design-antipatterns/unbounded-arrays/) como antipadrão.
+
+Firestore segue lógica parecida. Mapas e arrays servem para listas pequenas. Subcoleções servem quando a lista cresce ou precisa ser consultada separadamente. A página de [estrutura de dados do Firestore](https://firebase.google.com/docs/firestore/manage-data/structure-data) deixa esse trade-off explícito.
+
+## Quando apertar o modelo?
+
+Aperte o modelo quando o dado é parte do **núcleo transacional**. Isso vale para ERP, financeiro, pedidos, estoque, faturamento, assinatura, permissões, workflow de aprovação e qualquer fluxo em que corrigir depois custa caro.
+
+Sinais fortes:
+
+- A regra aparece em mais de uma tela ou serviço.
+- O relatório precisa confiar no dado.
+- Uma integração externa pode mandar payload ruim.
+- A operação precisa de histórico.
+- Existe risco financeiro, fiscal, jurídico ou operacional.
+- A mesma entidade será consultada por muitos caminhos diferentes.
+
+ERP é um bom exemplo porque uma entidade raramente fica isolada. Cliente se conecta a pedido, endereço, crédito, cobrança, entrega, imposto e relatório. O guia de [domain modeling do SAP CAP](https://cap.cloud.sap/docs/guides/domain/) trata entidades, tipos, associations e compositions como parte do modelo de domínio. O material de [associations e compositions](https://learning.sap.com/courses/introduction-to-sap-cloud-application-programming-model/using-associations-and-compositions_c6bad664-2d1a-4211-9076-c3a1213f176a) é útil aqui porque composition representa a ideia de que itens pertencem ao pedido e podem ser apagados junto com ele.
+
+Nesses casos, prefira:
+
+| Necessidade | Ferramenta |
+| --- | --- |
+| Identidade | `primary key` |
+| Existência referencial | `foreign key` |
+| Unicidade de negócio | `unique` |
+| Campo obrigatório | `not null` |
+| Regra local simples | `check` |
+| Mudança atômica | transação |
+| Rastreabilidade | tabela de auditoria ou evento de domínio |
+
+Se a regra é importante, deixe o banco participar da proteção. Validação em TypeScript ou no formulário ajuda, mas não substitui constraint.
+
+## Quando deixar flexível?
+
+Deixe **flexível** quando a variação é esperada e controlada:
+
+1. Campos customizados por cliente.
+2. Payload bruto de integração externa.
+3. Configuração de interface por usuário.
+4. Formulário experimental.
+5. Snapshot histórico de um pedido, contrato ou evento.
+6. Metadata usada por uma feature ainda instável.
+
+Mas defina limites desde o primeiro dia:
+
+| Guardrail | Regra prática |
+| --- | --- |
+| `schema_version` | Todo payload flexível precisa de versão |
+| validação | Rejeite formatos inválidos antes de salvar |
+| limite de tamanho | Evite documento que cresce sem fim |
+| índice | Só prometa filtro que o banco consegue executar bem |
+| dono | Todo campo customizado precisa de owner |
+| promoção | Campo crítico vira coluna, tabela ou dimensão |
+
+Um sinal simples: se o campo entrou em filtro, permissão, cobrança, contrato público ou relatório recorrente, ele deixou de ser detalhe flexível.
+
+## Como escolher entre Postgres, MongoDB e Firestore?
+
+Escolha pelo padrão de escrita e leitura, não pela moda.
+
+| Cenário | Escolha provável |
+| --- | --- |
+| Regras fortes entre entidades | Postgres |
+| Transação envolvendo várias tabelas | Postgres |
+| Dado que será particionado por tenant, usuário ou conta | Modele a chave de partição cedo |
+| Query ad hoc com muitos filtros | Postgres ou modelo analítico |
+| Agregado pequeno lido e escrito junto | MongoDB |
+| Payload externo com formato variável | MongoDB ou Postgres com JSONB |
+| App mobile com sync em tempo real | Firestore |
+| Sublista que cresce por entidade pai | Firestore subcollection ou coleção separada |
+| Relatório financeiro ou gerencial | Warehouse, data mart ou tabelas de resumo |
+
+Firestore tem limites importantes de consulta, incluindo restrições em `or`, `in` e `array-contains-any`, descritas em [Firestore queries](https://firebase.google.com/docs/firestore/query-data/queries). Se o produto precisa de filtros combináveis sem muita previsibilidade, isso precisa entrar na decisão cedo.
+
+Escala também transforma decisão de acesso em decisão de modelagem. O texto da Shopify sobre mover o backend do Shop app para [Vitess](https://shopify.engineering/horizontally-scaling-the-rails-backend-of-shop-app-with-vitess) mostra um caso concreto: antes de particionar, eles precisaram adicionar e preencher `user_id` porque muitas tabelas grandes tinham sido modeladas em torno de `account_id`. A lição é simples: se tenant, usuário, merchant ou conta será sua chave de partição, coloque isso no modelo antes de as tabelas ficarem enormes.
+
+## Como separar CRUD, dashboard e relatório?
+
+**CRUD** significa Create, Read, Update, Delete. O modelo de CRUD deve proteger escrita correta. Dashboard deve responder rápido. Relatório deve explicar números com histórico e grão claro.
+
+Não force tudo no mesmo modelo.
+
+| Carga | Pergunta | Modelo |
+| --- | --- | --- |
+| CRUD | Como impedir escrita errada? | Modelo transacional normalizado |
+| Dashboard | Como ler o estado atual rápido? | Projeção, cache, tabela de resumo ou materialized view |
+| Relatório | Como analisar fatos por dimensões? | Modelo dimensional, data mart ou warehouse |
+
+Um caminho comum:
+
+```txt
+orders + order_items + payments
+  -> job, stream or scheduled refresh
+  -> dashboard_order_summary
+  -> cards, charts and reports
+```
+
+Postgres oferece [materialized views](https://www.postgresql.org/docs/current/rules-materializedviews.html) para guardar resultado de consulta pesada. Em BI, o guia de [star schema do Power BI](https://learn.microsoft.com/en-us/power-bi/guidance/star-schema) resume bem a separação entre fatos e dimensões.
+
+Relatório financeiro pede a mesma disciplina. O guia da Stripe para [consultar dados transacionais](https://docs.stripe.com/data/query-transactions) aponta `balance_transactions` como ponto de partida estilo ledger para relatórios. Esse é o conceito a copiar, não o schema da Stripe: relatórios funcionam melhor quando leem fatos estáveis em vez de reconstruir números a partir de tabelas operacionais.
+
+O núcleo transacional não deve virar tabela torta só para salvar um gráfico lento. Crie um modelo de leitura.
+
+## Qual checklist usar antes de modelar?
+
+Antes de criar tabela, documento ou JSON genérico, responda:
+
+1. Qual é a fonte da verdade?
+2. Qual regra o banco deve impedir sozinho?
+3. A cardinalidade é limitada ou cresce sem controle?
+4. O filho existe sem o pai?
+5. A leitura principal precisa do conjunto inteiro?
+6. O dado entra em relatório, permissão, cobrança ou auditoria?
+7. O campo é estável, experimental ou customizado por cliente?
+8. Qual índice sustenta a consulta principal?
+9. Quem é dono da evolução desse campo?
+10. Quando esse campo flexível deve virar coluna, tabela ou dimensão?
+
+## Que referências valem a leitura?
+
+- [PostgreSQL Constraints](https://www.postgresql.org/docs/current/ddl-constraints.html)
+- [MongoDB embedded one-to-many](https://www.mongodb.com/docs/manual/tutorial/model-embedded-one-to-many-relationships-between-documents/)
+- [MongoDB referenced one-to-many](https://www.mongodb.com/docs/manual/tutorial/model-referenced-one-to-many-relationships-between-documents/)
+- [MongoDB Avoid Unbounded Arrays](https://www.mongodb.com/docs/manual/data-modeling/design-antipatterns/unbounded-arrays/)
+- [Firestore structure data](https://firebase.google.com/docs/firestore/manage-data/structure-data)
+- [Firestore queries](https://firebase.google.com/docs/firestore/query-data/queries)
+- [SAP CAP Domain Modeling](https://cap.cloud.sap/docs/guides/domain/)
+- [SAP CAP associations and compositions](https://learning.sap.com/courses/introduction-to-sap-cloud-application-programming-model/using-associations-and-compositions_c6bad664-2d1a-4211-9076-c3a1213f176a)
+- [Shopify Engineering: Rails backend with Vitess](https://shopify.engineering/horizontally-scaling-the-rails-backend-of-shop-app-with-vitess)
+- [Stripe transactional data](https://docs.stripe.com/data/query-transactions)
+- [Power BI star schema guidance](https://learn.microsoft.com/en-us/power-bi/guidance/star-schema)
+
+## Qual é a regra prática?
+
+Aperte o modelo onde erro vira prejuízo, retrabalho ou relatório sem confiança. Deixe flexível onde a variação é real, limitada e validada. Separe o modelo de escrita do modelo de leitura quando dashboard e relatório começarem a distorcer o CRUD.
+
+**Resumo:** modele invariantes e cardinalidade primeiro. Use Postgres para o núcleo transacional. Use MongoDB, Firestore, JSONB ou metadata para variação controlada. Use projeções e modelos analíticos para dashboards e relatórios. O melhor modelo deixa claro onde a verdade mora e onde a aplicação pode mudar sem quebrar o negócio.

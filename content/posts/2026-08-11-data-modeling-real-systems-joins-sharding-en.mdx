@@ -1,0 +1,259 @@
+---
+title: "Data modeling in real systems: relationships, reports, and scale"
+description: "Data modeling in real systems: decide FKs, joins, reports, snapshots, sharding, and separate databases before growth turns into operational chaos at scale."
+date: "2026-08-11"
+published: true
+slug: "data-modeling-real-systems-joins-sharding-en"
+language: "en"
+translationKey: "data-modeling-real-systems-joins-sharding"
+categories: ["data-modeling", "database", "postgres", "distributed-systems", "en"]
+image: "/images/blog/data-modeling-at-scale-cover.jpg"
+---
+
+**Data modeling** in real systems starts before choosing the database. Postgres, MongoDB, and Firestore solve different problems, but the difference is not simply "rigid schema" versus "flexible schema". The mistake is using flexibility where the rule needed integrity, or using rigidity where the product is still discovering the shape.
+
+My concern with joins is not "joins are bad". The problem is when one model tries to serve CRUD, online operations, annual closing, business intelligence, audit, and distributed scale. The fix is not choosing a database by trend. The fix is understanding the rule, the access pattern, and the consistency boundary.
+
+## How do you analyze an existing system?
+
+Read the product before the schema. For each use case, answer:
+
+1. What is the central entity in the flow?
+2. Which relationship protects money, inventory, permission, or audit?
+3. Which value must reflect the moment of the event, not current master data?
+4. Which list grows without limit?
+5. Which screen needs fast reads?
+6. Which report must explain numbers months later?
+7. Which boundary may become sharding, partitioning, or a separate database?
+
+Then look for it in the code: constraints, indexes, jobs, events, log tables, queues, JSONB, status fields, soft delete, exporters, and dashboards. The real model is not only in the schema file. It appears where the rule must survive human error, retries, imports, webhooks, and product changes.
+
+## How do you choose a database without the false dilemma?
+
+Do not choose a database from a caricature. Postgres is not only "rigid tables": it has JSON and JSONB, indexes, transactions, constraints, partitioning, and extensions. MongoDB is not only "documents without rules": the official docs show support for [transactions across multiple operations, collections, databases, documents, and shards](https://www.mongodb.com/docs/manual/core/transactions/), plus [schema validation](https://www.mongodb.com/docs/manual/data-modeling/) when parts of a document need stricter control. Firestore also offers [transactions and batched writes](https://firebase.google.com/docs/firestore/manage-data/transactions), but its document model, query model, and operational limits push the design somewhere else.
+
+The CAP theorem, Consistency, Availability, and Partition tolerance, helps when you discuss behavior during a network partition. It does not decide by itself whether a customer record should be a table, document, or collection. For most administrative products, the first question is still: which rule must not break?
+
+Use this cut:
+
+| Question | What it decides |
+| --- | --- |
+| Must the database reject the invalid state? | constraints, FK, unique, check, transaction |
+| Is the read unit a small aggregate? | document, JSONB, or aggregate table |
+| Does the query cross many entities in varied ways? | SQL or analytical model |
+| Does the app need client sync? | Firestore, IndexedDB, queues, and idempotency |
+| Does volume grow by time, tenant, or event? | partitioning, shard key, or data mart |
+| Must the system operate during partitions? | CAP trade-off and eventual consistency |
+
+In practice, Postgres and MongoDB overlap in many features. The difference is in defaults, operational cost, query ergonomics, index model, scaling shape, and how the team will evolve the domain.
+
+## What pressure does each case create?
+
+| System | Main pressure | What to inspect |
+| --- | --- | --- |
+| Social app, AT Protocol, and Bluesky | feed, graph, federated identity, moderation | timeline events and projections, not a huge real-time query |
+| Twenty CRM | standard objects plus workspace customization | controlled metadata, configurable relations, tenant cache |
+| iTOP | paid registration, payment, ticket, check-in, signature | split registration, payment, ticket, and async events |
+| AgroPilot | offline-first agricultural report, price, export | idempotency, snapshots, controlled JSONB, relational master data |
+| ERPNext | inventory, accounting, sales, assets | ledger, closing, traceability |
+| Apache OFBiz | broad ERP with Party, Product, Order, Invoice, Accounting | explicit entities and canonical relationships |
+| Odoo | business modules on top of an ORM | disciplined extension, not schema improvised per screen |
+
+The public repositories used as references are [ERPNext](https://github.com/frappe/erpnext), [Apache OFBiz](https://github.com/apache/ofbiz-framework), [Odoo](https://github.com/odoo/odoo), [Twenty](https://github.com/twentyhq/twenty), and [AT Protocol](https://github.com/bluesky-social/atproto). They are useful because they show real cardinality, not small CRUD examples.
+
+## When does a foreign key matter?
+
+A **foreign key** matters when the relationship is part of business truth inside a transactional boundary. An order without a customer, a payment without a registration, a stock movement without a product, an asset without a cost center, a ticket without an event, and a report without a valid price are not just technical problems. They are states the system should reject.
+
+Use an FK when:
+
+1. The child does not make sense without the parent.
+2. Reports must trust that the reference exists.
+3. Parent deletion must be blocked, restricted, or turned into deactivation.
+4. The relationship is used by other modules or integrations.
+5. Inconsistency creates wrong money, wrong stock, or manual audit.
+
+Avoid FKs across boundaries that do not share a transaction. Between databases, services, queues, and external integrations, use stable IDs, idempotent events, snapshots, and reconciliation. Inside the transactional boundary, an FK reduces bad data. Outside it, a global FK usually does not exist.
+
+In Postgres, primary keys, unique constraints, check constraints, and foreign keys preserve integrity close to the data. The [constraints documentation](https://www.postgresql.org/docs/current/ddl-constraints.html) is basic, but the practical lesson matters: critical rules should not live only in the form. In MongoDB, part of that protection may come from transactions, schema validation, and document design. The point is not defending a database brand. It is knowing where the rule is enforced.
+
+## Do joins make reports heavy?
+
+Yes. But that does not prove FKs are wrong. It proves that heavy reporting should not always depend on the live transactional model.
+
+An FK validates existence. The join is expensive because the query crosses tables, filters, cardinalities, and indexes. When annual closing, inventory statements, or asset reports are slow, the common causes are:
+
+1. missing index on a referenced or filtered column;
+2. date filter on a historical table without partitioning;
+3. unexpected fan-out that duplicates rows;
+4. metric without a clear grain, mixing order, item, payment, and adjustment;
+5. report recalculating the past with current master data;
+6. dashboard querying the operational database on every visit;
+7. missing closed snapshot.
+
+The key point: the past must not depend on mutable master data. If a product changed category, an asset changed owner, or a price changed, the old report must not change with it.
+
+## How should you model inventory?
+
+**Inventory** needs movement. A `current_quantity` column can be useful, but it is a projection. Truth should explain entries, exits, adjustments, and transfers.
+
+```sql
+create table stock_movements (
+  id uuid primary key,
+  product_id uuid not null references products(id),
+  location_id uuid not null references stock_locations(id),
+  type text not null check (type in ('in', 'out', 'adjustment', 'transfer')),
+  quantity numeric(14, 3) not null check (quantity > 0),
+  occurred_at timestamptz not null,
+  source_document text,
+  created_at timestamptz not null default now()
+);
+
+create table stock_balances (
+  product_id uuid not null references products(id),
+  location_id uuid not null references stock_locations(id),
+  quantity numeric(14, 3) not null,
+  updated_at timestamptz not null,
+  primary key (product_id, location_id)
+);
+```
+
+`stock_movements` answers audit. `stock_balances` answers the fast screen. For closing, freeze the result:
+
+```sql
+create table monthly_stock_close (
+  month date not null,
+  product_id uuid not null,
+  location_id uuid not null,
+  ending_quantity numeric(14, 3) not null,
+  ending_average_cost numeric(14, 4),
+  generated_at timestamptz not null default now(),
+  primary key (month, product_id, location_id)
+);
+```
+
+This design avoids two traps: recalculating everything at month end and losing the explanation for the balance.
+
+## How should you model assets?
+
+**Asset management** is not just an asset registry. It is the history of ownership, location, value, and disposal.
+
+At minimum, model these dimensions:
+
+1. asset;
+2. acquisition;
+3. owner or location movement;
+4. maintenance;
+5. depreciation;
+6. inventory count;
+7. disposal.
+
+The audit question is not only "where is this asset today?". It is "where was it on December 31, who owned it, which book value was valid, and which inventory confirmed it existed?". If the model cannot answer that, it supports registration, not asset management.
+
+## What should change in the case models?
+
+In **AgroPilot**, the good decision is combining integrity for stable master data, `idempotency_key` for offline retry, `CHECK` constraints for price, and JSONB where the contract still changes. The risk is letting JSONB become permanent storage. When `passadas`, photos, or schedules enter export and validation, they need a versioned schema or their own table.
+
+In **iTOP**, `Order` concentrates registration, buyer, participant, payment, ticket, and signature. That makes reconciliation, webhooks, support, and audit harder. A healthier model separates `Registration`, `Payment`, `Ticket`, `SignatureRequest`, and communication events. Registration is the intent to enter. Payment is settlement. Ticket is access right.
+
+In **Twenty**, customization is part of the product. The right path is typed metadata: object, field, relation, view, permission, and index. Loose JSON is not enough because CRM lives on filters and lists. One manual column per customer does not scale either.
+
+In a **social app**, the timeline should not be a giant relational query on every open. Post, follow, like, and moderation should become events and read indexes. The graph exists, but the experience depends on projection.
+
+In **ERPNext, OFBiz, and Odoo**, many relationships are necessary. ERP must explain order, item, tax, payment, inventory, asset, and accounting. The mistake is not using a document. The mistake is losing the grain of the operation because the first CRUD looked simpler as one large payload. The cost appears during closing.
+
+## How do you run reports without killing the database?
+
+Separate workloads:
+
+1. CRUD writes to the normalized transactional model.
+2. Jobs, events, or Change Data Capture update projections.
+3. Dashboards read summary tables.
+4. Closing reads frozen snapshots.
+5. Business intelligence reads a dimensional model, data mart, or warehouse.
+
+Postgres has [materialized views](https://www.postgresql.org/docs/current/rules-materializedviews.html) to persist expensive query results. For large historical tables, [partitioning](https://www.postgresql.org/docs/current/ddl-partitioning.html) by date, tenant, or access key reduces scans and helps retention.
+
+For business intelligence, the [Power BI star schema guidance](https://learn.microsoft.com/en-us/power-bi/guidance/star-schema) separates facts and dimensions. That forces one essential question: what is the grain of the report?
+
+Example:
+
+```txt
+fact_inventory_movement
+  date_key
+  product_key
+  location_key
+  movement_type_key
+  quantity
+  cost_amount
+
+dim_product
+dim_location
+dim_date
+dim_movement_type
+```
+
+CRUD must prevent bad writes. BI must answer stable questions. They are different models.
+
+## When should you split databases or shard?
+
+**Sharding** should enter only when the distribution boundary is clear. Before that, it adds cost without fixing the model.
+
+Try these first:
+
+1. indexes;
+2. pagination;
+3. projections;
+4. materialized views;
+5. partitioning;
+6. read replicas;
+7. cold data archival;
+8. separation between OLTP and OLAP.
+
+Then choose the boundary:
+
+| Strategy | When it fits | Cost |
+| --- | --- | --- |
+| Schema per tenant | SaaS with logical isolation | migrations per schema |
+| Database per tenant | large customer or strong compliance | provisioning and operations |
+| Shard by tenant | many tenants with uneven growth | routing and rebalancing |
+| Shard by time | logs, events, historical movements | queries across periods |
+| Service by domain | billing, search, analytics, audit | eventual consistency |
+
+In MongoDB, the [shard key](https://www.mongodb.com/docs/manual/core/sharding-shard-key/) defines distribution and query shape. A bad key creates a hot shard and scatter-gather. In Cassandra, modeling is [query-driven](https://cassandra.apache.org/doc/latest/cassandra/developing/data-modeling/intro.html): you model from the query. You cannot expect the same ad hoc join freedom as a relational database.
+
+When databases split, global FKs disappear. Compensate with global IDs, idempotent events, outbox, snapshots, reconciliation, and inconsistency metrics.
+
+## How do you detect the problem early?
+
+| Signal | Diagnosis | Correction |
+| --- | --- | --- |
+| Entity with too many responsibilities | the domain was flattened | split by lifecycle |
+| JSONB used in filter, money, or permission | flexibility became a rule | promote to column or table |
+| Report recalculates the past | history is not frozen | snapshot, ledger, or fact |
+| Dashboard always performs expensive joins | missing read model | projection or materialized view |
+| N:N without a name | relationship has no semantics | create a join entity with fields |
+| Referenced master data is physically deleted | history will break | soft delete, validity range, or status |
+| Tenant does not appear in the model | data leakage risk | explicit tenant boundary |
+| Offline flow has no idempotency | retry duplicates operation | `idempotency_key` and dedupe |
+| Sharding appears too early | weak diagnosis | measure, partition, and project first |
+
+## What rule should you use in practice?
+
+Use this line as a filter:
+
+```txt
+Understand the rule. Model writes. Project reads. Freeze closes. Distribute only after you understand the boundary.
+```
+
+FK is not the enemy. Join is not a sin. MongoDB also has transactions. Postgres also stores documents. Firestore also has atomic operations. Sharding is not maturity. Each tool only works when the business question is clear.
+
+## TL;DR
+
+1. Do not choose a database before understanding the rule.
+2. Rigid schema versus flexible schema is a false dilemma.
+3. Use FK inside the transactional boundary when the relationship must be true.
+4. Do not run every report on the live CRUD model.
+5. Inventory and assets need movement and snapshots.
+6. Separate databases remove global FK and require reconciliation.
+7. The most important question is: how will I explain this number one year from now?
