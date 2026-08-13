@@ -1,0 +1,148 @@
+---
+title: "UUIDv4 vs UUIDv7: quando usar cada um"
+description: "UUIDv4 vs UUIDv7: escolha IDs aleatórios ou ordenáveis por tempo para bancos, APIs e sistemas distribuídos, com exemplos e regra prática de uso em produção."
+date: "2026-08-13"
+published: true
+slug: "uuid4-vs-uuid7-quando-usar-cada-um-pt-br"
+language: "pt-BR"
+translationKey: "uuid4-vs-uuid7-when-to-use"
+categories: ["uuid", "database", "backend", "distributed-systems", "pt-br"]
+image: "/images/blog/uuid4-vs-uuid7-database-index-cover.jpg"
+---
+
+**UUIDv4** é um identificador quase todo aleatório. **UUIDv7** é um identificador ordenável por tempo, com timestamp no início e aleatoriedade no restante.
+
+Se o ID vai para um índice de banco, log, evento ou fila, UUIDv7 costuma ser a escolha mais prática. Se você só precisa de um ID aleatório, sem ordem temporal e sem revelar quando ele foi criado, UUIDv4 continua simples e forte.
+
+## O que é um UUID?
+
+**UUID** significa Universally Unique Identifier. É um identificador de 128 bits criado para ser único sem depender de uma autoridade central.
+
+A forma mais comum é o texto com hífens:
+
+```txt
+9f4a0c77-8f17-4c0d-a0e7-0d28e6fd0a79
+```
+
+A especificação atual é a [RFC 9562](https://www.rfc-editor.org/rfc/rfc9562.html), publicada em maio de 2024. Ela substitui a RFC 4122 e formaliza versões novas, incluindo UUIDv6, UUIDv7 e UUIDv8.
+
+## O que é UUIDv4?
+
+**UUIDv4** é a versão baseada em números aleatórios ou pseudoaleatórios.
+
+Na prática, ele usa 122 bits para aleatoriedade. Os outros bits indicam a versão e o formato do UUID. Isso gera IDs sem relação com o tempo, com baixíssima chance de colisão quando o gerador usa uma fonte de aleatoriedade adequada.
+
+Exemplo:
+
+```txt
+9f4a0c77-8f17-4c0d-a0e7-0d28e6fd0a79
+```
+
+Repare no `4` no terceiro bloco. Ele indica a versão:
+
+```txt
+9f4a0c77-8f17-4c0d-a0e7-0d28e6fd0a79
+              ^
+```
+
+Use UUIDv4 quando a pergunta principal for: "eu só preciso de um ID único e aleatório?".
+
+## O que é UUIDv7?
+
+**UUIDv7** é a versão baseada em tempo, criada para ordenar melhor IDs sem abandonar o formato UUID.
+
+Ele coloca um timestamp Unix em milissegundos nos 48 bits mais significativos. O restante usa bits aleatórios e, dependendo da implementação, pode incluir contador ou fração submilissegundo para melhorar a monotonicidade dentro do mesmo milissegundo.
+
+Exemplo:
+
+```txt
+0198a0d4-6d9b-7c21-a7d9-8a2d1f0f3b44
+```
+
+Repare no `7` no terceiro bloco:
+
+```txt
+0198a0d4-6d9b-7c21-a7d9-8a2d1f0f3b44
+              ^
+```
+
+Use UUIDv7 quando a pergunta principal for: "esse ID precisa ser eficiente para inserir, ordenar ou consultar por recência?".
+
+## Qual é a diferença prática?
+
+A diferença prática entre **UUIDv4** e **UUIDv7** é a ordem.
+
+| Critério | UUIDv4 | UUIDv7 |
+| --- | --- | --- |
+| Base | Aleatoriedade | Tempo + aleatoriedade |
+| Ordenação natural | Não | Sim, por criação aproximada |
+| Localidade em índice | Ruim em alto volume | Melhor para inserções recentes |
+| Revela criação aproximada | Não | Sim |
+| Bom para URLs públicas | Sim | Sim, com atenção à exposição de tempo |
+| Bom para eventos e logs | Funciona | Melhor |
+| Bom para chaves primárias em banco | Funciona | Geralmente melhor |
+
+UUIDv4 espalha novos valores pelo espaço do índice. UUIDv7 tende a inserir valores recentes perto de valores recentes.
+
+## Por que o banco se importa com isso?
+
+Um **índice B-tree** funciona melhor quando inserções novas caem perto do fim ou perto de uma região previsível do índice.
+
+Com UUIDv4, cada novo ID pode cair em qualquer ponto. Em tabelas grandes e com muito write, isso aumenta page split, cache miss e trabalho de manutenção do índice.
+
+Com UUIDv7, IDs criados no mesmo período ficam próximos. Isso melhora a localidade do índice sem voltar para `serial` ou `bigserial`, que são sequenciais, mas exigem coordenação central.
+
+A própria RFC 9562 cita esse problema: versões que não são ordenadas por tempo, como UUIDv4, têm pior localidade em índices de banco, enquanto UUIDv7 foi criado para atacar esse caso.
+
+## Quando usar UUIDv4?
+
+Use **UUIDv4** quando a ordem temporal não importa.
+
+Bons casos:
+
+| Caso | Por quê |
+| --- | --- |
+| Tokens internos não ordenados | Aleatoriedade simples e forte |
+| IDs temporários no cliente | Fácil de gerar sem coordenação |
+| Objetos sem consulta por recência | A ordem não ajuda |
+| Identificadores onde criação não deve ser inferida | Não carrega timestamp |
+
+Exemplo em JavaScript:
+
+```ts
+const id = crypto.randomUUID();
+```
+
+Esse método gera UUIDv4 na Web Crypto API e em runtimes modernos compatíveis.
+
+## Quando usar UUIDv7?
+
+Use **UUIDv7** quando o ID participa do caminho quente do banco ou de sistemas orientados a eventos.
+
+Bons casos:
+
+| Caso | Por quê |
+| --- | --- |
+| Chave primária de tabela com muito insert | Melhor localidade no índice |
+| Eventos de domínio | Ordenação por criação aproximada ajuda |
+| Logs distribuídos | Facilita investigar recência |
+| Filas e outbox tables | Combina unicidade com ordem |
+| Sincronização offline-first | Ajuda a organizar mudanças sem servidor central |
+
+Em APIs novas, eu trataria UUIDv7 como o default para entidades persistidas. UUIDv4 ainda é uma boa escolha quando você quer opacidade temporal máxima.
+
+## E segurança e privacidade?
+
+**UUIDv7** não deve ser tratado como segredo. Ele revela o tempo aproximado em que o ID foi criado.
+
+Isso normalmente é aceitável para chaves primárias, eventos e logs. Mas pode ser ruim se o timestamp revelar volume de negócio, horário de atividade, ordem de cadastro ou outro sinal sensível.
+
+UUIDv4 também não deve virar token de autenticação por acidente. Ele é aleatório, mas ID público e segredo são conceitos diferentes. Para senha temporária, convite, sessão ou reset de senha, gere um token próprio com entropia suficiente e regras de expiração.
+
+## Qual é a regra prática?
+
+Se você está criando uma tabela nova em 2026, comece pensando em **UUIDv7**.
+
+Escolha UUIDv7 para dados persistidos, índices, eventos, filas e qualquer fluxo onde ordenar por criação ajuda. Escolha UUIDv4 quando você só precisa de um identificador aleatório e não quer carregar informação temporal no próprio ID.
+
+**Resumo:** UUIDv4 é aleatório. UUIDv7 é ordenável por tempo. Para bancos e sistemas distribuídos modernos, UUIDv7 costuma ser melhor como ID padrão. Para opacidade temporal, UUIDv4 ainda é a escolha simples.
