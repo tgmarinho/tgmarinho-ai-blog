@@ -178,22 +178,34 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
   const strengthTargetRef = useRef(0);
   const lastTsRef = useRef(0);
   const autoRef = useRef(0); // low-power auto-brush clock
+  const lastPaintRef = useRef(0); // frame-rate throttle clock for the auto-brush
+  const visibleRef = useRef(true); // false while the portrait is off-screen
   // Restarts the parked rAF loop with the effect's real `draw` closure.
   const resumeRef = useRef<(() => void) | null>(null);
 
   const [hovered, setHovered] = useState(false);
   const [phase, setPhase] = useState<0 | 1>(0); // 0 human, 1 agent (for HUD)
   const [isLowPower, setIsLowPower] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const mql = window.matchMedia(
-      "(max-width: 768px), (prefers-reduced-motion: reduce)",
-    );
-    const update = () => setIsLowPower(mql.matches);
+    // Mobile viewport drives the auto-brush (no pointer) on a lighter grid.
+    // prefers-reduced-motion is tracked on its own: it paints a single static
+    // frame and never animates, the a11y-correct and cheapest path.
+    const mobileMql = window.matchMedia("(max-width: 768px)");
+    const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setReducedMotion(motionMql.matches);
+      setIsLowPower(mobileMql.matches || motionMql.matches);
+    };
     update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
+    mobileMql.addEventListener("change", update);
+    motionMql.addEventListener("change", update);
+    return () => {
+      mobileMql.removeEventListener("change", update);
+      motionMql.removeEventListener("change", update);
+    };
   }, []);
 
   // Load both portraits: keep the elements for crisp full-res drawing, and
@@ -237,6 +249,8 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
     let dpr = 1;
 
     const grid = isLowPower ? 120 : 160;
+    // Mobile viewport (auto-brush), excluding reduced-motion which stays static.
+    const isMobile = isLowPower && !reducedMotion;
     // Center-square crop of the 3:2 source, mapped onto the square canvas.
     const sx = SRC_CROP_X;
     const sw = SRC_SQUARE;
@@ -270,7 +284,53 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
     const ro = new ResizeObserver(resize);
     ro.observe(wrap);
 
+    // Park the whole loop while the portrait is scrolled out of view. On a
+    // phone the hero leaves the viewport almost immediately, so this is the
+    // single biggest saving: no clearRect / blits / particle loop off-screen.
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visibleRef.current = entry.isIntersecting;
+        if (entry.isIntersecting) schedule();
+      },
+      { threshold: 0 },
+    );
+    io.observe(wrap);
+
     const draw = (ts: number) => {
+      // Reduced motion: paint one static frame (agent base) and stop for good.
+      if (reducedMotion) {
+        const imgs = imagesRef.current;
+        if (imgs) {
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, W, H);
+          ctx.globalCompositeOperation = "source-over";
+          ctx.globalAlpha = 1;
+          ctx.imageSmoothingEnabled = true;
+          ctx.drawImage(imgs.agent, sx, 0, sw, sw, 0, 0, W, H);
+        }
+        setPhase((cur) => (cur === 1 ? cur : 1));
+        rafRef.current = null;
+        return;
+      }
+
+      // Off-screen: skip the frame entirely. The IntersectionObserver rewakes
+      // the loop when the portrait scrolls back into view.
+      if (!visibleRef.current) {
+        rafRef.current = null;
+        lastTsRef.current = 0;
+        return;
+      }
+
+      // The ambient auto-brush doesn't need 60fps: cap it to ~30fps so the
+      // per-frame blits + particle loop cost half as much on phones.
+      if (isMobile) {
+        if (lastPaintRef.current && ts - lastPaintRef.current < 33) {
+          rafRef.current = requestAnimationFrame(draw);
+          return;
+        }
+        lastPaintRef.current = ts;
+      }
+
       const p = particlesRef.current!;
       const dt = lastTsRef.current
         ? Math.min(0.05, (ts - lastTsRef.current) / 1000)
@@ -430,12 +490,14 @@ export function HeroPortrait({ size = 540, className }: HeroPortraitProps) {
 
     return () => {
       ro.disconnect();
+      io.disconnect();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
       resumeRef.current = null;
       lastTsRef.current = 0;
+      lastPaintRef.current = 0;
     };
-  }, [ready, isLowPower]);
+  }, [ready, isLowPower, reducedMotion]);
 
   const ensureLoop = () => resumeRef.current?.();
 
