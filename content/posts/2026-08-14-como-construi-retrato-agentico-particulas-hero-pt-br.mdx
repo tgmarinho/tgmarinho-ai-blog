@@ -1,0 +1,277 @@
+---
+title: "Como criar um retrato agentico com partículas no hero"
+description: "Retrato agentico com partículas: aprenda a criar um brush em Canvas 2D com typed arrays, reveal local, lazy loading e vídeo demo."
+date: "2026-08-14"
+published: true
+slug: "como-criar-retrato-agentico-particulas-hero"
+categories: ["frontend", "react", "nextjs", "canvas", "design", "pt-br"]
+image: "/images/blog/hero-portrait-particle-reveal-cover.jpg"
+language: "pt-BR"
+translationKey: "hero-portrait-particle-reveal"
+---
+
+Um **retrato agentico** com partículas funciona melhor quando a imagem continua nítida e o efeito aparece só onde o usuário interage. Neste tutorial, a ideia é criar um brush em Canvas 2D que revela uma segunda imagem localmente, com partículas apenas na borda do reveal.
+
+<video class="not-prose my-8 mx-auto w-full max-w-[600px] overflow-hidden rounded-lg border border-white/10 bg-black shadow-2xl shadow-cyan-950/40" src="/videos/blog/hero-portrait-particle-reveal-demo.mp4" poster="/images/blog/hero-portrait-particle-reveal-demo-poster.jpg" autoplay muted loop playsinline controls></video>
+
+## O que vamos construir?
+
+Vamos construir um **hover reveal** entre duas imagens com o mesmo enquadramento: uma versão humana e uma versão agente. A página não troca a imagem inteira. Ela só transforma a região tocada pelo cursor, mantendo o resto do retrato estável.
+
+Na prática, o visitante percebe três camadas:
+
+| Camada | Função |
+| --- | --- |
+| Retrato base | Mostra a versão agente, desenhada nítida no canvas. |
+| Brush de reveal | Revela a versão humana dentro de um círculo suave. |
+| Anel de partículas | Granula a borda do brush e cria o efeito de regeneração. |
+
+Essa diferença é importante. O objetivo não era mostrar uma animação decorativa por cima da imagem. Era fazer a própria imagem parecer estar mudando de estado.
+
+## Quais assets você precisa preparar?
+
+Você precisa de duas imagens com pose, escala e enquadramento parecidos. O efeito depende disso. Se o rosto humano estiver mais alto que o agente, ou se o agente tiver outro recorte, o brush ainda funciona, mas a transição parece desalinhada.
+
+Use este checklist:
+
+| Item | Recomendação |
+| --- | --- |
+| Imagem base | A versão que aparece em repouso, por exemplo o retrato agente. |
+| Imagem de reveal | A versão que aparece dentro do brush, por exemplo o rosto humano. |
+| Fundo | PNG transparente quando possível. |
+| Tamanho | Mesma proporção e mesmo enquadramento visual. |
+| Origem | Mesmo domínio, ou CORS configurado para permitir `getImageData`. |
+
+O ponto de CORS importa porque o canvas precisa ler pixels. Se a imagem vier de outro domínio sem permissão, `getImageData` falha com `SecurityError`. Para evitar isso, mantenha as imagens em `/public` ou carregue imagens remotas com headers corretos.
+
+## Por que não usar apenas crossfade?
+
+Um crossfade entre PNGs transparentes é simples: uma imagem entra, outra sai, talvez com wipe e brilho. Funciona para uma transição passiva, mas não cria uma superfície viva.
+
+O brush em Canvas resolve três problemas:
+
+1. A interação agora responde ao cursor.
+2. A imagem base continua nítida.
+3. A transformação acontece só onde o usuário encosta.
+
+O ponto técnico principal é evitar o visual quadriculado. Se você renderiza o retrato inteiro como uma grade de pontos, a foto perde qualidade. A solução é usar partículas apenas no anel da transição.
+
+## Como o Canvas 2D faz o reveal?
+
+Comece com duas imagens transparentes e com o mesmo enquadramento:
+
+```ts
+const HUMAN_SRC = "/images/hero/portrait-human-v2-removebg.png";
+const AGENT_SRC = "/images/hero/portrait-agent-v2-removebg.png";
+```
+
+Se as imagens originais não forem quadradas, use um crop central consistente. O desenho nítido e a amostragem das partículas precisam usar a mesma janela da imagem.
+
+O carregamento pode ser uma Promise simples:
+
+```ts
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+```
+
+Depois carregue as duas imagens juntas:
+
+```ts
+const [baseImg, revealImg] = await Promise.all([
+  loadImage(baseSrc),
+  loadImage(revealSrc),
+]);
+```
+
+O loop de renderização segue esta sequência:
+
+1. Limpa o canvas.
+2. Desenha o retrato agente com `drawImage`.
+3. Desenha o retrato humano em um buffer offscreen.
+4. Aplica uma máscara radial com `destination-in`.
+5. Copia o buffer por cima da base.
+6. Desenha partículas apenas no anel do brush.
+
+O trecho conceitual é este:
+
+```ts
+ctx.drawImage(agent, sx, 0, sw, sw, 0, 0, W, H);
+
+bctx.drawImage(human, sx, 0, sw, sw, 0, 0, W, H);
+bctx.globalCompositeOperation = "destination-in";
+bctx.fillStyle = radialGradient;
+bctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+
+ctx.drawImage(buffer, 0, 0);
+```
+
+A máscara radial é o detalhe que evita uma borda dura. O brush não abre um buraco transparente na base. Ele só limita a camada humana antes de compor por cima da camada agente.
+
+## Como criar o brush suave?
+
+O brush é uma posição normalizada do cursor, de `0` a `1`, convertida para pixels em cada frame:
+
+```ts
+const cx = mouse.x * width;
+const cy = mouse.y * height;
+const radius = brushRadius * Math.min(width, height);
+```
+
+Para criar a borda suave, pinte a imagem de reveal em um canvas offscreen e aplique uma máscara radial:
+
+```ts
+const gradient = bufferCtx.createRadialGradient(
+  cx,
+  cy,
+  radius * 0.4,
+  cx,
+  cy,
+  radius,
+);
+
+gradient.addColorStop(0, "rgba(0,0,0,1)");
+gradient.addColorStop(1, "rgba(0,0,0,0)");
+
+bufferCtx.globalCompositeOperation = "destination-in";
+bufferCtx.fillStyle = gradient;
+bufferCtx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+```
+
+Não use `destination-out` no canvas principal para abrir o reveal. Isso apaga a base e pode criar um buraco transparente. O buffer offscreen deixa a base intacta.
+
+## Como as partículas são calculadas?
+
+As **partículas** vêm de uma amostragem prévia das duas imagens em uma grade. O código desenha cada retrato em um canvas pequeno, lê os pixels com `getImageData` e guarda as cores em arrays tipados.
+
+Isso cria uma estrutura sem objetos alocados no loop quente:
+
+| Dado | Uso |
+| --- | --- |
+| `homeX`, `homeY` | posição original da partícula |
+| `dirX`, `dirY` | direção estável do fluxo |
+| `dist` | amplitude individual do deslocamento |
+| cores humanas | cor dentro do reveal |
+| cores agente | cor fora do reveal |
+
+Durante cada frame, o código calcula a distância de cada célula até o cursor. Só as células perto da borda do brush são desenhadas.
+
+```ts
+const ed = d - BRUSH_R;
+if (ed <= -BRUSH_BAND || ed >= BRUSH_BAND) continue;
+```
+
+Esse `continue` é o que mantém o efeito barato. A maior parte da imagem não vira partícula. Ela fica como fotografia nítida.
+
+## Como ajustar o efeito?
+
+Use valores pequenos primeiro. Depois aumente densidade e brilho conforme o dispositivo aguentar.
+
+| Parâmetro | Bom começo | O que muda |
+| --- | --- | --- |
+| `brushRadius` | `0.3` | Tamanho da área revelada. |
+| `brushBand` | `0.13` | Espessura do anel de partículas. |
+| `grid` | `160` | Quantidade de células amostradas. Maior deixa as partículas mais finas. |
+| `streamDistance` | `0.15` | Distância máxima do deslocamento das partículas. |
+| `streamAngle` | `2.4` | Direção do fluxo. |
+| `streamSpread` | `0.9` | Abertura do fluxo. |
+| `glowRGB` | `[170, 240, 255]` | Cor para onde as partículas brilham. |
+
+Se o efeito estiver pesado, reduza `grid` primeiro. Se estiver bonito, mas visualmente confuso, reduza `brushBand`. Se parecer um crossfade comum, aumente um pouco `streamDistance` e o brilho das partículas.
+
+## Quais bugs precisaram ser evitados?
+
+O primeiro bug era o canvas ficar em branco depois de um hard refresh. O motivo: `ResizeObserver` ajusta `canvas.width` e `canvas.height`, e isso limpa o desenho. Se o `requestAnimationFrame` já tinha parado, nada repintava até o primeiro hover.
+
+A correção foi agendar um repaint dentro do resize:
+
+```ts
+const resize = () => {
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  schedule();
+};
+```
+
+Também entraram quatro cuidados:
+
+1. Limitar `devicePixelRatio` a 2 para retina sem custo excessivo.
+2. Usar `imageSmoothingEnabled` no desenho nítido.
+3. Reduzir a grade em ambientes de baixa potência.
+4. Criar uma trajetória automática para touch e `prefers-reduced-motion`.
+
+O objetivo era fazer o efeito existir em mobile sem depender de hover.
+
+## Como o hero não virou custo de performance?
+
+O retrato é atmosfera, não conteúdo principal. Por isso, ele não deveria disputar **Largest Contentful Paint** com o texto do hero.
+
+A solução foi separar o componente em `HeroPortraitLazy`:
+
+```ts
+const HeroPortraitInner = dynamic(
+  () => import("./hero-portrait").then((m) => m.HeroPortrait),
+  { ssr: false },
+);
+```
+
+O wrapper reserva o espaço final com `aspect-square`, mas o canvas só monta depois da hidratação. Isso evita layout shift e tira o efeito do caminho crítico da primeira pintura.
+
+## Como aplicar isso em um projeto Next.js?
+
+Em um projeto Next.js com App Router, separe o efeito em dois componentes: um componente de Canvas e um wrapper lazy. O componente de Canvas fica no client, porque usa `window`, `Image`, `ResizeObserver`, pointer events e `requestAnimationFrame`.
+
+| Parte | Responsabilidade |
+| --- | --- |
+| `HeroPortrait` | Carrega imagens, amostra pixels, roda o loop do canvas e desenha o reveal. |
+| `HeroPortraitLazy` | Usa `dynamic(..., { ssr: false })` para montar o efeito depois da hidratação. |
+| Hero da página | Reserva espaço com `aspect-square` e renderiza o componente lazy. |
+
+O wrapper pode ser simples:
+
+```tsx
+const HeroPortraitInner = dynamic(
+  () => import("./hero-portrait").then((m) => m.HeroPortrait),
+  { ssr: false },
+);
+
+export function HeroPortraitLazy() {
+  return (
+    <div className="aspect-square w-full">
+      <HeroPortraitInner />
+    </div>
+  );
+}
+```
+
+Esse desenho mantém o tutorial aplicável em qualquer hero: o texto carrega primeiro, o espaço visual fica reservado e o canvas entra como camada interativa.
+
+## Onde está o código completo?
+
+O código completo está no repositório principal. Quando este PR for mergeado, estes links apontam para a versão em `main`:
+
+| Recurso | Link |
+| --- | --- |
+| Implementação isolada | [reference/PortraitReveal.tsx](https://github.com/tgmarinho/tgmarinho-ai-blog/blob/main/.cursor/skills/particle-portrait-reveal/reference/PortraitReveal.tsx) |
+| Explicação técnica | [reference/technique.md](https://github.com/tgmarinho/tgmarinho-ai-blog/blob/main/.cursor/skills/particle-portrait-reveal/reference/technique.md) |
+
+Também deixei uma **skill reutilizável** para quem quiser pedir o mesmo efeito a um agente de código:
+
+| Skill | Link |
+| --- | --- |
+| `particle-portrait-reveal` | [.cursor/skills/particle-portrait-reveal](https://github.com/tgmarinho/tgmarinho-ai-blog/tree/main/.cursor/skills/particle-portrait-reveal) |
+| Instruções da skill | [SKILL.md](https://github.com/tgmarinho/tgmarinho-ai-blog/blob/main/.cursor/skills/particle-portrait-reveal/SKILL.md) |
+
+Use a skill quando quiser criar um reveal entre dois retratos, um efeito de dissolução por cursor, ou uma transição visual de humano para agente sem reescrever a técnica do zero.
+
+## Resumo
+
+O **retrato agentico com partículas** funciona porque separa imagem e efeito. A imagem continua nítida com `drawImage`; o reveal humano entra por uma máscara radial em buffer offscreen; as partículas aparecem apenas no anel do brush; e o componente é carregado de forma lazy para não prejudicar o hero.
+
+O resultado visual parece mais complexo do que a arquitetura real. Essa é a boa parte: uma interação rica, feita com Canvas 2D, sem biblioteca extra e com o custo concentrado só onde o usuário está olhando.
