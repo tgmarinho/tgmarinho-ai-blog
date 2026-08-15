@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { siteConfig } from "@/lib/constants";
-import { HeroPortrait } from "@/components/fx/hero-portrait";
+import { HeroPortraitLazy } from "@/components/fx/hero-portrait-lazy";
 import { buildAlternates, localizedUrl, ogLocale } from "@/lib/seo";
 import {
   jsonLdGraph,
@@ -171,7 +171,7 @@ export default async function LandingPage({
           </div>
 
           <div className="mx-auto w-full max-w-[420px] md:max-w-none">
-            <HeroPortrait size={460} className="mx-auto" />
+            <HeroPortraitLazy size={460} className="mx-auto" />
           </div>
         </section>
 
