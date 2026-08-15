@@ -6,7 +6,7 @@ import { ArrowUpRight, Sparkles } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 import { trackEvent } from "@/lib/analytics";
 import { ParticleField } from "@/components/fx/particle-field";
-import { HeroPortrait } from "@/components/fx/hero-portrait";
+import { HeroPortraitLazy } from "@/components/fx/hero-portrait-lazy";
 import { RocketLaunch } from "@/components/fx/rocket-launch";
 import { BlackHole } from "@/components/fx/black-hole";
 import { VolumetricLight } from "@/components/fx/volumetric-light";
@@ -114,7 +114,7 @@ export function Hero({ postCount }: HeroProps) {
         {/* Right — morphing portrait */}
         <div className="relative flex items-center justify-center md:justify-end">
           <div className="relative w-full max-w-[640px]">
-            <HeroPortrait size={640} />
+            <HeroPortraitLazy size={640} />
             {/* Floating telemetry badges */}
             <FloatingBadge
               label={t("badges.routingLabel")}

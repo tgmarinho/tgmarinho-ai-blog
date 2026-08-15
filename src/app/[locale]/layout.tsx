@@ -140,6 +140,10 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className="dark">
       <body
+        // Some browser extensions (e.g. ColorZilla) inject attributes like
+        // `cz-shortcut-listen` on <body> before React hydrates, which trips a
+        // hydration mismatch warning. This silences that one-level-deep only.
+        suppressHydrationWarning
         className={`${geistSans.variable} ${manrope.variable} ${jetbrainsMono.variable} font-sans min-h-screen flex flex-col antialiased`}
       >
         <script
