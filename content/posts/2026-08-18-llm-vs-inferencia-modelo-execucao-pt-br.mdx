@@ -1,0 +1,148 @@
+---
+title: "LLM vs inferência: modelo é uma coisa, execução é outra"
+description: "LLM vs inferência: entenda que o LLM é o modelo treinado, enquanto inferência é a execução que usa esse modelo para gerar respostas, custos e latência."
+date: "2026-08-18"
+published: true
+slug: "llm-vs-inferencia-modelo-execucao-pt-br"
+language: "pt-BR"
+translationKey: "llm-vs-inference-model-vs-execution"
+categories: ["ai", "llm", "machine-learning", "agents", "pt-br"]
+image: "/images/blog/llm-vs-inferencia-modelo-execucao-cover.jpg"
+---
+
+**LLM** é o modelo treinado. **Inferência** é a operação de executar esse modelo para produzir uma resposta. A diferença importa porque modelo, custo, latência, servidor e GPU não são a mesma camada da conversa.
+
+Pense assim: o LLM é a coisa que foi criada no treinamento. Inferência é o momento em que essa coisa é usada.
+
+## O que é um LLM?
+
+**LLM** significa Large Language Model, ou Modelo de Linguagem de Grande Escala. É uma rede neural treinada com muitos textos para aprender padrões de linguagem, código, raciocínio estatístico e relações entre tokens.
+
+Depois do treinamento, o modelo vira um conjunto de pesos e parâmetros. Ele não "consulta a internet" por padrão e não aprende uma nova habilidade permanente a cada pergunta comum. Ele recebe tokens, calcula probabilidades e prevê quais tokens fazem sentido a seguir.
+
+Exemplo simplificado:
+
+```txt
+Entrada:
+"O céu é"
+
+Probabilidades calculadas:
+azul      72%
+claro      8%
+bonito     5%
+grande     2%
+...
+
+Token escolhido:
+"azul"
+```
+
+Modelos como GPT, Claude, Gemini e Llama são exemplos de LLMs. Cada um tem arquitetura, dados, políticas e capacidades diferentes, mas a ideia central é a mesma: um modelo treinado que transforma contexto em probabilidade de próximos tokens.
+
+## O que é inferência?
+
+**Inferência** é executar o modelo depois que ele já foi treinado. Quando você escreve um prompt, o sistema tokeniza a entrada, passa esses tokens pelo modelo, calcula probabilidades, escolhe o próximo token e repete o processo até formar uma resposta.
+
+O fluxo básico é:
+
+```txt
+prompt do usuário
+  -> tokenização
+  -> LLM
+  -> cálculos na rede neural
+  -> probabilidades
+  -> escolha do próximo token
+  -> repetição
+  -> resposta
+```
+
+Essa execução é inferência. Ela acontece quando o modelo responde uma pergunta, completa um texto, escreve código, resume um documento ou decide qual chamada de ferramenta deve ser feita em um sistema de agentes.
+
+## Como LLM e inferência se comparam?
+
+A forma mais simples de separar os termos é perguntar se estamos falando da coisa treinada ou da execução dessa coisa.
+
+| Termo | O que é | Pergunta que responde |
+| --- | --- | --- |
+| LLM | Modelo treinado, com pesos e parâmetros | Qual modelo estamos usando? |
+| Inferência | Execução do modelo para gerar saída | Como a resposta está sendo produzida agora? |
+| Treinamento | Processo que cria ou ajusta o modelo | Como o modelo foi criado ou adaptado? |
+| Servidor de inferência | Infra que roda o modelo | Onde e com que recursos o modelo executa? |
+| Custo de inferência | Custo de gerar respostas | Quanto custa usar o modelo em produção? |
+
+Uma frase prática resolve a maioria das dúvidas:
+
+> LLM é o motor. Inferência é ligar o motor para fazer trabalho.
+
+## Por que essa distinção aparece tanto em produto e infraestrutura?
+
+A distinção importa porque **treinamento** e inferência têm custos, tempos e objetivos diferentes.
+
+Treinamento cria ou ajusta o modelo. Ele costuma exigir muitos dados, muita computação e ciclos longos de experimentação. Inferência usa o modelo pronto para atender uma requisição. Ela precisa ser rápida, estável, barata e previsível.
+
+Quando uma empresa fala em `inference cost`, `inference server`, `inference GPU` ou `inference latency`, ela não está falando do treinamento do modelo. Está falando da execução necessária para transformar prompts em respostas.
+
+| Expressão | Significado prático |
+| --- | --- |
+| `inference cost` | Custo de gerar respostas com o modelo |
+| `inference latency` | Tempo entre o prompt e a resposta |
+| `inference server` | Serviço que hospeda e executa o modelo |
+| `inference GPU` | GPU usada para rodar o modelo em produção |
+| `inference throughput` | Quantas requisições ou tokens o sistema processa por intervalo |
+
+Esse vocabulário também aparece em decisões de produto. Uma experiência de chat pode ficar ruim não porque o LLM é fraco, mas porque a inferência está lenta, cara, mal configurada ou sem contexto suficiente.
+
+## Como isso muda a conversa sobre agentes?
+
+Em agentes de IA, o **LLM** faz inferência enquanto decide o próximo passo. Durante essa execução, ele pode concluir que precisa chamar uma ferramenta.
+
+Exemplo:
+
+```txt
+Usuário:
+"Qual é o clima em Dourados agora?"
+
+LLM em inferência:
+"Eu não tenho clima atual nos meus parâmetros.
+Preciso usar uma ferramenta."
+
+tool: weather()
+
+resultado da ferramenta
+
+LLM faz nova inferência:
+"Agora vou transformar esses dados em resposta."
+```
+
+O ponto importante é que a ferramenta não substitui o LLM. Ela entrega dados externos. Depois disso, o modelo faz mais inferência para interpretar o resultado, escolher o tom, filtrar detalhes e responder ao usuário.
+
+Por isso, uma chamada de agente normalmente alterna entre três movimentos:
+
+1. Inferência para entender a intenção.
+2. Uso de ferramenta quando falta dado ou ação externa.
+3. Nova inferência para transformar o resultado em resposta útil.
+
+## Como evitar confusão no vocabulário?
+
+Use **LLM** quando estiver falando do modelo: sua família, tamanho, capacidade, janela de contexto, parâmetros, treinamento, fine-tuning ou comportamento geral.
+
+Use **inferência** quando estiver falando da execução: requisição, tokens gerados, latência, custo, throughput, servidor, GPU, cache, streaming ou resposta em tempo real.
+
+Na prática:
+
+| Se a frase é sobre... | Use |
+| --- | --- |
+| "qual modelo escolher" | LLM |
+| "quanto custa responder" | inferência |
+| "por que a resposta demorou" | inferência |
+| "o que o modelo sabe fazer" | LLM |
+| "onde hospedar a geração" | inferência |
+| "como o agente escolheu uma tool" | inferência usando um LLM |
+
+## Qual é a regra prática?
+
+LLM é uma coisa. Inferência é uma operação feita usando essa coisa.
+
+Se alguém pergunta "qual LLM estamos usando?", a resposta é o nome ou a família do modelo. Se alguém pergunta "quanto custa rodar isso?", "qual a latência?" ou "qual GPU precisamos?", a conversa é sobre inferência.
+
+**Resumo:** LLM é o modelo treinado. Inferência é executar o modelo para gerar respostas. Em agentes, o LLM faz inferência, pode chamar ferramentas e depois faz mais inferência para transformar os resultados em uma resposta final.

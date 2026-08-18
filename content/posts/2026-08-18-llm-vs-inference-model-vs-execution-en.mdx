@@ -1,0 +1,148 @@
+---
+title: "LLM vs inference: the model is one thing, execution is another"
+description: "LLM vs inference: learn why the LLM is the trained model, while inference is the execution that runs the model to generate answers, costs, and latency."
+date: "2026-08-18"
+published: true
+slug: "llm-vs-inference-model-vs-execution-en"
+language: "en"
+translationKey: "llm-vs-inference-model-vs-execution"
+categories: ["ai", "llm", "machine-learning", "agents", "en"]
+image: "/images/blog/llm-vs-inferencia-modelo-execucao-cover.jpg"
+---
+
+An **LLM** is the trained model. **Inference** is the operation of running that model to produce an answer. The distinction matters because the model, cost, latency, server, and GPU are not the same layer of the conversation.
+
+Think of it this way: the LLM is the thing created by training. Inference is the moment that thing is used.
+
+## What is an LLM?
+
+**LLM** means Large Language Model. It is a neural network trained on large amounts of text to learn language patterns, code patterns, statistical reasoning, and relationships between tokens.
+
+After training, the model becomes a set of weights and parameters. It does not "browse the internet" by default, and it does not learn a permanent new skill from every normal question. It receives tokens, calculates probabilities, and predicts which tokens make sense next.
+
+Simplified example:
+
+```txt
+Input:
+"The sky is"
+
+Calculated probabilities:
+blue      72%
+clear      8%
+beautiful  5%
+large      2%
+...
+
+Chosen token:
+"blue"
+```
+
+Models such as GPT, Claude, Gemini, and Llama are examples of LLMs. Each one has different architecture, data, policies, and capabilities, but the core idea is the same: a trained model that turns context into probabilities for next tokens.
+
+## What is inference?
+
+**Inference** is running the model after it has already been trained. When you write a prompt, the system tokenizes the input, passes those tokens through the model, calculates probabilities, chooses the next token, and repeats the process until it forms an answer.
+
+The basic flow is:
+
+```txt
+user prompt
+  -> tokenization
+  -> LLM
+  -> neural network computation
+  -> probabilities
+  -> next token selection
+  -> repetition
+  -> answer
+```
+
+That execution is inference. It happens when the model answers a question, completes text, writes code, summarizes a document, or decides which tool call should happen in an agent system.
+
+## How do LLM and inference compare?
+
+The simplest way to separate the terms is to ask whether we are talking about the trained thing or the execution of that thing.
+
+| Term | What it is | Question it answers |
+| --- | --- | --- |
+| LLM | Trained model, with weights and parameters | Which model are we using? |
+| Inference | Execution of the model to produce output | How is the answer being produced now? |
+| Training | Process that creates or adapts the model | How was the model created or adjusted? |
+| Inference server | Infrastructure that runs the model | Where and with what resources does the model run? |
+| Inference cost | Cost of generating answers | How much does it cost to use the model in production? |
+
+A practical sentence resolves most confusion:
+
+> The LLM is the engine. Inference is turning the engine on to do work.
+
+## Why does this distinction show up in product and infrastructure?
+
+The distinction matters because **training** and inference have different costs, timelines, and goals.
+
+Training creates or adjusts the model. It often needs a lot of data, a lot of compute, and long experiment cycles. Inference uses the ready model to serve a request. It needs to be fast, stable, cheap, and predictable.
+
+When a company says `inference cost`, `inference server`, `inference GPU`, or `inference latency`, it is not talking about model training. It is talking about the execution needed to turn prompts into answers.
+
+| Phrase | Practical meaning |
+| --- | --- |
+| `inference cost` | Cost of generating answers with the model |
+| `inference latency` | Time between the prompt and the answer |
+| `inference server` | Service that hosts and runs the model |
+| `inference GPU` | GPU used to run the model in production |
+| `inference throughput` | How many requests or tokens the system processes per interval |
+
+This vocabulary also appears in product decisions. A chat experience can feel poor not because the LLM is weak, but because inference is slow, expensive, misconfigured, or missing enough context.
+
+## How does this change the conversation about agents?
+
+In AI agents, the **LLM** performs inference while deciding the next step. During that execution, it can decide that it needs to call a tool.
+
+Example:
+
+```txt
+User:
+"What is the weather in Dourados right now?"
+
+LLM during inference:
+"I do not have current weather in my parameters.
+I need to use a tool."
+
+tool: weather()
+
+tool result
+
+LLM performs more inference:
+"Now I will turn these data into an answer."
+```
+
+The important point is that the tool does not replace the LLM. It provides external data. After that, the model performs more inference to interpret the result, choose the tone, filter details, and answer the user.
+
+That is why an agent call usually alternates between three moves:
+
+1. Inference to understand intent.
+2. Tool use when data or external action is missing.
+3. More inference to turn the result into a useful answer.
+
+## How do you avoid vocabulary confusion?
+
+Use **LLM** when you are talking about the model: its family, size, capability, context window, parameters, training, fine-tuning, or general behavior.
+
+Use **inference** when you are talking about execution: request, generated tokens, latency, cost, throughput, server, GPU, cache, streaming, or real-time response.
+
+In practice:
+
+| If the sentence is about... | Use |
+| --- | --- |
+| "which model to choose" | LLM |
+| "how much an answer costs" | inference |
+| "why the answer was slow" | inference |
+| "what the model can do" | LLM |
+| "where to host generation" | inference |
+| "how the agent chose a tool" | inference using an LLM |
+
+## What is the practical rule?
+
+LLM is a thing. Inference is an operation performed with that thing.
+
+If someone asks "which LLM are we using?", the answer is the model name or family. If someone asks "how much does this cost to run?", "what is the latency?", or "which GPU do we need?", the conversation is about inference.
+
+**TL;DR:** LLM is the trained model. Inference is running the model to generate answers. In agents, the LLM performs inference, may call tools, and then performs more inference to turn the results into a final answer.
