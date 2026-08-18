@@ -1,0 +1,415 @@
+---
+title: "O que é o problema N+1 query?"
+description: "Problema N+1 query: entenda por que uma página faz consultas demais ao banco, como detectar o padrão e corrigir com join, preload ou batch antes de escalar."
+date: "2026-08-18"
+published: true
+slug: "o-que-e-problema-n-plus-one-query-pt-br"
+language: "pt-BR"
+translationKey: "n-plus-one-query-problem"
+categories: ["database", "backend", "performance", "sql", "pt-br"]
+image: "/images/blog/n-plus-one-query-problem-cover.jpg"
+---
+
+O **problema N+1 query** acontece quando a aplicação faz 1 consulta para buscar uma lista e depois faz mais 1 consulta para cada item dessa lista. Se a página retorna 50 usuários e busca os posts de cada usuário dentro de um loop, você não fez 2 consultas. Você fez 51.
+
+O bug não está em uma query isolada. O bug está no padrão de acesso aos dados.
+
+## Como o N+1 query aparece na prática?
+
+Imagine uma tela que lista usuários e mostra os últimos posts de cada um.
+
+O código parece simples:
+
+```ts
+const users = await db.user.findMany({
+  take: 50,
+});
+
+const result = [];
+
+for (const user of users) {
+  const posts = await db.post.findMany({
+    where: { userId: user.id },
+    take: 3,
+  });
+
+  result.push({ ...user, latestPosts: posts });
+}
+```
+
+Na cabeça de quem escreveu, a intenção é clara: buscar os usuários e depois buscar os posts de cada usuário.
+
+No banco, o padrão vira isto:
+
+```sql
+select * from users limit 50;
+select * from posts where user_id = 'u1' limit 3;
+select * from posts where user_id = 'u2' limit 3;
+select * from posts where user_id = 'u3' limit 3;
+-- ...
+select * from posts where user_id = 'u50' limit 3;
+```
+
+Esse é o **N+1**:
+
+| Parte | Quantidade |
+| --- | --- |
+| Consulta inicial | 1 |
+| Consultas por item | N |
+| Total | N + 1 |
+
+Com 50 usuários, são 51 consultas. Com 500 usuários, são 501 consultas.
+
+## Por que o N+1 query é tão caro?
+
+O custo do **N+1 query** não é só o tempo de execução do SQL. O custo aparece em cada ida e volta entre aplicação e banco.
+
+Cada consulta paga:
+
+| Custo | O que acontece |
+| --- | --- |
+| Latência de rede | A aplicação espera o banco responder |
+| Pool de conexões | Mais queries ocupam conexões por mais tempo |
+| Planejamento | O banco precisa parsear e planejar mais comandos |
+| Concorrência | Outras requisições esperam mais |
+| Observabilidade | Logs e traces ficam cheios de queries repetidas |
+
+Uma consulta de 5 ms parece barata. Cem consultas de 5 ms dentro da mesma request já mudam a experiência do usuário.
+
+O pior detalhe é que o problema cresce com o volume de dados. Em desenvolvimento, com 5 registros, parece aceitável. Em produção, com 500 registros, vira gargalo.
+
+## Como detectar o N+1 query?
+
+Você detecta **N+1 query** olhando para repetição, não para uma query lenta isolada.
+
+Sinais comuns:
+
+| Sinal | O que procurar |
+| --- | --- |
+| Muitas queries parecidas | Mesmo `select`, só muda o `id` |
+| Tempo cresce com a lista | 10 itens é rápido, 200 itens fica lento |
+| Trace com escada | Várias chamadas ao banco em sequência |
+| Loop com query dentro | `for`, `map`, resolver GraphQL ou template chamando o banco |
+| ORM escondendo o acesso | Lazy loading dispara queries sem parecer explícito |
+
+Um cheiro forte no código:
+
+```ts
+const teams = await db.team.findMany();
+
+const result = await Promise.all(
+  teams.map(async (team) => {
+    const members = await db.member.findMany({
+      where: { teamId: team.id },
+    });
+
+    return { ...team, members };
+  })
+);
+```
+
+`Promise.all` melhora a espera, mas não elimina o problema. Ele só dispara muitas queries ao mesmo tempo. Às vezes isso piora o pool de conexões.
+
+## Como corrigir com join ou eager loading?
+
+A correção mais direta é buscar os dados relacionados junto com a lista principal.
+
+Em um ORM, isso costuma aparecer como **eager loading**, `include`, `preload` ou `with`.
+
+Exemplo:
+
+```ts
+const users = await db.user.findMany({
+  take: 50,
+  include: {
+    posts: {
+      take: 3,
+      orderBy: { createdAt: "desc" },
+    },
+  },
+});
+```
+
+Em SQL, a ideia pode virar um `join`:
+
+```sql
+select
+  users.id,
+  users.name,
+  posts.id as post_id,
+  posts.title as post_title
+from users
+left join posts on posts.user_id = users.id
+where users.active = true
+order by users.created_at desc
+limit 50;
+```
+
+Essa abordagem reduz a conversa com o banco. Em vez de 1 consulta para a lista e N consultas para os filhos, você transforma o acesso em uma consulta planejada.
+
+Mas o `join` não é resposta automática para tudo. Relações `one-to-many` podem duplicar linhas do lado principal. Às vezes você precisa agregar, paginar com cuidado ou fazer uma segunda query em lote.
+
+## Quando usar batch loading?
+
+Use **batch loading** quando o `join` ficaria pesado, duplicaria linhas demais ou quando a arquitetura naturalmente resolve campos separados, como em GraphQL.
+
+A ideia é simples:
+
+1. Busque a lista principal.
+2. Extraia os IDs.
+3. Busque todos os filhos com `where in`.
+4. Agrupe em memória.
+
+Exemplo:
+
+```ts
+const users = await db.user.findMany({
+  take: 50,
+});
+
+const userIds = users.map((user) => user.id);
+
+const posts = await db.post.findMany({
+  where: {
+    userId: { in: userIds },
+  },
+  orderBy: { createdAt: "desc" },
+});
+
+const postsByUserId = new Map<string, typeof posts>();
+
+for (const post of posts) {
+  const userPosts = postsByUserId.get(post.userId) ?? [];
+  userPosts.push(post);
+  postsByUserId.set(post.userId, userPosts);
+}
+
+const result = users.map((user) => ({
+  ...user,
+  posts: postsByUserId.get(user.id) ?? [],
+}));
+```
+
+Agora o padrão virou 2 queries:
+
+| Antes | Depois |
+| --- | --- |
+| 1 query para usuários + 50 queries para posts | 1 query para usuários + 1 query para posts |
+| 51 idas ao banco | 2 idas ao banco |
+| Cresce com cada item | Cresce com cada tipo de relação |
+
+Em GraphQL, bibliotecas como DataLoader aplicam esse mesmo princípio: juntar várias leituras pequenas em uma leitura em lote por request.
+
+## Como corrigir N+1 query em Prisma, Drizzle, Sequelize e GraphQL?
+
+O nome da API muda, mas a intenção é a mesma: carregar a relação junto ou carregar os filhos em lote.
+
+### Como fica em Prisma?
+
+Em **Prisma**, o N+1 costuma aparecer quando você busca a lista com `findMany` e depois chama outra query dentro do loop.
+
+```ts
+const users = await prisma.user.findMany({
+  take: 50,
+});
+
+const result = await Promise.all(
+  users.map(async (user) => {
+    const posts = await prisma.post.findMany({
+      where: { userId: user.id },
+      take: 3,
+      orderBy: { createdAt: "desc" },
+    });
+
+    return { ...user, posts };
+  })
+);
+```
+
+Prefira `include` quando a relação pode ser carregada junto:
+
+```ts
+const users = await prisma.user.findMany({
+  take: 50,
+  include: {
+    posts: {
+      take: 3,
+      orderBy: { createdAt: "desc" },
+    },
+  },
+});
+```
+
+Se você precisar controlar melhor o volume, faça duas queries e agrupe por `userId`, como no exemplo de batch loading.
+
+### Como fica em Drizzle?
+
+Em **Drizzle**, você pode cair no mesmo problema se fizer uma query de posts por usuário.
+
+```ts
+const users = await db.query.users.findMany({
+  limit: 50,
+});
+
+const result = await Promise.all(
+  users.map(async (user) => {
+    const posts = await db.query.posts.findMany({
+      where: (posts, { eq }) => eq(posts.userId, user.id),
+      limit: 3,
+    });
+
+    return { ...user, posts };
+  })
+);
+```
+
+Quando você usa relations no Drizzle, carregue a relação com `with`:
+
+```ts
+const users = await db.query.users.findMany({
+  limit: 50,
+  with: {
+    posts: {
+      limit: 3,
+      orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+    },
+  },
+});
+```
+
+Outra opção é buscar os posts em lote com `inArray`:
+
+```ts
+const users = await db.query.users.findMany({
+  limit: 50,
+});
+
+const userIds = users.map((user) => user.id);
+
+const posts = await db
+  .select()
+  .from(postsTable)
+  .where(inArray(postsTable.userId, userIds));
+```
+
+### Como fica em Sequelize?
+
+Em **Sequelize**, o padrão problemático aparece quando você chama o método da associação para cada registro.
+
+```ts
+const users = await User.findAll({
+  limit: 50,
+});
+
+const result = await Promise.all(
+  users.map(async (user) => {
+    const posts = await user.getPosts({
+      limit: 3,
+      order: [["createdAt", "DESC"]],
+    });
+
+    return { user, posts };
+  })
+);
+```
+
+Use `include` para eager loading:
+
+```ts
+const users = await User.findAll({
+  limit: 50,
+  include: [
+    {
+      model: Post,
+      as: "posts",
+      limit: 3,
+      order: [["createdAt", "DESC"]],
+    },
+  ],
+});
+```
+
+Em relações grandes, valide o SQL gerado. Dependendo da associação, paginação e `limit`, pode ser melhor carregar a lista primeiro e os posts depois em lote.
+
+### Como fica em GraphQL?
+
+Em **GraphQL**, o N+1 costuma morar nos resolvers de campo.
+
+```ts
+const resolvers = {
+  User: {
+    posts: async (user) => {
+      return db.post.findMany({
+        where: { userId: user.id },
+      });
+    },
+  },
+};
+```
+
+Se a query retorna 50 usuários e o cliente pede `posts`, esse resolver pode rodar 50 vezes.
+
+Use DataLoader ou um batch loader por request:
+
+```ts
+import DataLoader from "dataloader";
+
+function createLoaders() {
+  return {
+    postsByUserId: new DataLoader(async (userIds: readonly string[]) => {
+      const posts = await db.post.findMany({
+        where: {
+          userId: { in: [...userIds] },
+        },
+      });
+
+      return userIds.map((userId) =>
+        posts.filter((post) => post.userId === userId)
+      );
+    }),
+  };
+}
+
+const resolvers = {
+  User: {
+    posts: (user, _args, context) => {
+      return context.loaders.postsByUserId.load(user.id);
+    },
+  },
+};
+```
+
+O detalhe importante é criar o loader por request. Assim ele consegue agrupar leituras da mesma operação sem misturar cache entre usuários diferentes.
+
+## Como evitar que o N+1 volte?
+
+Você evita **N+1 query** combinando revisão de código com observabilidade.
+
+Checklist prático:
+
+1. Desconfie de qualquer query dentro de loop.
+2. Ative logs de SQL em desenvolvimento quando mexer em listagens.
+3. Veja traces de requests lentas, procurando queries repetidas.
+4. Crie testes de integração para endpoints críticos com volume realista.
+5. Defina um orçamento de queries para páginas importantes.
+6. Prefira APIs de repositório que já exponham a intenção: `findUsersWithPosts`, `findTeamsWithMembers`, `loadPostsForUsers`.
+
+O ponto não é proibir múltiplas queries. O ponto é impedir que a quantidade de queries cresça sem controle junto com a quantidade de registros.
+
+## Qual é a regra prática?
+
+Se você busca uma lista e depois busca dados relacionados item por item, pare e classifique o acesso.
+
+| Caso | Correção provável |
+| --- | --- |
+| Relação pequena e simples | `join`, `include` ou `preload` |
+| Relação grande | segunda query em lote com `where in` |
+| GraphQL resolvendo campos | DataLoader ou batch por request |
+| Lista paginada | paginação primeiro, relações depois |
+| Endpoint crítico | teste com orçamento de queries |
+
+O **N+1 query** é perigoso porque parece código limpo. A tela funciona, o ORM ajuda, os testes passam e o banco responde rápido com poucos dados.
+
+O problema aparece quando o N cresce.
+
+**Resumo:** N+1 query é fazer 1 consulta para a lista e mais 1 consulta para cada item. Corrija com eager loading, join ou batch loading antes que a latência cresça junto com os dados.
