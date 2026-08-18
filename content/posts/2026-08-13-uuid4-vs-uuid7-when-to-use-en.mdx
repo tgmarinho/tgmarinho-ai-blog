@@ -1,0 +1,148 @@
+---
+title: "UUIDv4 vs UUIDv7: when to use each one"
+description: "UUIDv4 vs UUIDv7: choose random or time-ordered IDs for databases, APIs, and distributed systems, with examples and a practical selection rule for production."
+date: "2026-08-13"
+published: true
+slug: "uuid4-vs-uuid7-when-to-use-en"
+language: "en"
+translationKey: "uuid4-vs-uuid7-when-to-use"
+categories: ["uuid", "database", "backend", "distributed-systems", "en"]
+image: "/images/blog/uuid4-vs-uuid7-database-index-cover.jpg"
+---
+
+**UUIDv4** is an almost fully random identifier. **UUIDv7** is a time-ordered identifier, with a timestamp at the beginning and randomness in the rest.
+
+If the ID goes into a database index, log, event, or queue, UUIDv7 is usually the more practical choice. If you only need a random ID, do not care about time order, and do not want to expose creation time, UUIDv4 is still simple and strong.
+
+## What is a UUID?
+
+**UUID** means Universally Unique Identifier. It is a 128-bit identifier designed to be unique without a central authority.
+
+The most common form is the dashed text format:
+
+```txt
+9f4a0c77-8f17-4c0d-a0e7-0d28e6fd0a79
+```
+
+The current specification is [RFC 9562](https://www.rfc-editor.org/rfc/rfc9562.html), published in May 2024. It replaces RFC 4122 and formalizes newer versions, including UUIDv6, UUIDv7, and UUIDv8.
+
+## What is UUIDv4?
+
+**UUIDv4** is the version based on random or pseudorandom numbers.
+
+In practice, it uses 122 bits for randomness. The other bits mark the UUID version and format. This creates IDs with no time relationship and a very low collision risk when the generator uses a good source of randomness.
+
+Example:
+
+```txt
+9f4a0c77-8f17-4c0d-a0e7-0d28e6fd0a79
+```
+
+Notice the `4` in the third group. It marks the version:
+
+```txt
+9f4a0c77-8f17-4c0d-a0e7-0d28e6fd0a79
+              ^
+```
+
+Use UUIDv4 when the main question is: "do I only need a unique random ID?".
+
+## What is UUIDv7?
+
+**UUIDv7** is the time-based version built to make IDs sort better while keeping the UUID format.
+
+It puts a Unix timestamp in milliseconds in the most significant 48 bits. The rest uses random bits and, depending on the implementation, may include a counter or sub-millisecond fraction to improve monotonicity inside the same millisecond.
+
+Example:
+
+```txt
+0198a0d4-6d9b-7c21-a7d9-8a2d1f0f3b44
+```
+
+Notice the `7` in the third group:
+
+```txt
+0198a0d4-6d9b-7c21-a7d9-8a2d1f0f3b44
+              ^
+```
+
+Use UUIDv7 when the main question is: "does this ID need to be efficient to insert, sort, or query by recency?".
+
+## What is the practical difference?
+
+The practical difference between **UUIDv4** and **UUIDv7** is order.
+
+| Criteria | UUIDv4 | UUIDv7 |
+| --- | --- | --- |
+| Base | Randomness | Time + randomness |
+| Natural sorting | No | Yes, by approximate creation time |
+| Index locality | Poor at high volume | Better for recent inserts |
+| Reveals approximate creation time | No | Yes |
+| Good for public URLs | Yes | Yes, with care around time exposure |
+| Good for events and logs | Works | Better |
+| Good for database primary keys | Works | Usually better |
+
+UUIDv4 spreads new values across the index space. UUIDv7 tends to put recent values near other recent values.
+
+## Why does the database care?
+
+A **B-tree index** works better when new inserts land near the end or near a predictable region of the index.
+
+With UUIDv4, each new ID can land anywhere. In large tables with heavy writes, this increases page splits, cache misses, and index maintenance work.
+
+With UUIDv7, IDs created around the same time stay close. This improves index locality without going back to `serial` or `bigserial`, which are sequential but require central coordination.
+
+RFC 9562 calls out this problem directly: versions that are not time ordered, such as UUIDv4, have worse database-index locality, while UUIDv7 was designed to address this class of use case.
+
+## When should you use UUIDv4?
+
+Use **UUIDv4** when time order does not matter.
+
+Good cases:
+
+| Case | Why |
+| --- | --- |
+| Unordered internal tokens | Simple and strong randomness |
+| Temporary client-side IDs | Easy to generate without coordination |
+| Objects not queried by recency | Order does not help |
+| Identifiers where creation time should not be inferred | No timestamp inside the ID |
+
+Example in JavaScript:
+
+```ts
+const id = crypto.randomUUID();
+```
+
+This method generates UUIDv4 in the Web Crypto API and compatible modern runtimes.
+
+## When should you use UUIDv7?
+
+Use **UUIDv7** when the ID sits on the hot path of a database or event-driven system.
+
+Good cases:
+
+| Case | Why |
+| --- | --- |
+| Primary key for a high-insert table | Better index locality |
+| Domain events | Approximate creation order helps |
+| Distributed logs | Easier recency investigation |
+| Queues and outbox tables | Combines uniqueness with order |
+| Offline-first sync | Helps organize changes without a central server |
+
+For new APIs, I would treat UUIDv7 as the default for persisted entities. UUIDv4 is still a good choice when you want maximum time opacity.
+
+## What about security and privacy?
+
+**UUIDv7** should not be treated as a secret. It reveals the approximate time when the ID was created.
+
+That is usually fine for primary keys, events, and logs. It can be a problem if the timestamp reveals business volume, activity time, signup order, or another sensitive signal.
+
+UUIDv4 should not become an authentication token by accident either. It is random, but public ID and secret are different concepts. For a temporary password, invite, session, or password reset, generate a dedicated token with enough entropy and expiration rules.
+
+## What is the practical rule?
+
+If you are creating a new table in 2026, start by considering **UUIDv7**.
+
+Choose UUIDv7 for persisted data, indexes, events, queues, and any flow where creation order helps. Choose UUIDv4 when you only need a random identifier and do not want to carry time information inside the ID.
+
+**TL;DR:** UUIDv4 is random. UUIDv7 is time ordered. For modern databases and distributed systems, UUIDv7 is usually better as the default ID. For time opacity, UUIDv4 is still the simple choice.
