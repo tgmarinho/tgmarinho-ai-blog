@@ -1,0 +1,152 @@
+---
+title: "Code review com IA: o trabalho difícil virou decidir em que confiar"
+description: "Code review com IA muda engenharia de escrever código para decidir quando confiar nele: ajuste o rigor ao contexto, risco, usuários e responsabilidade pelo merge."
+date: "2026-06-19"
+published: true
+slug: "code-review-ia-decidir-em-que-confiar"
+language: "pt-BR"
+translationKey: "ai-code-review-trust"
+categories: ["ai", "software-engineering", "code-review", "quality", "pt-br"]
+image: "/images/blog/ai-code-review-trust-cover.jpg"
+---
+
+**Code review com IA** não é mais só ler código que outra pessoa escreveu. O trabalho difícil de engenharia saiu de escrever o diff e foi para decidir se dá para confiar nele. Isso torna review uma das habilidades mais alavancadas em software agora.
+
+Essa ideia aparece com força no texto do Addy Osmani, [Agentic Code Review](https://addyo.substack.com/p/agentic-code-review):
+
+> "So the constraint moved downstream, to the one step that did not get faster: a person being confident the change is right."
+
+O gargalo desceu para a etapa que não ficou mais rápida: uma pessoa ter confiança de que a mudança está certa. Esse é o centro do problema. O post também complementa o meu guia anterior sobre [processo de code review](https://tgmarinhopro.com/en/blog/code-review-process), que foca em como preparar PRs, separar bloqueios de sugestões e manter fluxo sem perder qualidade.
+
+Mas existe uma ressalva importante: a forma de revisar depende muito de quem você é. Um dev solo, sem usuários, pode aceitar risco de um jeito. Um time mantendo uma aplicação de dez anos, com usuários, dados e integrações reais, está resolvendo outro problema.
+
+## O que mudou de 2025 para 2026?
+
+Até 2025, **code review** ainda partia de uma premissa simples: uma pessoa escrevia a mudança, outra pessoa revisava. Mesmo quando havia autocomplete, template, CI e bot comentando no PR, o centro do processo era humano. A velocidade do diff ainda vinha de alguém digitando, pesquisando e decidindo arquivo por arquivo.
+
+Em 2026, a camada agêntica mudou essa base. O agente não só completa código. Ele navega o repositório, propõe plano, edita vários arquivos, roda comandos, ajusta testes e abre uma mudança com aparência de trabalho acabado. O review deixou de ser apenas inspeção de uma contribuição humana e virou avaliação de uma cadeia de decisões parcialmente automatizada.
+
+Software engineering está mudando mais rápido do que os times conseguem documentar. Ainda não deu tempo de transformar tudo em padrão, playbook, guideline e métrica. As coisas simplesmente estão acontecendo: agentes entram no fluxo, PRs ficam maiores ou mais numerosos, evidência vira parte do trabalho e a noção de autoria fica menos óbvia.
+
+Por isso review virou a camada de estabilização. Quando o processo ainda não tem nome, o revisor precisa proteger o sistema com perguntas boas, evidência concreta e senso de contexto.
+
+## Por que review virou o ponto de maior alavanca?
+
+**Geração de código** ficou barata. Agentes escrevem handlers, componentes, testes, migrations e documentação em minutos. O gargalo não é mais conseguir uma primeira versão, é saber se aquela versão respeita o sistema.
+
+O revisor precisa responder perguntas que o modelo não consegue decidir sozinho:
+
+- O comportamento bate com a intenção?
+- A mudança respeita contratos existentes?
+- O risco está coberto por teste, log, fallback ou rollback?
+- O código segue os padrões reais do codebase?
+- O diff cria uma dívida que alguém vai pagar caro depois?
+
+Quando a IA acelera a escrita, ela também aumenta o volume de coisas que parecem prontas. **Confiança** vira a unidade central do trabalho.
+
+## Como o contexto muda o rigor do review?
+
+O mesmo checklist não serve para todo mundo. **Contexto** define quanta evidência você precisa antes de confiar.
+
+Existe uma receita base de code review: entender intenção, ler o diff, checar risco, pedir evidência e decidir se algo bloqueia merge. Mas essa receita sempre se adapta ao projeto, ao produto, ao codebase e ao time onde você está inserido. É como bolo: existe técnica, proporção e forno, mas pode ser bolo de laranja, cenoura, chocolate ou formigueiro.
+
+Essa é a lição prática. Não copie o processo de outro time como se fosse universal. Use a receita geral para montar um review que combina com o risco real do seu sistema.
+
+| Contexto | O que otimizar | O que não pode faltar |
+|---|---|---|
+| Protótipo solo sem usuários | Velocidade e aprendizado | Entender o risco aceito |
+| Produto pequeno com poucos usuários | Feedback rápido | Teste do fluxo principal e rollback simples |
+| SaaS com clientes pagantes | Previsibilidade | CI, observabilidade, permissões e compatibilidade |
+| Aplicação antiga de dez anos | Estabilidade | Contratos, migrations, regressão e impacto indireto |
+| Sistema com dados sensíveis | Segurança | Isolamento, logs sanitizados e revisão de vazamento |
+
+O erro comum é importar o ritual errado. Um protótipo não precisa da mesma cerimônia de um banco. Um sistema crítico não pode usar o mesmo otimismo de um side project.
+
+## O que muda para um dev solo?
+
+Para um **dev solo**, review não precisa imitar um processo corporativo. A pergunta principal é: "Se isso quebrar, eu consigo entender, desfazer e aprender rápido?"
+
+Um fluxo suficiente costuma ser:
+
+1. Peça para o agente explicar o diff em termos de comportamento.
+2. Rode lint, typecheck e o teste mais próximo do fluxo.
+3. Abra manualmente a tela, rota ou comando que mudou.
+4. Leia arquivos de contrato: schema, API, autenticação, permissões e persistência.
+5. Faça um commit pequeno quando a evidência for aceitável.
+
+Você pode aceitar mais risco porque o custo social é menor. Mas não pule compreensão. O objetivo não é revisar tudo com perfeição, é não virar operador cego de código que você mesmo colocou em produção.
+
+## O que muda para um time em uma aplicação antiga?
+
+Em uma **aplicação antiga**, o problema não é só o diff. O problema é o que o diff pode tocar sem parecer que tocou.
+
+Um time nesse contexto precisa revisar camadas invisíveis:
+
+- Contratos públicos: API, eventos, webhooks, filas, jobs e schemas.
+- Dados existentes: migrations, backfills, defaults e compatibilidade.
+- Permissões: usuário, organização, tenant, papel e escopo.
+- Observabilidade: logs, métricas, traces e alertas.
+- Produto: fluxos que dependem de comportamento antigo.
+- Operação: deploy, rollback, feature flag e suporte.
+
+Aqui o agente ajuda muito, mas não substitui responsabilidade. **Responsabilidade** significa que alguém entende por que o merge é seguro o bastante, não apenas que uma ferramenta disse "LGTM".
+
+## Como agentes devem entrar no review?
+
+Use **agentes de revisão** como primeira passada, não como juiz final. Eles são bons para resumir PRs, apontar inconsistências, sugerir testes, encontrar código morto e lembrar padrões esquecidos.
+
+Isso não significa que "a IA revisa a IA" seja uma resposta completa. Um segundo modelo, com priors diferentes, realmente encontra bugs que o primeiro deixou passar. Por isso vale rodar esse tipo de revisão. O que ele não entrega é o julgamento humano sobre se aquela era a mudança certa a construir em primeiro lugar.
+
+Esse julgamento continua com uma pessoa. E talvez seja justamente a parte mais interessante do trabalho, a parte que vale preservar.
+
+Também não acho que a resposta seja uma pessoa ler cada linha para sempre. Essa parte está mudando. O problema é trocar isso por um loop fechado onde um agente escreve, outro revisa, um terceiro julga e todos compartilham pontos cegos parecidos. Especialmente quando os modelos vêm da mesma família, eles podem concordar com confiança nos mesmos lugares errados.
+
+Um "looks good" sem humano no caminho é confiança emprestada. A certeza do sistema vira a sua, mas ninguém entendeu de verdade. O loop pode estar muito seguro e muito errado ao mesmo tempo.
+
+O fluxo saudável é:
+
+1. O agente revisa antes do humano.
+2. O autor remove o ruído óbvio.
+3. O humano revisa comportamento, risco, produto, dados e manutenção.
+4. Comentários repetidos viram teste, lint, regra de CI ou documentação.
+5. Falsos positivos viram ajuste de instrução.
+
+Isso preserva atenção humana. O agente filtra o mecânico. A pessoa decide o que exige julgamento.
+
+## Quais perguntas fazer antes de confiar no diff?
+
+Antes de aprovar um **diff gerado por IA**, faça perguntas de confiança, não só de estilo.
+
+| Pergunta | Por que importa |
+|---|---|
+| O diff resolve o problema declarado? | Código plausível pode resolver o problema errado |
+| Qual contrato mudou? | Quebras aparecem em consumidores distantes |
+| Onde o dado entra e onde sai? | Vazamentos costumam nascer em logs, eventos e erros |
+| Qual teste prova o risco principal? | Teste genérico não prova comportamento crítico |
+| O rollback é simples? | Mudanças reversíveis aceitam mais velocidade |
+| O código parece local ao padrão do repo? | Código estranho aumenta custo de manutenção |
+| O que o agente não viu? | Contexto de produto e operação costuma estar fora do prompt |
+
+Essa lista é mais útil do que discutir preferência de nome cedo demais. Primeiro decida se o sistema continua confiável. Depois refine legibilidade.
+
+## Como você se responsabiliza por código que não escreveu?
+
+O ponto central do review na era da IA é **accountability**. Você não precisa ter digitado cada linha para ser responsável por ela. Mas precisa entender o suficiente para defender o merge.
+
+Então o humano não sai do processo. Ele sobe um nível. Em vez de revisar cada diff com a mesma intensidade, passa a possuir as partes que não transferem bem para um modelo: intenção, prioridade, trade-off, risco aceito, impacto no produto e responsabilidade pela decisão.
+
+Isso muda a identidade do trabalho. Escrever ficou barato. Entender o sistema, saber onde ele quebra, pedir evidência certa e decidir quando confiar continuam caros. Essa é a parte durável da engenharia.
+
+O bom reviewer não tenta competir com a velocidade do agente. Ele constrói um filtro melhor: contexto claro, PR pequeno, evidência verificável, CI útil, logs seguros e critérios explícitos de bloqueio.
+
+## Resumo
+
+**Code review com IA** é uma prática de confiança. Quanto mais barato fica gerar código, mais valioso fica decidir se ele pode entrar no sistema.
+
+- Para protótipos, otimize aprendizado e reversibilidade.
+- Para produtos com usuários, exija evidência do fluxo principal.
+- Para sistemas maduros, revise contratos, dados, permissões, observabilidade e rollback.
+- Use agentes como primeira passada, não como dono da decisão.
+- Aprove apenas o código que você entende o suficiente para defender.
+
+O futuro do review não é ler cada linha com a mesma intensidade. É saber onde olhar, qual evidência pedir e quando dizer: sim, isso está seguro o bastante para seguir.
