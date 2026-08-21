@@ -1,0 +1,125 @@
+---
+title: "Pragmatic agentic engineering: what loop engineering changes"
+description: "Loop engineering shows how to move from manual prompts to agent loops without losing review discipline, cost control, technical ownership, or quality."
+date: "2026-06-21T10:00:00-04:00"
+published: true
+slug: "pragmatic-agentic-loop-engineer"
+categories: ["ai", "software-engineering", "agents", "loop-engineering", "en"]
+image: "/images/blog/pragmatic-agentic-loop-engineer-cover.jpg"
+language: "en"
+translationKey: "pragmatic-agentic-loop-engineer"
+---
+
+**Loop engineering** is the next layer of working with coding agents: you stop writing prompts one by one and start designing the system that finds work, calls agents, checks results, and decides whether to continue. The pragmatic point is this: the loop increases your leverage, but it also increases cost, risk, and comprehension debt if you stop acting like the engineer.
+
+Addy Osmani's article on [Loop Engineering](https://addyosmani.com/blog/loop-engineering/) landed because it names a shift already visible in daily work with Codex, Claude Code, Conductor, worktrees, skills, MCP, and sub-agents. The question is no longer "what prompt should I send next?" It is "what loop can I let run without degrading the system?"
+
+## What does Addy call loop engineering?
+
+**Loop engineering** means designing a routine that prompts your agents for you. Instead of opening a chat, asking for a task, waiting, reading, correcting, and asking again, you create a cycle with a goal, state, tools, verification, and a stopping condition.
+
+The loop can be simple: every day, check new issues, classify impact, write a task list, and stop. It can also be more ambitious: find a bug, create an isolated worktree, send one agent to implement, send another to review, run tests, open a pull request, and record what is still pending.
+
+The difference is not the model. It is the cadence. The agent becomes a function called by a larger system, not a virtual person waiting for your next command.
+
+## Where does pragmatic agentic engineering fit?
+
+**Pragmatic agentic engineering** means using agents without outsourcing technical judgment. You let the machine execute repetitive cycles, but you still own architecture, review, budget, and the meaning of "done."
+
+That detail matters because a good loop creates a dangerous feeling of autonomy. If the loop discovers, implements, and opens pull requests while you do something else, it becomes easy to confuse motion with progress. A pragmatic engineer measures the loop by what it proves, not by how much it produces.
+
+The role changes, but it does not disappear:
+
+- You write fewer one-off prompts.
+- You write more stopping conditions.
+- You review less intermediate text.
+- You review more final evidence.
+- You accept less "looks right."
+- You require more lint, tests, small diffs, and traceability.
+
+## What is the difference between prompt, harness, and loop?
+
+**Prompt engineering** improves one interaction. **Harness engineering** improves the environment where one agent runs one task. **Loop engineering** improves the system that decides when to call agents, with which context, in which isolation, with which verification, and for how long.
+
+| Layer | What you design | How it fails when weak |
+| --- | --- | --- |
+| Prompt | The instruction for one turn | Nice answer, incomplete result |
+| Harness | Environment, tools, rules, and tests | Agent understands, but cannot prove |
+| Loop | Cadence, state, work selection, and stop | System works a lot and ships little |
+
+That is why the earlier post about [the harness as the product](/en/blog/the-harness-is-the-product-en) still matters. The loop sits one floor above the harness, but depends on it. A loop without a reliable harness only automates trial and error.
+
+## What pieces make a useful loop?
+
+**Useful loop** does not mean a `while` statement calling a large language model. It needs pieces that reduce collisions, forgetting, and self-deception.
+
+1. **Automation**: a trigger, schedule, or event that starts the cycle.
+2. **Worktree**: isolation so parallel agents do not fight over the same files.
+3. **Skill**: project knowledge written once and read on every run.
+4. **Connector**: access to GitHub, Linear, Gmail, databases, docs, or the real environment.
+5. **Sub-agent**: separation between the agent that implements and the one that verifies.
+6. **External state**: a file, issue, board, or record that survives model context.
+
+That sixth piece sounds boring, but it is central. The agent forgets. The repository, board, and state file do not. Without external state, each run starts half blind and reopens questions that were already answered.
+
+## How does this show up in my workflow?
+
+**Conductor** makes this pattern concrete: each workspace is an isolated worktree, each agent works on a variation of the repo, and review happens in the diff before any merge. That is already a practical loop, even while a human still approves each step.
+
+The real gain is not having three agents running at the same time. The gain is having a repeatable cycle:
+
+1. Create a workspace from `main`.
+2. Provide context through `AGENTS.md`, a skill, or a file in `.context`.
+3. Let the agent implement in isolation.
+4. Run `bun lint`, `bun velite`, or the right test for that change.
+5. Review the diff calmly.
+6. Open the pull request, merge, and archive.
+
+When this cycle matures, parts of it become automation. But the order matters: first you learn the loop manually, then you automate what already proved useful. Automating a process you do not understand only creates confusion faster.
+
+## What risks grow when the loop gets better?
+
+**Comprehension debt** grows when the repository changes faster than your head can keep up. The loop may generate correct code in the short term and still leave you without a mental map of the system.
+
+The main risks are simple:
+
+- **Uncapped cost**: long loops burn tokens, CI time, and attention.
+- **Weak stopping condition**: "done" becomes a sentence, not proof.
+- **Biased reviewer**: the same agent that wrote the code tends to approve its own solution.
+- **Dishonest state**: a progress file becomes optimistic narrative if nobody validates it.
+- **False volume**: more pull requests can mean more review work, not more delivery.
+
+That is why the loop needs explicit limits. Maximum iterations, budget, required tests, small diffs, logs, screenshots for UI changes, and human review where the risk is real.
+
+## How do you start without becoming dependent on the loop?
+
+**Small loop** is the best start. Pick a repetitive task with low risk, verifiable output, and predictable cost. If it does not pass those three filters, it is too early to automate it.
+
+A good first loop for a software project:
+
+1. Discover recent issues or CI failures.
+2. Classify impact in a markdown file.
+3. Suggest one small action per item.
+4. Do not modify code automatically.
+5. Wait for human review.
+
+Then add execution in a worktree. Then add a reviewer sub-agent. Then add pull request creation. Each step needs to prove that it reduced cognitive load without reducing quality.
+
+## What defines a good loop engineer?
+
+**Loop engineer** is not the person who can run more agents. It is the person who can turn recurring work into a verifiable system without losing technical ownership.
+
+In practice, this profile combines four disciplines:
+
+- Product: choosing which loop is worth existing.
+- Engineering: designing isolation, state, tests, and rollback.
+- Operations: watching cost, failure, latency, and noise.
+- Review: keeping human judgment where impact requires it.
+
+The hype says the next engineer will only "orchestrate agents." The pragmatic version is better: the next engineer designs loops, but remains responsible for the code that reaches production.
+
+## TL;DR
+
+**Loop engineering** is real, but it is not permission to abdicate. It moves the work from manual prompting to designing systems that call agents, keep state, and verify results.
+
+The pragmatic agentic engineer builds loops with three locks: a clear stopping condition, evidence that is hard to fake, and review proportional to risk. The loop can do a lot for you. It should not think for you.

@@ -3,6 +3,7 @@ import { allPosts as posts } from "@/lib/all-posts";
 import { routing } from "@/i18n/routing";
 import { getPostLanguage, getTranslationPair } from "@/lib/posts-i18n";
 import { buildAlternates, localizedUrl } from "@/lib/seo";
+import { isPostVisible } from "@/lib/post-visibility";
 import { featureFlags } from "@/lib/feature-flags";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -32,7 +33,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const seenKeys = new Set<string>();
   const postEntries: MetadataRoute.Sitemap = [];
   for (const post of posts) {
-    if (!post.published) continue;
+    if (!isPostVisible(post)) continue;
     const pair = getTranslationPair(posts, post);
     const key = post.translationKey ?? post.slug;
     if (seenKeys.has(key)) continue;

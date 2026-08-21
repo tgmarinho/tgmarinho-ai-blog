@@ -17,8 +17,18 @@ function postUrl(post) {
   return `${SITE_URL}${localePrefix}/blog/${post.slug}`;
 }
 
+function isPostVisible(post, now = new Date()) {
+  if (post.published === false) return false;
+
+  const publishedAt = Date.parse(post.date);
+  if (Number.isNaN(publishedAt)) return true;
+
+  const nowTime = now instanceof Date ? now.getTime() : Date.now();
+  return publishedAt <= nowTime;
+}
+
 const published = posts
-  .filter((p) => p.published !== false)
+  .filter((post) => isPostVisible(post))
   .sort((a, b) => new Date(b.date) - new Date(a.date));
 
 const byLang = {
