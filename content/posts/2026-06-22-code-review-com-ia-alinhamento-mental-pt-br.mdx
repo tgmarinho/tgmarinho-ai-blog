@@ -1,0 +1,185 @@
+---
+title: "Code review com IA começa por alinhamento mental"
+description: "Code review com IA deve alinhar o modelo mental do time primeiro: revise intenção, sessão, solução, design, bugs e estilo antes de discutir sintaxe."
+date: "2026-06-22"
+published: true
+slug: "code-review-com-ia-alinhamento-mental"
+language: "pt-BR"
+translationKey: "ai-code-review-mental-alignment"
+categories: ["ai", "software-engineering", "code-review", "team-process", "pt-br"]
+image: "/images/blog/ai-code-review-mental-alignment-cover.jpg"
+---
+
+**Code review com IA** não começa no diff. Começa no alinhamento mental: entender qual era a intenção, como a mudança foi pensada, quais decisões foram tomadas e por que aquele código apareceu. Só depois faz sentido discutir solução, design, bugs e estilo.
+
+Esse ponto parece novo por causa dos agentes de código, mas a raiz é antiga. Em 2015, Blake Smith publicou [Code Review Essentials for Software Teams](https://blakesmith.me/2015/02/09/code-review-essentials-for-software-teams.html) e colocou as funções do code review em uma hierarquia: manter o modelo mental do time alinhado, confirmar a solução correta, abrir discussão de design, encontrar bugs e manter estilo consistente.
+
+Em 2026, essa hierarquia ficou mais importante. Com agentes, uma pessoa consegue gerar mais código, mais rápido, em mais partes do sistema. O gargalo deixa de ser digitar e passa a ser entender. O review precisa responder uma pergunta antes de todas as outras: o time ainda entende o que acabou de mudar?
+
+A mesma ideia aparece no post da HumanLayer sobre [Advanced Context Engineering for Coding Agents](https://www.humanlayer.dev/blog/advanced-context-engineering). A tese prática é que revisar pesquisa, plano e especificação tem mais alavancagem do que revisar só o código final, porque um erro cedo no pipeline pode virar muito código errado depois.
+
+## Por que alinhamento mental vem antes de encontrar bugs?
+
+O **alinhamento mental** vem antes porque um bug é local, mas um modelo mental errado contamina decisões futuras. Se o reviewer só encontra um erro no diff, ele protege aquele merge. Se ele entende a intenção, o contrato e o caminho da mudança, ele protege os próximos merges também.
+
+Uma revisão que começa pelo bug tende a perguntar:
+
+- isso quebra?
+- tem teste?
+- tem edge case?
+- o nome está bom?
+
+Essas perguntas importam, mas chegam depois. A primeira pergunta deveria ser:
+
+> Eu entendi o problema que esta mudança tenta resolver e por que esta solução foi escolhida?
+
+Quando a resposta é "não", o review ainda não começou de verdade. O reviewer está julgando linhas sem entender o sistema que aquelas linhas estão tentando preservar.
+
+## Como a IA muda o que precisa ser revisado?
+
+A **IA** muda o review porque o diff não mostra mais todo o trabalho. Um agente pode pesquisar arquivos, testar hipóteses, alterar o plano, descartar caminhos, rodar comandos, corrigir falhas e só então entregar um patch limpo. O pull request mostra o resultado final. A sessão mostra a jornada.
+
+Isso cria um novo artefato útil para review: a thread ou sessão do agente. Ela pode mostrar:
+
+- o prompt inicial e a intenção declarada;
+- o plano antes da implementação;
+- a ordem em que os arquivos foram lidos;
+- quais alternativas foram rejeitadas;
+- quais surpresas apareceram durante a execução;
+- quais comandos, testes e verificações foram rodados;
+- onde o agente ficou inseguro ou fez uma suposição.
+
+Esse contexto ajuda o reviewer a entender não só o que mudou, mas por que mudou. Um PR gerado por IA sem sessão é como um commit grande sem descrição: às vezes funciona, mas obriga o reviewer a reconstruir a história sozinho.
+
+## Qual ordem usar em code review com IA?
+
+Use a ordem de prioridade como uma pilha. Não trate todos os comentários como se tivessem o mesmo peso.
+
+| Prioridade | Pergunta de review | Evidência esperada |
+|---|---|---|
+| 1. Alinhamento mental | Entendemos a intenção, o contexto e o modelo do sistema? | Descrição clara, sessão resumida, decisões explícitas |
+| 2. Solução correta | A mudança resolve o problema certo? | Issue, requisito, comportamento antes/depois, teste principal |
+| 3. Discussão de design | O desenho respeita contratos, limites e padrões do projeto? | Justificativa de arquitetura, trade-offs, compatibilidade |
+| 4. Bugs | Existem falhas de comportamento, dados, segurança ou edge cases? | Testes, logs seguros, validação manual, cobertura de erro |
+| 5. Estilo | O código está consistente com o codebase? | Lint, formatter, nomes, organização local |
+
+Essa ordem não significa ignorar estilo. Significa automatizar estilo sempre que possível e não deixar estilo roubar a atenção de risco, intenção e design.
+
+## Como preparar um PR gerado com IA?
+
+Um **PR gerado com IA** precisa carregar mais contexto do que um PR manual pequeno. Não precisa anexar um romance, mas precisa deixar o reviewer entrar na mudança sem adivinhar.
+
+Inclua:
+
+- **Intenção:** qual problema o agente recebeu.
+- **Sessão:** link ou resumo da thread, quando ela puder ser compartilhada.
+- **Linha do tempo:** passos importantes, mudanças de plano e surpresas.
+- **Decisões:** alternativas rejeitadas e motivo.
+- **Evidência:** testes, lint, screenshots, logs ou motivo para não rodar.
+- **Risco:** dados, permissão, migração, cache, performance, SEO, acessibilidade ou compatibilidade.
+- **Privacidade:** confirmação de que a sessão não expõe segredo, dado sensível ou contexto privado.
+
+O melhor formato costuma ser curto:
+
+| Campo | Exemplo |
+|---|---|
+| Intent | Corrigir erro de paginação quando o filtro muda |
+| Agent session | Sessão compartilhada ou resumo em 5 bullets |
+| Timeline | Leu rota, reproduziu bug, ajustou query, adicionou teste |
+| Surprise | O estado do filtro era resetado em dois lugares |
+| Evidence | `bun lint`, teste unitário da query, screenshot do fluxo |
+| Risk | Baixo, sem migração e sem mudança de contrato público |
+
+O objetivo não é transformar o PR em auditoria burocrática. É reduzir o custo de reconstruir contexto.
+
+## Quando compartilhar a sessão inteira?
+
+Compartilhar a **sessão inteira** ajuda quando a jornada importa para entender o resultado. Isso vale especialmente para correções com investigação, mudanças em arquitetura, bugs intermitentes, refactors grandes e PRs em áreas que poucos conhecem.
+
+Compartilhe a sessão quando:
+
+- o agente pesquisou várias hipóteses;
+- o plano mudou durante a execução;
+- houve decisão de design relevante;
+- a solução parece simples, mas a investigação foi complexa;
+- o reviewer precisa entender por que uma alternativa foi descartada;
+- o PR toca segurança, dados, permissões ou contratos públicos.
+
+Não compartilhe a sessão inteira quando:
+
+- ela contém segredo, token, chave, cookie, variável de ambiente ou URL privada;
+- ela inclui dados de usuário, cliente, candidato, empresa ou pessoa;
+- ela mistura contexto pessoal ou irrelevante;
+- ela está cheia de ruído que não ajuda o review;
+- um resumo fiel já resolve.
+
+A prática segura é compartilhar um resumo da sessão por padrão e anexar a thread completa quando ela for limpa, útil e apropriada para o público do PR.
+
+## Como revisar a sessão sem perder tempo?
+
+O reviewer não precisa ler cada token de uma **sessão de agente**. Ele precisa procurar sinais de intenção, risco e erro de raciocínio.
+
+Leia a sessão nesta ordem:
+
+1. Qual objetivo foi dado ao agente?
+2. O agente entendeu o problema certo?
+3. Quais arquivos e contratos ele considerou?
+4. Que alternativa ele descartou e por quê?
+5. Quais testes ou verificações falharam no meio do caminho?
+6. O resultado final ainda combina com a intenção inicial?
+7. Existe alguma suposição que deveria virar comentário, teste ou documentação?
+
+Se a sessão mostra que o agente seguiu uma premissa errada, o diff pode estar tecnicamente limpo e ainda assim estar errado. Esse é o tipo de problema que só aparece quando o review olha para o caminho, não apenas para o resultado.
+
+## Como comentar seguindo a hierarquia?
+
+Um bom comentário de **code review** deixa claro em qual camada da hierarquia ele está. Isso evita transformar preferência em bloqueio.
+
+Use rótulos simples:
+
+| Tipo | Quando usar |
+|---|---|
+| Alignment | O objetivo, escopo ou modelo mental não está claro |
+| Blocker | A solução pode quebrar produção, dados, segurança ou contrato |
+| Design | A arquitetura funciona, mas há trade-off relevante |
+| Bug | Há falha concreta de comportamento ou edge case |
+| Suggestion | Melhoraria leitura, manutenção ou consistência |
+| Nit | Detalhe pequeno, nunca deveria bloquear |
+
+Exemplos:
+
+- **Alignment:** não consegui ligar a sessão ao requisito. Qual comportamento do usuário este PR protege?
+- **Blocker:** esta mutation não valida `orgId`, então pode atravessar isolamento entre organizações.
+- **Design:** a solução funciona, mas acopla cache e autorização. Podemos separar antes de isso virar padrão?
+- **Suggestion:** este nome poderia refletir que agora inclui apenas pedidos pagos.
+- **Nit:** remover comentário temporário antes do merge.
+
+Essa linguagem protege o fluxo. O autor sabe o que precisa corrigir agora, o que pode responder e o que pode deixar para depois.
+
+## O que muda para times em 2026?
+
+O **review em 2026** precisa revisar três coisas: diff, evidência e trajetória. O diff mostra o resultado. A evidência mostra que o resultado foi verificado. A trajetória mostra se a intenção e o raciocínio chegaram até ali sem desvio perigoso.
+
+Isso muda a responsabilidade do time:
+
+- autores precisam entregar intenção, evidência e contexto;
+- agentes precisam produzir sessões legíveis e menos ruidosas;
+- reviewers precisam priorizar alinhamento antes de estilo;
+- ferramentas precisam transformar comentários repetidos em lint, teste, regra ou skill;
+- organizações precisam definir o que pode ou não ser compartilhado em threads de agente.
+
+Quanto mais código os agentes geram, mais valioso fica o alinhamento. A pergunta central deixa de ser "quem escreveu isso?" e passa a ser "o time entende isso bem o bastante para manter?".
+
+## Resumo
+
+**Code review com IA** deve seguir uma hierarquia: alinhamento mental, solução correta, discussão de design, bugs e estilo. A sessão do agente é útil porque mostra intenção, linha do tempo, surpresas e decisões que o diff não mostra.
+
+Compartilhe a sessão quando ela ajudar o reviewer a entender a jornada, mas filtre segredos, dados sensíveis e ruído. O objetivo do review não é só aprovar código. É manter o time capaz de entender, operar e evoluir o sistema depois do merge.
+
+## Referências
+
+- [Code Review Essentials for Software Teams](https://blakesmith.me/2015/02/09/code-review-essentials-for-software-teams.html), Blake Smith, 2015.
+- [Advanced Context Engineering for Coding Agents](https://www.humanlayer.dev/blog/advanced-context-engineering), HumanLayer, 2025.
+- [Mitchell Hashimoto sobre sessões compartilhadas no Amp](https://x.com/mitchellh/status/1963277478795026484), X, 2025.
+- [Dex Horthy sobre threads de agentes mostrarem a linha do tempo da implementação](https://x.com/dexhorthy/status/1963282300709609976), X, 2025.
+- Imagem de capa gerada para este post, sem fonte externa.
