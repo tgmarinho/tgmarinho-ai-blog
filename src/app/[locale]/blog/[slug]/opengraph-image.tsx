@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { allPosts as posts } from "@/lib/all-posts";
 import { siteConfig } from "@/lib/constants";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
-import { getPostLanguage } from "@/lib/posts-i18n";
+import { getPostLanguage, isPostVisible } from "@/lib/posts-i18n";
 import { type Locale } from "@/i18n/routing";
 
 export const alt = `${siteConfig.name}, blog post`;
@@ -15,7 +15,7 @@ export async function generateImageMetadata({
   params: Promise<{ locale: Locale; slug: string }>;
 }) {
   const { slug } = await params;
-  const post = posts.find((p) => p.slug === slug && p.published);
+  const post = posts.find((p) => p.slug === slug && isPostVisible(p));
   return [{ id: "main", alt: post?.title ?? alt, contentType, size }];
 }
 
@@ -25,7 +25,7 @@ export default async function PostOpengraphImage({
   params: Promise<{ locale: Locale; slug: string }>;
 }) {
   const { slug, locale } = await params;
-  const post = posts.find((p) => p.slug === slug && p.published);
+  const post = posts.find((p) => p.slug === slug && isPostVisible(p));
 
   if (!post) {
     return new ImageResponse(
@@ -154,4 +154,3 @@ export default async function PostOpengraphImage({
     { ...size }
   );
 }
-
