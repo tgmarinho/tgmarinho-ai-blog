@@ -1,0 +1,482 @@
+---
+title: "System Design na prática: como desenhar um Ticketmaster"
+description: "Um estudo aplicado de system design usando Ticketmaster como exemplo: picos de tráfego, consistência forte, fila virtual, reserva de assentos, cache, filas e trade-offs de arquitetura."
+date: "2026-04-30"
+published: true
+slug: "system-design-ticketmaster-na-pratica"
+language: "pt-BR"
+categories: ["software-engineering", "system-design", "pt-br"]
+image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?ixlib=rb-4.0.3&auto=format&fit=crop&w=928&q=80"
+---
+
+System design fica muito mais fácil de entender quando sai da lista abstrata de conceitos e entra em um problema concreto.
+
+Um dos melhores problemas para estudar é: **como desenhar um sistema parecido com o Ticketmaster?**
+
+Pense no momento em que abre a venda de ingressos para um festival gigante. Milhões de pessoas entram ao mesmo tempo. Todo mundo quer comprar rápido. O sistema precisa continuar disponível, mas também não pode vender o mesmo assento duas vezes.
+
+Esse caso força praticamente todos os temas clássicos de sistemas distribuídos:
+
+- pico brutal de tráfego
+- recurso finito disputado
+- race conditions
+- consistência forte
+- baixa latência
+- alta disponibilidade
+- cache
+- filas
+- back pressure
+- locks
+- idempotência
+
+Neste post, vou usar Ticketmaster como estudo aplicado para conectar conceitos de system design com decisões reais de arquitetura.
+
+### O problema central
+
+O Ticketmaster não é difícil porque vende ingressos.
+
+Ele é difícil porque vende **um recurso finito e concorrido**.
+
+Se duas pessoas tentam comprar o mesmo assento no mesmo milissegundo, só uma pode ganhar. Se o sistema vender o assento A12 duas vezes, isso não é apenas um bug técnico. É problema financeiro, jurídico e reputacional.
+
+Essa é a primeira lição importante:
+
+**nem todas as partes do sistema têm o mesmo requisito de consistência.**
+
+O catálogo de eventos pode tolerar um pouco de atraso. Se o nome de uma atração demora alguns segundos para atualizar em uma réplica de leitura, provavelmente tudo bem.
+
+O estoque de assentos não pode. Se o assento já foi reservado, todo mundo precisa enxergar isso imediatamente.
+
+Então, em vez de dizer que o sistema inteiro é CP ou AP, a resposta mais realista é:
+
+| Parte do sistema | Estratégia |
+| --- | --- |
+| Catálogo de eventos | Mais AP, otimizado para leitura e disponibilidade |
+| Busca | Mais AP, índice próprio e eventual consistency |
+| Estoque de assentos | CP, consistência forte e controle de concorrência |
+| Pagamento | Assíncrono, idempotente e resiliente a falhas externas |
+| Notificações | Melhor esforço, não pode bloquear a venda |
+
+Essa separação é a base de todo o desenho.
+
+### Latência e vazão
+
+Em entrevistas de system design, é comum falar de latência e throughput como se fossem coisas separadas. No Ticketmaster, você precisa dos dois.
+
+Latência baixa importa na experiência individual: o usuário clica em "comprar" e precisa saber rapidamente se conseguiu reservar o assento.
+
+Throughput alto importa no agregado: o sistema precisa processar milhares ou milhões de tentativas durante o pico.
+
+O erro clássico é tentar resolver tudo de forma síncrona em uma única requisição HTTP:
+
+1. validar usuário
+2. reservar assento
+3. chamar gateway de pagamento
+4. confirmar compra
+5. enviar e-mail
+6. responder o frontend
+
+Isso acopla a experiência do usuário ao componente mais lento do fluxo, normalmente o pagamento.
+
+Um desenho melhor separa o que precisa ser imediato do que pode ser assíncrono.
+
+### Camada de borda: sobreviver ao pico
+
+Antes de chegar ao serviço de reserva, o tráfego passa por uma camada de borda. Essa camada existe para absorver o máximo possível de leitura, filtrar abuso e encaminhar apenas o necessário para o backend.
+
+Uma arquitetura comum começa assim:
+
+```txt
+[Usuário]
+    |
+    v
+[DNS com roteamento por latência]
+    |
+    v
+[CDN]
+    |
+    v
+[Load Balancer L7]
+    |
+    v
+[Reverse Proxy]
+    |
+    v
+[API Gateway]
+```
+
+O DNS pode direcionar o usuário para a região mais próxima.
+
+A CDN tira dos servidores de aplicação tudo que é estático: imagens de eventos, CSS, JavaScript, logos, páginas públicas e assets promocionais.
+
+O load balancer distribui requisições entre instâncias da aplicação. Em um sistema desse tipo, faz sentido usar balanceamento L7, porque ele permite rotear por path:
+
+- `/events` para o serviço de catálogo
+- `/search` para o serviço de busca
+- `/reservations` para o serviço de reserva
+- `/payments` para o serviço de pagamento
+
+O reverse proxy cuida de SSL termination, compressão, rate limiting e algumas proteções contra abuso.
+
+Essa camada não resolve o problema da venda de assentos, mas evita que o sistema crítico receba tráfego que não precisa receber.
+
+### Separando os serviços
+
+O próximo passo é separar o sistema por comportamento.
+
+Não porque "microserviços são melhores", mas porque cada parte tem um padrão de acesso diferente.
+
+| Serviço | Padrão de acesso | Estratégia |
+| --- | --- | --- |
+| Catálogo | Muitas leituras, poucas escritas | Cache pesado e réplicas de leitura |
+| Busca | Muitas leituras e queries flexíveis | Elasticsearch ou índice dedicado |
+| Reserva | Escrita crítica e alta concorrência | Transações, locks, TTL e sharding |
+| Pagamento | Integração externa lenta | Fila, workers e idempotência |
+| Notificação | Fire-and-forget | Fila e retentativas |
+| Usuário/Auth | Leitura frequente | Sessão em cache |
+
+O serviço de catálogo quer escala horizontal e cache agressivo.
+
+O serviço de reserva quer controle de concorrência.
+
+O serviço de pagamento quer resiliência contra lentidão e falha de terceiros.
+
+Misturar tudo em um único fluxo síncrono torna o gargalo de um serviço o gargalo de todos.
+
+### Dados: onde mora o assento?
+
+Essa é a pergunta mais importante do sistema.
+
+Existem várias formas de modelar o estoque de assentos, mas duas aparecem com frequência.
+
+### Opção 1: banco relacional como autoridade
+
+Nesta opção, Postgres ou MySQL é a fonte da verdade para o assento.
+
+No momento da reserva, o sistema usa uma transação e trava a linha do assento:
+
+```sql
+SELECT *
+FROM seats
+WHERE event_id = $1
+  AND seat_id = $2
+FOR UPDATE;
+```
+
+Depois, se o assento ainda estiver disponível, atualiza o status para reservado.
+
+Vantagens:
+
+- modelo simples de entender
+- ACID pronto
+- consistência forte
+- menos peças móveis
+
+Desvantagens:
+
+- lock vira gargalo em evento muito concorrido
+- um show popular pode criar um hot shard
+- throughput pode ficar limitado pelo banco
+
+Essa opção funciona bem para muitos eventos, principalmente quando o pico é menor ou mais previsível.
+
+### Opção 2: Redis como autoridade temporária do estoque
+
+Para eventos muito concorridos, o caminho comum é usar Redis para reserva temporária.
+
+O usuário tenta reservar um assento com uma operação atômica:
+
+```txt
+SET seat:event:123:A12 user_456 NX EX 480
+```
+
+O `NX` garante que a chave só será criada se ainda não existir.
+
+O `EX 480` coloca um TTL de 480 segundos. Se o usuário não concluir a compra, o assento volta automaticamente para o estoque.
+
+Vantagens:
+
+- latência muito baixa
+- operações atômicas simples
+- ótimo throughput
+- TTL nativo para reserva temporária
+
+Desvantagens:
+
+- maior complexidade operacional
+- necessidade de reconciliação com o banco persistente
+- cuidado com persistência, failover e consistência
+
+Na prática, um desenho real pode combinar as duas abordagens:
+
+- Redis controla o estoque "ao vivo" durante a janela de venda
+- Postgres mantém o registro persistente e auditável
+- jobs de reconciliação garantem que os estados convergem
+- eventos críticos usam idempotência para evitar duplicidade
+
+### Reserva temporária: o seat hold
+
+O fluxo clássico de ticketing usa uma reserva temporária.
+
+1. Usuário escolhe o assento A12.
+2. Sistema tenta criar uma reserva com TTL.
+3. Se conseguir, o assento fica bloqueado para os outros usuários.
+4. Usuário tem alguns minutos para pagar.
+5. Se pagar, a reserva vira compra confirmada.
+6. Se não pagar, o TTL expira e o assento volta para disponível.
+
+Esse padrão evita que o usuário perca o assento enquanto digita dados de pagamento, mas também evita que assentos fiquem presos para sempre.
+
+O detalhe importante: a reserva precisa ser atômica.
+
+Não pode existir um fluxo assim:
+
+1. verificar se o assento está livre
+2. depois marcar como reservado
+
+Entre o passo 1 e o passo 2, outro usuário pode fazer a mesma verificação.
+
+Por isso a operação precisa ser uma única ação atômica, seja com lock no banco, `SET NX` no Redis ou script Lua.
+
+### Idempotência: evitando compras duplicadas
+
+Em sistemas distribuídos, clientes fazem retry.
+
+O usuário clica duas vezes. O app perde conexão e tenta de novo. O gateway demora para responder. O worker processa uma mensagem mais de uma vez.
+
+Se cada tentativa gerar uma nova compra, você tem um desastre.
+
+Por isso, operações críticas precisam de **idempotency key**.
+
+O cliente envia uma chave única para a tentativa de compra. O backend guarda o resultado da primeira execução. Se a mesma chave aparecer de novo, o sistema retorna o mesmo resultado em vez de executar tudo novamente.
+
+Isso vale para:
+
+- criar reserva
+- iniciar pagamento
+- confirmar compra
+- consumir mensagens da fila
+- chamar gateway externo
+
+Idempotência é uma das diferenças entre um desenho bonito no quadro e um sistema que aguenta produção.
+
+### Fila virtual: controlando entrada
+
+Para eventos gigantes, nem todo mundo deve chegar ao serviço de reserva ao mesmo tempo.
+
+Entra aqui a sala de espera virtual.
+
+O objetivo é transformar um pico instantâneo em vazão controlada.
+
+Em vez de permitir que um milhão de usuários tente reservar assentos ao mesmo tempo, o sistema coloca os usuários em uma fila e libera grupos em ritmo controlado.
+
+```txt
+[Usuário entra]
+    |
+    v
+[Sala de espera virtual]
+    |
+    v
+[Libera N usuários por minuto]
+    |
+    v
+[Fluxo real de reserva]
+```
+
+Isso pode ser implementado com uma solução pronta, como Queue-it, ou com estruturas como sorted sets no Redis.
+
+O mais importante não é a ferramenta. É o princípio:
+
+**não deixe o pico bruto bater no componente mais crítico do sistema.**
+
+### Pagamento deve ser assíncrono
+
+Pagamento envolve gateway externo. Gateway externo pode ficar lento, falhar, retornar timeout ou responder depois de alguns segundos.
+
+O serviço de reserva não deve ficar bloqueado esperando tudo isso.
+
+Um fluxo mais robusto:
+
+1. usuário confirma intenção de compra
+2. sistema mantém a reserva temporária
+3. uma mensagem entra na fila de pagamento
+4. worker processa o pagamento
+5. status da compra é atualizado
+6. frontend acompanha por polling, WebSocket ou Server-Sent Events
+
+Ferramentas possíveis:
+
+- Kafka
+- RabbitMQ
+- SQS
+- Redis Streams
+
+O ponto não é escolher a fila mais famosa. É isolar o sistema crítico de reserva da latência e instabilidade do pagamento.
+
+### Outbox pattern
+
+Existe um problema clássico em sistemas com banco e fila:
+
+1. salvar compra no banco
+2. publicar evento `PurchaseCreated` na fila
+
+E se o banco salvar, mas a publicação na fila falhar?
+
+O outbox pattern resolve isso gravando o evento em uma tabela `outbox` dentro da mesma transação do banco.
+
+Depois, um worker lê a outbox e publica os eventos na fila.
+
+Assim, "salvar estado" e "registrar evento a publicar" acontecem atomicamente.
+
+### Cache: onde usar e onde evitar
+
+Cache é essencial, mas cache no lugar errado cria bugs difíceis.
+
+Para Ticketmaster, a regra prática é:
+
+| Dado | Estratégia |
+| --- | --- |
+| Página inicial | CDN com TTL curto |
+| Imagens e assets | CDN com TTL longo |
+| Detalhes de evento | Cache-aside |
+| Lista de eventos | Cache-aside |
+| Busca | Índice dedicado |
+| Sessão do usuário | Redis |
+| Estoque de assentos | Cuidado: precisa consistência forte |
+
+Catálogo pode ser cacheado agressivamente.
+
+Estoque de assentos não pode ser tratado como cache comum, porque dado velho vira overselling.
+
+Se Redis for usado para estoque, ele não é apenas cache. Ele vira parte do caminho crítico de consistência temporária.
+
+Essa distinção importa muito.
+
+### Back pressure
+
+Um sistema maduro sabe dizer "não" antes de quebrar.
+
+Se a fila de pagamento está crescendo sem controle, se o serviço de reserva está perto do limite ou se o gateway externo está instável, continuar aceitando novas compras pode piorar o incidente.
+
+Back pressure é a prática de reduzir entrada quando a capacidade de processamento está saturada.
+
+Pode aparecer como:
+
+- limitar usuários saindo da sala de espera
+- retornar 429 para abuso
+- retornar 503 com mensagem clara em pico extremo
+- reduzir chamadas para gateway externo
+- pausar novas reservas se a confirmação estiver atrasada
+
+Isso parece ruim do ponto de vista do produto, mas é melhor do que aceitar compras que o sistema não consegue concluir corretamente.
+
+### Observabilidade
+
+Em um sistema desses, logs soltos não bastam.
+
+Você precisa saber:
+
+- taxa de reserva por segundo
+- taxa de sucesso e falha por evento
+- latência por serviço
+- tamanho das filas
+- tempo médio de pagamento
+- quantidade de reservas expiradas
+- quantidade de conflitos por assento
+- erros do gateway de pagamento
+- saturação por shard
+
+Tracing distribuído também é importante para seguir uma compra entre API Gateway, serviço de reserva, fila, worker de pagamento e notificação.
+
+Sem observabilidade, você só descobre que o sistema falhou quando o usuário reclama.
+
+### Arquitetura consolidada
+
+Juntando as peças, uma arquitetura possível fica assim:
+
+```txt
+[Usuário]
+    |
+    v
+[DNS com roteamento por latência]
+    |
+    v
+[CDN]
+    |
+    v
+[Load Balancer L7]
+    |
+    v
+[Reverse Proxy: SSL, rate limit, compressão]
+    |
+    v
+[Sala de Espera Virtual]
+    |
+    v
+[API Gateway]
+    |
+    +--> [Serviço de Catálogo]
+    |        |
+    |        +--> [Postgres com réplicas de leitura]
+    |        +--> [Redis cache]
+    |
+    +--> [Serviço de Busca]
+    |        |
+    |        +--> [Elasticsearch]
+    |
+    +--> [Serviço de Reserva]
+    |        |
+    |        +--> [Redis: reserva temporária com TTL]
+    |        +--> [Postgres: persistência e auditoria]
+    |
+    +--> [Serviço de Pagamento]
+    |        |
+    |        +--> [Fila]
+    |        +--> [Workers]
+    |        +--> [Gateway externo]
+    |
+    +--> [Serviço de Notificação]
+             |
+             +--> [Fila]
+             +--> [Workers de e-mail, SMS e push]
+
+[Observabilidade]
+    |
+    +--> métricas
+    +--> logs
+    +--> tracing distribuído
+    +--> alertas
+```
+
+Esse desenho não é a única resposta possível, mas captura bem os principais trade-offs.
+
+### O que vale levar desse estudo
+
+O Ticketmaster é um ótimo exercício porque obriga você a pensar por domínio, não por buzzword.
+
+Você não escolhe Redis porque Redis é rápido.
+
+Você escolhe Redis se precisa de operação atômica com TTL para reserva temporária.
+
+Você não escolhe Kafka porque Kafka é escalável.
+
+Você escolhe fila porque pagamento é lento, externo e não deveria bloquear reserva.
+
+Você não escolhe microserviços porque está na moda.
+
+Você separa serviços porque catálogo, reserva, pagamento e notificação têm requisitos completamente diferentes.
+
+Essa é a essência de system design: entender o problema, identificar os trade-offs e escolher a arquitetura que protege as invariantes mais importantes.
+
+No caso do Ticketmaster, a invariante principal é simples:
+
+**um assento só pode ser vendido uma vez.**
+
+Todo o resto da arquitetura existe para preservar isso durante um pico absurdo de tráfego.
+
+### Referências
+
+- [System Design Primer](https://github.com/donnemartin/system-design-primer)
+- [Designing Ticketmaster in Practice - Renato Augusto](https://www.youtube.com/watch?v=3XSijmIZxXU)
+- [System Design Interview, Vol. 1 e 2 - Alex Xu](https://bytebytego.com/)
+- [Designing Data-Intensive Applications - Martin Kleppmann](https://dataintensive.net/)
