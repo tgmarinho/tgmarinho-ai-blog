@@ -1,0 +1,130 @@
+---
+title: "Um agente é um LLM, um loop e contexto — mas o contexto é o jogo"
+description: "Construir um agente de código cabe em 300 linhas. O que separa um bom agente de um ruim é como o contexto é curado a cada turno."
+date: "2026-05-21"
+published: true
+slug: "agente-llm-loop-e-contexto-pt-br"
+language: "pt-BR"
+translationKey: "agent-llm-loop-and-context"
+categories: ["ai", "software-engineering", "pt-br"]
+image: "/images/blog/photo-1451187580459-43490279c0fa.jpg"
+---
+
+Duas leituras curtas, postadas pela equipe do Amp, sintetizam de forma rara duas verdades que parecem contraditórias sobre agentes de código:
+
+1. **Construir um agente é simples.** Cabe em ~300 linhas: um LLM, um loop, e algumas ferramentas.
+2. **Operar um agente bem é difícil.** O fator que mais decide qualidade não é o modelo nem o loop, é o que vai dentro da janela de contexto a cada turno.
+
+São os dois lados de uma mesma moeda. Vale juntar.
+
+### A parte simples: LLM + loop + ferramentas
+
+Thorsten Ball resume com uma frase que ficou:
+
+> "É um LLM, um loop e tokens suficientes."
+
+Um agente de código, em essência, é:
+
+1. **Um modelo** que gera texto.
+2. **Um loop** que mantém o histórico da conversa, manda para o modelo, executa o que ele pedir e devolve o resultado.
+3. **Ferramentas** declaradas como JSON Schema: `read_file`, `list_files`, `edit_file` já são suficientes para entregar um agente útil.
+
+Não há truque. Ferramenta é apenas uma convenção: o modelo aprende a sinalizar "quero usar X com argumentos Y" em um formato específico, e o cliente executa. Ball usa a analogia perfeita: é como combinar com um amigo que ele pisca quando quer que você levante o braço. Nenhuma mágica de plataforma necessária.
+
+O comportamento emergente assusta:
+
+- pergunte "qual versão do Go esse projeto usa?" e ele lista os arquivos, identifica `go.mod`, lê e responde
+- peça um FizzBuzz e ele cria e roda
+- peça pra editar código e docs juntos, e ele edita os dois
+
+Tudo isso sem orquestração explícita. O modelo decompõe a tarefa sozinho.
+
+### O que não é mágica: produto
+
+Ball deixa claro: o núcleo é simples, **mas Amp, Cursor, Claude Code e similares são produtos**. A diferença está em integração com editor, prompts cuidados, mecanismos de feedback, UX, observabilidade, segurança. Não há um salto conceitual entre o agente de 300 linhas e o produto — há **disciplina de engenharia acumulada**.
+
+E o lugar onde mais essa disciplina aparece é exatamente o ponto cego do tutorial de 300 linhas: **gestão de contexto**.
+
+### A parte difícil: a conversa é o resultado
+
+O guia de contexto do Amp começa com três verdades duras sobre a janela de contexto:
+
+1. **Tem limite.** Modelos têm tamanho máximo de contexto. Quando enche, a conversa morre.
+2. **Tudo interage multiplicativamente.** O modelo faz atenção par a par entre tokens. **Tudo o que está na janela influencia a saída**, mesmo o que parece irrelevante.
+3. **Qualidade cai com volume.** Conversas longas aumentam alucinação, repetição e falsa confiança.
+
+O ponto central:
+
+> **A conversa é o resultado.**
+
+Não é "o input para o resultado". É o resultado. Curar contexto não é tarefa periférica — é o que mais determina a qualidade da saída.
+
+### O que está dentro da janela (mais do que você imagina)
+
+Quando você usa um agente, o que ocupa a janela não é só o que você digitou:
+
+- mensagens do usuário e respostas do agente
+- chamadas de ferramentas **e suas saídas** (logs, diffs, listagens)
+- prompt de sistema
+- definição das ferramentas (schemas, descrições)
+- regras de projeto (`AGENTS.md`)
+- metadados de ambiente (SO, diretório, arquivo selecionado, hora)
+
+Cada ingrediente influencia o comportamento. Trocar o `AGENTS.md` por outro conteúdo muda como o agente interpreta o **mesmo pedido**. Logs de teste verbosos colados na conversa moldam o raciocínio dos próximos turnos. Nada é neutro.
+
+### Quatro mecanismos práticos para manter contexto limpo
+
+O guia descreve quatro alavancas que dá pra adotar imediatamente, independente da ferramenta:
+
+1. **Menção explícita de arquivo (`@arquivo`)**
+   Em vez de deixar o agente "adivinhar" o que ler, indique. No Amp, `@` lê o arquivo (ignora binário, trunca em 500 linhas). É controle deliberado sobre o que entra na janela.
+
+2. **Editar mensagem anterior**
+   Conversa virou pra um caminho ruim? Edite a mensagem que iniciou aquele desvio. O thread reseta a partir daquele ponto. Isso evita que um "turno falso" contamine o histórico para sempre.
+
+3. **Restaurar (rebobinar)**
+   Apaga a mensagem e seus efeitos. Permite voltar a um estado anterior limpo. Use sempre que perceber que o agente entrou em loop ou desviou.
+
+4. **Handoff entre threads**
+   Quando uma thread cresce demais, extraia o que importa para uma nova. Um modelo secundário lê a thread origem, identifica o relevante e formula a mensagem inicial da nova thread. Fica enxuta e focada, sem perder o que era essencial.
+
+5. **Referência a outra thread (`read_thread`)**
+   Quer puxar contexto de outra conversa sem inflar a atual? Referencie por URL/ID com uma extraction prompt. O modelo secundário extrai só o pedaço relevante.
+
+> Regra prática: **threads curtas e focadas entregam melhor.** Quando estiver longa, faça handoff em vez de continuar empurrando.
+
+### Por que isso bate com a ideia de harness
+
+Se você já leu sobre [harness engineering](/posts/agent-harness-engineering-na-pratica), a conexão é direta:
+
+- o **núcleo do agente** é o loop simples do Ball
+- o **harness** é tudo que decide o que entra/sai da janela: regras, ferramentas, hooks, compaction, handoff, observabilidade
+
+Em outras palavras: a parte fácil é o que está no GitHub. A parte cara é o que está em torno dela.
+
+### O que levar pra prática esta semana
+
+Independente do agente que você usa (Amp, Cursor, Claude Code, Codex CLI, o seu agente caseiro), três hábitos rendem ganho imediato:
+
+1. **Pense em curadoria, não em prompt.**
+   A próxima resposta depende do conteúdo inteiro da janela. Vale a pena gastar 30 segundos podando o que não serve.
+
+2. **Quebre tarefas em threads.**
+   Em vez de uma thread mega "faz tudo", uma thread por tarefa. Use handoff para passar o bastão.
+
+3. **Trate logs longos como ruído.**
+   Se sua ferramenta cuspir 800 linhas de stack trace, sumarize antes de continuar. Se o agente não tiver mecanismo de offload, faça você o offload manualmente.
+
+### Fechando
+
+Ball mostra que o esqueleto de um agente é trivial: LLM + loop + ferramentas. O guia do Amp mostra que o esqueleto não é o que define a experiência — a experiência é definida pela conversa em si, e a conversa é o que você (e o harness) deixa entrar nela.
+
+Modelos vão continuar ficando melhores. Janelas vão ficar maiores. Nada disso elimina o trabalho de curadoria. Quanto mais o modelo for capaz, mais valor um contexto bem cuidado captura.
+
+A maior alavanca está no que parece o detalhe: **o que está na janela agora.**
+
+### Referências
+
+- [How to Build an Agent — Thorsten Ball / Amp](https://ampcode.com/notes/how-to-build-an-agent)
+- [Context Management — Guia do Amp](https://ampcode.com/guides/context-management)
+- [Agent Harness Engineering na prática](/posts/agent-harness-engineering-na-pratica)
