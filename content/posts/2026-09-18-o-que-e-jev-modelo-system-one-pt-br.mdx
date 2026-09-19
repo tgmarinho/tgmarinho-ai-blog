@@ -1,0 +1,190 @@
+---
+title: "O que é Jev? Decisões estruturadas com IA para software"
+description: "Jev é o modelo System One da TypeSafe para decisões estruturadas em software. Entenda Choice, Score e Noul com um exemplo seguro de triagem de reembolso."
+date: "2026-09-18"
+published: true
+slug: "o-que-e-jev-modelo-system-one-pt-br"
+language: "pt-BR"
+translationKey: "what-is-jev-system-one-model"
+categories: ["ai", "machine-learning", "software-engineering", "pt-br"]
+image: "/images/blog/jev-system-one-model-cover.jpg"
+---
+
+**Jev** é o modelo System One da TypeSafe para transformar texto e estado estruturado em decisões que o software pode consumir diretamente. Em vez de produzir uma resposta em linguagem natural e pedir que a aplicação faça o parse, ele avalia perguntas tipadas e devolve escolhas, notas ou probabilidades.
+
+Esse formato é útil quando a IA precisa classificar, priorizar ou encaminhar algo dentro de um fluxo. Ele não substitui regras de negócio, validações ou autorização para ações sensíveis. A decisão probabilística fica em um limite claro, e o código mantém a responsabilidade pelo que é determinístico e crítico.
+
+## O que é o Jev e o que significa System One?
+
+Segundo a [documentação da TypeSafe](https://docs.typesafe.ai/introduction), Jev é o modelo principal da empresa e o primeiro modelo da categoria que ela chama de **System One**. O nome remete ao conceito de pensamento rápido e intuitivo popularizado por Daniel Kahneman, mas não significa que o modelo esteja tentando reproduzir todo o raciocínio humano.
+
+Na prática, o foco é mais simples: fazer julgamentos pequenos, rápidos e bem delimitados sobre um **state**. O state pode ser uma string ou um objeto JSON com uma mensagem de suporte, dados de um pedido e uma política. Jev aceita entrada de texto no momento, não imagem, áudio ou vídeo.
+
+Um LLM é otimizado para gerar texto. Jev é projetado para responder perguntas em formatos que o programa já conhece. Isso reduz uma camada comum de fragilidade:
+
+```txt
+LLM em um fluxo de decisão
+texto livre -> validação e parse -> decisão no código
+
+Jev em um fluxo de decisão
+pergunta tipada -> valor estruturado -> decisão no código
+```
+
+Os dois tipos de modelo podem coexistir. Use um LLM quando a tarefa pede explicação, redação, código ou raciocínio aberto. Use Jev quando você já sabe a forma da resposta que o software precisa para seguir por um caminho.
+
+## Quais perguntas o Jev consegue responder?
+
+As perguntas da TypeSafe são chamadas de **primitivas**. Cada uma representa um tipo de resposta, não um prompt genérico. A documentação descreve três delas:
+
+| Primitiva | Melhor para | Retorno principal |
+| --- | --- | --- |
+| **Choice** | Escolher uma opção conhecida, sem ordem entre elas | `choice`, probabilidades e `confidence` |
+| **Score** | Avaliar uma posição em uma escala definida | `score`, probabilidades e `confidence` |
+| **Noul** | Avaliar se uma afirmação é verdadeira | `noul`, de 0 a 1 |
+
+Um **Choice** serve, por exemplo, para encaminhar um ticket entre `billing`, `technical`, `sales` e `other`. Um **Score** serve para medir frustração em uma rubrica que a equipe definiu. Um **Noul** responde a uma pergunta de sim ou não, como “a mensagem pede reembolso?”, usando uma probabilidade.
+
+Há uma distinção importante: no Choice, as opções são definidas por você. O modelo escolhe entre elas e retorna uma distribuição de probabilidade. Ele não cria uma nova categoria fora da lista. Por isso, inclua `other` ou `none_of_the_above` quando o conjunto de opções não cobrir todos os casos.
+
+## Como fazer perguntas que o código consegue usar?
+
+Uma pergunta deve pedir **um julgamento atômico**. “Determine a melhor ação para este caso” junta classificação, regra de negócio, risco e autorização em uma única avaliação. Ela é difícil de testar e difícil de ajustar.
+
+Divida o problema em fatos que o modelo pode julgar a partir do texto, depois combine os resultados no código:
+
+| Em vez de perguntar | Pergunte separadamente | Quem decide o resultado final? |
+| --- | --- | --- |
+| “Este reembolso deve ser aprovado?” | A pessoa pede reembolso? Há sinal de fraude? A mensagem é urgente? | Código, com regras de política e revisão humana |
+| “Qual a prioridade deste ticket?” | Há impacto no cliente? O tom mostra urgência? O relato contém passos para reproduzir? | Código, com pesos e limites explícitos |
+| “Este lead é bom?” | Há um caso de uso claro? O porte está dentro do perfil? Há urgência declarada? | Código, com a definição comercial da equipe |
+
+Essa separação permite mudar um peso ou um limite sem reescrever uma instrução longa. Também permite testar a política de negócio com testes normais, sem depender de uma saída de modelo.
+
+## Como chamar a API em uma triagem de reembolso?
+
+O exemplo abaixo usa o endpoint documentado `POST /v1/systemone`. O estado traz a mensagem e o contexto útil. As perguntas apontam explicitamente para campos do objeto para deixar claro o que deve ser avaliado.
+
+```bash
+curl -X POST https://api.typesafe.ai/v1/systemone \
+  -H "Authorization: Bearer $TYPESAFE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @- <<'EOF'
+{
+  "model": "jev-latest",
+  "state": {
+    "ticket": {
+      "message": "Paguei ontem, não vou conseguir ir ao evento. Posso cancelar e receber de volta?"
+    },
+    "order": {
+      "status": "confirmed",
+      "payment_method": "pix",
+      "purchased_at": "2026-09-17T21:40:00Z",
+      "event_starts_at": "2026-10-20T18:00:00Z"
+    },
+    "refund_policy": "Reembolso integral até 7 dias após a compra e até 48 horas antes do evento."
+  },
+  "questions": {
+    "request_type": {
+      "type": "choice",
+      "instructions": "Qual é o pedido principal em `ticket.message`?",
+      "criteria": {
+        "refund": "A pessoa quer cancelar e receber o dinheiro de volta.",
+        "reschedule": "A pessoa quer mudar a data ou transferir o ingresso.",
+        "information": "A pessoa só quer informação.",
+        "other": "Nenhuma das opções descreve bem o pedido."
+      }
+    },
+    "refund_requested": {
+      "type": "noul",
+      "instructions": "`ticket.message` pede cancelamento ou reembolso?"
+    },
+    "chargeback_risk": {
+      "type": "noul",
+      "instructions": "`ticket.message` afirma que a compra não foi reconhecida ou ameaça uma disputa bancária?"
+    },
+    "urgency": {
+      "type": "score",
+      "instructions": "Quão urgente é o tom de `ticket.message`?",
+      "criteria": [
+        "Sem urgência declarada.",
+        "A pessoa quer resolver em breve.",
+        "A pessoa exige uma solução imediata."
+      ]
+    }
+  }
+}
+EOF
+```
+
+Cada pergunta recebe o mesmo state, mas é avaliada de forma independente. É possível misturar Choice, Score e Noul na mesma chamada. A resposta vem em `answers`, indexada pelos IDs definidos pela aplicação, com valores tipados em vez de prosa para extrair.
+
+## Como separar o julgamento da política de reembolso?
+
+O exemplo anterior identifica sinais linguísticos. Ele não deve decidir se existe direito a reembolso nem disparar um pagamento. Prazo, status do pedido, valor e autorização são fatos que a aplicação calcula e valida de forma determinística.
+
+Este trecho em TypeScript mostra uma fronteira segura. Os limiares são exemplos de produto e precisam ser ajustados à tolerância de risco e a dados reais.
+
+```ts
+type JevRefundAnswers = {
+  request_type: {choice: "refund" | "reschedule" | "information" | "other"; confidence: number};
+  refund_requested: {noul: number};
+  chargeback_risk: {noul: number};
+};
+
+function routeRefundRequest(
+  answers: JevRefundAnswers,
+  order: {status: "confirmed" | "pending"; isWithinRefundWindow: boolean},
+) {
+  const clearRefundIntent =
+    answers.request_type.choice === "refund" &&
+    answers.request_type.confidence >= 0.8 &&
+    answers.refund_requested.noul >= 0.9;
+
+  const needsHumanReview =
+    !clearRefundIntent || answers.chargeback_risk.noul >= 0.5;
+
+  const eligibleByPolicy =
+    order.status === "confirmed" && order.isWithinRefundWindow;
+
+  if (needsHumanReview || !eligibleByPolicy) {
+    return {route: "human-review" as const};
+  }
+
+  return {route: "present-confirmed-refund-flow" as const};
+}
+```
+
+O Jev encontra intenção e sinais no texto. O código valida a política. Depois, um fluxo autorizado e auditável pode pedir confirmação e executar a operação financeira. Essa divisão reduz o risco de tratar uma probabilidade como se fosse uma regra.
+
+## Como interpretar confidence e probability?
+
+**Confidence** não é sinônimo da probabilidade de uma opção. Em Choice e Score, ela resume o quão concentrada está a distribuição entre as opções ou níveis. Uma distribuição espalhada sugere que o modelo não tem uma leitura clara para aquela pergunta.
+
+Noul funciona de outro modo: retorna diretamente a probabilidade de a afirmação ser verdadeira e não possui um campo `confidence` separado. Um valor perto de `1` indica forte evidência para “sim”; perto de `0`, para “não”; e perto de `0.5`, incerteza.
+
+Uma estratégia inicial é usar três caminhos:
+
+1. Alta certeza e ação reversível: seguir automaticamente.
+2. Certeza intermediária: pedir mais dados ou sinalizar para revisão.
+3. Baixa certeza ou ação sensível: não executar, encaminhar para uma pessoa.
+
+Os limites não são universais. Aprovar uma ação financeira, mudar permissões ou bloquear uma conta exige controles mais rigorosos do que encaminhar um ticket para uma fila.
+
+## Quando Jev é uma boa escolha e quando não é?
+
+| Use Jev para | Não use Jev como única fonte para |
+| --- | --- |
+| Roteamento de tickets e classificação de intenção | Cálculo de prazo, preço, saldo ou imposto |
+| Pontuação de urgência, gravidade ou qualidade em uma rubrica | Executar pagamentos, reembolsos ou exclusões sem controles |
+| Detecção de uma afirmação textual, como pedido de reembolso | Explicar uma decisão complexa para um usuário |
+| Avaliações paralelas sobre o mesmo contexto | Pesquisa aberta, redação ou geração de código |
+
+Se a resposta precisa ser texto novo, explicação longa ou investigação aberta, um LLM é a ferramenta mais natural. Se a resposta é uma escolha delimitada, uma escala ou uma probabilidade que alimenta um fluxo, Jev pode deixar esse limite do sistema mais explícito.
+
+## Qual é a regra prática para começar?
+
+Comece com uma decisão pequena e observável, como classificar o destino de mensagens de suporte. Defina as opções, mantenha um caminho para casos fora da lista e registre as respostas para comparar o resultado com a revisão humana. Só então ajuste perguntas, limiares e automações.
+
+Leia a [introdução ao Jev](https://docs.typesafe.ai/introduction), o guia de [primitivas](https://docs.typesafe.ai/primitives), a página sobre [confidence](https://docs.typesafe.ai/confidence) e o [quick start](https://docs.typesafe.ai/introduction/quickstart) antes de integrar uma ação em produção.
+
+**Resumo:** Jev é um modelo para julgamentos tipados, não para gerar texto. Use Choice, Score e Noul em perguntas atômicas, combine as respostas no código e mantenha regras de negócio e ações sensíveis fora do limite probabilístico.
