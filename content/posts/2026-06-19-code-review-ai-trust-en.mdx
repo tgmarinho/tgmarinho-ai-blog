@@ -1,0 +1,152 @@
+---
+title: "AI code review: the hard part is deciding what to trust"
+description: "AI code review shifts engineering from writing code to deciding when to trust it: match review depth to context, risk, users, and merge responsibility today."
+date: "2026-06-19"
+published: true
+slug: "ai-code-review-deciding-what-to-trust"
+language: "en"
+translationKey: "ai-code-review-trust"
+categories: ["ai", "software-engineering", "code-review", "quality", "en"]
+image: "/images/blog/ai-code-review-trust-cover.jpg"
+---
+
+**AI code review** is no longer only about reading code another person wrote. The hard part of engineering moved from writing code to deciding whether to trust it. That makes review one of the most leveraged skills in software right now.
+
+That idea is central to Addy Osmani's [Agentic Code Review](https://addyo.substack.com/p/agentic-code-review):
+
+> "So the constraint moved downstream, to the one step that did not get faster: a person being confident the change is right."
+
+That is the center of the problem. The bottleneck moved to confidence. This post also extends my earlier guide on the [code review process](https://tgmarinhopro.com/en/blog/code-review-process), which focuses on preparing pull requests, separating blockers from suggestions, and keeping flow without losing quality.
+
+But there is an important caveat: how you review depends on who you are. A solo developer with no users can accept risk one way. A team maintaining a ten-year-old application with users, data, and real integrations is solving a different problem.
+
+## What changed from 2025 to 2026?
+
+Until 2025, **code review** still started from a simple premise: one person wrote the change, another person reviewed it. Even with autocomplete, templates, CI, and bots commenting on pull requests, the center of the process was human. The speed of the diff still came from someone typing, searching, and deciding file by file.
+
+In 2026, the agentic layer changed that base. The agent does not only complete code. It navigates the repository, proposes a plan, edits several files, runs commands, adjusts tests, and opens a change that looks finished. Review stopped being only the inspection of a human contribution. It became the evaluation of a partly automated decision chain.
+
+Software engineering is changing faster than teams can document it. There has not been enough time to turn everything into standards, playbooks, guidelines, and metrics. Things are simply happening: agents enter the flow, pull requests become larger or more frequent, evidence becomes part of the work, and authorship becomes less obvious.
+
+That is why review became the stabilization layer. When the process does not have a clear name yet, the reviewer has to protect the system with good questions, concrete evidence, and context.
+
+## Why did review become the leverage point?
+
+**Code generation** became cheap. Agents can write handlers, components, tests, migrations, and docs in minutes. The bottleneck is no longer getting a first version. It is knowing whether that version respects the system.
+
+The reviewer needs to answer questions the model cannot decide alone:
+
+- Does the behavior match the intent?
+- Does the change preserve existing contracts?
+- Is the risk covered by a test, log, fallback, or rollback?
+- Does the code follow the real patterns of the codebase?
+- Does the diff create debt someone will pay for later?
+
+When AI speeds up writing, it also increases the amount of code that looks ready. **Trust** becomes the core unit of the work.
+
+## How does context change review depth?
+
+The same checklist does not fit everyone. **Context** decides how much evidence you need before you trust a change.
+
+There is a base recipe for code review: understand intent, read the diff, check risk, ask for evidence, and decide whether something blocks the merge. But that recipe always adapts to the project, product, codebase, and team around you. The technique is shared. The result changes with the ingredients.
+
+That is the practical lesson. Do not copy another team's process as if it were universal. Use the general recipe to build a review flow that matches the real risk of your system.
+
+| Context | Optimize for | Non-negotiable evidence |
+|---|---|---|
+| Solo prototype with no users | Speed and learning | Know the risk you accepted |
+| Small product with a few users | Fast feedback | Main flow test and simple rollback |
+| SaaS with paying customers | Predictability | CI, observability, permissions, and compatibility |
+| Ten-year-old application | Stability | Contracts, migrations, regression, and indirect impact |
+| System with sensitive data | Security | Isolation, sanitized logs, and leak review |
+
+The common mistake is importing the wrong ritual. A prototype does not need the ceremony of a bank. A critical system cannot use the optimism of a side project.
+
+## What changes for a solo developer?
+
+For a **solo developer**, review does not need to imitate a corporate process. The main question is: "If this breaks, can I understand it, undo it, and learn quickly?"
+
+A good enough flow is usually:
+
+1. Ask the agent to explain the diff in terms of behavior.
+2. Run lint, typecheck, and the closest test to the changed flow.
+3. Manually open the screen, route, or command that changed.
+4. Read contract files: schema, API, authentication, permissions, and persistence.
+5. Make a small commit when the evidence is acceptable.
+
+You can accept more risk because the social cost is lower. But do not skip understanding. The goal is not to review everything perfectly. It is to avoid becoming a blind operator of code you put in production.
+
+## What changes for a team in an old application?
+
+In an **old application**, the problem is not only the diff. The problem is what the diff can touch without looking like it touched it.
+
+A team in this context needs to review hidden layers:
+
+- Public contracts: API, events, webhooks, queues, jobs, and schemas.
+- Existing data: migrations, backfills, defaults, and compatibility.
+- Permissions: user, organization, tenant, role, and scope.
+- Observability: logs, metrics, traces, and alerts.
+- Product: flows that depend on old behavior.
+- Operations: deploy, rollback, feature flag, and support.
+
+Here the agent helps a lot, but it does not replace responsibility. **Responsibility** means someone understands why the merge is safe enough, not only that a tool said "LGTM".
+
+## How should agents fit into review?
+
+Use **review agents** as the first pass, not as the final judge. They are useful for summarizing pull requests, pointing out inconsistencies, suggesting tests, finding dead code, and remembering forgotten patterns.
+
+None of this makes "have the AI review the AI" a complete answer. A second model with different priors really can catch bugs the first one missed. That is why you should run one. What it does not supply is the human judgment about whether this was the right change to build in the first place.
+
+That judgment stays with a person. It is also the most interesting part of the job, the part worth keeping.
+
+I also do not think the answer is "a human reads every line forever." That part is changing. The problem is replacing it with a closed loop where one agent writes, another reviews, a third judges, and all of them share similar blind spots. Especially when the models come from the same family, they can agree with confidence in the same wrong places.
+
+A "looks good" with no human in the path is borrowed confidence. The system's certainty becomes yours, but nobody actually understood the change. The loop can be very sure and very wrong at the same time.
+
+A healthy flow looks like this:
+
+1. The agent reviews before the human.
+2. The author removes obvious noise.
+3. The human reviews behavior, risk, product, data, and maintenance.
+4. Repeated comments become tests, lint, CI rules, or docs.
+5. False positives become instruction tuning.
+
+This preserves human attention. The agent filters mechanical work. The person decides what requires judgment.
+
+## What should you ask before trusting the diff?
+
+Before approving an **AI-generated diff**, ask trust questions, not only style questions.
+
+| Question | Why it matters |
+|---|---|
+| Does the diff solve the stated problem? | Plausible code can solve the wrong problem |
+| Which contract changed? | Breakage often appears in distant consumers |
+| Where does data enter and leave? | Leaks often start in logs, events, and errors |
+| Which test proves the main risk? | A generic test does not prove critical behavior |
+| Is rollback simple? | Reversible changes can move faster |
+| Does the code feel local to the repo? | Strange code raises maintenance cost |
+| What did the agent not see? | Product and operational context often sit outside the prompt |
+
+This list is more useful than debating naming preference too early. First decide whether the system remains trustworthy. Then refine readability.
+
+## How do you stand behind code you did not write?
+
+The central point of AI-era review is **accountability**. You do not need to have typed every line to be responsible for it. But you need to understand enough to defend the merge.
+
+So the human does not leave the process. The human moves up a level. Instead of reviewing every diff with the same intensity, they own the parts that do not transfer well to a model: intent, priority, trade-off, accepted risk, product impact, and responsibility for the decision.
+
+That changes the identity of the work. Writing became cheap. Understanding the system, knowing where it breaks, asking for the right evidence, and deciding when to trust remain expensive. That is the durable part of engineering.
+
+The good reviewer does not try to compete with the agent's speed. They build a better filter: clear context, small pull requests, verifiable evidence, useful CI, safe logs, and explicit blocker criteria.
+
+## TL;DR
+
+**AI code review** is a trust practice. The cheaper code generation gets, the more valuable it becomes to decide whether the code can enter the system.
+
+- For prototypes, optimize learning and reversibility.
+- For products with users, require evidence for the main flow.
+- For mature systems, review contracts, data, permissions, observability, and rollback.
+- Use agents as the first pass, not as the owner of the decision.
+- Approve only code you understand well enough to defend.
+
+The future of review is not reading every line with the same intensity. It is knowing where to look, what evidence to ask for, and when to say: yes, this is safe enough to move forward.
