@@ -4,6 +4,7 @@ import { siteConfig } from "@/lib/constants";
 import { formatIsoDateForDisplay } from "@/lib/format-iso-date";
 import { getPostLanguage } from "@/lib/posts-i18n";
 import { type Locale } from "@/i18n/routing";
+import { isPostVisible } from "@/lib/post-visibility";
 
 export const alt = `${siteConfig.name}, blog post`;
 export const size = { width: 1200, height: 630 };
@@ -15,7 +16,7 @@ export async function generateImageMetadata({
   params: Promise<{ locale: Locale; slug: string }>;
 }) {
   const { slug } = await params;
-  const post = posts.find((p) => p.slug === slug && p.published);
+  const post = posts.find((p) => p.slug === slug && isPostVisible(p));
   return [{ id: "main", alt: post?.title ?? alt, contentType, size }];
 }
 
@@ -25,7 +26,7 @@ export default async function PostOpengraphImage({
   params: Promise<{ locale: Locale; slug: string }>;
 }) {
   const { slug, locale } = await params;
-  const post = posts.find((p) => p.slug === slug && p.published);
+  const post = posts.find((p) => p.slug === slug && isPostVisible(p));
 
   if (!post) {
     return new ImageResponse(
@@ -154,4 +155,3 @@ export default async function PostOpengraphImage({
     { ...size }
   );
 }
-

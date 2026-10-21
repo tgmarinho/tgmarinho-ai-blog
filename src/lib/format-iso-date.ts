@@ -1,8 +1,7 @@
 /**
- * Velite `s.isodate()` values are date-only (`YYYY-MM-DD`). `new Date("…")`
- * parses that as UTC midnight; `toLocaleDateString` without `timeZone` then
- * maps that instant to the user's local calendar — often the previous day
- * outside UTC, which breaks SSR/client hydration for visible date text.
+ * Most visible post dates are calendar days, even when the frontmatter carries
+ * a timestamp for scheduled publishing. Format the YYYY-MM-DD part in UTC so
+ * SSR/client output stays stable across time zones.
  */
 export function formatIsoDateForDisplay(
   isoDate: string,
