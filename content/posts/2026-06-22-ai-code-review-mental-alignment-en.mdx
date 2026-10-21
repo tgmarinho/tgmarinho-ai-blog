@@ -1,0 +1,185 @@
+---
+title: "AI code review starts with mental alignment"
+description: "AI code review should align the team's mental model first: review intent, session history, solution, design, bugs, and style before arguing about syntax."
+date: "2026-06-22"
+published: true
+slug: "ai-code-review-mental-alignment"
+language: "en"
+translationKey: "ai-code-review-mental-alignment"
+categories: ["ai", "software-engineering", "code-review", "team-process", "en"]
+image: "/images/blog/ai-code-review-mental-alignment-cover.jpg"
+---
+
+**AI code review** does not start with the diff. It starts with mental alignment: understanding the intent, how the change was reasoned about, which decisions were made, and why the code exists. Only after that should the team discuss the solution, design, bugs, and style.
+
+This feels new because coding agents changed the workflow, but the root idea is old. In 2015, Blake Smith published [Code Review Essentials for Software Teams](https://blakesmith.me/2015/02/09/code-review-essentials-for-software-teams.html) and framed code review as a hierarchy: keep the team's mental model aligned, confirm the correct solution, discuss design, find bugs, and keep style consistent.
+
+In 2026, that hierarchy matters more. Agents let one person produce more code, faster, across more parts of the system. The bottleneck is no longer typing. The bottleneck is understanding. Review needs to answer one question before all the others: does the team still understand what just changed?
+
+The same idea appears in HumanLayer's post on [Advanced Context Engineering for Coding Agents](https://www.humanlayer.dev/blog/advanced-context-engineering). The practical claim is that reviewing research, plans, and specs has more leverage than reviewing only the final code, because an early pipeline error can become a lot of wrong code later.
+
+## Why does mental alignment come before finding bugs?
+
+**Mental alignment** comes first because a bug is local, but a wrong mental model spreads into future decisions. If the reviewer only finds one error in the diff, they protect that merge. If they understand the intent, contract, and path of the change, they protect future merges too.
+
+A review that starts with bugs tends to ask:
+
+- does this break?
+- is there a test?
+- is there an edge case?
+- is the name good?
+
+Those questions matter, but they come later. The first question should be:
+
+> Do I understand the problem this change is trying to solve and why this solution was chosen?
+
+When the answer is "no", the review has not really started. The reviewer is judging lines without understanding the system those lines are trying to preserve.
+
+## How does AI change what needs review?
+
+**AI** changes review because the diff no longer shows all the work. An agent can search files, test hypotheses, change the plan, discard paths, run commands, fix failures, and only then return a clean patch. The pull request shows the final result. The session shows the journey.
+
+That creates a new review artifact: the agent thread or session. It can show:
+
+- the initial prompt and declared intent;
+- the plan before implementation;
+- the order in which files were read;
+- which alternatives were rejected;
+- which surprises appeared during execution;
+- which commands, tests, and checks were run;
+- where the agent was unsure or made an assumption.
+
+This context helps the reviewer understand not only what changed, but why it changed. An AI-generated PR without a session is like a large commit without a description. It can work, but it forces the reviewer to reconstruct the story alone.
+
+## What order should AI code review follow?
+
+Use the priority order as a stack. Do not treat every comment as if it has the same weight.
+
+| Priority | Review question | Expected evidence |
+|---|---|---|
+| 1. Mental alignment | Do we understand the intent, context, and system model? | Clear description, session summary, explicit decisions |
+| 2. Correct solution | Does the change solve the right problem? | Issue, requirement, before/after behavior, main test |
+| 3. Design discussion | Does the design respect contracts, boundaries, and project patterns? | Architecture reason, trade-offs, compatibility |
+| 4. Bugs | Are there behavior, data, security, or edge case failures? | Tests, safe logs, manual check, error coverage |
+| 5. Style | Is the code consistent with the codebase? | Lint, formatter, names, local organization |
+
+This order does not mean style does not matter. It means style should be automated whenever possible, and it should not steal attention from risk, intent, and design.
+
+## How should you prepare an AI-generated PR?
+
+An **AI-generated PR** needs more context than a small manual PR. It does not need a long essay, but it should let the reviewer enter the change without guessing.
+
+Include:
+
+- **Intent:** the problem given to the agent.
+- **Session:** link or summary of the thread, when it can be shared.
+- **Timeline:** important steps, plan changes, and surprises.
+- **Decisions:** rejected alternatives and why.
+- **Evidence:** tests, lint, screenshots, logs, or reason for not running them.
+- **Risk:** data, permission, migration, cache, performance, SEO, accessibility, or compatibility.
+- **Privacy:** confirmation that the session does not expose secrets, sensitive data, or private context.
+
+The best format is usually short:
+
+| Field | Example |
+|---|---|
+| Intent | Fix pagination when the filter changes |
+| Agent session | Shared session or 5 bullet summary |
+| Timeline | Read route, reproduced bug, adjusted query, added test |
+| Surprise | Filter state was reset in two places |
+| Evidence | `bun lint`, unit test for the query, screenshot of the flow |
+| Risk | Low, no migration and no public contract change |
+
+The goal is not to turn the PR into bureaucracy. The goal is to reduce the cost of reconstructing context.
+
+## When should you share the full session?
+
+Sharing the **full session** helps when the journey matters for understanding the result. This is especially useful for investigations, architecture changes, intermittent bugs, large refactors, and PRs in areas few people know well.
+
+Share the session when:
+
+- the agent explored several hypotheses;
+- the plan changed during execution;
+- there was a relevant design decision;
+- the solution looks simple, but the investigation was complex;
+- the reviewer needs to understand why an alternative was rejected;
+- the PR touches security, data, permissions, or public contracts.
+
+Do not share the full session when:
+
+- it contains secrets, tokens, keys, cookies, environment variables, or private URLs;
+- it includes user, customer, candidate, company, or personal data;
+- it mixes in personal or irrelevant context;
+- it is full of noise that does not help review;
+- a faithful summary is enough.
+
+The safe default is to share a session summary and attach the full thread only when it is clean, useful, and appropriate for the PR audience.
+
+## How do you review the session without wasting time?
+
+The reviewer does not need to read every token in an **agent session**. They need to look for intent, risk, and reasoning errors.
+
+Read the session in this order:
+
+1. What goal was given to the agent?
+2. Did the agent understand the right problem?
+3. Which files and contracts did it consider?
+4. Which alternative did it reject and why?
+5. Which tests or checks failed along the way?
+6. Does the final result still match the original intent?
+7. Is there any assumption that should become a comment, test, or documentation?
+
+If the session shows that the agent followed the wrong premise, the diff can be technically clean and still be wrong. That kind of problem only appears when review looks at the path, not only the result.
+
+## How should comments follow the hierarchy?
+
+A good **code review** comment makes its layer in the hierarchy clear. That keeps preference from becoming a blocker.
+
+Use simple labels:
+
+| Type | When to use it |
+|---|---|
+| Alignment | The goal, scope, or mental model is unclear |
+| Blocker | The solution can break production, data, security, or a contract |
+| Design | The architecture works, but there is a relevant trade-off |
+| Bug | There is a concrete behavior failure or edge case |
+| Suggestion | It would improve reading, maintenance, or consistency |
+| Nit | A small detail that should never block |
+
+Examples:
+
+- **Alignment:** I cannot connect the session to the requirement. Which user behavior does this PR protect?
+- **Blocker:** this mutation does not validate `orgId`, so it can cross organization isolation.
+- **Design:** the solution works, but it couples cache and authorization. Can we split that before it becomes a pattern?
+- **Suggestion:** this name could show that it now includes only paid orders.
+- **Nit:** remove temporary comment before merge.
+
+This language protects flow. The author knows what must change now, what can be answered, and what can wait.
+
+## What changes for teams in 2026?
+
+**Review in 2026** needs to review three things: diff, evidence, and trajectory. The diff shows the result. The evidence shows that the result was checked. The trajectory shows whether intent and reasoning reached the result without a dangerous drift.
+
+That changes team responsibility:
+
+- authors need to provide intent, evidence, and context;
+- agents need to produce readable sessions with less noise;
+- reviewers need to prioritize alignment before style;
+- tools need to turn repeated comments into lint, tests, rules, or skills;
+- organizations need to define what can and cannot be shared in agent threads.
+
+The more code agents generate, the more valuable alignment becomes. The core question is no longer "who wrote this?". It is "does the team understand this well enough to maintain it?".
+
+## TL;DR
+
+**AI code review** should follow a hierarchy: mental alignment, correct solution, design discussion, bugs, and style. The agent session is useful because it shows intent, timeline, surprises, and decisions that the diff cannot show.
+
+Share the session when it helps the reviewer understand the journey, but filter secrets, sensitive data, and noise. The goal of review is not only to approve code. It is to keep the team able to understand, operate, and evolve the system after merge.
+
+## References
+
+- [Code Review Essentials for Software Teams](https://blakesmith.me/2015/02/09/code-review-essentials-for-software-teams.html), Blake Smith, 2015.
+- [Advanced Context Engineering for Coding Agents](https://www.humanlayer.dev/blog/advanced-context-engineering), HumanLayer, 2025.
+- [Mitchell Hashimoto on shared Amp sessions](https://x.com/mitchellh/status/1963277478795026484), X, 2025.
+- [Dex Horthy on agent threads showing the implementation timeline](https://x.com/dexhorthy/status/1963282300709609976), X, 2025.
+- Cover image generated for this post, with no external source.
