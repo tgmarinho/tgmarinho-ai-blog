@@ -168,8 +168,11 @@ After creating or editing a blog image:
 
 1. **Never use em dashes (`—`) or en dashes (`–`) for emphasis or asides**, in either language. Restructure with a comma, colon, parentheses, or a period. Don't just swap `—` for a hyphen; rewrite so it reads naturally. The em dash is a recognizable LLM tell, and in 2026 readers carry a bias against it because AI overuses it; avoiding it keeps the prose from reading as machine-written.
 2. **English content stays in plain English:** short sentences, common words, active voice. The pt-BR may be a touch more expressive; the EN stays simple.
-3. **Professional, concise, direct tone:** less is more. Remove jokes, filler, "cute" phrasing, war-story padding, and sentences that do not add diagnosis, context, decision, or action.
-4. **Debugging posts must show the applied fix:** state exactly what fixed or temporarily stabilized the issue. Include the relevant command, config, flag, or setting. Do not end with vague future plans unless the human explicitly asks for roadmap framing.
+3. **Say less, mean more:** lead with the conclusion, then give only the context needed for the reader to decide, act, or understand the trade-off.
+4. **Substance before ornament:** every paragraph needs real weight: a thesis, decision, diagnosis, example, command, metric, or useful question. Remove decorative openings, filler transitions, clever phrasing, and anything that only makes the text look busy.
+5. **Authority voice:** calm, direct, precise, respectful. The post should project clarity, power, leadership, and respect without sounding aggressive, inflated, or performative.
+6. **Professional, concise, direct tone:** less is more. Remove jokes, filler, "cute" phrasing, war-story padding, and sentences that do not add diagnosis, context, decision, or action.
+7. **Debugging posts must show the applied fix:** state exactly what fixed or temporarily stabilized the issue. Include the relevant command, config, flag, or setting. Do not end with vague future plans unless the human explicitly asks for roadmap framing.
 
 ## SEO + GEO (search engines and AI engines)
 
@@ -207,6 +210,7 @@ they populate both the page `keywords` meta tag and the JSON-LD `keywords`.
 - [ ] Write pt-BR version first
 - [ ] Write English version with same structure
 - [ ] Remove filler and make both versions professional, concise, and direct
+- [ ] Apply the authority voice: say less, mean more; substance before ornament; conclusion first
 - [ ] Define non-obvious acronyms on first use
 - [ ] For debugging posts, include the exact applied fix or temporary mitigation
 - [ ] Apply the four SEO+GEO rules (answer-first, question headings, key-term bold, extractable structure)
