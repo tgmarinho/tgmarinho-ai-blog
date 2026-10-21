@@ -1,0 +1,118 @@
+---
+title: "Do not outsource the thinking"
+description: "Do not outsource the thinking to AI. Research, plan, implement, validate, and ship with human judgment before releasing real software safely."
+date: "2026-06-20"
+published: true
+slug: "do-not-outsource-the-thinking"
+language: "en"
+translationKey: "do-not-outsource-the-thinking"
+categories: ["ai", "software-engineering", "agents", "productivity", "en"]
+image: "/images/blog/do-not-outsource-the-thinking-cover.jpg"
+---
+
+**Do not outsource the thinking** when you use artificial intelligence (AI) to code. Turns out, how to build good software has not changed: research, plan, implement, validate, ship. What changed is the speed, the number of options, and the noise around the work.
+
+AI can write code, suggest plans, summarize diffs, and run commands. But it should not decide what matters. Thinking is still your identity and purpose as an engineer.
+
+```txt
+research -> plan -> implement -> validate -> ship
+```
+
+That loop looks simple because it is old. The new part is not the process. The new part is that every step can now be accelerated by agents. That is exactly why every step needs more judgment, not less.
+
+## Where does thinking fit?
+
+**Thinking** is not one step before the loop. Thinking is the operator applied to every step.
+
+```txt
+engineering = think(research) -> think(plan) -> think(implement) -> think(validate) -> think(ship)
+```
+
+You think when you research: what is true?
+
+You think when you plan: which path respects the problem?
+
+You think when you implement: does the code still match the intent?
+
+You think when you validate: does this evidence prove something real?
+
+You think when you ship: does the impact confirm or change the plan?
+
+That feedback is the loop of engineering. Shipped reality changes the next round of research.
+
+## Why is thinking harder now?
+
+**Noise** is the real enemy of good engineering.
+
+There is always a new `SKILL.md`, a new agent, a new tool, a new IDE, and a better process. The technique that looked inevitable today can look like outdated hype two months later. Spec-driven development (SDD) is good, then it is too much process, then it comes back with another name.
+
+That creates real mental confusion for an engineer who just wants to build good software.
+
+The useful exaggeration is that an engineer needs a MacBook with four hours online and four hours offline. Four hours to research, compare tools, and understand the state of the world. Four hours without the feed, without tool announcements, without a new trend, and without anxiety, just to think about the problem.
+
+Thinking removes noise.
+
+| Step | Removes noise from |
+|---|---|
+| Research | The problem |
+| Plan | The path |
+| Implement | The artifact |
+| Validate | Confidence |
+| Ship | Theory |
+
+## What can AI do and what stays yours?
+
+Use AI to speed up iteration, not to abandon judgment.
+
+| Step | AI can speed up | You need to think |
+|---|---|---|
+| Research | Read files, find patterns, summarize risks | Which reading is correct? |
+| Plan | Propose steps, files, and validation | Does this plan solve the right problem? |
+| Implement | Edit code and tests | Does this code belong in the system? |
+| Validate | Run checks and gather evidence | Does this evidence measure what matters? |
+| Ship | Prepare the diff, PR, and summary | Is the risk small enough? |
+
+The mistake is not using AI. The mistake is letting AI carry intent, criteria, and responsibility.
+
+## Where is the highest leverage?
+
+**Leverage** comes before code.
+
+A bad line of code usually creates a local problem. Bad research creates a bad plan. A bad plan creates a coherent implementation in the wrong direction. A bad instruction in `CLAUDE.md`, `AGENTS.md`, or `SKILL.md` can spread error across many sessions.
+
+That is why reviewing `research.md` and `plan.md` can be worth more than reviewing a huge pull request and trying to reconstruct the intent afterward.
+
+The point is not bureaucracy. It is thinking early, while changing your mind is still cheap.
+
+## What is the minimum?
+
+Before shipping, answer:
+
+1. Is the real problem clear?
+2. Does the plan follow the research?
+3. Does the implementation follow the plan?
+4. Does validation prove behavior, not only activity?
+5. Does what shipped change the next decision?
+
+If the answer is still vague, the agent can keep working. You should not ship yet.
+
+## References
+
+The main **references** for this post are:
+
+- [No Vibes Allowed: Solving Hard Problems in Complex Codebases](https://www.youtube.com/watch?v=rmvDxxNubIg), Dex Horthy, HumanLayer, AI Engineer Code Summit.
+- [Advanced Context Engineering for Coding Agents](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/ace-fca.md), HumanLayer, 2025.
+- [Direct image for the research, planning, and implementation workflow](https://www.humanlayer.dev/blog/advanced-context-engineering/workflow.png), from HumanLayer.
+- [Direct image for Impact Hierarchy for Coding Agents](https://www.humanlayer.dev/blog/advanced-context-engineering/leverage.png), from HumanLayer.
+- [Vibe Coding Our Way to Disaster](https://www.arthropod.software/p/vibe-coding-our-way-to-disaster), Jake Nations, 2025.
+- [Direct image for the three-phase method](https://substackcdn.com/image/fetch/%24s_%21UC4a%21%2Cw_1456%2Cc_limit%2Cf_auto%2Cq_auto%3Agood%2Cfl_progressive%3Asteep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc7aa3030-eec5-4b65-830f-c3f128ac5a2c_704x658.png), used as a visual reference.
+- [research_codebase.md](https://github.com/humanlayer/humanlayer/blob/main/.claude/commands/research_codebase.md), [create_plan.md](https://github.com/humanlayer/humanlayer/blob/main/.claude/commands/create_plan.md), and [implement_plan.md](https://github.com/humanlayer/humanlayer/blob/main/.claude/commands/implement_plan.md).
+- [Simple Made Easy](https://www.youtube.com/watch?v=SxdOUGdseq4) and [Hammock-Driven Development](https://www.youtube.com/watch?v=f84n5oFoZBc), Rich Hickey.
+
+## TL;DR
+
+**AI in programming** changes speed, not responsibility. The loop remains: research, plan, implement, validate, ship.
+
+Do not outsource the thinking. Outsource parts of the execution.
+
+Thinking is the part that gives the work meaning.
